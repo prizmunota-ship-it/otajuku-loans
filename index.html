@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0063)file:///Users/ootakeiichi/Downloads/otajuku_loans_latest_8.html -->
+<!-- saved from url=(0063)file:///Users/ootakeiichi/Downloads/otajuku_loans_latest_9.html -->
 <html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1021,6 +1021,12 @@ render();
 
 // ===== ログイン認証 =====
 var GAS_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
+
+// ログイン済みチェック
+if(localStorage.getItem("otajuku_auth") === "ok"){
+  document.getElementById("loginOverlay").style.display = "none";
+}
+
 function doLogin(){
   var email = document.getElementById("loginEmail").value.trim();
   var msg = document.getElementById("loginMsg");
@@ -1037,6 +1043,7 @@ function doLogin(){
   window._loginCallback = function(result){
     if(document.body.contains(script)) document.body.removeChild(script);
     if(result === "ok"){
+      localStorage.setItem("otajuku_auth", "ok");
       msg.className="login-msg success";
       msg.textContent="認証成功！";
       setTimeout(function(){ document.getElementById("loginOverlay").style.display="none"; }, 600);
