@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0063)file:///Users/ootakeiichi/Downloads/otajuku_loans_latest_3.html -->
+<!-- saved from url=(0063)file:///Users/ootakeiichi/Downloads/otajuku_loans_latest_5.html -->
 <html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -112,27 +112,31 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 #scrollTop { position:fixed; bottom:20px; right:16px; width:42px; height:42px; background:var(--amber); color:#fff; border:none; border-radius:50%; font-size:18px; cursor:pointer; box-shadow:0 4px 14px rgba(180,110,0,0.4); display:none; align-items:center; justify-content:center; z-index:200; }
 #scrollTop.show { display:flex; }
 /* ===== ログイン画面 ===== */
-#loginOverlay { position:fixed; inset:0; background:#FDF6DC; z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; }
-.login-box { background:#fff; border-radius:16px; border:2px solid var(--border); box-shadow:0 8px 32px rgba(180,130,0,0.18); padding:36px 28px; max-width:380px; width:100%; text-align:center; }
-.login-logo { font-size:36px; margin-bottom:8px; }
-.login-title { font-size:18px; font-weight:900; color:var(--dark); margin-bottom:4px; }
-.login-sub { font-size:12px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
-.login-input { width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; color:var(--dark2); outline:none; margin-bottom:12px; }
-.login-input:focus { border-color:var(--amber); }
-.login-btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--amber),var(--gold)); color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer; letter-spacing:0.05em; }
-.login-btn:disabled { opacity:0.6; cursor:not-allowed; }
+#loginOverlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(145deg, #FFFBEA 0%, #FFF3B0 50%, #FFE566 100%); }
+.login-box { background:#fff; border-radius:24px; padding:44px 32px 36px; max-width:360px; width:100%; text-align:center; box-shadow:0 16px 48px rgba(180,130,0,0.18), 0 2px 8px rgba(180,130,0,0.08); border:1.5px solid rgba(245,196,0,0.4); }
+.login-logo { font-size:48px; margin-bottom:10px; }
+.login-title { font-size:24px; font-weight:900; color:#1C1400; margin-bottom:4px; letter-spacing:0.04em; }
+.login-badge { display:inline-block; background:linear-gradient(135deg,#F5C400,#E8A000); color:#fff; font-size:10px; font-weight:800; padding:4px 12px; border-radius:20px; margin-bottom:18px; letter-spacing:0.12em; box-shadow:0 2px 8px rgba(232,160,0,0.35); }
+.login-sub { font-size:12px; color:#7A5800; margin-bottom:24px; line-height:1.8; }
+.login-input { width:100%; padding:13px 16px; background:#FFFDF5; border:1.5px solid #EDD97A; border-radius:10px; font-size:14px; font-family:inherit; color:#3D2B00; outline:none; margin-bottom:12px; transition:border-color .2s; }
+.login-input::placeholder { color:#C4A862; }
+.login-input:focus { border-color:#E8A000; background:#FFFBEA; }
+.login-btn { width:100%; padding:14px; background:linear-gradient(135deg,#F5C400 0%,#E8A000 100%); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:900; font-family:inherit; cursor:pointer; letter-spacing:0.08em; box-shadow:0 4px 16px rgba(232,160,0,0.4); transition:transform .15s, box-shadow .15s; }
+.login-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,160,0,0.5); }
+.login-btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
 .login-msg { font-size:12px; margin-top:10px; min-height:18px; }
 .login-msg.error { color:#B52020; }
-.login-msg.loading { color:var(--muted); }
-.login-msg.success { color:#1A7A3A; }
+.login-msg.loading { color:#A08040; }
+.login-msg.success { color:#1A7A3A; font-weight:700; }
 </style>
 </head>
 <body>
 <div id="loginOverlay">
   <div class="login-box">
     <div class="login-logo">🏠</div>
-    <div class="login-title">太田塾㊙️ 内部情報</div>
-    <div class="login-sub">太田塾メンバー専用ページです。<br>登録済みのGmailアドレスを入力してください。</div>
+    <div class="login-title">太田塾</div>
+    <div class="login-badge">㊙️ MEMBERS ONLY</div>
+    <div class="login-sub">入会時アンケートに登録頂いた<br>Gmailアドレスを入力してください。</div>
     <input type="email" id="loginEmail" class="login-input" placeholder="example@gmail.com" autocomplete="email">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">ログイン</button>
     <div class="login-msg" id="loginMsg"></div>
