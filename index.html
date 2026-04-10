@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0063)file:///Users/ootakeiichi/Downloads/otajuku_loans_latest_2.html -->
+<!-- saved from url=(0063)file:///Users/ootakeiichi/Downloads/otajuku_loans_latest_3.html -->
 <html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -111,9 +111,33 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .empty-state { text-align:center; padding:60px 20px; color:var(--muted); font-size:14px; }
 #scrollTop { position:fixed; bottom:20px; right:16px; width:42px; height:42px; background:var(--amber); color:#fff; border:none; border-radius:50%; font-size:18px; cursor:pointer; box-shadow:0 4px 14px rgba(180,110,0,0.4); display:none; align-items:center; justify-content:center; z-index:200; }
 #scrollTop.show { display:flex; }
+/* ===== ログイン画面 ===== */
+#loginOverlay { position:fixed; inset:0; background:#FDF6DC; z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; }
+.login-box { background:#fff; border-radius:16px; border:2px solid var(--border); box-shadow:0 8px 32px rgba(180,130,0,0.18); padding:36px 28px; max-width:380px; width:100%; text-align:center; }
+.login-logo { font-size:36px; margin-bottom:8px; }
+.login-title { font-size:18px; font-weight:900; color:var(--dark); margin-bottom:4px; }
+.login-sub { font-size:12px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
+.login-input { width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; color:var(--dark2); outline:none; margin-bottom:12px; }
+.login-input:focus { border-color:var(--amber); }
+.login-btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--amber),var(--gold)); color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:800; font-family:inherit; cursor:pointer; letter-spacing:0.05em; }
+.login-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.login-msg { font-size:12px; margin-top:10px; min-height:18px; }
+.login-msg.error { color:#B52020; }
+.login-msg.loading { color:var(--muted); }
+.login-msg.success { color:#1A7A3A; }
 </style>
 </head>
 <body>
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">🏠</div>
+    <div class="login-title">太田塾㊙️ 内部情報</div>
+    <div class="login-sub">太田塾メンバー専用ページです。<br>登録済みのGmailアドレスを入力してください。</div>
+    <input type="email" id="loginEmail" class="login-input" placeholder="example@gmail.com" autocomplete="email">
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">ログイン</button>
+    <div class="login-msg" id="loginMsg"></div>
+  </div>
+</div>
 <header>
   <div class="header-inner">
     <div class="header-label">太田塾㊙️ 内部情報</div>
@@ -143,7 +167,7 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
     <span class="count" id="countLabel">32件</span>
   </div>
 </div>
-<div class="cards" id="cardContainer"><div class="card open" id="c0"><div class="card-head" onclick="tog(0)"><span class="type-badge b-shinku">信用組合</span><div class="card-title-area"><div class="card-name">横浜幸銀信用組合</div><div class="card-meta"><span class="meta-pill">年収 決まりなし</span><span class="meta-pill">支店のある地域</span></div><div class="eval-row"><div class="eval-item"><span class="em em-caut">▲</span>個人</div><div class="eval-item"><span class="em em-ok">○</span>法人</div><div class="eval-item" style="margin-left:4px">金利&nbsp;<span class="rate-val">3%</span></div></div></div><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div><div class="card-body"><div class="card-body-inner"><div class="section"><div class="sec-title">契約者条件</div><div class="grid2"><div class="ic"><div class="lb">契約エリア</div><div class="vl">支店のある地域</div></div><div class="ic"><div class="lb">年収目安</div><div class="vl">決まりなし</div></div></div><div class="memo">・一見は断られるケース大
+<div class="cards" id="cardContainer"><div class="card" id="c0"><div class="card-head" onclick="tog(0)"><span class="type-badge b-shinku">信用組合</span><div class="card-title-area"><div class="card-name">横浜幸銀信用組合</div><div class="card-meta"><span class="meta-pill">年収 決まりなし</span><span class="meta-pill">支店のある地域</span></div><div class="eval-row"><div class="eval-item"><span class="em em-caut">▲</span>個人</div><div class="eval-item"><span class="em em-ok">○</span>法人</div><div class="eval-item" style="margin-left:4px">金利&nbsp;<span class="rate-val">3%</span></div></div></div><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div><div class="card-body"><div class="card-body-inner"><div class="section"><div class="sec-title">契約者条件</div><div class="grid2"><div class="ic"><div class="lb">契約エリア</div><div class="vl">支店のある地域</div></div><div class="ic"><div class="lb">年収目安</div><div class="vl">決まりなし</div></div></div><div class="memo">・一見は断られるケース大
 ・紹介者が重要
 ・原則法人契約、個人は要相談
 ・プロジェクト融資OK</div></div><div class="section"><div class="sec-title">物件・融資期間</div><div class="area-boxes"><div class="area-box area-general"><div class="ab-label">対象エリア</div><div class="ab-text">支店のある地域（以下福岡の場合）</div></div><div class="area-box area-posi"><div class="ab-label">✅ ポジティブエリア</div><div class="ab-text">福岡市内、筑紫野市、大野城市、糸島市、久留米市（北九州より久留米の方が積極的）、北九州市（八幡西区、八幡東区、小倉北区、小倉南区の駅近）</div></div><div class="area-box area-nega"><div class="ab-label">⚠️ ネガティブ・NGエリア</div><div class="ab-text">飯塚市、直方市、田川市、福津市、宗像市（初取引だと相談もNG）</div></div></div><div class="grid4"><div class="struct-cell"><div class="sl">木造</div><div class="sm" style="color:var(--ok)">○</div><div class="sy">22年</div></div><div class="struct-cell"><div class="sl">軽鉄</div><div class="sm" style="color:var(--ok)">○</div><div class="sy">27年</div></div><div class="struct-cell"><div class="sl">重鉄</div><div class="sm" style="color:var(--ok)">○</div><div class="sy">34年</div></div><div class="struct-cell"><div class="sl">RC</div><div class="sm" style="color:var(--ok)">○</div><div class="sy">47年</div></div></div><div class="grid1"><div class="ic"><div class="lb">新築MAX融資期間</div><div class="vl">30年</div></div></div><div class="memo">・初回取引は5,000万以下を希望
@@ -409,7 +433,7 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 ・高利回り築古物件（利回り15%以上）に実績
 ・信組プロパー融資
 ※購入報告から推計</div></div></div><div class="section"><div class="sec-title">🏡 購入報告</div><div class="report-count-badge">🎉 1件の実績</div><div class="report-list"><div class="report-card"><div class="report-header"><span class="report-icon">🏠</span><span class="report-name">堀井さん</span><span class="report-date">2025/11</span></div><div class="report-body"><div><span class="report-section-label spec">🏠 物件スペック</span><div class="report-grid"><div class="report-cell spec-cell"><div class="rl">購入金額</div><div class="rv highlight-blue">2,000万円</div></div><div class="report-cell spec-cell"><div class="rl">利回り</div><div class="rv highlight-blue">15.41%</div></div><div class="report-cell spec-cell"><div class="rl">所在地</div><div class="rv">山梨県都留市</div></div><div class="report-cell spec-cell"><div class="rl">築年数</div><div class="rv">築45年</div></div><div class="report-cell spec-cell"><div class="rl">構造</div><div class="rv">木造</div></div><div class="report-cell spec-cell"><div class="rl">部屋数</div><div class="rv">12戸</div></div></div></div><div><span class="report-section-label loan">💴 融資条件</span><div class="report-grid"><div class="report-cell loan-cell"><div class="rl">融資金額</div><div class="rv highlight-green">2,000万円</div></div><div class="report-cell loan-cell"><div class="rl">金利</div><div class="rv highlight-green">2.30%</div></div><div class="report-cell loan-cell"><div class="rl">融資期間</div><div class="rv">15年</div></div><div class="report-cell loan-cell"><div class="rl">返済比率</div><div class="rv">100.0%</div></div><div class="report-cell loan-cell"><div class="rl">支店</div><div class="rv">—</div></div></div><div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">内訳・備考</div><div class="rv" style="white-space:pre-wrap">・融資割合：100.0%</div></div></div></div></div></div></div></div></div></div></div></div>
-<button id="scrollTop" onclick="window.scrollTo({top:0,behavior:&#39;smooth&#39;})" class="">↑</button>
+<button id="scrollTop" onclick="window.scrollTo({top:0,behavior:&#39;smooth&#39;})">↑</button>
 <script>
 var DATA = [];
 (function(){
@@ -987,6 +1011,38 @@ document.querySelectorAll(".chip").forEach(function(btn){
 document.getElementById("searchInput").addEventListener("input",function(e){ curQ=e.target.value; render(); });
 window.addEventListener("scroll",function(){ var st=document.getElementById("scrollTop"); if(window.scrollY>300) st.classList.add("show"); else st.classList.remove("show"); });
 render();
+
+// ===== ログイン認証 =====
+var GAS_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
+function doLogin(){
+  var email = document.getElementById("loginEmail").value.trim();
+  var msg = document.getElementById("loginMsg");
+  var btn = document.getElementById("loginBtn");
+  if(!email || !email.includes("@")){
+    msg.className="login-msg error";
+    msg.textContent="正しいメールアドレスを入力してください";
+    return;
+  }
+  btn.disabled = true;
+  msg.className="login-msg loading";
+  msg.textContent="確認中...";
+  var script = document.createElement("script");
+  window._loginCallback = function(result){
+    if(document.body.contains(script)) document.body.removeChild(script);
+    if(result === "ok"){
+      msg.className="login-msg success";
+      msg.textContent="認証成功！";
+      setTimeout(function(){ document.getElementById("loginOverlay").style.display="none"; }, 600);
+    } else {
+      msg.className="login-msg error";
+      msg.textContent="このメールアドレスは登録されていません。太田までご連絡ください。";
+      btn.disabled = false;
+    }
+  };
+  script.src = GAS_URL + "?email=" + encodeURIComponent(email) + "&callback=_loginCallback";
+  document.body.appendChild(script);
+}
+document.getElementById("loginEmail").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
 </script>
 
 
