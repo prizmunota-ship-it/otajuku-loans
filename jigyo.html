@@ -92,13 +92,43 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:11px 20px;border-radius:24px;z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;}
 
+/* ===== Excel再現ドキュメント ===== */
+#view-result{max-width:840px;}
+.vlabel{font-size:11px;color:#888;text-align:center;margin-bottom:8px;}
+.xls{background:#fff;border:1px solid #E8E6E0;border-radius:10px;overflow-x:auto;}
+.xls-paper{min-width:680px;padding:14px;color:#000;}
+.xls-title{position:relative;text-align:center;font-size:17px;font-weight:700;border:1.5px solid #333;padding:8px;letter-spacing:2px;}
+.xls-date{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:400;letter-spacing:0;}
+.xls-buyer{font-size:14px;font-weight:700;padding:8px 2px 10px;}
+.xls-cols{display:flex;gap:12px;align-items:flex-start;}
+.xls-col{flex:1;min-width:0;}
+.sec{margin-bottom:9px;}
+.sec-h{font-weight:700;font-size:11.5px;background:#ECEAE3;border:1px solid #9A9A9A;border-bottom:none;padding:3px 6px;}
+table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
+.t th,.t td{border:1px solid #B5B5B5;padding:3px 5px;overflow:hidden;text-overflow:ellipsis;}
+.t th{background:#F4F3EF;font-weight:500;font-size:10px;color:#555;text-align:center;}
+.t td.lbl{background:#FAF9F6;white-space:nowrap;}
+.t td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.t td.yc,.t .num .yc{color:#777;font-size:9px;}
+.t td.yc{width:24px;text-align:left;}
+.t .num .yc{margin-left:2px;}
+.t tr.rowtot td{font-weight:700;background:#F0EFEA;}
+.note{font-size:9.5px;color:#888;padding:4px 2px;line-height:1.4;}
+
+@media (max-width:640px){
+  .xls-paper{min-width:0;}
+  .xls-cols{flex-direction:column;}
+}
+
 @media print{
-  .top-bar,.maintabs,.fab,.seg,.no-print{display:none !important;}
+  .top-bar,.maintabs,.fab,.seg,.vlabel,.no-print{display:none !important;}
   body{background:#fff;}
   .wrap{padding:0;max-width:none;}
-  .doc{border:none;border-radius:0;}
+  .xls{border:none;border-radius:0;overflow:visible;}
+  .xls-paper{min-width:0;padding:0;}
+  .xls-cols{flex-direction:row !important;}
   .card{display:none;}
-  .doc-print-only{display:block !important;}
+  @page{size:A4 portrait;margin:10mm;}
 }
 .doc-print-only{display:none;}
 </style>
@@ -150,7 +180,13 @@ function load(){
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
 
 /* ============ 数値ヘルパ ============ */
-const n = v => { const x=parseFloat(String(v).replace(/,/g,'')); return isFinite(x)?x:0; };
+// 全角数字・記号を半角に正規化（３５００ → 3500、．→ . など）
+function toHalf(s){
+  return String(s)
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/[．。]/g,'.').replace(/[，、]/g,'').replace(/　/g,' ');
+}
+const n = v => { const x=parseFloat(toHalf(String(v)).replace(/,/g,'')); return isFinite(x)?x:0; };
 const man = v => n(v)*10000;                       // 万円→円
 const yen = v => v ? '¥'+Math.round(v).toLocaleString('ja-JP') : '¥0';
 const pct = (v,d=1) => isFinite(v)? v.toFixed(d)+'%' : '—';
@@ -168,36 +204,37 @@ function calc(){
   c.chukai = S.chukai_auto ? Math.round((c.price*0.03+60000)*1.1) : n(S.chukai);
   // 取得税（自動: 価格×構造別率）
   c.shutoku = S.shutoku_auto ? Math.round(c.price*(STRUCT_TAX[S.struct]??0.03)) : n(S.shutoku);
-  // 火災保険
+  // 火災保険（手持ち=1年 / 提出=5年）
   c.fire1 = n(S.fire1); c.fire5 = c.fire1*5;
-  // 諸経費合計
+  // 諸経費 各項目（出資金その他C40は元の出力シートでは諸経費合計に含めない）
   c.kotoze=n(S.kotoze); c.bankfee=n(S.bankfee); c.iten=n(S.iten); c.teito=n(S.teito);
   c.shihoshoshi=n(S.shihoshoshi); c.inshi=n(S.inshi); c.shusshi=n(S.shusshi);
-  c.shokei = c.kotoze+c.bankfee+c.iten+c.teito+c.shihoshoshi+c.inshi+c.chukai+c.fire1+c.shutoku+c.shusshi;
+  const base = c.kotoze+c.bankfee+c.iten+c.teito+c.shihoshoshi+c.inshi+c.chukai+c.shutoku;
+  c.shokeiHold   = base + c.fire1;   // 手持ち用 諸経費合計（火災1年）
+  c.shokeiSubmit = base + c.fire5;   // 提出用 諸経費合計（火災5年）
   // 総事業費
   c.jigyohi = c.price;
-  c.total = c.jigyohi + c.shokei;
+  c.totalHold   = c.jigyohi + c.shokeiHold;
+  c.totalSubmit = c.jigyohi + c.shokeiSubmit;
   // 融資
   c.loan = man(S.loan); c.years=n(S.years); c.rate=n(S.rate);
   c.atamakin = man(S.atamakin);
-  c.pmt = pmt(c.loan, c.rate, c.years);     // 月返済
+  c.pmt = Math.round(pmt(c.loan, c.rate, c.years));   // 月返済（ExcelのC48=ROUND(PMT,0)と一致させる）
   c.pmtYear = c.pmt*12;
-  c.jiko = c.shokei + c.atamakin;            // 自己資金（手持ち基準）
-  c.teishutsuJiko = c.shokei + c.jigyohi - c.loan; // 提出: 自己資金必要額
   // ランニング
   c.junkai=n(S.junkai); c.net=n(S.net);
   return c;
 }
 function pmt(principal, ratePct, years){
   if(principal<=0||years<=0) return 0;
-  const r = ratePct/100/12, nn=years*12;
+  const rate = ratePct>1 ? ratePct/100 : ratePct;  // Excelと同じ: >1なら%とみなす
+  const r = rate/12, nn=years*12;
   if(r===0) return principal/nn;
   return principal*r*Math.pow(1+r,nn)/(Math.pow(1+r,nn)-1);
 }
-// view別の管理料率 / rentMode別の家賃
-function scenario(c){
-  const mRate = view==='standhold'?0.05:0.04;      // 手持ち5% / 提出4%
-  const month = rentMode==='real'? c.monthReal : c.monthR;
+// mode: 'real'(実家賃) / 'redo'(引き直し)。mRate=管理料率, total=総事業費(FCR用)
+function scenario(c, mode, mRate, total){
+  const month = mode==='real'? c.monthReal : c.monthR;
   const kanri = Math.round(month*mRate*1.1);       // 月管理料(税込)
   const monthBalance = month - (c.pmt + kanri + c.junkai + c.net);
   const yearIncome = month*12;
@@ -206,12 +243,25 @@ function scenario(c){
   const yearNet = c.net*12;
   const koteishisan = c.kotoze;                    // 固定資産税(年)=固都税
   const yearBalance = yearIncome - (c.pmtYear + yearKanri + yearJunkai + yearNet + koteishisan);
+  const yearBalanceMonth = yearBalance/12;
   const hyomen = c.jigyohi>0 ? yearIncome/c.jigyohi*100 : NaN;       // 表面利回り
   const noi = yearIncome - yearKanri - koteishisan - yearJunkai;     // NOI(ネット除外)
-  const fcr = c.total>0 ? noi/c.total*100 : NaN;                    // FCR
+  const fcr = total>0 ? noi/total*100 : NaN;                        // FCR
   const dcr = c.pmtYear>0 ? noi/c.pmtYear : NaN;                    // DCR
   const ratio = yearIncome>0 ? c.pmtYear/yearIncome*100 : NaN;      // 返済比率
-  return {mRate,month,kanri,monthBalance,yearIncome,yearKanri,yearJunkai,yearNet,koteishisan,yearBalance,hyomen,noi,fcr,dcr,ratio};
+  return {mRate,month,kanri,monthBalance,yearIncome,yearKanri,yearJunkai,yearNet,koteishisan,yearBalance,yearBalanceMonth,hyomen,noi,fcr,dcr,ratio};
+}
+// 坪（Excelと同じ ㎡/3.30579, 小数2桁）
+function tsubo(m){ const x=n(m); return x? (x/3.30579).toFixed(2):''; }
+// 築年月文字列（入力シートH7と同じ書式）
+function builtText(){
+  if(!S.eraType || !S.eraYear) return '';
+  const d=n(S.eraYear), m=n(S.builtMonth);
+  const base={'西暦':0,'令和':2018,'平成':1988,'昭和':1925,'大正':1911}[S.eraType]||0;
+  const y = base+d;
+  const now=new Date(), cy=now.getFullYear(), cm=now.getMonth()+1;
+  let age = m? (cy-y-(cm<m?1:0)) : (cy-y);
+  return y+'年'+(m?m+'月':'')+'（築'+age+'年）';
 }
 
 /* ============ 入力UI ============ */
@@ -222,9 +272,10 @@ function field(label, key, opt={}){
   const unit = opt.unit?`<span class="unit">${opt.unit}</span>`:'';
   const ph = opt.ph?`placeholder="${opt.ph}"`:'';
   const im = (t==='number')?'inputmode="decimal"':'';
+  const handler = (t==='number')? `setNum('${key}',this)` : `setText('${key}',this.value)`;
   return `<div class="fgroup"><div class="flabel">${label}${unit}</div>
     <input class="${cls}" type="${t==='number'?'text':t}" ${im} value="${esc(v)}" ${ph}
-      oninput="setText('${key}',this.value)"></div>`;
+      oninput="${handler}"></div>`;
 }
 function selectF(label, key, opts){
   const v = S[key]??'';
@@ -279,9 +330,9 @@ function renderInput(){
   S.rents.forEach((r,i)=>{
     h += `<div class="rent-row">
       <input class="fval" value="${esc(r.name)}" placeholder="例:2DK" oninput="setRent(${i},'name',this.value)">
-      <input class="fval" inputmode="decimal" value="${esc(r.units)}" placeholder="戸" oninput="setRent(${i},'units',this.value)">
-      <input class="fval" inputmode="decimal" value="${esc(r.rent)}" placeholder="円" oninput="setRent(${i},'rent',this.value)">
-      <input class="fval" inputmode="decimal" value="${esc(r.rentR)}" placeholder="円" oninput="setRent(${i},'rentR',this.value)">
+      <input class="fval" inputmode="decimal" value="${esc(r.units)}" placeholder="戸" oninput="setRentNum(${i},'units',this)">
+      <input class="fval" inputmode="decimal" value="${esc(r.rent)}" placeholder="円" oninput="setRentNum(${i},'rent',this)">
+      <input class="fval" inputmode="decimal" value="${esc(r.rentR)}" placeholder="円" oninput="setRentNum(${i},'rentR',this)">
     </div>`;
   });
   h += `<div class="line total" style="margin-top:8px;"><span class="lbl">月額家賃合計(実)</span><span class="val" id="t-rent">${yen(c.monthReal)} / ${c.units}戸</span></div></div>`;
@@ -292,14 +343,16 @@ function renderInput(){
     <div class="row2">${field('移転登記','iten',{type:'number'})}${field('抵当権設定','teito',{type:'number'})}</div>
     <div class="row2">${field('司法書士','shihoshoshi',{type:'number'})}${field('印紙代','inshi',{type:'number'})}</div>
     <div class="fgroup"><div class="flabel">仲介手数料 ${S.chukai_auto?'<span class="autonote">自動: '+yen(c.chukai)+'</span>':''}</div>
-      <input class="fval ${S.chukai_auto?'auto':''}" inputmode="decimal" value="${S.chukai_auto?'':esc(S.chukai)}" placeholder="${S.chukai_auto?yen(c.chukai)+'(自動)':'円'}" oninput="setChukai(this.value)">
+      <input class="fval ${S.chukai_auto?'auto':''}" inputmode="decimal" value="${S.chukai_auto?'':esc(S.chukai)}" placeholder="${S.chukai_auto?yen(c.chukai)+'(自動)':'円'}" oninput="setNum('chukai',this)">
       <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.chukai_auto?'checked':''} onchange="toggleAuto('chukai',this.checked)">自動計算</label></div>
     ${field('火災保険(1年)','fire1',{type:'number'})}
     <div class="fgroup"><div class="flabel">取得税 ${S.shutoku_auto?'<span class="autonote">自動: '+yen(c.shutoku)+'</span>':''}</div>
-      <input class="fval ${S.shutoku_auto?'auto':''}" inputmode="decimal" value="${S.shutoku_auto?'':esc(S.shutoku)}" placeholder="${S.shutoku_auto?yen(c.shutoku)+'(自動)':'円'}" oninput="setShutoku(this.value)">
+      <input class="fval ${S.shutoku_auto?'auto':''}" inputmode="decimal" value="${S.shutoku_auto?'':esc(S.shutoku)}" placeholder="${S.shutoku_auto?yen(c.shutoku)+'(自動)':'円'}" oninput="setNum('shutoku',this)">
       <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.shutoku_auto?'checked':''} onchange="toggleAuto('shutoku',this.checked)">自動計算（構造別）</label></div>
     ${field('出資金その他','shusshi',{type:'number'})}
-    <div class="line total" style="margin-top:6px;"><span class="lbl">諸経費合計</span><span class="val" id="t-shokei">${yen(c.shokei)}</span></div></div>`;
+    <div style="font-size:10px;color:#bbb;margin-top:-8px;">※出資金その他は計画書の諸経費合計には含みません（参考）</div>
+    <div class="line total" style="margin-top:8px;"><span class="lbl">諸経費合計(手持・火災1年)</span><span class="val" id="t-shokei">${yen(c.shokeiHold)}</span></div>
+    <div class="line" style="font-size:12px;"><span class="lbl" style="color:#999;">諸経費合計(提出・火災5年)</span><span class="val" id="t-shokei5">${yen(c.shokeiSubmit)}</span></div></div>`;
 
   // 融資条件
   h += `<div class="card"><div class="card-title"><span class="dot"></span>融資条件</div>
@@ -316,7 +369,7 @@ function renderInput(){
   document.getElementById('view-input').innerHTML = h;
 }
 
-/* ============ 結果UI ============ */
+/* ============ 結果UI（元のExcel「事業計画書」レイアウトを忠実に再現） ============ */
 function renderResult(){
   const c = calc();
   const hasData = c.price>0 || c.monthReal>0 || c.units>0;
@@ -325,107 +378,165 @@ function renderResult(){
       `<div class="empty-state">入力タブで物件情報・価格・家賃を入力すると<br>事業計画書がここに表示されます。</div>`;
     return;
   }
-  const sc = scenario(c);
   const isHold = view==='standhold';
+  const shokei = isHold? c.shokeiHold : c.shokeiSubmit;
+  const total  = isHold? c.totalHold  : c.totalSubmit;
+  const fireAmt = isHold? c.fire1 : c.fire5;
+  const fireLbl = isHold? '火災保険（１年）' : '火災保険（５年）';
+  const mRate = isHold? 0.05 : 0.04;
+  const R = scenario(c,'real',mRate,total);   // 実家賃
+  const D = scenario(c,'redo',mRate,total);   // 引き直し
+  const rentDataRows = S.rents.filter(r=> n(r.units)>0 || String(r.name).trim());
+
   let h = '';
-  // トグル
-  h += `<div class="seg">
+  // 手持ち/提出 トグル（実家賃・引き直しは元データ同様に両方表示）
+  h += `<div class="seg no-print">
     <button class="seg-btn ${isHold?'active':''}" onclick="setView('standhold')">手持ち用</button>
     <button class="seg-btn ${!isHold?'active':''}" onclick="setView('submit')">金融機関提出用</button></div>`;
-  h += `<div class="seg">
-    <button class="seg-btn ${rentMode==='real'?'active':''}" onclick="setRentMode('real')">実家賃</button>
-    <button class="seg-btn ${rentMode==='redo'?'active':''}" onclick="setRentMode('redo')">引き直し</button></div>`;
+  h += `<div class="vlabel no-print">${isHold?'手持ち用':'金融機関提出用'}（左:実家賃／右:引き直し）</div>`;
 
-  h += `<div class="doc" id="doc">`;
-  // ヘッダ
-  const era = S.eraType+(S.eraYear?S.eraYear+'年':'')+(S.builtMonth?S.builtMonth+'月':'');
-  h += `<div class="doc-head">
-    <h2>${esc(S.pname||'(物件名未入力)')} 事業計画書</h2>
-    <div class="meta">${isHold?'手持ち用':'金融機関提出用'} ／ ${rentMode==='real'?'実家賃':'引き直し家賃'}${S.buyer?' ／ '+esc(S.buyer):''}</div></div>`;
+  // ===== ドキュメント本体 =====
+  h += `<div class="xls" id="doc"><div class="xls-paper">`;
+  const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'/');
+  h += `<div class="xls-title">収益物件事業計画書<span class="xls-date">${today}</span></div>`;
+  h += `<div class="xls-buyer">${esc(S.buyer)||'　'}　様</div>`;
 
-  // 物件概要
-  const tsubo = a => n(a)? (n(a)*0.3025).toFixed(2)+'坪':'';
-  h += `<div class="doc-sec"><h3>物件概要</h3>`;
-  h += docLine('所在地', esc(S.addr)||'—');
-  h += docLine('構造・規模', (S.struct||'—')+(S.scale?' '+esc(S.scale):''));
-  if(S.eraYear) h += docLine('築年', era);
-  if(n(S.land_area)) h += docLine('敷地面積', n(S.land_area)+'㎡ ('+tsubo(S.land_area)+')');
-  if(n(S.floor_area)) h += docLine('延べ床面積', n(S.floor_area)+'㎡ ('+tsubo(S.floor_area)+')');
-  if(n(S.kenpei)||n(S.yoseki)) h += docLine('建蔽率 / 容積率', (n(S.kenpei)||'—')+'% / '+(n(S.yoseki)||'—')+'%');
-  h += `</div>`;
+  h += `<div class="xls-cols">`;
 
-  // 家賃内訳
-  h += `<div class="doc-sec"><h3>家賃${rentMode==='real'?'内訳':'(引き直し)内訳'}</h3><table class="rent-table">
-    <tr><th>タイプ</th><th>戸数</th><th>家賃</th><th>小計(月)</th></tr>`;
-  S.rents.forEach(r=>{
-    const u=n(r.units); if(u<=0 && !r.name) return;
-    const rent = rentMode==='real'? n(r.rent):n(r.rentR);
-    h += `<tr><td>${esc(r.name)||'—'}</td><td>${u||0}</td><td>${yen(rent)}</td><td>${yen(u*rent)}</td></tr>`;
-  });
-  h += `<tr class="tot"><td>合計</td><td>${c.units}</td><td></td><td>${yen(sc.month)}</td></tr></table></div>`;
-
-  // 事業費・資金計画
-  h += `<div class="doc-sec"><h3>事業費・資金計画</h3>`;
-  h += docLine('物件価格(事業費)', yen(c.jigyohi));
-  h += docLine('諸経費合計', yen(c.shokei));
-  h += docSub('固都税', yen(c.kotoze));
-  h += docSub('仲介手数料', yen(c.chukai));
-  h += docSub('登記関連(移転+抵当+司法書士)', yen(c.iten+c.teito+c.shihoshoshi));
-  h += docSub('火災保険(1年)', yen(c.fire1));
-  h += docSub('取得税', yen(c.shutoku));
-  if(c.bankfee||c.inshi||c.shusshi) h += docSub('その他(銀行・印紙・出資金)', yen(c.bankfee+c.inshi+c.shusshi));
-  h += docLineTotal('総事業費', yen(c.total));
-  if(isHold){
-    h += docLine('借入金', yen(c.loan));
-    h += docLine('頭金', yen(c.atamakin));
-    h += docLineTotal('自己資金(諸経費+頭金)', yen(c.jiko));
+  // ---- 左カラム ----
+  h += `<div class="xls-col">`;
+  // 事業内容
+  h += `<div class="sec"><div class="sec-h">【事業内容】</div><table class="t">`;
+  h += tr2('事業名称', esc(S.pname));
+  h += tr2('住所', esc(S.addr));
+  h += tr2('敷地面積', n(S.land_area)? `${toHalf(S.land_area)}㎡ (${tsubo(S.land_area)}坪)`:'');
+  h += tr2('築年月', builtText());
+  h += tr2('建蔽率', n(S.kenpei)? toHalf(S.kenpei)+'%':'');
+  h += tr2('容積率', n(S.yoseki)? toHalf(S.yoseki)+'%':'');
+  h += tr2('構造・規模', (S.struct||'')+(S.scale?esc(S.scale):''));
+  h += tr2('延べ床面積', n(S.floor_area)? `${toHalf(S.floor_area)}㎡ (${tsubo(S.floor_area)}坪)`:'');
+  h += `</table></div>`;
+  // 事業費
+  h += `<div class="sec"><div class="sec-h">【事業費】</div><table class="t">`;
+  if(S.priceMode==='all'){
+    h += trN('土地建物売買価格', c.price);
   }else{
-    h += docLine('借入金', yen(c.loan));
-    h += docLineTotal('自己資金必要額', yen(c.teishutsuJiko));
+    h += trN('土地売買価格', man(S.price_land));
+    h += trN('建物売買価格', man(S.price_bldg));
   }
-  h += `</div>`;
+  h += trN('事業費合計', c.jigyohi, true);
+  h += `</table></div>`;
+  // 諸経費
+  h += `<div class="sec"><div class="sec-h">【諸経費】</div><table class="t">`;
+  h += trN('固都税', c.kotoze);
+  h += trN('銀行手数料・出資金', c.bankfee);
+  h += trN('土地・建物登記費用', c.iten);
+  h += trN('抵当権設定登記', c.teito);
+  h += trN('司法書士手数料等', c.shihoshoshi);
+  h += trN('契約書印紙代', c.inshi);
+  h += trN('仲介手数料', c.chukai);
+  h += trN(fireLbl, fireAmt);
+  h += trN('不動産取得税', c.shutoku);
+  h += trN('諸経費合計', shokei, true);
+  h += `</table></div>`;
+  // 総事業費
+  h += `<div class="sec"><div class="sec-h">【総事業費】</div><table class="t">`;
+  h += trN('事業費合計', c.jigyohi);
+  h += trN('諸経費合計', shokei);
+  h += trN('合計', total, true);
+  h += `</table><div class="note">※不動産取得税は、取得から半年後に納税通知書が届きます。</div></div>`;
+  h += `</div>`; // xls-col 左
 
-  // 収支計画
-  h += `<div class="doc-sec"><h3>収支計画(月額)</h3>`;
-  h += docLine('家賃収入', yen(sc.month));
-  h += docLine('▲ 借入返済', yen(c.pmt));
-  h += docLine('▲ 管理料('+(sc.mRate*100)+'%税込)', yen(sc.kanri));
-  if(c.junkai) h += docLine('▲ 巡回清掃', yen(c.junkai));
-  if(c.net) h += docLine('▲ ネット等', yen(c.net));
-  h += docLineTotal('月間収支', yen(sc.monthBalance));
-  h += `</div>`;
-  h += `<div class="doc-sec"><h3>収支計画(年額)</h3>`;
-  h += docLine('家賃収入', yen(sc.yearIncome));
-  h += docLine('▲ 借入返済', yen(c.pmtYear));
-  h += docLine('▲ 管理料', yen(sc.yearKanri));
-  h += docLine('▲ 固定資産税', yen(sc.koteishisan));
-  if(sc.yearJunkai) h += docLine('▲ 巡回清掃', yen(sc.yearJunkai));
-  if(sc.yearNet) h += docLine('▲ ネット等', yen(sc.yearNet));
-  h += docLineTotal('年間収支', yen(sc.yearBalance));
-  h += `</div>`;
+  // ---- 右カラム ----
+  h += `<div class="xls-col">`;
+  // 資金計画
+  h += `<div class="sec"><div class="sec-h">【資金計画】</div><table class="t">`;
+  if(isHold){
+    h += trN('諸経費', shokei);
+    h += trN('頭金', c.atamakin);
+    h += trN('借入金', c.loan);
+    h += trN('合計', shokei+c.atamakin+c.loan, true);
+    h += trN('自己資金', shokei+c.atamakin);
+  }else{
+    h += trN('諸経費', shokei + c.jigyohi - c.loan);  // 自己資金必要額
+    h += trN('借入金', c.loan);
+    h += trN('合計', (shokei+c.jigyohi-c.loan)+c.loan, true);
+  }
+  h += `</table></div>`;
+  // 家賃収入内訳（実家賃 / 引き直し）
+  h += rentTable('【家賃収入内訳】', rentDataRows, 'rent', R.month);
+  h += rentTable('【家賃引き直し収入内訳】', rentDataRows, 'rentR', D.month);
+  // 返済計画
+  const rr = c.rate>1? c.rate/100 : c.rate;
+  const joken = n(S.rate)? '変動'+(rr*100).toFixed(2)+'%':'';
+  const kikan = n(S.years)? '銀行融資'+toHalf(S.years)+'年':'';
+  h += `<div class="sec"><div class="sec-h">【返済計画】</div><table class="t">
+    <tr><th>融資期間</th><th>融資条件</th><th>月間返済額</th></tr>
+    <tr><td>${kikan}</td><td>${joken}</td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
+    <tr><td class="lbl">◯◯銀行</td><td></td><td></td></tr>
+    <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
+    </table></div>`;
+  // 収支計画（実家賃 / 引き直し 2列）
+  h += `<div class="sec"><div class="sec-h">【収支計画】</div><table class="t">
+    <tr><th>項目</th><th>実家賃</th><th>引き直し</th></tr>`;
+  h += tr3('月間収入', R.month, D.month);
+  h += tr3('月間借入支払', c.pmt, c.pmt);
+  h += tr3('月間管理料', R.kanri, D.kanri);
+  h += tr3('巡回清掃', c.junkai, c.junkai);
+  h += tr3('インターネット', c.net, c.net);
+  h += tr3('月間収支合計', R.monthBalance, D.monthBalance, true);
+  h += tr3('年間収入', R.yearIncome, D.yearIncome);
+  h += tr3('年間借入支払', c.pmtYear, c.pmtYear);
+  h += tr3('年間管理料', R.yearKanri, D.yearKanri);
+  h += tr3('固定資産税', R.koteishisan, D.koteishisan);
+  h += tr3('巡回清掃', R.yearJunkai, D.yearJunkai);
+  h += tr3('インターネット', R.yearNet, D.yearNet);
+  h += tr3('年間収支合計', R.yearBalance, D.yearBalance, true);
+  h += tr3('月間収支合計', R.yearBalanceMonth, D.yearBalanceMonth);
+  h += tr3p('表面利回り', R.hyomen, D.hyomen, '%');
+  h += tr3p('NOI', R.noi, D.noi, '円', true);
+  h += tr3p('FCR', R.fcr, D.fcr, '%');
+  h += tr3p('DCR', R.dcr, D.dcr, '（>1.3）', false, 2);
+  h += tr3p('返済比率', R.ratio, D.ratio, '%');
+  h += `</table></div>`;
+  h += `</div>`; // xls-col 右
 
-  // 投資指標
-  h += `<div class="doc-sec"><h3>投資指標</h3><div class="kpis">`;
-  h += kpi('表面利回り', pct(sc.hyomen), sc.hyomen>=8?'good':(sc.hyomen>=6?'warn':'bad'), '年収入÷事業費');
-  h += kpi('FCR(総収益率)', pct(sc.fcr), sc.fcr>=5?'good':(sc.fcr>=3?'warn':'bad'), 'NOI÷総事業費');
-  h += kpi('DCR', isFinite(sc.dcr)?sc.dcr.toFixed(2):'—', sc.dcr>=1.3?'good':(sc.dcr>=1?'warn':'bad'), 'NOI÷年返済(>1.3良)');
-  h += kpi('返済比率', pct(sc.ratio), sc.ratio<=50?'good':(sc.ratio<=60?'warn':'bad'), '年返済÷年収入');
-  h += `</div></div>`;
-  h += `</div>`; // doc
-
+  h += `</div></div></div>`; // xls-cols / xls-paper / xls
   document.getElementById('view-result').innerHTML = h;
 }
-function docLine(l,v){ return `<div class="line"><span class="lbl">${l}</span><span class="val">${v}</span></div>`; }
-function docSub(l,v){ return `<div class="line sub"><span class="lbl">${l}</span><span class="val">${v}</span></div>`; }
-function docLineTotal(l,v){ return `<div class="line total"><span class="lbl">${l}</span><span class="val">${v}</span></div>`; }
-function kpi(l,v,cls,sub){ return `<div class="kpi ${cls}"><div class="k-lbl">${l}</div><div class="k-val">${v}</div><div class="k-sub">${sub}</div></div>`; }
+// ラベル+文字値（2列）
+function tr2(l,v){ return `<tr><td class="lbl">${l}</td><td>${v||''}</td></tr>`; }
+// ラベル+金額+円（合計行は太字）
+function trN(l,v,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(v)}</td><td class="yc">円</td></tr>`; }
+// 収支計画 3列（項目/実/引き直し）金額
+function tr3(l,a,b,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(a)}</td><td class="num">${num(b)}</td></tr>`; }
+// 指標行（％や倍率、単位付き）
+function tr3p(l,a,b,unit,tot,dec){
+  const f=v=> isFinite(v)? (dec!=null? v.toFixed(dec): (unit==='%'? v.toFixed(2): num(v))) : '';
+  return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${f(a)}<span class="yc">${unit}</span></td><td class="num">${f(b)}<span class="yc">${unit}</span></td></tr>`;
+}
+// 家賃内訳テーブル（タイプ/戸数/1戸賃料/賃料合計）
+function rentTable(title, rows, key, monthTotal){
+  let unitsTotal=0;
+  let body = rows.map(r=>{
+    const u=n(r.units), rent=n(r[key]); unitsTotal+=u;
+    return `<tr><td>${esc(r.name)||''}</td><td class="num">${u||''}</td><td class="num">${num(rent)}</td><td class="num">${num(u*rent)}</td></tr>`;
+  }).join('');
+  return `<div class="sec"><div class="sec-h">${title}</div><table class="t">
+    <tr><th>タイプ</th><th>戸数</th><th>1戸あたり賃料</th><th>賃料合計</th></tr>
+    ${body}
+    <tr class="rowtot"><td>合計</td><td class="num">${unitsTotal||''}</td><td></td><td class="num">${num(monthTotal)}<span class="yc">円</span></td></tr>
+    </table></div>`;
+}
 
 /* ============ イベント ============ */
 // 文字入力中はDOMを作り直さない（フォーカスが外れて打てなくなるのを防ぐ）。合計表示だけ更新。
 function setText(k,v){ S[k]=v; save(); updateInputTotals(); }
 function setRent(i,k,v){ S.rents[i][k]=v; save(); updateInputTotals(); }
-function setChukai(v){ S.chukai=v; save(); updateInputTotals(); }
-function setShutoku(v){ S.shutoku=v; save(); updateInputTotals(); }
+// 数値欄: 全角→半角に正規化してから保存（カーソル位置は維持）
+function normEl(el){ const v=toHalf(el.value); if(v!==el.value){ const p=el.selectionStart; el.value=v; try{el.setSelectionRange(p,p);}catch(e){} } return v; }
+function setNum(k,el){ S[k]=normEl(el); save(); updateInputTotals(); }
+function setRentNum(i,k,el){ S.rents[i][k]=normEl(el); save(); updateInputTotals(); }
 // セレクト/ボタン/チェックは確定操作なので作り直してOK
 function setF(k,v){ S[k]=v; save(); renderInput(); }
 function toggleAuto(which,on){ S[which+'_auto']=on; save(); renderInput(); }
@@ -435,7 +546,8 @@ function updateInputTotals(){
   const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;};
   set('t-price', yen(c.price));
   set('t-rent', yen(c.monthReal)+' / '+c.units+'戸');
-  set('t-shokei', yen(c.shokei));
+  set('t-shokei', yen(c.shokeiHold));
+  set('t-shokei5', yen(c.shokeiSubmit));
   set('t-pmt', yen(c.pmt));
 }
 function setView(v){ view=v; renderResult(); }
