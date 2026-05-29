@@ -224,7 +224,7 @@ function field(label, key, opt={}){
   const im = (t==='number')?'inputmode="decimal"':'';
   return `<div class="fgroup"><div class="flabel">${label}${unit}</div>
     <input class="${cls}" type="${t==='number'?'text':t}" ${im} value="${esc(v)}" ${ph}
-      oninput="setF('${key}',this.value)"></div>`;
+      oninput="setText('${key}',this.value)"></div>`;
 }
 function selectF(label, key, opts){
   const v = S[key]??'';
@@ -271,7 +271,7 @@ function renderInput(){
   }else{
     h += `<div class="row2">${field('土地価格','price_land',{type:'number',unit:'万円'})}${field('建物価格','price_bldg',{type:'number',unit:'万円'})}</div>`;
   }
-  h += `<div class="line total" style="margin-top:6px;"><span class="lbl">合計</span><span class="val">${yen(c.price)}</span></div></div>`;
+  h += `<div class="line total" style="margin-top:6px;"><span class="lbl">合計</span><span class="val" id="t-price">${yen(c.price)}</span></div></div>`;
 
   // 家賃
   h += `<div class="card"><div class="card-title"><span class="dot"></span>間取り・家賃<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">最大5タイプ</span></div>
@@ -284,7 +284,7 @@ function renderInput(){
       <input class="fval" inputmode="decimal" value="${esc(r.rentR)}" placeholder="円" oninput="setRent(${i},'rentR',this.value)">
     </div>`;
   });
-  h += `<div class="line total" style="margin-top:8px;"><span class="lbl">月額家賃合計(実)</span><span class="val">${yen(c.monthReal)} / ${c.units}戸</span></div></div>`;
+  h += `<div class="line total" style="margin-top:8px;"><span class="lbl">月額家賃合計(実)</span><span class="val" id="t-rent">${yen(c.monthReal)} / ${c.units}戸</span></div></div>`;
 
   // 諸経費
   h += `<div class="card"><div class="card-title"><span class="dot"></span>諸経費<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">円</span></div>
@@ -299,13 +299,13 @@ function renderInput(){
       <input class="fval ${S.shutoku_auto?'auto':''}" inputmode="decimal" value="${S.shutoku_auto?'':esc(S.shutoku)}" placeholder="${S.shutoku_auto?yen(c.shutoku)+'(自動)':'円'}" oninput="setShutoku(this.value)">
       <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.shutoku_auto?'checked':''} onchange="toggleAuto('shutoku',this.checked)">自動計算（構造別）</label></div>
     ${field('出資金その他','shusshi',{type:'number'})}
-    <div class="line total" style="margin-top:6px;"><span class="lbl">諸経費合計</span><span class="val">${yen(c.shokei)}</span></div></div>`;
+    <div class="line total" style="margin-top:6px;"><span class="lbl">諸経費合計</span><span class="val" id="t-shokei">${yen(c.shokei)}</span></div></div>`;
 
   // 融資条件
   h += `<div class="card"><div class="card-title"><span class="dot"></span>融資条件</div>
     ${field('融資額','loan',{type:'number',unit:'万円'})}
     <div class="row2">${field('期間','years',{type:'number',unit:'年'})}${field('金利','rate',{type:'number',unit:'%(年率)'})}</div>
-    <div class="line total" style="margin-top:6px;"><span class="lbl">月返済額(元利均等)</span><span class="val">${yen(c.pmt)}</span></div></div>`;
+    <div class="line total" style="margin-top:6px;"><span class="lbl">月返済額(元利均等)</span><span class="val" id="t-pmt">${yen(c.pmt)}</span></div></div>`;
 
   // ランニング・自己資金
   h += `<div class="card"><div class="card-title"><span class="dot"></span>ランニング・自己資金</div>
@@ -421,11 +421,23 @@ function docLineTotal(l,v){ return `<div class="line total"><span class="lbl">${
 function kpi(l,v,cls,sub){ return `<div class="kpi ${cls}"><div class="k-lbl">${l}</div><div class="k-val">${v}</div><div class="k-sub">${sub}</div></div>`; }
 
 /* ============ イベント ============ */
-function setF(k,v){ S[k]=v; save(); rerender(); }
-function setRent(i,k,v){ S.rents[i][k]=v; save(); rerender(); }
-function setChukai(v){ S.chukai=v; save(); renderResultOnly(); }
-function setShutoku(v){ S.shutoku=v; save(); renderResultOnly(); }
-function toggleAuto(which,on){ S[which+'_auto']=on; save(); rerender(); }
+// 文字入力中はDOMを作り直さない（フォーカスが外れて打てなくなるのを防ぐ）。合計表示だけ更新。
+function setText(k,v){ S[k]=v; save(); updateInputTotals(); }
+function setRent(i,k,v){ S.rents[i][k]=v; save(); updateInputTotals(); }
+function setChukai(v){ S.chukai=v; save(); updateInputTotals(); }
+function setShutoku(v){ S.shutoku=v; save(); updateInputTotals(); }
+// セレクト/ボタン/チェックは確定操作なので作り直してOK
+function setF(k,v){ S[k]=v; save(); renderInput(); }
+function toggleAuto(which,on){ S[which+'_auto']=on; save(); renderInput(); }
+function updateInputTotals(){
+  if(tab!=='input') return;
+  const c=calc();
+  const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;};
+  set('t-price', yen(c.price));
+  set('t-rent', yen(c.monthReal)+' / '+c.units+'戸');
+  set('t-shokei', yen(c.shokei));
+  set('t-pmt', yen(c.pmt));
+}
 function setView(v){ view=v; renderResult(); }
 function setRentMode(m){ rentMode=m; renderResult(); }
 function showTab(t){
@@ -437,8 +449,6 @@ function showTab(t){
   if(t==='result') renderResult();
   renderFab();
 }
-function rerender(){ if(tab==='input') renderInput(); else renderResult(); }
-function renderResultOnly(){ /* auto計算は再描画が必要なので入力でもresult側を更新 */ }
 
 function renderFab(){
   const f = document.getElementById('fab');
