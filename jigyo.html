@@ -42,11 +42,15 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .autonote{font-size:10px;color:#C07000;margin-top:3px;}
+.hint{font-size:12px;color:#1060C0;margin-top:4px;font-weight:500;min-height:1px;}
 
 /* rent type rows */
-.rent-head{display:grid;grid-template-columns:1.4fr 0.7fr 1fr 1fr;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;}
-.rent-row{display:grid;grid-template-columns:1.4fr 0.7fr 1fr 1fr;gap:6px;margin-bottom:6px;}
+.rent-head{display:grid;grid-template-columns:34px 1.3fr 0.7fr 1fr 1fr;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;align-items:end;}
+.rent-head>div:first-child{text-align:center;}
+.rent-row{display:grid;grid-template-columns:34px 1.3fr 0.7fr 1fr 1fr;gap:6px;margin-bottom:6px;align-items:center;}
 .rent-row .fval{padding:9px 8px;font-size:13px;}
+.resi-box{display:flex;align-items:center;justify-content:center;}
+.resi-box input{width:20px;height:20px;accent-color:#1a1a1a;cursor:pointer;}
 
 .seg{display:flex;gap:0;background:#F0EEE8;border-radius:10px;padding:3px;margin-bottom:12px;}
 .seg-btn{flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:700;color:#888;border-radius:8px;cursor:pointer;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;}
@@ -180,7 +184,7 @@ const blank = {
   eraType:'西暦', eraYear:'', builtMonth:'',
   struct:'', scale:'', kenpei:'', yoseki:'', land_area:'', floor_area:'',
   price_all:'', price_land:'', price_bldg:'', priceMode:'all',
-  rents:[ {name:'',units:'',rent:'',rentR:''},{name:'',units:'',rent:'',rentR:''},{name:'',units:'',rent:'',rentR:''},{name:'',units:'',rent:'',rentR:''},{name:'',units:'',rent:'',rentR:''} ],
+  rents:[ {name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true} ],
   kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
   chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
   loan:'', years:'', rate:'',
@@ -215,9 +219,9 @@ function calc(){
   const c = {};
   // 価格
   c.price = S.priceMode==='all' ? man(S.price_all) : man(S.price_land)+man(S.price_bldg);
-  // 家賃集計（実家賃 / 引き直し）
-  c.monthReal=0; c.monthR=0; c.units=0;
-  S.rents.forEach(r=>{ const u=n(r.units); c.units+=u; c.monthReal+=u*n(r.rent); c.monthR+=u*n(r.rentR); });
+  // 家賃集計（実家賃 / 引き直し）。戸数は住居のみカウント（駐車場等は除外）
+  c.monthReal=0; c.monthR=0; c.units=0; c.unitsResi=0;
+  S.rents.forEach(r=>{ const u=n(r.units); c.units+=u; if(r.resi!==false) c.unitsResi+=u; c.monthReal+=u*n(r.rent); c.monthR+=u*n(r.rentR); });
   // 仲介手数料（自動: (価格×3%+6万)×1.1）
   c.chukai = S.chukai_auto ? Math.round((c.price*0.03+60000)*1.1) : n(S.chukai);
   // 取得税（自動: 価格×構造別率）
@@ -301,6 +305,13 @@ function selectF(label, key, opts){
   return `<div class="fgroup"><div class="flabel">${label}</div>
     <select class="fval" onchange="setF('${key}',this.value)">${o}</select></div>`;
 }
+// 面積入力（下に坪数を表示）
+function areaField(label, key){
+  const v = S[key]??'';
+  return `<div class="fgroup"><div class="flabel">${label}<span class="unit">㎡</span></div>
+    <input class="fval" type="text" inputmode="decimal" value="${esc(v)}" oninput="setNum('${key}',this)">
+    <div class="hint" id="h-${key}">${n(v)? tsubo(v)+'坪':''}</div></div>`;
+}
 function esc(s){ return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
 function renderInput(){
@@ -316,6 +327,7 @@ function renderInput(){
       ${field('年','eraYear',{type:'number',ph:'例: 1995'})}
       ${field('月','builtMonth',{type:'number'})}
     </div>
+    <div class="hint" id="h-built" style="margin-top:-6px;margin-bottom:13px;">${builtText()}</div>
     <div class="row2">
       ${selectF('構造','struct',['','木造','鉄骨造','鉄筋コンクリート'])}
       ${field('規模','scale',{ph:'例: 3階建'})}
@@ -325,8 +337,8 @@ function renderInput(){
       ${field('容積率','yoseki',{type:'number',unit:'%'})}
     </div>
     <div class="row2">
-      ${field('敷地面積','land_area',{type:'number',unit:'㎡'})}
-      ${field('延べ床面積','floor_area',{type:'number',unit:'㎡'})}
+      ${areaField('敷地面積','land_area')}
+      ${areaField('延べ床面積','floor_area')}
     </div></div>`;
 
   // 購入価格
@@ -344,16 +356,18 @@ function renderInput(){
 
   // 家賃
   h += `<div class="card"><div class="card-title"><span class="dot"></span>間取り・家賃<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">最大5タイプ</span></div>
-    <div class="rent-head"><div>タイプ</div><div>戸数</div><div>実家賃</div><div>引直し</div></div>`;
+    <div class="rent-head"><div>住居</div><div>タイプ</div><div>戸数</div><div>実家賃</div><div>引直し</div></div>`;
   S.rents.forEach((r,i)=>{
     h += `<div class="rent-row">
+      <label class="resi-box"><input type="checkbox" ${r.resi!==false?'checked':''} onchange="setResi(${i},this.checked)"></label>
       <input class="fval" value="${esc(r.name)}" placeholder="例:2DK" oninput="setRent(${i},'name',this.value)">
       <input class="fval" inputmode="decimal" value="${esc(r.units)}" placeholder="戸" oninput="setRentNum(${i},'units',this)">
       <input class="fval" inputmode="decimal" value="${esc(r.rent)}" placeholder="円" oninput="setRentNum(${i},'rent',this)">
       <input class="fval" inputmode="decimal" value="${esc(r.rentR)}" placeholder="円" oninput="setRentNum(${i},'rentR',this)">
     </div>`;
   });
-  h += `<div class="line total" style="margin-top:8px;"><span class="lbl">月額家賃合計(実)</span><span class="val" id="t-rent">${yen(c.monthReal)} / ${c.units}戸</span></div></div>`;
+  h += `<div style="font-size:10px;color:#bbb;margin:2px 2px 6px;">※「住居」のチェックを外すと戸数合計に数えません（駐車場・倉庫など）。家賃は合計に含みます。</div>
+    <div class="line total" style="margin-top:6px;"><span class="lbl">月額家賃合計(実)</span><span class="val" id="t-rent">${yen(c.monthReal)} / 住居${c.unitsResi}戸</span></div></div>`;
 
   // 諸経費
   h += `<div class="card"><div class="card-title"><span class="dot"></span>諸経費<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">円</span></div>
@@ -535,9 +549,9 @@ function tr3p(l,a,b,unit,tot,dec){
 }
 // 家賃内訳テーブル（タイプ/戸数/1戸賃料/賃料合計）
 function rentTable(title, rows, key, monthTotal){
-  let unitsTotal=0;
+  let unitsTotal=0;  // 戸数合計は住居のみ
   let body = rows.map(r=>{
-    const u=n(r.units), rent=n(r[key]); unitsTotal+=u;
+    const u=n(r.units), rent=n(r[key]); if(r.resi!==false) unitsTotal+=u;
     return `<tr><td>${esc(r.name)||''}</td><td class="num">${u||''}</td><td class="num">${num(rent)}</td><td class="num">${num(u*rent)}</td></tr>`;
   }).join('');
   return `<div class="sec"><div class="sec-h">${title}</div><table class="t">
@@ -555,6 +569,7 @@ function setRent(i,k,v){ S.rents[i][k]=v; save(); updateInputTotals(); }
 function normEl(el){ const v=toHalf(el.value); if(v!==el.value){ const p=el.selectionStart; el.value=v; try{el.setSelectionRange(p,p);}catch(e){} } return v; }
 function setNum(k,el){ S[k]=normEl(el); save(); updateInputTotals(); }
 function setRentNum(i,k,el){ S.rents[i][k]=normEl(el); save(); updateInputTotals(); }
+function setResi(i,on){ S.rents[i].resi=on; save(); updateInputTotals(); }
 // セレクト/ボタン/チェックは確定操作なので作り直してOK
 function setF(k,v){ S[k]=v; save(); renderInput(); }
 function toggleAuto(which,on){ S[which+'_auto']=on; save(); renderInput(); }
@@ -563,10 +578,13 @@ function updateInputTotals(){
   const c=calc();
   const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;};
   set('t-price', yen(c.price));
-  set('t-rent', yen(c.monthReal)+' / '+c.units+'戸');
+  set('t-rent', yen(c.monthReal)+' / 住居'+c.unitsResi+'戸');
   set('t-shokei', yen(c.shokeiHold));
   set('t-shokei5', yen(c.shokeiSubmit));
   set('t-pmt', yen(c.pmt));
+  set('h-built', builtText());
+  set('h-land_area', n(S.land_area)? tsubo(S.land_area)+'坪':'');
+  set('h-floor_area', n(S.floor_area)? tsubo(S.floor_area)+'坪':'');
 }
 function setView(v){ view=v; renderResult(); }
 function setRentMode(m){ rentMode=m; renderResult(); }
