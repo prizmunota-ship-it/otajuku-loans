@@ -122,20 +122,21 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
   .xls-cols{flex-direction:column;}
 }
 
-/* PDF出力用に一時的に固定幅・横並びでレンダリング（A4いっぱいに収める） */
+/* PDF出力用に一時的に固定幅・横並びでレンダリング（A4いっぱいに大きく収める） */
 .pdf-mode #view-result{max-width:none;}
 .pdf-mode .xls{overflow:visible;border:none;border-radius:0;}
-.pdf-mode .xls-paper{min-width:1000px !important;width:1000px;padding:24px;}
-.pdf-mode .xls-cols{flex-direction:row !important;gap:18px;}
-.pdf-mode .xls-title{font-size:24px;padding:12px;}
-.pdf-mode .xls-date{font-size:14px;}
-.pdf-mode .xls-buyer{font-size:19px;padding:12px 2px 14px;}
-.pdf-mode .sec-h{font-size:14px;padding:5px 8px;}
-.pdf-mode table.t{font-size:13.5px;}
-.pdf-mode .t th{font-size:12px;}
-.pdf-mode .t th,.pdf-mode .t td{padding:5px 7px;}
-.pdf-mode .t td.yc,.pdf-mode .t .num .yc{font-size:11px;}
-.pdf-mode .note{font-size:12px;}
+.pdf-mode .xls-paper{min-width:960px !important;width:960px;padding:20px;}
+.pdf-mode .xls-cols{flex-direction:row !important;gap:16px;}
+.pdf-mode .sec{margin-bottom:7px;}
+.pdf-mode .xls-title{font-size:26px;padding:13px;letter-spacing:3px;}
+.pdf-mode .xls-date{font-size:15px;}
+.pdf-mode .xls-buyer{font-size:20px;padding:13px 2px 15px;}
+.pdf-mode .sec-h{font-size:15.5px;padding:5px 9px;}
+.pdf-mode table.t{font-size:15px;}
+.pdf-mode .t th{font-size:13px;}
+.pdf-mode .t th,.pdf-mode .t td{padding:5px 8px;}
+.pdf-mode .t td.yc,.pdf-mode .t .num .yc{font-size:12px;}
+.pdf-mode .note{font-size:12.5px;}
 
 @media print{
   .top-bar,.maintabs,.fab,.seg,.vlabel,.no-print{display:none !important;}
@@ -582,8 +583,7 @@ function showTab(t){
 function renderFab(){
   const f = document.getElementById('fab');
   if(tab==='result'){
-    f.innerHTML = `<button class="f-print" onclick="downloadPDF()">PDFを保存</button>
-      <button class="f-clear" onclick="window.print()">印刷</button>`;
+    f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`;
   }else{
     f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>
       <button class="f-clear" onclick="clearAll()">クリア</button>`;
@@ -606,10 +606,12 @@ async function downloadPDF(){
     const availW=pw-margin*2, availH=ph-margin*2;
     let w=availW, h=availW*canvas.height/canvas.width;   // 幅優先
     if(h>availH){ h=availH; w=availH*canvas.width/canvas.height; }  // はみ出すなら1ページに収める
-    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',(pw-w)/2,margin,w,h);
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2,margin,w,h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
-    pdf.save('事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf');
-    toast('PDFを保存しました');
+    const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
+    pdf.save(fname);                       // ファイルを保存（メール添付用・名前付き）
+    try{ window.open(pdf.output('bloburl'),'_blank'); }catch(e){}  // 新しいタブで開いて確認・印刷
+    toast('PDFを作成しました');
   }catch(e){
     document.body.classList.remove('pdf-mode');
     toast('PDF作成に失敗しました');
