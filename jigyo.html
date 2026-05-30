@@ -187,7 +187,7 @@ const blank = {
   rents:[ {name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true},{name:'',units:'',rent:'',rentR:'',resi:true} ],
   kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
   chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
-  loan:'', years:'', rate:'',
+  loan:'', years:'', rate:'', bankName:'',
   junkai:'', net:'', atamakin:''
 };
 let S = load();
@@ -388,6 +388,7 @@ function renderInput(){
 
   // 融資条件
   h += `<div class="card"><div class="card-title"><span class="dot"></span>融資条件</div>
+    ${field('銀行名','bankName',{ph:'例: ○○銀行 △△支店'})}
     ${field('融資額','loan',{type:'number',unit:'万円'})}
     <div class="row2">${field('期間','years',{type:'number',unit:'年'})}${field('金利','rate',{type:'number',unit:'%(年率)'})}</div>
     <div class="line total" style="margin-top:6px;"><span class="lbl">月返済額(元利均等)</span><span class="val" id="t-pmt">${yen(c.pmt)}</span></div></div>`;
@@ -505,7 +506,7 @@ function renderResult(){
   h += `<div class="sec"><div class="sec-h">【返済計画】</div><table class="t">
     <tr><th>融資期間</th><th>融資条件</th><th>月間返済額</th></tr>
     <tr><td>${kikan}</td><td>${joken}</td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
-    <tr><td class="lbl">◯◯銀行</td><td></td><td></td></tr>
+    <tr><td class="lbl">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td></tr>
     <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
     </table></div>`;
   // 収支計画（実家賃 / 引き直し 2列）
