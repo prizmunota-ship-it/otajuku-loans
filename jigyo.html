@@ -8,6 +8,8 @@
 <title>事業計画書</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-height:100vh;}
@@ -119,6 +121,21 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
   .xls-paper{min-width:0;}
   .xls-cols{flex-direction:column;}
 }
+
+/* PDF出力用に一時的に固定幅・横並びでレンダリング（A4いっぱいに収める） */
+.pdf-mode #view-result{max-width:none;}
+.pdf-mode .xls{overflow:visible;border:none;border-radius:0;}
+.pdf-mode .xls-paper{min-width:1000px !important;width:1000px;padding:24px;}
+.pdf-mode .xls-cols{flex-direction:row !important;gap:18px;}
+.pdf-mode .xls-title{font-size:24px;padding:12px;}
+.pdf-mode .xls-date{font-size:14px;}
+.pdf-mode .xls-buyer{font-size:19px;padding:12px 2px 14px;}
+.pdf-mode .sec-h{font-size:14px;padding:5px 8px;}
+.pdf-mode table.t{font-size:13.5px;}
+.pdf-mode .t th{font-size:12px;}
+.pdf-mode .t th,.pdf-mode .t td{padding:5px 7px;}
+.pdf-mode .t td.yc,.pdf-mode .t .num .yc{font-size:11px;}
+.pdf-mode .note{font-size:12px;}
 
 @media print{
   .top-bar,.maintabs,.fab,.seg,.vlabel,.no-print{display:none !important;}
@@ -565,10 +582,37 @@ function showTab(t){
 function renderFab(){
   const f = document.getElementById('fab');
   if(tab==='result'){
-    f.innerHTML = `<button class="f-print" onclick="window.print()">PDF / 印刷</button>`;
+    f.innerHTML = `<button class="f-print" onclick="downloadPDF()">PDFを保存</button>
+      <button class="f-clear" onclick="window.print()">印刷</button>`;
   }else{
     f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>
       <button class="f-clear" onclick="clearAll()">クリア</button>`;
+  }
+}
+// 元のExcelのように1ページ・余白少なめのきれいなPDFを直接生成（ブラウザのヘッダー/フッターなし）
+async function downloadPDF(){
+  const doc = document.getElementById('doc');
+  if(!doc){ toast('先に内容を入力してください'); return; }
+  if(typeof html2canvas==='undefined' || !window.jspdf){ toast('PDF準備中…数秒後にもう一度'); return; }
+  toast('PDFを作成中…');
+  try{
+    document.body.classList.add('pdf-mode');
+    await new Promise(r=>setTimeout(r,60));
+    const canvas = await html2canvas(doc, {scale:2, backgroundColor:'#ffffff', windowWidth:1100, useCORS:true});
+    document.body.classList.remove('pdf-mode');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pw=210, ph=297, margin=7;
+    const availW=pw-margin*2, availH=ph-margin*2;
+    let w=availW, h=availW*canvas.height/canvas.width;   // 幅優先
+    if(h>availH){ h=availH; w=availH*canvas.width/canvas.height; }  // はみ出すなら1ページに収める
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',(pw-w)/2,margin,w,h);
+    const name = (view==='submit'?'金融機関提出用':'手持ち用');
+    pdf.save('事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf');
+    toast('PDFを保存しました');
+  }catch(e){
+    document.body.classList.remove('pdf-mode');
+    toast('PDF作成に失敗しました');
   }
 }
 function clearAll(){
