@@ -190,6 +190,11 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
 const LS_KEY = 'jigyo_keikaku_v1';
 const STRUCT_TAX = {'木造':0.015,'鉄骨造':0.02,'鉄筋コンクリート':0.025,'':0.03};
 const YOUTO_LIST = ['','第一種低層住居専用地域','第二種低層住居専用地域','第一種中高層住居専用地域','第二種中高層住居専用地域','第一種住居地域','第二種住居地域','準住居地域','田園住居地域','近隣商業地域','商業地域','準工業地域','工業地域','工業専用地域','指定なし（非線引き等）'];
+// 登録物件リスト（キー不要・即時自動入力）。match=住所の一部, youto/kenpei/yoseki を登録。
+// 例: {match:'博多区博多駅前1', youto:'商業地域', kenpei:80, yoseki:600}
+const YOUTO_DB = [
+  // ここに太田さんの物件を追加していきます（住所の一部とその用途地域）
+];
 const blank = {
   buyer:'', pname:'', addr:'',
   eraType:'西暦', eraYear:'', builtMonth:'', youto:'',
@@ -305,10 +310,17 @@ function field(label, key, opt={}){
   const unit = opt.unit?`<span class="unit">${opt.unit}</span>`:'';
   const ph = opt.ph?`placeholder="${opt.ph}"`:'';
   const im = (t==='number')?'inputmode="decimal"':'';
+  const idAttr = opt.id? `id="${opt.id}"` : '';
   const handler = (t==='number')? `setNum('${key}',this)` : `setText('${key}',this.value)`;
   return `<div class="fgroup"><div class="flabel">${label}${unit}</div>
-    <input class="${cls}" type="${t==='number'?'text':t}" ${im} value="${esc(v)}" ${ph}
+    <input ${idAttr} class="${cls}" type="${t==='number'?'text':t}" ${im} value="${esc(v)}" ${ph}
       oninput="${handler}"></div>`;
+}
+// 用途地域のプルダウン選択肢（自動取得値が一覧に無ければ追加）
+function youtoOptions(){
+  let list = YOUTO_LIST.slice();
+  if(S.youto && !list.includes(S.youto)) list.push(S.youto);
+  return list.map(x=>`<option value="${esc(x)}" ${x===S.youto?'selected':''}>${x||'選択'}</option>`).join('');
 }
 function selectF(label, key, opts){
   const v = S[key]??'';
@@ -332,7 +344,8 @@ function renderInput(){
   h += `<div class="card"><div class="card-title"><span class="dot"></span>物件情報</div>
     ${field('購入者名','buyer',{ph:'例: 太田 圭一'})}
     ${field('物件名','pname',{ph:'例: アーバンパレス博多'})}
-    ${field('所在地','addr')}
+    <div class="fgroup"><div class="flabel">所在地<span class="unit">入力すると用途地域を自動取得</span></div>
+      <input class="fval" value="${esc(S.addr)}" placeholder="例: 福岡市博多区博多駅前1-2-3" oninput="setAddr(this.value)"></div>
     <div class="row3">
       ${selectF('築年(元号)','eraType',['西暦','令和','平成','昭和'])}
       ${field('年','eraYear',{type:'number',ph:'例: 1995'})}
@@ -340,10 +353,8 @@ function renderInput(){
     </div>
     <div class="hint" id="h-built" style="margin-top:-6px;margin-bottom:13px;">${builtText()}</div>
     <div class="fgroup"><div class="flabel">用途地域</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <select class="fval" style="flex:1;" onchange="setF('youto',this.value)">${YOUTO_LIST.map(x=>`<option value="${esc(x)}" ${x===S.youto?'selected':''}>${x||'選択'}</option>`).join('')}</select>
-        <button type="button" class="lookup-btn" onclick="lookupYouto()">🔍 住所から調べる</button>
-      </div>
+      <select id="sel-youto" class="fval" onchange="setF('youto',this.value)">${youtoOptions()}</select>
+      <div class="hint" id="youto-status" style="color:#1A7040;"></div>
       <div class="hint" style="color:#C0392B;">※用途地域は番地・区画で異なります。正確な情報はご自身でご確認ください。</div>
     </div>
     <div class="row2">
@@ -351,8 +362,8 @@ function renderInput(){
       ${field('規模','scale',{ph:'例: 3階建'})}
     </div>
     <div class="row2">
-      ${field('建蔽率','kenpei',{type:'number',unit:'%'})}
-      ${field('容積率','yoseki',{type:'number',unit:'%'})}
+      ${field('建蔽率','kenpei',{type:'number',unit:'%',id:'f-kenpei'})}
+      ${field('容積率','yoseki',{type:'number',unit:'%',id:'f-yoseki'})}
     </div>
     <div class="row2">
       ${areaField('敷地面積','land_area')}
@@ -594,12 +605,39 @@ function normEl(el){ const v=toHalf(el.value); if(v!==el.value){ const p=el.sele
 function setNum(k,el){ S[k]=normEl(el); save(); updateInputTotals(); }
 function setRentNum(i,k,el){ S.rents[i][k]=normEl(el); save(); updateInputTotals(); }
 function setResi(i,on){ S.rents[i].resi=on; save(); updateInputTotals(); }
-// 住所から用途地域を調べる（市の都市計画情報を新しいタブで開く）
-function lookupYouto(){
+// 住所→用途地域の自動取得。(1)登録物件リスト[キー不要・即時] → (2)公式API[キー設定後]
+function setAddr(v){ S.addr=v; save(); scheduleYouto(); }
+let _youtoTimer=null;
+function scheduleYouto(){ clearTimeout(_youtoTimer); _youtoTimer=setTimeout(autoYouto, 700); }
+async function autoYouto(){
   const a=(S.addr||'').trim();
-  if(!a){ toast('先に所在地（住所）を入力してください'); return; }
-  window.open('https://www.google.com/search?q='+encodeURIComponent(a+' 用途地域 都市計画'),'_blank');
+  if(a.length<4){ setYoutoStatus(''); return; }
+  // (1) 登録物件リスト（キー不要・即時）
+  const hit = YOUTO_DB.find(e=> a.replace(/\s/g,'').includes(e.match.replace(/\s/g,'')));
+  if(hit){ applyYouto(hit, '登録物件'); return; }
+  // (2) 公式API（reinfolibキー設定後に有効）
+  setYoutoStatus('用途地域を取得中…','#888');
+  try{
+    const r = await fetch('/api/youto?addr='+encodeURIComponent(a));
+    if(r.ok){ const d=await r.json(); if(d && d.youto){ applyYouto(d, d.source||'公式データ'); return; } }
+  }catch(e){}
+  setYoutoStatus('');  // 取得できず → 手動でプルダウン選択
 }
+function applyYouto(res, src){
+  if(res.youto){
+    S.youto=res.youto;
+    const sel=document.getElementById('sel-youto');
+    if(sel){
+      if(![].some.call(sel.options,o=>o.value===res.youto)){ const o=document.createElement('option'); o.value=res.youto; o.textContent=res.youto; sel.appendChild(o); }
+      sel.value=res.youto;
+    }
+  }
+  if(res.kenpei!=null && res.kenpei!=='' && !n(S.kenpei)){ S.kenpei=String(res.kenpei); const k=document.getElementById('f-kenpei'); if(k) k.value=S.kenpei; }
+  if(res.yoseki!=null && res.yoseki!=='' && !n(S.yoseki)){ S.yoseki=String(res.yoseki); const y=document.getElementById('f-yoseki'); if(y) y.value=S.yoseki; }
+  save();
+  setYoutoStatus('自動入力：'+res.youto+'（'+src+'）','#1A7040');
+}
+function setYoutoStatus(msg,color){ const el=document.getElementById('youto-status'); if(el){ el.textContent=msg||''; if(color) el.style.color=color; } }
 // セレクト/ボタン/チェックは確定操作なので作り直してOK
 function setF(k,v){ S[k]=v; save(); renderInput(); }
 function toggleAuto(which,on){ S[which+'_auto']=on; save(); renderInput(); }
