@@ -506,7 +506,11 @@ function renderResult(){
   h += trN('諸経費合計', shokei);
   h += trN('合計', total, true);
   h += `</table><div class="note">※不動産取得税は、取得から半年後に納税通知書が届きます。</div></div>`;
-  // 資金計画（総事業費の下に配置して左右のバランスを調整）
+  h += `</div>`; // xls-col 左
+
+  // ---- 右カラム ----
+  h += `<div class="xls-col">`;
+  // 資金計画
   h += `<div class="sec"><div class="sec-h">【資金計画】</div><table class="t">`;
   if(isHold){
     h += trN('諸経費', shokei);
@@ -520,10 +524,6 @@ function renderResult(){
     h += trN('合計', (shokei+c.jigyohi-c.loan)+c.loan, true);
   }
   h += `</table></div>`;
-  h += `</div>`; // xls-col 左
-
-  // ---- 右カラム ----
-  h += `<div class="xls-col">`;
   // 家賃収入内訳
   h += rentTable('【家賃収入内訳】', rentDataRows, 'rent', R.month);
   // 返済計画
@@ -536,23 +536,24 @@ function renderResult(){
     <tr><td class="lbl">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td></tr>
     <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
     </table></div>`;
-  // 収支計画（家賃 単一列）
+  // 収支計画（家賃 単一列）。金融機関提出用はランニングコスト(巡回清掃・ネット)を非表示＆合計から除外
+  const hideRun = !isHold;
+  const monthBal = hideRun ? (R.month - (c.pmt + R.kanri)) : R.monthBalance;
+  const yearBal  = hideRun ? (R.yearIncome - (c.pmtYear + R.yearKanri + R.koteishisan)) : R.yearBalance;
   h += `<div class="sec"><div class="sec-h">【収支計画】</div><table class="t">
     <tr><th>項目</th><th>金額</th></tr>`;
   h += tr2N('月間収入', R.month);
   h += tr2N('月間借入支払', c.pmt);
   h += tr2N('月間管理料', R.kanri);
-  h += tr2N('巡回清掃', c.junkai);
-  h += tr2N('インターネット', c.net);
-  h += tr2N('月間収支合計', R.monthBalance, true);
+  if(!hideRun){ h += tr2N('巡回清掃', c.junkai); h += tr2N('インターネット', c.net); }
+  h += tr2N('月間収支合計', monthBal, true);
   h += tr2N('年間収入', R.yearIncome);
   h += tr2N('年間借入支払', c.pmtYear);
   h += tr2N('年間管理料', R.yearKanri);
   h += tr2N('固定資産税', R.koteishisan);
-  h += tr2N('巡回清掃', R.yearJunkai);
-  h += tr2N('インターネット', R.yearNet);
-  h += tr2N('年間収支合計', R.yearBalance, true);
-  h += tr2N('月間収支合計', R.yearBalanceMonth);
+  if(!hideRun){ h += tr2N('巡回清掃', R.yearJunkai); h += tr2N('インターネット', R.yearNet); }
+  h += tr2N('年間収支合計', yearBal, true);
+  h += tr2N('月間収支合計', yearBal/12);
   h += tr2P('表面利回り', R.hyomen, '%');
   h += `</table>`;
   // NOI / FCR / DCR / 返済比率 は表の外に別枠で明記
