@@ -196,15 +196,21 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 <div class="fab" id="fab"></div>
 <div class="toast" id="toast"></div>
 
-<!-- PDFオーバーレイ（スマホ・PC共通で同ページ内に表示） -->
-<div id="pdfOverlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;background:#555;">
-  <div style="background:#1a1a1a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-    <button onclick="closePdfOverlay()" style="background:none;border:1.5px solid #fff;color:#fff;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;">✕ 閉じる</button>
-    <span style="font-size:13px;font-weight:700;">事業計画書 PDF</span>
-    <a id="pdfSaveLink" download="" href="#" style="background:#fff;color:#1a1a1a;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;text-decoration:none;">💾 保存</a>
+<!-- PDFオーバーレイ（キャプチャ画像で表示→1画面フィット・印刷・共有に対応） -->
+<div id="pdfOverlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;background:#333;">
+  <div style="background:#1a1a1a;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:8px;">
+    <button onclick="closePdfOverlay()" style="background:none;border:1.5px solid rgba(255,255,255,0.8);color:#fff;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;white-space:nowrap;">✕ 閉じる</button>
+    <span style="font-size:12px;font-weight:700;flex:1;text-align:center;">事業計画書</span>
+    <button onclick="printPdf()" style="background:none;border:1.5px solid rgba(255,255,255,0.8);color:#fff;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;white-space:nowrap;">🖨️ 印刷</button>
+    <button onclick="savePdf()" style="background:#fff;color:#1a1a1a;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;white-space:nowrap;">📤 共有・保存</button>
   </div>
-  <iframe id="pdfFrame" src="" style="flex:1;width:100%;height:100%;border:none;background:#555;"></iframe>
+  <!-- 画像として表示→1画面にフィット -->
+  <div style="flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;background:#444;padding:8px;">
+    <img id="pdfImg" src="" style="max-width:100%;height:auto;display:block;box-shadow:0 4px 20px rgba(0,0,0,0.5);" alt="事業計画書">
+  </div>
 </div>
+<!-- 印刷用（PCのみ） -->
+<div id="printArea" style="display:none;"><img id="printImg" style="width:100%;"></div>
 
 <script>
 /* ============ 状態 ============ */
@@ -780,8 +786,9 @@ async function downloadPDF(){
     pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2, margin+(availH-h)/2, w, h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
     const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
+    const imgDataUrl = canvas.toDataURL('image/jpeg',0.92);
     const blobUrl = URL.createObjectURL(pdf.output('blob'));
-    openPdfOverlay(blobUrl, fname);
+    openPdfOverlay(imgDataUrl, blobUrl, fname);
     toast('PDFを表示しました');
   }catch(e){
     document.body.classList.remove('pdf-mode');
@@ -790,19 +797,44 @@ async function downloadPDF(){
     if(wasFit && tab==='result') fitResult();
   }
 }
-function openPdfOverlay(blobUrl, fname){
-  const ov=document.getElementById('pdfOverlay');
-  document.getElementById('pdfFrame').src=blobUrl;
-  const lnk=document.getElementById('pdfSaveLink'); lnk.href=blobUrl; lnk.download=fname;
-  ov.style.display='flex';
-  document.body.style.overflow='hidden';  // 背景スクロール防止
+let _pdfBlobUrl='', _pdfFname='';
+function openPdfOverlay(imgDataUrl, blobUrl, fname){
+  _pdfBlobUrl=blobUrl; _pdfFname=fname;
+  document.getElementById('pdfImg').src=imgDataUrl;
+  document.getElementById('pdfOverlay').style.display='flex';
+  document.body.style.overflow='hidden';
 }
 function closePdfOverlay(){
-  const ov=document.getElementById('pdfOverlay');
-  const fr=document.getElementById('pdfFrame'); fr.src='';
-  ov.style.display='none';
+  document.getElementById('pdfOverlay').style.display='none';
+  document.getElementById('pdfImg').src='';
   document.body.style.overflow='';
+  if(_pdfBlobUrl){URL.revokeObjectURL(_pdfBlobUrl); _pdfBlobUrl='';}
   if(tab==='result') fitResult();
+}
+function savePdf(){
+  if(!_pdfBlobUrl) return;
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    // iOSはblobURLに遷移させると共有シートが使える(保存・AirPrint等)
+    window.location.href=_pdfBlobUrl;
+  }else{
+    const a=document.createElement('a'); a.href=_pdfBlobUrl; a.download=_pdfFname; a.click();
+  }
+}
+function printPdf(){
+  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    // iOS: blobURLを開くと共有シート→印刷が使える
+    window.location.href=_pdfBlobUrl;
+  }else{
+    // PC: 印刷専用ウィンドウを開く
+    const img=document.getElementById('pdfImg').src;
+    const pw=window.open('','_blank','width=800,height=900');
+    if(pw){
+      pw.document.write('<!DOCTYPE html><html><head><title>事業計画書</title><style>*{margin:0;padding:0;}body{background:#fff;}img{width:100%;display:block;}@page{margin:5mm;}</style></head><body><img src="'+img+'" onload="window.print();window.close()"></body></html>');
+      pw.document.close();
+    }
+  }
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 
