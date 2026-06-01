@@ -215,19 +215,18 @@ const blank = {
   junkai:'', net:'', atamakin:'',
   runs:[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]  // その他ランニング(手持ち用のみ反映)
 };
-// 雛形（例）：初めて開いた人が入力例を見られるよう、サンプル物件を入れておく
+// 雛形（例）：初めて開いた人が入力欄の例を見られるよう、項目名だけ例を入れておく（他は空欄）
 const SAMPLE = {
-  buyer:'（例）太田 太郎', pname:'（例）アーバンパレス博多', addr:'福岡市博多区博多駅前1-1-1',
-  eraType:'平成', eraYear:'7', builtMonth:'11', youto:'商業地域',
-  struct:'鉄筋コンクリート', scale:'4階建', kenpei:'80', yoseki:'600', land_area:'200', floor_area:'350',
-  price_all:'8800', price_land:'', price_bldg:'', priceMode:'all',
-  rents:[ {name:'1K',units:'24',rent:'33000',resi:true},{name:'駐車場',units:'3',rent:'5500',resi:false},
-          {name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true} ],
-  kotoze:'400000', bankfee:'50000', iten:'500000', teito:'800000', shihoshoshi:'100000', inshi:'50000',
-  chukai:'', chukai_auto:true, fire1:'150000', shutoku:'', shutoku_auto:true, shusshi:'',
-  loan:'8000', years:'23', rate:'3.30', bankName:'（例）○○銀行 △△支店',
-  junkai:'8800', net:'25000', atamakin:'800',
-  runs:[{name:'（例）エレベーター保守',amt:'15000'},{name:'',amt:''},{name:'',amt:''}]
+  buyer:'（例）太田圭一', pname:'（例）プライマリー○○', addr:'福岡県糸島市○○○３丁目○ー○',
+  eraType:'西暦', eraYear:'', builtMonth:'', youto:'',
+  struct:'', scale:'', kenpei:'', yoseki:'', land_area:'', floor_area:'',
+  price_all:'', price_land:'', price_bldg:'', priceMode:'all',
+  rents:[ {name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true} ],
+  kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
+  chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
+  loan:'', years:'', rate:'', bankName:'○○銀行',
+  junkai:'', net:'', atamakin:'',
+  runs:[{name:'（例）共用電気',amt:''},{name:'（例）浄化槽保守',amt:''},{name:'（例）エレベーター保守',amt:''}]
 };
 let S = load();
 let view = 'standhold'; // 手持ち用 / 提出用
@@ -430,12 +429,12 @@ function renderInput(){
     <div class="row2">${field('固都税','kotoze',{type:'number'})}${field('銀行事務手数料','bankfee',{type:'number'})}</div>
     <div class="row2">${field('移転登記','iten',{type:'number'})}${field('抵当権設定','teito',{type:'number'})}</div>
     <div class="row2">${field('司法書士','shihoshoshi',{type:'number'})}${field('印紙代','inshi',{type:'number'})}</div>
-    <div class="fgroup"><div class="flabel">仲介手数料 ${S.chukai_auto?'<span class="autonote">自動: '+yen(c.chukai)+'</span>':''}</div>
-      <input class="fval ${S.chukai_auto?'auto':''}" inputmode="decimal" value="${S.chukai_auto?'':esc(S.chukai)}" placeholder="${S.chukai_auto?yen(c.chukai)+'(自動)':'円'}" oninput="setNum('chukai',this)">
+    <div class="fgroup"><div class="flabel">仲介手数料 <span class="autonote" id="chukai-note">${S.chukai_auto?'自動: '+yen(c.chukai):''}</span></div>
+      <input id="f-chukai" class="fval ${S.chukai_auto?'auto':''}" inputmode="decimal" value="${S.chukai_auto?'':esc(S.chukai)}" placeholder="${S.chukai_auto?yen(c.chukai)+'(自動)':'円'}" oninput="setNum('chukai',this)">
       <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.chukai_auto?'checked':''} onchange="toggleAuto('chukai',this.checked)">自動計算</label></div>
     ${field('火災保険(1年)','fire1',{type:'number'})}
-    <div class="fgroup"><div class="flabel">取得税 ${S.shutoku_auto?'<span class="autonote">自動: '+yen(c.shutoku)+'</span>':''}</div>
-      <input class="fval ${S.shutoku_auto?'auto':''}" inputmode="decimal" value="${S.shutoku_auto?'':esc(S.shutoku)}" placeholder="${S.shutoku_auto?yen(c.shutoku)+'(自動)':'円'}" oninput="setNum('shutoku',this)">
+    <div class="fgroup"><div class="flabel">取得税 <span class="autonote" id="shutoku-note">${S.shutoku_auto?'自動: '+yen(c.shutoku):''}</span></div>
+      <input id="f-shutoku" class="fval ${S.shutoku_auto?'auto':''}" inputmode="decimal" value="${S.shutoku_auto?'':esc(S.shutoku)}" placeholder="${S.shutoku_auto?yen(c.shutoku)+'(自動)':'円'}" oninput="setNum('shutoku',this)">
       <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.shutoku_auto?'checked':''} onchange="toggleAuto('shutoku',this.checked)">自動計算（構造別）</label></div>
     ${field('出資金その他','shusshi',{type:'number'})}
     <div style="font-size:10px;color:#bbb;margin-top:-8px;">※出資金その他は計画書の諸経費合計には含みません（参考）</div>
@@ -725,6 +724,9 @@ function updateInputTotals(){
   set('t-shokei', yen(c.shokeiHold));
   set('t-shokei5', yen(c.shokeiSubmit));
   set('t-pmt', yen(c.pmt));
+  // 自動計算ONの仲介手数料・取得税は、価格変更に合わせて常に最新表示にする
+  if(S.chukai_auto){ set('chukai-note','自動: '+yen(c.chukai)); const ci=document.getElementById('f-chukai'); if(ci) ci.placeholder=yen(c.chukai)+'(自動)'; }
+  if(S.shutoku_auto){ set('shutoku-note','自動: '+yen(c.shutoku)); const si=document.getElementById('f-shutoku'); if(si) si.placeholder=yen(c.shutoku)+'(自動)'; }
   set('h-built', builtText());
   set('h-land_area', n(S.land_area)? tsubo(S.land_area)+'坪':'');
   set('h-floor_area', n(S.floor_area)? tsubo(S.floor_area)+'坪':'');
