@@ -773,16 +773,14 @@ async function downloadPDF(){
     pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2, margin+(availH-h)/2, w, h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
     const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
-    const url = URL.createObjectURL(pdf.output('blob'));
-    if(isMobile){
-      if(win){ win.location.href = url; }   // スマホ：新しいタブでPDFを表示
-      else { window.location.href = url; }  // ブロックされた場合は同じタブで表示
-      toast('PDFを表示しました');
-    }else{
-      pdf.save(fname);                       // PC：名前付きで保存
-      try{ window.open(url,'_blank'); }catch(e){}  // 別タブで表示
-      toast('PDFを作成しました');
+    // スマホ・PC共通: pdf.save() でダウンロード/共有シートを表示
+    // （iOS Safariはblobを新タブで開くと空白になるためsave()が確実）
+    pdf.save(fname);
+    if(win) try{ win.close(); }catch(e2){}   // 先に開いた空タブを閉じる
+    if(!isMobile){
+      try{ window.open(URL.createObjectURL(pdf.output('blob')),'_blank'); }catch(e){}
     }
+    toast(isMobile ? 'PDFを保存しました（共有ボタンで送れます）' : 'PDFを作成しました');
   }catch(e){
     document.body.classList.remove('pdf-mode');
     if(win) try{ win.close(); }catch(e2){}
