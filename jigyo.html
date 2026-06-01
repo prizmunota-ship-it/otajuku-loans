@@ -805,21 +805,15 @@ function closePdfOverlay(){
   document.getElementById('pdfOverlay').style.display='none';
   document.getElementById('pdfImg').src='';
   document.body.style.overflow='';
-  if(_pdfBlobUrl){URL.revokeObjectURL(_pdfBlobUrl); _pdfBlobUrl='';}
+  // blobURLはここでは解放しない（印刷ボタンで使う可能性があるため）
   if(tab==='result') fitResult();
 }
 function printPdf(){
-  toast('印刷準備中…');
-  var el=document.getElementById('pdfImg');
-  if(!el||!el.src||el.src.length<10){ toast('PDFが見つかりません'); return; }
-  var img=el.src;
-  // iOSを含む全ブラウザ対応: srcdocのiframeにPDF画像を入れてiframe側でprint
-  var iframe=document.createElement('iframe');
-  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;visibility:hidden;';
-  iframe.srcdoc='<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;}body{background:#fff;}img{width:100%;display:block;}@page{margin:5mm;size:A4 portrait;}</style></head><body><img src="'+img+'" onload="setTimeout(function(){try{window.focus();window.print();}catch(e){}},200)"></body></html>';
-  document.body.appendChild(iframe);
-  toast('印刷ダイアログが開きます');
-  setTimeout(function(){ if(iframe.parentNode) iframe.parentNode.removeChild(iframe); },8000);
+  toast('PDFを開きます…');
+  if(!_pdfBlobUrl){ toast('先にPDFを作成してください'); return; }
+  // 現在のタブでPDFを開く（iOSで最も確実な方法）
+  // ブラウザの戻るボタンで事業計画書に戻れます
+  document.location.href = _pdfBlobUrl;
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 
