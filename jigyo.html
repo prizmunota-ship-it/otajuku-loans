@@ -161,14 +161,23 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 .pdf-mode .kpi-line{font-size:14px;grid-template-columns:1fr 18px 110px 46px;margin-bottom:4px;}
 
 @media print{
-  .top-bar,.maintabs,.fab,.seg,.vlabel,.no-print{display:none !important;}
-  body{background:#fff;}
-  .wrap{padding:0;max-width:none;}
-  .xls{border:none;border-radius:0;overflow:visible;}
-  .xls-paper{min-width:0;padding:0;}
-  .xls-cols{flex-direction:row !important;}
-  .card{display:none;}
-  @page{size:A4 portrait;margin:10mm;}
+  /* PDFオーバーレイが開いている時は画像だけ印刷 */
+  body.pdf-printing > *:not(#printArea){ display:none !important; }
+  body.pdf-printing #printArea{ display:block !important; }
+  body.pdf-printing #printArea img{ width:100%; height:auto; }
+  /* 通常画面からの印刷（PDFオーバーレイなし） */
+  body:not(.pdf-printing) .top-bar,
+  body:not(.pdf-printing) .maintabs,
+  body:not(.pdf-printing) .fab,
+  body:not(.pdf-printing) .seg,
+  body:not(.pdf-printing) .vlabel,
+  body:not(.pdf-printing) .no-print{ display:none !important; }
+  body:not(.pdf-printing) .wrap{ padding:0;max-width:none; }
+  body:not(.pdf-printing) .xls{ border:none;border-radius:0;overflow:visible; }
+  body:not(.pdf-printing) .xls-paper{ min-width:0;padding:0; }
+  body:not(.pdf-printing) .xls-cols{ flex-direction:row !important; }
+  body:not(.pdf-printing) .card{ display:none; }
+  @page{ size:A4 portrait; margin:8mm; }
 }
 .doc-print-only{display:none;}
 </style>
@@ -822,19 +831,13 @@ function savePdf(){
   }
 }
 function printPdf(){
-  const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if(isMobile){
-    // iOS: blobURLを開くと共有シート→印刷が使える
-    window.location.href=_pdfBlobUrl;
-  }else{
-    // PC: 印刷専用ウィンドウを開く
-    const img=document.getElementById('pdfImg').src;
-    const pw=window.open('','_blank','width=800,height=900');
-    if(pw){
-      pw.document.write('<!DOCTYPE html><html><head><title>事業計画書</title><style>*{margin:0;padding:0;}body{background:#fff;}img{width:100%;display:block;}@page{margin:5mm;}</style></head><body><img src="'+img+'" onload="window.print();window.close()"></body></html>');
-      pw.document.close();
-    }
-  }
+  // スマホ(iOS AirPrint)・PC共通: window.print() で印刷ダイアログを開く
+  const img=document.getElementById('pdfImg').src;
+  document.getElementById('printImg').src=img;
+  document.body.classList.add('pdf-printing');
+  window.print();
+  // 印刷ダイアログが閉じたら元に戻す
+  setTimeout(function(){ document.body.classList.remove('pdf-printing'); },1000);
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 
