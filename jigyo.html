@@ -182,7 +182,7 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
   </div>
 </div>
 
-<script>if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");}</script>
+<script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}window._rc=function(r){if(r!=="ok"){localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
 
 <div class="maintabs">
   <div class="maintab active" id="tab-input" onclick="showTab('input')">入力</div>

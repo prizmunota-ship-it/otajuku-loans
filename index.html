@@ -96,9 +96,26 @@ body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FF
 // ===== メンバー認証（融資一覧と同じGAS照合・localStorage共有） =====
 var GAS_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
 
-// 認証済みなら入口（ログイン）を閉じてメニューを表示
-if(localStorage.getItem("otajuku_auth") === "ok"){
+// 認証済みなら入口を閉じてメニュー表示。ただし毎回「在籍」を再確認（退会者を締め出すため）
+if(localStorage.getItem("otajuku_auth") === "ok" && localStorage.getItem("otajuku_email")){
   document.getElementById("loginOverlay").style.display = "none";
+  revalidate();
+} else {
+  localStorage.removeItem("otajuku_auth");   // 旧セッション(メール未保存)は再ログインさせる
+}
+// 在籍の再確認：登録から外れていたら強制ログアウト
+function revalidate(){
+  var em = localStorage.getItem("otajuku_email"); if(!em) return;
+  window._recheck = function(r){
+    if(r !== "ok"){
+      localStorage.removeItem("otajuku_auth"); localStorage.removeItem("otajuku_email");
+      var ov=document.getElementById("loginOverlay"); ov.style.display="flex";
+      var m=document.getElementById("loginMsg"); m.className="login-msg error"; m.textContent="登録が確認できませんでした。再度ログインしてください。";
+    }
+  };
+  var s=document.createElement("script");
+  s.src = GAS_URL + "?email=" + encodeURIComponent(em) + "&callback=_recheck";
+  document.body.appendChild(s);
 }
 
 function doLogin(){
@@ -118,6 +135,7 @@ function doLogin(){
     if(document.body.contains(script)) document.body.removeChild(script);
     if(result === "ok"){
       localStorage.setItem("otajuku_auth", "ok");
+      localStorage.setItem("otajuku_email", email.toLowerCase());
       msg.className="login-msg success";
       msg.textContent="認証成功！";
       setTimeout(function(){ document.getElementById("loginOverlay").style.display="none"; }, 500);
@@ -130,7 +148,7 @@ function doLogin(){
   script.src = GAS_URL + "?email=" + encodeURIComponent(email) + "&callback=_loginCallback";
   document.body.appendChild(script);
 }
-function logout(){ localStorage.removeItem("otajuku_auth"); location.reload(); }
+function logout(){ localStorage.removeItem("otajuku_auth"); localStorage.removeItem("otajuku_email"); location.reload(); }
 document.getElementById("loginEmail").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
 </script>
 </body>
