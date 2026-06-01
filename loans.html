@@ -139,17 +139,9 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .login-msg.loading { color:#A08040; }
 .login-msg.success { color:#1A7A3A; font-weight:700; }
 </style>
-<style>
-.kakunin-banner{position:sticky;top:0;z-index:9999;background:#C0392B;color:#fff;padding:9px 12px;font-size:13px;font-weight:700;text-align:center;font-family:'Noto Sans JP',sans-serif;line-height:1.5;}
-.kakunin-new{outline:3px solid #E0201B !important;outline-offset:-1px;border-radius:14px;}
-.kakunin-new .card-name{color:#E0201B !important;}
-.kakunin-badge{background:#E0201B;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;display:inline-block;margin:8px 0 0 12px;}
-.kakunin-new .vl,.kakunin-new .memo,.kakunin-new .sy,.kakunin-new .rate-val,.kakunin-new .rate,.kakunin-new .ab-text,.kakunin-new .meta-pill{color:#C0392B !important;}
-</style>
 </head>
 <body>
 <script>if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");}</script>
-<div class="kakunin-banner">⚠️ これは【確認用ページ】です ｜ <span style="text-decoration:underline">赤色＝今回 追加/更新 した機関</span>（L&F・福岡県信組・オリックス・西日本シティ・横浜幸銀）｜ 本番アプリ（/）は変更していません</div>
 <div id="loginOverlay" style="display: none;">
   <div class="login-box">
     <div class="login-logo">🏠</div>
@@ -1167,26 +1159,4 @@ document.getElementById("loginEmail").addEventListener("keydown", function(e){ i
 </script>
 
 
-<script>
-(function(){
-  var ADD=["L&Fアセットファイナンス"];
-  var UPD=["福岡県信用組合","オリックス銀行","西日本シティ銀行","横浜幸銀信用組合"];
-  function mark(){
-    document.querySelectorAll(".card").forEach(function(c){
-      var nm=c.querySelector(".card-name"); if(!nm) return; var t=nm.textContent.trim();
-      var isAdd=ADD.indexOf(t)>=0, isUpd=UPD.indexOf(t)>=0;
-      if(isAdd||isUpd){
-        c.classList.add("kakunin-new");
-        if(!c.parentNode.querySelector(".kakunin-badge[data-for='"+t+"']")){
-          var b=document.createElement("div"); b.className="kakunin-badge"; b.setAttribute("data-for",t);
-          b.textContent=isAdd?"🆕 今回追加（確認用）":"✏️ 今回更新（確認用）";
-          var head=c.querySelector(".card-head")||c; head.parentNode.insertBefore(b,head.nextSibling);
-        }
-      }
-    });
-  }
-  var n=0,t=setInterval(function(){ n++; mark(); if(n>60) clearInterval(t); },200);
-  window.addEventListener("load",mark);
-})();
-</script>
 </body></html>
