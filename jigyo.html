@@ -133,6 +133,11 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
   .xls-paper{min-width:0;}
   .xls-cols{flex-direction:column;}
 }
+/* スマホで事業計画書を1画面に収める（2段組みのまま縮小表示。zoomはJSで算出） */
+body.fit-result #view-result{overflow-x:hidden;}
+body.fit-result #view-result .xls-cols{flex-direction:row !important;gap:10px;}
+body.fit-result #view-result .xls-paper{width:700px !important;min-width:700px !important;padding:12px;}
+body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1;}
 
 /* PDF出力用に一時的に固定幅・横並びでレンダリング（A4いっぱいに大きく収める） */
 .pdf-mode #view-result{max-width:none;}
@@ -579,6 +584,22 @@ function renderResult(){
 
   h += `</div></div></div>`; // xls-cols / xls-paper / xls
   document.getElementById('view-result').innerHTML = h;
+  fitResult();
+}
+// スマホ(<=640px)では事業計画書全体を1画面に収まるよう縮小(zoom)。PCは等倍。
+function fitResult(){
+  const xls=document.getElementById('doc'); if(!xls) return;
+  const vr=document.getElementById('view-result');
+  if(window.innerWidth<=640){
+    document.body.classList.add('fit-result');
+    xls.style.zoom='1';
+    const natural=xls.offsetWidth||700;
+    const avail=Math.min(vr.clientWidth||window.innerWidth, window.innerWidth-12);
+    xls.style.zoom = Math.min(1, avail/natural);
+  }else{
+    document.body.classList.remove('fit-result');
+    xls.style.zoom='';
+  }
 }
 // ラベル+文字値（2列）
 function tr2(l,v){ return `<tr><td class="lbl">${l}</td><td>${v||''}</td></tr>`; }
@@ -743,6 +764,8 @@ function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.
 document.getElementById('sub-date').textContent =
   '太田塾 ・ '+new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
 renderInput(); renderFab();
+window.addEventListener('resize', function(){ if(tab==='result') fitResult(); });
+window.addEventListener('orientationchange', function(){ setTimeout(function(){ if(tab==='result') fitResult(); },300); });
 </script>
 </body>
 </html>
