@@ -758,12 +758,10 @@ async function downloadPDF(){
   if(!doc){ toast('先に内容を入力してください'); return; }
   if(typeof html2canvas==='undefined' || !window.jspdf){ toast('PDF準備中…数秒後にもう一度'); return; }
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  // スマホはタップ直後に新規タブを開いておく（生成後にPDFを表示。ジェスチャ維持でブロック回避）
-  const win = isMobile ? window.open('', '_blank') : null;
-  const wasFit = document.body.classList.contains('fit-result');  // スマホの縮小表示中か
+  // ★新しいタブは開かない★ → スマホ・PC共通で同ページ内オーバーレイにPDFを表示
+  const wasFit = document.body.classList.contains('fit-result');
   toast('PDFを作成中…');
   try{
-    // スマホの「1画面縮小(zoom)」を一旦解除してから等倍でキャプチャ（PDFがA4全面に広がるように）
     document.body.classList.remove('fit-result');
     doc.style.zoom='';
     document.body.classList.add('pdf-mode');
@@ -775,25 +773,21 @@ async function downloadPDF(){
     const pw=210, ph=297, margin=5;
     const availW=pw-margin*2, availH=ph-margin*2;
     const natAspect = canvas.height/canvas.width;
-    let w=availW, h=availW*natAspect;                 // まずA4幅いっぱい
-    // A4の高さにも合わせて縦を伸縮し、A4全面に広げる（歪みは±13%程度に制限）
+    let w=availW, h=availW*natAspect;
     const vScale = Math.max(0.87, Math.min(1.15, availH/h));
     h = h*vScale;
-    if(h>availH){ const k=availH/h; h=availH; w=w*k; } // それでも縦が余る超大型のみ幅を少し縮小
+    if(h>availH){ const k=availH/h; h=availH; w=w*k; }
     pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2, margin+(availH-h)/2, w, h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
     const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
     const blobUrl = URL.createObjectURL(pdf.output('blob'));
-    // スマホ・PC共通: 同ページ内オーバーレイでiframe表示（iOS Safariでも確実に動作）
-    if(win) try{ win.close(); }catch(e){}
     openPdfOverlay(blobUrl, fname);
     toast('PDFを表示しました');
   }catch(e){
     document.body.classList.remove('pdf-mode');
-    if(win) try{ win.close(); }catch(e2){}
     toast('PDF作成に失敗しました');
   }finally{
-    if(wasFit && tab==='result') fitResult();  // スマホの縮小表示を元に戻す
+    if(wasFit && tab==='result') fitResult();
   }
 }
 function openPdfOverlay(blobUrl, fname){
