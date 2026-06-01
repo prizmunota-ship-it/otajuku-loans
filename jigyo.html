@@ -759,8 +759,12 @@ async function downloadPDF(){
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   // スマホはタップ直後に新規タブを開いておく（生成後にPDFを表示。ジェスチャ維持でブロック回避）
   const win = isMobile ? window.open('', '_blank') : null;
+  const wasFit = document.body.classList.contains('fit-result');  // スマホの縮小表示中か
   toast('PDFを作成中…');
   try{
+    // スマホの「1画面縮小(zoom)」を一旦解除してから等倍でキャプチャ（PDFがA4全面に広がるように）
+    document.body.classList.remove('fit-result');
+    doc.style.zoom='';
     document.body.classList.add('pdf-mode');
     await new Promise(r=>setTimeout(r,60));
     const canvas = await html2canvas(doc, {scale:2, backgroundColor:'#ffffff', windowWidth:1100, useCORS:true});
@@ -789,6 +793,8 @@ async function downloadPDF(){
     document.body.classList.remove('pdf-mode');
     if(win) try{ win.close(); }catch(e2){}
     toast('PDF作成に失敗しました');
+  }finally{
+    if(wasFit && tab==='result') fitResult();  // スマホの縮小表示を元に戻す
   }
 }
 function clearAll(){
