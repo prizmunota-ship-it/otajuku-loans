@@ -41,8 +41,10 @@ export async function onRequest(context) {
 
     const p = feat.properties || {};
     const numOnly = (s) => { const m = String(s == null ? '' : s).match(/\d+(\.\d+)?/); return m ? m[0] : null; };
+    // 用途地域名の表記をアプリのプルダウン(漢数字)に合わせる: 第１種→第一種 等
+    const youtoName = (p.use_area_ja || '').replace('１', '一').replace('２', '二').replace('３', '三');
     return json({
-      youto: p.use_area_ja || '',
+      youto: youtoName,
       kenpei: numOnly(p.u_building_coverage_ratio_ja),
       yoseki: numOnly(p.u_floor_area_ratio_ja),
       source: '公式データ',
