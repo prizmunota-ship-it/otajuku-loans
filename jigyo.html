@@ -237,7 +237,7 @@ let tab = 'input';
 
 function load(){
   try{ const o=JSON.parse(localStorage.getItem(LS_KEY)); if(o) return Object.assign(JSON.parse(JSON.stringify(blank)),o); }catch(e){}
-  return JSON.parse(JSON.stringify(SAMPLE));  // 初回（保存データなし）は雛形（例）を表示
+  return JSON.parse(JSON.stringify(blank));  // 初回は空欄（例は各入力欄の背景プレースホルダーで表示）
 }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
 
@@ -370,10 +370,10 @@ function renderInput(){
   let h = '';
   // 物件情報
   h += `<div class="card"><div class="card-title"><span class="dot"></span>物件情報</div>
-    ${field('購入者名','buyer',{ph:'例: 太田 圭一'})}
-    ${field('物件名','pname',{ph:'例: アーバンパレス博多'})}
+    ${field('購入者名','buyer',{ph:'（例）太田圭一'})}
+    ${field('物件名','pname',{ph:'（例）プライマリー○○'})}
     <div class="fgroup"><div class="flabel">所在地<span class="unit">入力すると用途地域を自動取得</span></div>
-      <input class="fval" value="${esc(S.addr)}" placeholder="例: 福岡市博多区博多駅前1-2-3" oninput="setAddr(this.value)"></div>
+      <input class="fval" value="${esc(S.addr)}" placeholder="（例）福岡県糸島市○○○３丁目○ー○" oninput="setAddr(this.value)"></div>
     <div class="row3">
       ${selectF('築年(元号)','eraType',['西暦','令和','平成','昭和'])}
       ${field('年','eraYear',{type:'number',ph:'例: 1995'})}
@@ -445,7 +445,7 @@ function renderInput(){
 
   // 融資条件
   h += `<div class="card"><div class="card-title"><span class="dot"></span>融資条件</div>
-    ${field('銀行名','bankName',{ph:'例: ○○銀行 △△支店'})}
+    ${field('銀行名','bankName',{ph:'（例）○○銀行 △△支店'})}
     ${field('融資額','loan',{type:'number',unit:'万円'})}
     <div class="row2">${field('期間','years',{type:'number',unit:'年'})}${field('金利','rate',{type:'number',unit:'%(年率)'})}</div>
     <div class="line total" style="margin-top:6px;"><span class="lbl">月返済額(元利均等)</span><span class="val" id="t-pmt">${yen(c.pmt)}</span></div></div>`;
@@ -455,9 +455,10 @@ function renderInput(){
     <div class="row2">${field('巡回清掃(月)','junkai',{type:'number',unit:'円'})}${field('ネット等(月)','net',{type:'number',unit:'円'})}</div>
     <div style="font-size:11px;color:#888;margin:10px 0 5px;">その他のランニングコスト（任意・最大3件 / <b>手持ち用のみ反映</b>）</div>
     <div class="run-head"><div>項目名</div><div>月額(円)</div></div>`;
+  const runEx=['共用電気','浄化槽保守','エレベーター保守'];
   (S.runs||[]).forEach((r,i)=>{
     h += `<div class="run-row">
-      <input class="fval" value="${esc(r.name)}" placeholder="例:エレベーター保守" oninput="setRun(${i},'name',this.value)">
+      <input class="fval" value="${esc(r.name)}" placeholder="（例）${runEx[i]||'共用電気'}" oninput="setRun(${i},'name',this.value)">
       <input class="fval" inputmode="decimal" value="${esc(r.amt)}" placeholder="円/月" oninput="setRunNum(${i},'amt',this)">
     </div>`;
   });
