@@ -91,10 +91,10 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 
 .empty-state{text-align:center;padding:60px 20px;color:#AAA;font-size:14px;}
 
-.fab{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:120;}
-.fab button{border:none;border-radius:26px;padding:13px 22px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.18);}
+.fab{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:120;max-width:96vw;}
+.fab button{border:none;border-radius:26px;padding:13px 20px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.18);white-space:nowrap;flex-shrink:0;}
 .fab .f-print{background:#1a1a1a;color:#fff;}
-.fab .f-clear{background:#fff;color:#777;border:1.5px solid #DDD;}
+.fab .f-clear{background:#fff;color:#777;border:1.5px solid #DDD;padding:13px 16px;}
 
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:11px 20px;border-radius:24px;z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;}
@@ -206,6 +206,19 @@ const blank = {
   loan:'', years:'', rate:'', bankName:'',
   junkai:'', net:'', atamakin:''
 };
+// 雛形（例）：初めて開いた人が入力例を見られるよう、サンプル物件を入れておく
+const SAMPLE = {
+  buyer:'（例）太田 太郎', pname:'（例）アーバンパレス博多', addr:'福岡市博多区博多駅前1-1-1',
+  eraType:'平成', eraYear:'7', builtMonth:'11', youto:'商業地域',
+  struct:'鉄筋コンクリート', scale:'4階建', kenpei:'80', yoseki:'600', land_area:'200', floor_area:'350',
+  price_all:'8800', price_land:'', price_bldg:'', priceMode:'all',
+  rents:[ {name:'1K',units:'24',rent:'33000',resi:true},{name:'駐車場',units:'3',rent:'5500',resi:false},
+          {name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true} ],
+  kotoze:'400000', bankfee:'50000', iten:'500000', teito:'800000', shihoshoshi:'100000', inshi:'50000',
+  chukai:'', chukai_auto:true, fire1:'150000', shutoku:'', shutoku_auto:true, shusshi:'',
+  loan:'8000', years:'23', rate:'3.30', bankName:'（例）○○銀行 △△支店',
+  junkai:'8800', net:'25000', atamakin:'800'
+};
 let S = load();
 let view = 'standhold'; // 手持ち用 / 提出用
 let rentMode = 'real';   // 実家賃 / 引き直し
@@ -213,7 +226,7 @@ let tab = 'input';
 
 function load(){
   try{ const o=JSON.parse(localStorage.getItem(LS_KEY)); if(o) return Object.assign(JSON.parse(JSON.stringify(blank)),o); }catch(e){}
-  return JSON.parse(JSON.stringify(blank));
+  return JSON.parse(JSON.stringify(SAMPLE));  // 初回（保存データなし）は雛形（例）を表示
 }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); }
 
@@ -672,6 +685,7 @@ function renderFab(){
     f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`;
   }else{
     f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>
+      <button class="f-clear" onclick="loadSample()">例</button>
       <button class="f-clear" onclick="clearAll()">クリア</button>`;
   }
 }
@@ -718,6 +732,10 @@ async function downloadPDF(){
 function clearAll(){
   if(!confirm('入力内容をすべて消去します。よろしいですか？')) return;
   S = JSON.parse(JSON.stringify(blank)); save(); renderInput(); toast('クリアしました');
+}
+function loadSample(){
+  if(!confirm('入力例（雛形）を読み込みます。今の入力内容は置き換わります。よろしいですか？')) return;
+  S = JSON.parse(JSON.stringify(SAMPLE)); save(); renderInput(); toast('入力例を読み込みました');
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 
