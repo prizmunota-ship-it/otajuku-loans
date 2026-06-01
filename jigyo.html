@@ -140,7 +140,7 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
 body.fit-result #view-result{overflow-x:hidden;}
 body.fit-result #view-result .xls-cols{flex-direction:row !important;gap:10px;}
 body.fit-result #view-result .xls-paper{width:700px !important;min-width:700px !important;padding:12px;}
-body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1;}
+body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1;margin:0 auto;}
 
 /* PDF出力用に一時的に固定幅・横並びでレンダリング（A4いっぱいに大きく収める） */
 .pdf-mode #view-result{max-width:none;}
@@ -620,7 +620,8 @@ function fitResult(){
     document.body.classList.add('fit-result');
     xls.style.zoom='1';
     const natural=xls.offsetWidth||700;
-    const avail=Math.min(vr.clientWidth||window.innerWidth, window.innerWidth-12);
+    // 左右に余白(各約14px)を残す＝はみ出し/見切れ防止＆バランス
+    const avail=Math.max(220, (vr.clientWidth||window.innerWidth) - 28);
     xls.style.zoom = Math.min(1, avail/natural);
   }else{
     document.body.classList.remove('fit-result');
@@ -750,9 +751,7 @@ function renderFab(){
   if(tab==='result'){
     f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`;
   }else{
-    f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>
-      <button class="f-clear" onclick="loadSample()">例</button>
-      <button class="f-clear" onclick="clearAll()">クリア</button>`;
+    f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>`;
   }
 }
 // 元のExcelのように1ページ・余白少なめのきれいなPDFを直接生成（ブラウザのヘッダー/フッターなし）
