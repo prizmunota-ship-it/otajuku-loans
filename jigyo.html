@@ -577,7 +577,7 @@ function renderResult(){
   const monthBal = hideRun ? (R.month - (c.pmt + R.kanri)) : R.monthBalance;
   const yearBal  = hideRun ? (R.yearIncome - (c.pmtYear + R.yearKanri + R.koteishisan)) : R.yearBalance;
   h += `<div class="sec"><div class="sec-h">【収支計画】</div><table class="t">
-    <tr><th>項目</th><th>金額</th></tr>`;
+    <tr><th>項目</th><th>金額</th><th style="width:26px"></th></tr>`;
   h += tr2N('月間収入', R.month);
   h += tr2N('月間借入支払', c.pmt);
   h += tr2N('月間管理料', R.kanri);
@@ -630,12 +630,12 @@ function fitResult(){
 function tr2(l,v){ return `<tr><td class="lbl">${l}</td><td>${v||''}</td></tr>`; }
 // ラベル+金額+円（合計行は太字）
 function trN(l,v,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(v)}</td><td class="yc">円</td></tr>`; }
-// 収支計画 2列（項目/金額）
-function tr2N(l,a,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(a)}<span class="yc">円</span></td></tr>`; }
-// 指標行（％や倍率、単位付き）
+// 収支計画 3列（項目/金額/円）— 左側の表と同じく数字と「円」の間に区切り線
+function tr2N(l,a,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(a)}</td><td class="yc">円</td></tr>`; }
+// 指標行（％や倍率）— 単位も別セルにして区切り線を入れる
 function tr2P(l,a,unit,tot,dec){
   const f=v=> isFinite(v)? (dec!=null? v.toFixed(dec): (unit==='%'? v.toFixed(2): num(v))) : '';
-  return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${f(a)}<span class="yc">${unit}</span></td></tr>`;
+  return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${f(a)}</td><td class="yc">${unit}</td></tr>`;
 }
 // 別枠の指標行（NOI = 値）
 function kpiLine(label, eq, val, note){
