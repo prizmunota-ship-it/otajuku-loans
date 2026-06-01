@@ -46,10 +46,10 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 .lookup-btn{flex-shrink:0;border:1.5px solid #1a1a1a;background:#1a1a1a;color:#fff;border-radius:10px;padding:10px 12px;font-size:12px;font-family:'Noto Sans JP',sans-serif;font-weight:500;cursor:pointer;white-space:nowrap;}
 
 /* rent type rows */
-.rent-head{display:grid;grid-template-columns:34px 1.5fr 0.8fr 1.2fr;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;align-items:end;}
+.rent-head{display:grid;grid-template-columns:26px 1fr 0.5fr 0.95fr 0.95fr;gap:5px;font-size:9.5px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;align-items:end;}
 .rent-head>div:first-child{text-align:center;}
-.rent-row{display:grid;grid-template-columns:34px 1.5fr 0.8fr 1.2fr;gap:6px;margin-bottom:6px;align-items:center;}
-.rent-row .fval{padding:9px 8px;font-size:13px;}
+.rent-row{display:grid;grid-template-columns:26px 1fr 0.5fr 0.95fr 0.95fr;gap:5px;margin-bottom:6px;align-items:center;}
+.rent-row .fval{padding:9px 6px;font-size:12.5px;}
 .resi-box{display:flex;align-items:center;justify-content:center;}
 .resi-box input{width:20px;height:20px;accent-color:#1a1a1a;cursor:pointer;}
 .run-head{display:grid;grid-template-columns:1.6fr 1fr;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;}
@@ -411,16 +411,18 @@ function renderInput(){
 
   // 家賃
   h += `<div class="card"><div class="card-title"><span class="dot"></span>間取り・家賃<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">最大5タイプ</span></div>
-    <div class="rent-head"><div>住居</div><div>タイプ</div><div>戸数</div><div>家賃(月)</div></div>`;
+    <div class="rent-head"><div>住居</div><div>タイプ</div><div>戸数</div><div>1戸家賃</div><div>合計(月)</div></div>`;
   S.rents.forEach((r,i)=>{
+    const tot=(n(r.units)&&n(r.rent))? String(n(r.units)*n(r.rent)) : '';
     h += `<div class="rent-row">
       <label class="resi-box"><input type="checkbox" ${r.resi!==false?'checked':''} onchange="setResi(${i},this.checked)"></label>
       <input class="fval" value="${esc(r.name)}" placeholder="例:2DK" oninput="setRent(${i},'name',this.value)">
       <input class="fval" inputmode="decimal" value="${esc(r.units)}" placeholder="戸" oninput="setRentNum(${i},'units',this)">
-      <input class="fval" inputmode="decimal" value="${esc(r.rent)}" placeholder="円" oninput="setRentNum(${i},'rent',this)">
+      <input class="fval" inputmode="decimal" value="${esc(r.rent)}" placeholder="1戸" oninput="setRentNum(${i},'rent',this)">
+      <input class="fval" inputmode="decimal" value="${tot}" placeholder="合計" oninput="setRentTotal(${i},this)">
     </div>`;
   });
-  h += `<div style="font-size:10px;color:#bbb;margin:2px 2px 6px;">※「住居」のチェックを外すと戸数合計に数えません（駐車場・倉庫など）。家賃は合計に含みます。</div>
+  h += `<div style="font-size:10px;color:#bbb;margin:2px 2px 6px;">※「合計(月)」に総額を入れると1戸家賃(平均)を自動計算。1戸家賃の手打ちもOK（その場合は合計を自動計算）。<br>※「住居」のチェックを外すと戸数合計に数えません（駐車場・倉庫など）。家賃は合計に含みます。</div>
     <div class="line total" style="margin-top:6px;"><span class="lbl">月額家賃合計</span><span class="val" id="t-rent">${yen(c.monthReal)} / 住居${c.unitsResi}戸</span></div></div>`;
 
   // 諸経費
@@ -660,7 +662,21 @@ function setRent(i,k,v){ S.rents[i][k]=v; save(); updateInputTotals(); }
 // 数値欄: 全角→半角に正規化してから保存（カーソル位置は維持）
 function normEl(el){ const v=toHalf(el.value); if(v!==el.value){ const p=el.selectionStart; el.value=v; try{el.setSelectionRange(p,p);}catch(e){} } return v; }
 function setNum(k,el){ S[k]=normEl(el); save(); updateInputTotals(); }
-function setRentNum(i,k,el){ S.rents[i][k]=normEl(el); save(); updateInputTotals(); }
+function setRentNum(i,k,el){ S.rents[i][k]=normEl(el); save(); syncRentTotalCell(i); updateInputTotals(); }
+// 合計(月)を入力→1戸家賃(平均)=合計÷戸数 を自動計算
+function setRentTotal(i,el){
+  const v=normEl(el); const u=n(S.rents[i].units); const rent = u>0 ? Math.round(n(v)/u) : 0;
+  S.rents[i].rent = rent? String(rent) : ''; save();
+  const row=document.querySelectorAll('.rent-row')[i];
+  if(row){ const ins=row.querySelectorAll('input'); if(ins[3]) ins[3].value=S.rents[i].rent; }  // 1戸家賃セルに反映
+  updateInputTotals();
+}
+// 戸数/1戸家賃を変更→合計セル(=戸数×1戸)を更新
+function syncRentTotalCell(i){
+  const u=n(S.rents[i].units), rent=n(S.rents[i].rent);
+  const row=document.querySelectorAll('.rent-row')[i];
+  if(row){ const ins=row.querySelectorAll('input'); if(ins[4]) ins[4].value=(u>0&&rent)? String(u*rent):''; }
+}
 function setResi(i,on){ S.rents[i].resi=on; save(); updateInputTotals(); }
 function setRun(i,k,v){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=v; save(); }
 function setRunNum(i,k,el){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=normEl(el); save(); }
