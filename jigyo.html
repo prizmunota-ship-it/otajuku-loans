@@ -196,6 +196,16 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 <div class="fab" id="fab"></div>
 <div class="toast" id="toast"></div>
 
+<!-- PDFオーバーレイ（スマホ・PC共通で同ページ内に表示） -->
+<div id="pdfOverlay" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;background:#555;">
+  <div style="background:#1a1a1a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+    <button onclick="closePdfOverlay()" style="background:none;border:1.5px solid #fff;color:#fff;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;">✕ 閉じる</button>
+    <span style="font-size:13px;font-weight:700;">事業計画書 PDF</span>
+    <a id="pdfSaveLink" download="" href="#" style="background:#fff;color:#1a1a1a;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;text-decoration:none;">💾 保存</a>
+  </div>
+  <iframe id="pdfFrame" src="" style="flex:1;width:100%;height:100%;border:none;background:#555;"></iframe>
+</div>
+
 <script>
 /* ============ 状態 ============ */
 const LS_KEY = 'jigyo_keikaku_v2';  // v2: 例を値→プレースホルダー化したため旧保存データをリセット
@@ -773,17 +783,11 @@ async function downloadPDF(){
     pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2, margin+(availH-h)/2, w, h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
     const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
-    if(isMobile){
-      // iOS Safari: blob URLは空白になるのでdata URIをタップ直後に開いたタブに流し込む
-      const dataUri = pdf.output('datauristring');
-      if(win){ win.location.href = dataUri; }
-      else { window.location.href = dataUri; }  // ポップアップブロック時は同タブ
-      toast('PDFを表示中…（共有ボタンで保存・送信できます）');
-    }else{
-      pdf.save(fname);
-      try{ window.open(URL.createObjectURL(pdf.output('blob')),'_blank'); }catch(e){}
-      toast('PDFを作成しました');
-    }
+    const blobUrl = URL.createObjectURL(pdf.output('blob'));
+    // スマホ・PC共通: 同ページ内オーバーレイでiframe表示（iOS Safariでも確実に動作）
+    if(win) try{ win.close(); }catch(e){}
+    openPdfOverlay(blobUrl, fname);
+    toast('PDFを表示しました');
   }catch(e){
     document.body.classList.remove('pdf-mode');
     if(win) try{ win.close(); }catch(e2){}
@@ -791,6 +795,20 @@ async function downloadPDF(){
   }finally{
     if(wasFit && tab==='result') fitResult();  // スマホの縮小表示を元に戻す
   }
+}
+function openPdfOverlay(blobUrl, fname){
+  const ov=document.getElementById('pdfOverlay');
+  document.getElementById('pdfFrame').src=blobUrl;
+  const lnk=document.getElementById('pdfSaveLink'); lnk.href=blobUrl; lnk.download=fname;
+  ov.style.display='flex';
+  document.body.style.overflow='hidden';  // 背景スクロール防止
+}
+function closePdfOverlay(){
+  const ov=document.getElementById('pdfOverlay');
+  const fr=document.getElementById('pdfFrame'); fr.src='';
+  ov.style.display='none';
+  document.body.style.overflow='';
+  if(tab==='result') fitResult();
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
 
