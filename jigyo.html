@@ -567,10 +567,10 @@ function renderResult(){
   const joken = n(S.rate)? '変動'+(rr*100).toFixed(2)+'%':'';
   const kikan = n(S.years)? '銀行融資'+toHalf(S.years)+'年':'';
   h += `<div class="sec"><div class="sec-h">【返済計画】</div><table class="t">
-    <tr><th>融資期間</th><th>融資条件</th><th>月間返済額</th></tr>
-    <tr><td>${kikan}</td><td>${joken}</td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
-    <tr><td class="lbl">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td></tr>
-    <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}<span class="yc">円</span></td></tr>
+    <tr><th>融資期間</th><th>融資条件</th><th>月間返済額</th><th style="width:24px"></th></tr>
+    <tr><td>${kikan}</td><td>${joken}</td><td class="num">${num(c.pmt)}</td><td class="yc">円</td></tr>
+    <tr><td class="lbl">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td><td></td></tr>
+    <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}</td><td class="yc">円</td></tr>
     </table></div>`;
   // 収支計画（家賃 単一列）。金融機関提出用はランニングコスト(巡回清掃・ネット)を非表示＆合計から除外
   const hideRun = !isHold;
@@ -646,12 +646,12 @@ function rentTable(title, rows, key, monthTotal){
   let unitsTotal=0;  // 戸数合計は住居のみ
   let body = rows.map(r=>{
     const u=n(r.units), rent=n(r[key]); if(r.resi!==false) unitsTotal+=u;
-    return `<tr><td>${esc(r.name)||''}</td><td class="num">${u||''}</td><td class="num">${num(rent)}</td><td class="num">${num(u*rent)}</td></tr>`;
+    return `<tr><td>${esc(r.name)||''}</td><td class="num">${u||''}</td><td class="num">${num(rent)}</td><td class="num">${num(u*rent)}</td><td class="yc">円</td></tr>`;
   }).join('');
   return `<div class="sec"><div class="sec-h">${title}</div><table class="t">
-    <tr><th>タイプ</th><th>戸数</th><th>1戸あたり賃料</th><th>賃料合計</th></tr>
+    <tr><th>タイプ</th><th>戸数</th><th>1戸あたり賃料</th><th>賃料合計</th><th style="width:24px"></th></tr>
     ${body}
-    <tr class="rowtot"><td>合計</td><td class="num">${unitsTotal||''}</td><td></td><td class="num">${num(monthTotal)}<span class="yc">円</span></td></tr>
+    <tr class="rowtot"><td>合計</td><td class="num">${unitsTotal||''}</td><td></td><td class="num">${num(monthTotal)}</td><td class="yc">円</td></tr>
     </table></div>`;
 }
 
