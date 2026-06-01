@@ -144,21 +144,21 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 
 /* PDF出力用に一時的に固定幅・横並びでレンダリング（A4いっぱいに大きく収める） */
 .pdf-mode #view-result{max-width:none;}
-.pdf-mode .xls{overflow:visible;border:none;border-radius:0;}
-.pdf-mode .xls-paper{min-width:830px !important;width:830px;padding:18px;}
-.pdf-mode .xls-cols{flex-direction:row !important;gap:14px;}
-.pdf-mode .sec{margin-bottom:9px;}
-.pdf-mode .xls-title{font-size:25px;padding:14px;letter-spacing:3px;}
-.pdf-mode .xls-date{font-size:14px;}
-.pdf-mode .xls-buyer{font-size:20px;padding:14px 2px 16px;}
-.pdf-mode .sec-h{font-size:16px;padding:7px 10px;}
-.pdf-mode table.t{font-size:16px;}
-.pdf-mode .t th{font-size:13.5px;}
-.pdf-mode .t th,.pdf-mode .t td{padding:7px 9px;}
-.pdf-mode .t td.yc,.pdf-mode .t .num .yc{font-size:12.5px;}
-.pdf-mode .note{font-size:13px;}
-.pdf-mode .kpibox{max-width:330px;margin-top:8px;}
-.pdf-mode .kpi-line{font-size:16px;grid-template-columns:1fr 18px 120px 48px;margin-bottom:8px;}
+.pdf-mode .xls{overflow:visible;border:none;border-radius:0;width:840px;}
+.pdf-mode .xls-paper{min-width:0 !important;width:840px;padding:14px;}
+.pdf-mode .xls-cols{flex-direction:row !important;gap:12px;}
+.pdf-mode .sec{margin-bottom:6px;}
+.pdf-mode .xls-title{font-size:22px;padding:10px;letter-spacing:3px;}
+.pdf-mode .xls-date{font-size:13px;}
+.pdf-mode .xls-buyer{font-size:18px;padding:9px 2px 11px;}
+.pdf-mode .sec-h{font-size:14px;padding:4px 9px;}
+.pdf-mode table.t{font-size:14px;}
+.pdf-mode .t th{font-size:11.5px;}
+.pdf-mode .t th,.pdf-mode .t td{padding:4px 8px;}
+.pdf-mode .t td.yc,.pdf-mode .t .num .yc{font-size:11px;}
+.pdf-mode .note{font-size:11px;}
+.pdf-mode .kpibox{max-width:320px;margin-top:5px;}
+.pdf-mode .kpi-line{font-size:14px;grid-template-columns:1fr 18px 110px 46px;margin-bottom:4px;}
 
 @media print{
   .top-bar,.maintabs,.fab,.seg,.vlabel,.no-print{display:none !important;}
@@ -631,7 +631,7 @@ function tr2(l,v){ return `<tr><td class="lbl">${l}</td><td>${v||''}</td></tr>`;
 // ラベル+金額+円（合計行は太字）
 function trN(l,v,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(v)}</td><td class="yc">円</td></tr>`; }
 // 収支計画 2列（項目/金額）
-function tr2N(l,a,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(a)}</td></tr>`; }
+function tr2N(l,a,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(a)}<span class="yc">円</span></td></tr>`; }
 // 指標行（％や倍率、単位付き）
 function tr2P(l,a,unit,tot,dec){
   const f=v=> isFinite(v)? (dec!=null? v.toFixed(dec): (unit==='%'? v.toFixed(2): num(v))) : '';
@@ -773,10 +773,13 @@ async function downloadPDF(){
     const pdf = new jsPDF('p','mm','a4');
     const pw=210, ph=297, margin=5;
     const availW=pw-margin*2, availH=ph-margin*2;
-    let w=availW, h=availW*canvas.height/canvas.width;   // 幅優先（A4幅いっぱい）
-    if(h>availH){ h=availH; w=availH*canvas.width/canvas.height; }  // はみ出すなら1ページに収める
-    const y = h<availH ? margin + (availH-h)/2 : margin;  // 余白は上下中央に
-    pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2,y,w,h);
+    const natAspect = canvas.height/canvas.width;
+    let w=availW, h=availW*natAspect;                 // まずA4幅いっぱい
+    // A4の高さにも合わせて縦を伸縮し、A4全面に広げる（歪みは±13%程度に制限）
+    const vScale = Math.max(0.87, Math.min(1.15, availH/h));
+    h = h*vScale;
+    if(h>availH){ const k=availH/h; h=availH; w=w*k; } // それでも縦が余る超大型のみ幅を少し縮小
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG',(pw-w)/2, margin+(availH-h)/2, w, h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
     const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
     const url = URL.createObjectURL(pdf.output('blob'));
