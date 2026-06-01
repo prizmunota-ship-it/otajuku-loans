@@ -280,7 +280,7 @@ function calc(){
 }
 function pmt(principal, ratePct, years){
   if(principal<=0||years<=0) return 0;
-  const rate = ratePct>1 ? ratePct/100 : ratePct;  // Excelと同じ: >1なら%とみなす
+  const rate = ratePct/100;  // 金利欄は%入力（5.95→0.0595, 1→0.01）
   const r = rate/12, nn=years*12;
   if(r===0) return principal/nn;
   return principal*r*Math.pow(1+r,nn)/(Math.pow(1+r,nn)-1);
@@ -552,8 +552,7 @@ function renderResult(){
   // 家賃収入内訳
   h += rentTable('【家賃収入内訳】', rentDataRows, 'rent', R.month);
   // 返済計画
-  const rr = c.rate>1? c.rate/100 : c.rate;
-  const joken = n(S.rate)? '変動'+(rr*100).toFixed(2)+'%':'';
+  const joken = n(S.rate)? '変動'+c.rate.toFixed(2)+'%':'';
   const kikan = n(S.years)? '銀行融資'+toHalf(S.years)+'年':'';
   h += `<div class="sec"><div class="sec-h">【返済計画】</div><table class="t">
     <tr><th>融資期間</th><th>融資条件</th><th>月間返済額</th><th style="width:24px"></th></tr>
