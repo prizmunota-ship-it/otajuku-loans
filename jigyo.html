@@ -52,6 +52,9 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 .rent-row .fval{padding:9px 8px;font-size:13px;}
 .resi-box{display:flex;align-items:center;justify-content:center;}
 .resi-box input{width:20px;height:20px;accent-color:#1a1a1a;cursor:pointer;}
+.run-head{display:grid;grid-template-columns:1.6fr 1fr;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;}
+.run-row{display:grid;grid-template-columns:1.6fr 1fr;gap:6px;margin-bottom:6px;}
+.run-row .fval{padding:9px 10px;font-size:13px;}
 
 .seg{display:flex;gap:0;background:#F0EEE8;border-radius:10px;padding:3px;margin-bottom:12px;}
 .seg-btn{flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:700;color:#888;border-radius:8px;cursor:pointer;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;}
@@ -209,7 +212,8 @@ const blank = {
   kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
   chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
   loan:'', years:'', rate:'', bankName:'',
-  junkai:'', net:'', atamakin:''
+  junkai:'', net:'', atamakin:'',
+  runs:[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]  // その他ランニング(手持ち用のみ反映)
 };
 // 雛形（例）：初めて開いた人が入力例を見られるよう、サンプル物件を入れておく
 const SAMPLE = {
@@ -222,7 +226,8 @@ const SAMPLE = {
   kotoze:'400000', bankfee:'50000', iten:'500000', teito:'800000', shihoshoshi:'100000', inshi:'50000',
   chukai:'', chukai_auto:true, fire1:'150000', shutoku:'', shutoku_auto:true, shusshi:'',
   loan:'8000', years:'23', rate:'3.30', bankName:'（例）○○銀行 △△支店',
-  junkai:'8800', net:'25000', atamakin:'800'
+  junkai:'8800', net:'25000', atamakin:'800',
+  runs:[{name:'（例）エレベーター保守',amt:'15000'},{name:'',amt:''},{name:'',amt:''}]
 };
 let S = load();
 let view = 'standhold'; // 手持ち用 / 提出用
@@ -279,6 +284,10 @@ function calc(){
   c.pmtYear = c.pmt*12;
   // ランニング
   c.junkai=n(S.junkai); c.net=n(S.net);
+  // その他ランニング(追加枠・手持ち用のみ反映)。入力のある行だけ集計
+  c.extraRunList=[]; c.extraRun=0;
+  (S.runs||[]).forEach(r=>{ const a=n(r.amt), nm=String(r.name||'').trim(); if(a>0||nm){ c.extraRunList.push({name:nm||'その他', amt:a}); c.extraRun+=a; } });
+  c.extraRunYear=c.extraRun*12;
   return c;
 }
 function pmt(principal, ratePct, years){
@@ -292,13 +301,13 @@ function pmt(principal, ratePct, years){
 function scenario(c, mode, mRate, total){
   const month = mode==='real'? c.monthReal : c.monthR;
   const kanri = Math.round(month*mRate*1.1);       // 月管理料(税込)
-  const monthBalance = month - (c.pmt + kanri + c.junkai + c.net);
+  const monthBalance = month - (c.pmt + kanri + c.junkai + c.net + c.extraRun);
   const yearIncome = month*12;
   const yearKanri = kanri*12;
   const yearJunkai = c.junkai*12;
   const yearNet = c.net*12;
   const koteishisan = c.kotoze;                    // 固定資産税(年)=固都税
-  const yearBalance = yearIncome - (c.pmtYear + yearKanri + yearJunkai + yearNet + koteishisan);
+  const yearBalance = yearIncome - (c.pmtYear + yearKanri + yearJunkai + yearNet + koteishisan + c.extraRunYear);
   const yearBalanceMonth = yearBalance/12;
   const hyomen = c.jigyohi>0 ? yearIncome/c.jigyohi*100 : NaN;       // 表面利回り
   const noi = yearIncome - yearKanri - koteishisan - yearJunkai;     // NOI(ネット除外)
@@ -441,7 +450,15 @@ function renderInput(){
   // ランニング・自己資金
   h += `<div class="card"><div class="card-title"><span class="dot"></span>ランニング・自己資金</div>
     <div class="row2">${field('巡回清掃(月)','junkai',{type:'number',unit:'円'})}${field('ネット等(月)','net',{type:'number',unit:'円'})}</div>
-    ${field('頭金','atamakin',{type:'number',unit:'万円'})}
+    <div style="font-size:11px;color:#888;margin:10px 0 5px;">その他のランニングコスト（任意・最大3件 / <b>手持ち用のみ反映</b>）</div>
+    <div class="run-head"><div>項目名</div><div>月額(円)</div></div>`;
+  (S.runs||[]).forEach((r,i)=>{
+    h += `<div class="run-row">
+      <input class="fval" value="${esc(r.name)}" placeholder="例:エレベーター保守" oninput="setRun(${i},'name',this.value)">
+      <input class="fval" inputmode="decimal" value="${esc(r.amt)}" placeholder="円/月" oninput="setRunNum(${i},'amt',this)">
+    </div>`;
+  });
+  h += `${field('頭金','atamakin',{type:'number',unit:'万円'})}
     <div style="font-size:11px;color:#888;margin-top:6px;">※管理料は月家賃収入から自動計算（手持ち5% / 提出4%・税込）</div></div>`;
 
   document.getElementById('view-input').innerHTML = h;
@@ -562,13 +579,19 @@ function renderResult(){
   h += tr2N('月間収入', R.month);
   h += tr2N('月間借入支払', c.pmt);
   h += tr2N('月間管理料', R.kanri);
-  if(!hideRun){ h += tr2N('巡回清掃', c.junkai); h += tr2N('インターネット', c.net); }
+  if(!hideRun){
+    h += tr2N('巡回清掃', c.junkai); h += tr2N('インターネット', c.net);
+    c.extraRunList.forEach(r=>{ h += tr2N(esc(r.name), r.amt); });   // その他ランニング(手持ち用のみ)
+  }
   h += tr2N('月間収支合計', monthBal, true);
   h += tr2N('年間収入', R.yearIncome);
   h += tr2N('年間借入支払', c.pmtYear);
   h += tr2N('年間管理料', R.yearKanri);
   h += tr2N('固定資産税', R.koteishisan);
-  if(!hideRun){ h += tr2N('巡回清掃', R.yearJunkai); h += tr2N('インターネット', R.yearNet); }
+  if(!hideRun){
+    h += tr2N('巡回清掃', R.yearJunkai); h += tr2N('インターネット', R.yearNet);
+    c.extraRunList.forEach(r=>{ h += tr2N(esc(r.name), r.amt*12); });  // その他ランニング 年額(手持ち用のみ)
+  }
   h += tr2N('年間収支合計', yearBal, true);
   h += tr2N('月間収支合計', yearBal/12);
   h += tr2P('表面利回り', R.hyomen, '%');
@@ -639,6 +662,8 @@ function normEl(el){ const v=toHalf(el.value); if(v!==el.value){ const p=el.sele
 function setNum(k,el){ S[k]=normEl(el); save(); updateInputTotals(); }
 function setRentNum(i,k,el){ S.rents[i][k]=normEl(el); save(); updateInputTotals(); }
 function setResi(i,on){ S.rents[i].resi=on; save(); updateInputTotals(); }
+function setRun(i,k,v){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=v; save(); }
+function setRunNum(i,k,el){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=normEl(el); save(); }
 // 住所→用途地域の自動取得。(1)登録物件リスト[キー不要・即時] → (2)公式API[キー設定後]
 function setAddr(v){ S.addr=v; save(); scheduleYouto(); }
 let _youtoTimer=null;
