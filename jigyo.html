@@ -602,14 +602,14 @@ function renderResult(){
   h += tr2N('年間収支合計', yearBal, true);
   h += tr2N('月間収支合計', yearBal/12);
   h += tr2P('表面利回り', R.hyomen, '%');
-  h += `</table>`;
-  // NOI / FCR / DCR / 返済比率 は表の外に別枠で明記
+  h += `</table></div>`;
+  // NOI / FCR / DCR / 返済比率 は収支計画の枠の外に別枠で明記（表面利回りの下で区切る）
   h += `<div class="kpibox">
     ${kpiLine('NOI','=', isFinite(R.noi)? num(R.noi):'')}
     ${kpiLine('FCR','=', isFinite(R.fcr)? R.fcr.toFixed(2):'')}
     ${kpiLine('DCR','=', isFinite(R.dcr)? R.dcr.toFixed(2):'', '＞1.3')}
     ${kpiLine('返済比率','', isFinite(R.ratio)? Math.round(R.ratio)+' ％':'')}
-  </div></div>`;
+  </div>`;
   h += `</div>`; // xls-col 右
 
   h += `</div></div></div>`; // xls-cols / xls-paper / xls
