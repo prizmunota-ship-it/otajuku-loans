@@ -704,11 +704,11 @@ async function autoYouto(){
       const d=await r.json();
       if(d && d.youto){ applyYouto(d, d.source||'公式データ'); return; }
       // 座標は取れたが用途地域ポリゴンに該当なし（指定なし/非線引き区域 等）
-      setYoutoStatus('この住所は用途地域が自動取得できませんでした（指定なし・非線引き等の可能性）。下の一覧から手動で選択してください。','#C0392B');
+      setYoutoStatus('この住所は用途地域が自動取得できませんでした（指定なし・非線引き等の可能性）。上の一覧から手動で選択してください。','#C0392B');
       return;
     }
   }catch(e){}
-  setYoutoStatus('用途地域を自動取得できませんでした。下の一覧から手動で選択してください。','#C0392B');
+  setYoutoStatus('用途地域を自動取得できませんでした。上の一覧から手動で選択してください。','#C0392B');
 }
 function applyYouto(res, src){
   if(res.youto){
