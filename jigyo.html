@@ -284,7 +284,7 @@ function calc(){
   c.totalSubmit = c.jigyohi + c.shokeiSubmit;
   // 融資
   c.loan = man(S.loan); c.years=n(S.years); c.rate=n(S.rate);
-  c.atamakin = man(S.atamakin);
+  c.atamakin = Math.max(0, c.price - c.loan);  // 頭金=購入価格−融資額（自動）
   c.pmt = Math.round(pmt(c.loan, c.rate, c.years));   // 月返済（ExcelのC48=ROUND(PMT,0)と一致させる）
   c.pmtYear = c.pmt*12;
   // ランニング
@@ -466,8 +466,8 @@ function renderInput(){
       <input class="fval" inputmode="decimal" value="${esc(r.amt)}" placeholder="円/月" oninput="setRunNum(${i},'amt',this)">
     </div>`;
   });
-  h += `${field('頭金','atamakin',{type:'number',unit:'万円'})}
-    <div style="font-size:11px;color:#888;margin-top:6px;">※管理料は月家賃収入から自動計算（手持ち5% / 提出4%・税込）</div></div>`;
+  h += `<div class="line total" style="margin-top:6px;"><span class="lbl">頭金（購入価格−融資額・自動）</span><span class="val" id="t-atama">${yen(c.atamakin)}</span></div>
+    <div style="font-size:11px;color:#888;margin-top:6px;">※頭金は「購入価格−融資額」で自動計算されます<br>※管理料は月家賃収入から自動計算（手持ち5% / 提出4%・税込）</div></div>`;
 
   document.getElementById('view-input').innerHTML = h;
 }
@@ -731,6 +731,7 @@ function updateInputTotals(){
   set('t-shokei', yen(c.shokeiHold));
   set('t-shokei5', yen(c.shokeiSubmit));
   set('t-pmt', yen(c.pmt));
+  set('t-atama', yen(c.atamakin));
   // 自動計算ONの仲介手数料・取得税は、価格変更に合わせて常に最新表示にする
   if(S.chukai_auto){ set('chukai-note','自動: '+yen(c.chukai)); const ci=document.getElementById('f-chukai'); if(ci) ci.placeholder=yen(c.chukai)+'(自動)'; }
   if(S.shutoku_auto){ set('shutoku-note','自動: '+yen(c.shutoku)); const si=document.getElementById('f-shutoku'); if(si) si.placeholder=yen(c.shutoku)+'(自動)'; }
