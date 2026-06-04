@@ -216,7 +216,7 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 /* ============ 状態 ============ */
 const LS_KEY = 'jigyo_keikaku_v2';  // v2: 例を値→プレースホルダー化したため旧保存データをリセット
 const STRUCT_TAX = {'木造':0.015,'鉄骨造':0.02,'鉄筋コンクリート':0.025,'':0.03};
-const YOUTO_LIST = ['','第一種低層住居専用地域','第二種低層住居専用地域','第一種中高層住居専用地域','第二種中高層住居専用地域','第一種住居地域','第二種住居地域','準住居地域','田園住居地域','近隣商業地域','商業地域','準工業地域','工業地域','工業専用地域','指定なし（非線引き等）'];
+const YOUTO_LIST = ['','第一種低層住居専用地域','第二種低層住居専用地域','第一種中高層住居専用地域','第二種中高層住居専用地域','第一種住居地域','第二種住居地域','準住居地域','田園住居地域','近隣商業地域','商業地域','準工業地域','工業地域','工業専用地域','指定なし（非線引き等）','表示なし'];
 // 登録物件リスト（キー不要・即時自動入力）。match=住所の一部, youto/kenpei/yoseki を登録。
 // 例: {match:'博多区博多駅前1', youto:'商業地域', kenpei:80, yoseki:600}
 const YOUTO_DB = [
@@ -352,7 +352,10 @@ function field(label, key, opt={}){
 function youtoOptions(){
   let list = YOUTO_LIST.slice();
   if(S.youto && !list.includes(S.youto)) list.push(S.youto);
-  return list.map(x=>`<option value="${esc(x)}" ${x===S.youto?'selected':''}>${x||'選択'}</option>`).join('');
+  return list.map(x=>{
+    const label = x==='表示なし' ? '表示なし（計画書に載せない）' : (x||'選択');
+    return `<option value="${esc(x)}" ${x===S.youto?'selected':''}>${label}</option>`;
+  }).join('');
 }
 function selectF(label, key, opts){
   const v = S[key]??'';
@@ -513,7 +516,7 @@ function renderResult(){
   h += tr2('住所', esc(S.addr));
   h += tr2('敷地面積', n(S.land_area)? `${toHalf(S.land_area)}㎡ (${tsubo(S.land_area)}坪)`:'');
   h += tr2('築年月', builtText());
-  h += tr2('用途地域', esc(S.youto));
+  if(S.youto!=='表示なし') h += tr2('用途地域', esc(S.youto));  // 「表示なし」選択時は行ごと出さない
   h += tr2('建蔽率', n(S.kenpei)? toHalf(S.kenpei)+'%':'');
   h += tr2('容積率', n(S.yoseki)? toHalf(S.yoseki)+'%':'');
   h += tr2('構造・規模', (S.struct||'')+(S.scale?esc(S.scale):''));
