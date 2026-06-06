@@ -822,9 +822,9 @@ function closePdfOverlay(){
 }
 function printPdf(){
   if(!_pdfBlob){ toast('先にPDFを作成してください'); return; }
-  var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if(isMobile && navigator.share){
-    // iOS: Web Share APIでPDFファイルを共有シートに渡す → 「プリント」選択でAirPrint
+  var isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);   // iPhone等のみ共有シート。Androidはwindow.print()へ
+  if(isIOS && navigator.share){
+    // iOS: Web Share APIでPDFファイルを共有シートに渡す → 「プリント」選択でAirPrint（iPhoneの挙動は従来のまま）
     var file=new File([_pdfBlob], _pdfFname||'事業計画書.pdf', {type:'application/pdf'});
     var shareData={files:[file], title:'事業計画書'};
     var canShare=navigator.canShare ? navigator.canShare(shareData) : true;
@@ -837,7 +837,7 @@ function printPdf(){
       navigator.share({title:'事業計画書', url:location.href}).catch(function(){});
     }
   } else {
-    // PC: window.print() with visibility trick
+    // Android & PC: window.print()（印刷ダイアログを開く）with visibility trick
     var img=document.getElementById('pdfImg').src;
     var tgt=document.getElementById('pdf-print-target');
     tgt.querySelector('img').src=img; tgt.style.display='block';
