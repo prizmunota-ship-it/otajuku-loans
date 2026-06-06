@@ -836,8 +836,22 @@ function printPdf(){
       // ファイル共有非対応の旧iOS: URLを共有
       navigator.share({title:'事業計画書', url:location.href}).catch(function(){});
     }
+  } else if(/Android/i.test(navigator.userAgent)){
+    // Android: window.print()/共有が無反応の端末・アプリ内ブラウザが多い → PDFを直接ダウンロード保存
+    // （保存後、ファイル/PDFアプリから開けばどの環境でも印刷できる）
+    try{
+      var aurl=URL.createObjectURL(_pdfBlob);
+      var a=document.createElement('a');
+      a.href=aurl; a.download=_pdfFname||'事業計画書.pdf';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ try{a.remove();}catch(e){} URL.revokeObjectURL(aurl); }, 5000);
+      toast('PDFを保存しました。ファイルを開いて印刷してください');
+    }catch(e){
+      try{ window.open(URL.createObjectURL(_pdfBlob),'_blank'); }
+      catch(e2){ toast('保存できませんでした。Chromeで開いてお試しください'); }
+    }
   } else {
-    // Android & PC: window.print()（印刷ダイアログを開く）with visibility trick
+    // PC: window.print()（印刷ダイアログを開く）with visibility trick
     var img=document.getElementById('pdfImg').src;
     var tgt=document.getElementById('pdf-print-target');
     tgt.querySelector('img').src=img; tgt.style.display='block';
