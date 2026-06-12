@@ -793,7 +793,9 @@ async function downloadPDF(){
     const vScale = Math.max(0.87, Math.min(1.15, availH/h));
     h = h*vScale;
     if(h>availH){ const k=availH/h; h=availH; w=w*k; }
-    pdf.addImage(canvas.toDataURL('image/png'),'PNG',(pw-w)/2, margin+(availH-h)/2, w, h);
+    // 共有/保存用PDFの埋め込みは高品質JPEG（0.95）。PNGだと36MB級になりiPhoneの共有が不安定になるため軽量化。
+    // 画面プレビュー・PC印刷は下のimgDataUrl(PNG)を使うので画質・罫線は従来通り。
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',(pw-w)/2, margin+(availH-h)/2, w, h);
     const name = (view==='submit'?'金融機関提出用':'手持ち用');
     const fname = '事業計画書_'+((S.pname||'物件').replace(/[\\/:*?"<>|]/g,''))+'_'+name+'.pdf';
     const imgDataUrl = canvas.toDataURL('image/png');
