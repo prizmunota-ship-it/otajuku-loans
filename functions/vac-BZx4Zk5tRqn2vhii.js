@@ -17,6 +17,11 @@ header .upd{font-size:12px;color:var(--mut);margin-top:2px}
 .chip{background:#f1f5f9;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;color:#334155}
 .chip b{color:var(--ac);font-size:14px}
 .chip.bad b{color:#dc2626}
+.chip.tap{cursor:pointer;border:1px solid #cbd5e1}
+.chip.on{background:#2563eb;color:#fff;border-color:#2563eb}
+.chip.on b{color:#fff}
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:7px 11px;margin-bottom:4px;font-size:13px;font-weight:700;color:#1d4ed8}
+.fbar button{background:#fff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:7px;padding:4px 10px;font-size:12.5px;font-weight:700}
 .search{width:100%;margin-top:8px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:15px}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);margin-top:7px}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:3px}
@@ -58,6 +63,8 @@ header .upd{font-size:12px;color:var(--mut);margin-top:2px}
 .b.apply{background:#bbf7d0;color:#166534}
 .b.days{background:#f1f5f9;color:#475569}
 .b.days.lt{background:#fee2e2;color:#b91c1c}
+.b.set{background:#ede9fe;color:#6d28d9}
+.b.col{background:#fce7f3;color:#be185d}
 .r2{font-size:13px;color:#334155;margin-top:5px;display:flex;flex-wrap:wrap;gap:3px 12px}
 .r2 .yen{font-weight:700}
 .r2 .ad{color:#0369a1;font-weight:600}
@@ -86,6 +93,14 @@ const VJ={};R.forEach(r=>{if(r.broker||String(r.go).startsWith('P'))return;const
 const KR={};M.forEach(m=>{const tj=m.total_ju||0,v=VJ[m.name]||0;KR[m.name]=tj?Math.round((tj-v)/tj*100):100});
 const OPEN={};   // 物件名→展開状態
 let ALLOPEN=false;
+let FILTER=null; // null / 'needset' / 'gas' / 'collect'（チップでフィルタ）
+const isP=r=>String(r.go).startsWith('P');
+const FILT={
+ needset:{label:'要ｾｯﾄ設置',fn:r=>!isP(r)&&r.naiso==='完了'&&(r.set6!=='完'||r.set3!=='完')&&!r.broker},
+ gas:{label:'ガスコンロ未',fn:r=>!isP(r)&&r.gas==='未'},
+ collect:{label:'セット回収',fn:r=>!isP(r)&&r.broker&&r.set6==='完'},
+};
+function setFilter(k){FILTER=(FILTER===k?null:k);summary();render();window.scrollTo(0,0)}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function summary(){
  const U=R.filter(r=>!String(r.go).startsWith('P'));
@@ -95,12 +110,13 @@ function summary(){
  const setcol=U.filter(r=>r.broker&&r.set6==='完').length;
  let tj=0,tv=0;M.forEach(m=>{tj+=m.total_ju||0;tv+=VJ[m.name]||0});
  const occ=tj?((tj-tv)/tj*100):0;
+ const on=k=>FILTER===k?' on':'';
  document.getElementById('chips').innerHTML=
   '<span class="chip">空室 <b>'+vac+'</b> 戸</span>'+
   '<span class="chip'+(occ<90?' bad':'')+'">稼働 <b>'+occ.toFixed(1)+'</b>％</span>'+
-  '<span class="chip">要ｾｯﾄ設置 <b>'+needset+'</b></span>'+
-  '<span class="chip">ガスコンロ未 <b>'+gasmi+'</b></span>'+
-  '<span class="chip">セット回収 <b>'+setcol+'</b></span>';
+  '<span class="chip tap'+on('needset')+'" onclick="setFilter(\\'needset\\')">要ｾｯﾄ設置 <b>'+needset+'</b></span>'+
+  '<span class="chip tap'+on('gas')+'" onclick="setFilter(\\'gas\\')">ガスコンロ未 <b>'+gasmi+'</b></span>'+
+  '<span class="chip tap'+on('collect')+'" onclick="setFilter(\\'collect\\')">セット回収 <b>'+setcol+'</b></span>';
 }
 function naisoBadge(s){
  const map={'完了':['done','完了'],'内装中':['work','内装中'],'未内装':['none','未内装'],'空予定':['soon','空予定']};
@@ -117,6 +133,10 @@ function roomCard(r){
   if(r.broker)badges+='<span class="b apply">申込中'+(r.nyukyo?'・'+r.nyukyo+'入居':'')+'</span>';
   else if(r.markstate==='cancel_new'||(typeof r.days==='number'&&r.days<0))badges+='<span class="b soon">退去予定'+(r.taikyo&&r.taikyo!=='-'?'・'+r.taikyo:'')+'</span>';
   if(typeof r.days==='number'&&!r.broker)badges+='<span class="b days'+(r.days>=60?' lt':'')+'">空室'+r.days+'日</span>';
+  if(!r.broker&&r.naiso==='完了'&&r.set6!=='完')badges+='<span class="b set">6点未</span>';
+  if(!r.broker&&r.naiso==='完了'&&r.set3!=='完')badges+='<span class="b set">3点未</span>';
+  if(r.gas==='未')badges+='<span class="b set">ガス未</span>';
+  if(r.broker&&r.set6==='完')badges+='<span class="b col">セット回収</span>';
  }
  let r2='';
  if(!park){
@@ -131,14 +151,20 @@ function roomCard(r){
  return '<div class="room '+mk+'"><div class="r1"><div class="go'+(park?' park':'')+'">'+esc(r.go)+'</div><div class="badges">'+badges+'</div></div>'+r2+rkey+memo+tanto+'</div>';
 }
 function render(){
+ const flt=FILTER?FILT[FILTER]:null;
+ document.getElementById('exall').style.display=flt?'none':'';
  const order=[],g={};
- R.forEach(r=>{if(!g[r.prop]){g[r.prop]=[];order.push(r.prop)}g[r.prop].push(r)});
+ R.forEach(r=>{if(flt&&!flt.fn(r))return;if(!g[r.prop]){g[r.prop]=[];order.push(r.prop)}g[r.prop].push(r)});
  const list=document.getElementById('list');
- if(!order.length){list.innerHTML='<div class="empty">該当する部屋がありません</div>';return}
  let html='';
+ if(flt){
+  let n=0;order.forEach(p=>n+=g[p].length);
+  html+='<div class="fbar"><span>'+flt.label+'　該当 '+n+'室</span><button onclick="setFilter(\\''+FILTER+'\\')">✕ 解除</button></div>';
+ }
+ if(!order.length){list.innerHTML=html+'<div class="empty">該当する部屋はありません</div>';return}
  order.forEach(prop=>{
   const rooms=g[prop],any=rooms[0];
-  const open=!!OPEN[prop];
+  const open=flt?true:!!OPEN[prop];
   const kr=KR[any.kado_key||prop];
   const nm=String(prop).replace(/^プライマリー/,'');
   const ju=rooms.filter(x=>!String(x.go).startsWith('P'));
@@ -146,8 +172,10 @@ function render(){
   const vac=ju.filter(x=>!x.broker).length, apl=ju.filter(x=>x.broker).length;
   const pvac=park.filter(x=>!x.broker).length;
   const toi=ju.length?ju[0].toi:'',nai=ju.length?ju[0].nai:'';
-  let cnt=[];if(vac)cnt.push('空室 '+vac);if(apl)cnt.push('<span class="ap">申込 '+apl+'</span>');if(pvac)cnt.push('駐車 '+pvac+'空');
-  const react=(toi!==''||nai!=='')?'<span class="react">　今週 問合 '+(toi||0)+'・内見 '+(nai||0)+'</span>':'';
+  let cnt=[];
+  if(flt){cnt.push('該当 '+rooms.length+'室');}
+  else{if(vac)cnt.push('空室 '+vac);if(apl)cnt.push('<span class="ap">申込 '+apl+'</span>');if(pvac)cnt.push('駐車 '+pvac+'空');}
+  const react=(!flt&&(toi!==''||nai!==''))?'<span class="react">　今週 問合 '+(toi||0)+'・内見 '+(nai||0)+'</span>':'';
   const krHtml=kr!=null?'<span class="kr'+(kr<90?' lo':'')+'">稼働 '+kr+'％</span>':'';
   html+='<div class="pcard'+(open?' open':'')+'" id="pc-'+esc(prop)+'">'
    +'<div class="phead" onclick="tog(this)">'
