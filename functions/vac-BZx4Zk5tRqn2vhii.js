@@ -9,39 +9,34 @@ const HTML = `<!doctype html>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--ink:#0f172a;--mut:#64748b;--line:#e5e8ee;--ac:#2563eb}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;font-size:15px;line-height:1.45;padding-bottom:40px}
-header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 14px}
-header h1{margin:0;font-size:17px;display:flex;align-items:center;gap:6px}
-header .upd{font-size:12px;color:var(--mut);margin-top:2px}
-.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
-.chip{background:#f1f5f9;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;color:#334155}
-.chip b{color:var(--ac);font-size:14px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;font-size:18px;line-height:1.5;padding-bottom:40px}
+header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:11px 14px}
+header h1{margin:0;font-size:21px;display:flex;align-items:center;gap:6px}
+header .upd{font-size:14px;color:var(--mut);margin-top:3px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{background:#f1f5f9;border-radius:999px;padding:5px 13px;font-size:15.5px;font-weight:600;color:#334155}
+.chip b{color:var(--ac);font-size:17.5px}
 .chip.bad b{color:#dc2626}
 .chip.tap{cursor:pointer;border:1px solid #cbd5e1}
 .chip.on{background:#2563eb;color:#fff;border-color:#2563eb}
 .chip.on b{color:#fff}
-.fbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:7px 11px;margin-bottom:4px;font-size:13px;font-weight:700;color:#1d4ed8}
-.fbar button{background:#fff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:7px;padding:4px 10px;font-size:12.5px;font-weight:700}
-.search{width:100%;margin-top:8px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:15px}
-.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);margin-top:7px}
-.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:3px}
-.an{background:#d8f5a2}.yl{background:#fff3bf}.cn{background:#ffa8a8}
+.fbar{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:9px 13px;margin-bottom:4px;font-size:16.5px;font-weight:700;color:#1d4ed8}
+.fbar button{background:#fff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:7px;padding:6px 13px;font-size:15px;font-weight:700}
 .wrap{padding:10px 12px}
-.exall{font-size:12px;color:var(--ac);font-weight:600;background:none;border:0;padding:4px 2px;margin-bottom:2px}
+.exall{font-size:15px;color:var(--ac);font-weight:600;background:none;border:0;padding:6px 2px;margin-bottom:2px}
 /* ===== 物件アコーディオン ===== */
 .pcard{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:9px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
 .phead{cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;background:linear-gradient(to right,#fafbfc,#fff)}
 .phead .pmain{flex:1;min-width:0}
 .pnrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.pn{font-weight:700;font-size:16px}
-.kr{font-size:12.5px;font-weight:700;color:#334155;white-space:nowrap}
+.pn{font-weight:700;font-size:19.5px}
+.kr{font-size:15px;font-weight:700;color:#334155;white-space:nowrap}
 .kr.lo{color:#dc2626}
-.pa{font-size:11.5px;color:var(--mut);margin-top:1px}
-.pcount{font-size:12px;color:#475569;margin-top:3px;font-weight:600}
+.pa{font-size:13.5px;color:var(--mut);margin-top:2px}
+.pcount{font-size:14.5px;color:#475569;margin-top:4px;font-weight:600}
 .pcount .ap{color:#166534}
 .pcount .react{color:var(--mut);font-weight:500}
-.pkey{font-size:12px;margin-top:4px;color:#1d4ed8;font-weight:600;background:#eff6ff;border:1px solid #dbeafe;border-radius:7px;padding:3px 8px;display:inline-block;line-height:1.35}
-.chev{flex:none;width:20px;height:20px;color:#94a3b8;transition:transform .3s}
+.chev{flex:none;width:24px;height:24px;color:#94a3b8;transition:transform .3s}
 .pcard.open .chev{transform:rotate(180deg)}
 .pbody{max-height:0;overflow:hidden;transition:max-height .35s ease}
 .pcard.open .pbody{max-height:8000px}
@@ -52,10 +47,10 @@ header .upd{font-size:12px;color:var(--mut);margin-top:2px}
 .room.mk{background:#fffbe9;border-color:#f3e4a3}
 .room.mk-cn{background:#fff0f0;border-color:#f3b6b6}
 .r1{display:flex;align-items:center;gap:9px}
-.go{font-size:18px;font-weight:800;min-width:46px}
-.go.park{font-size:15px;font-weight:700;color:#475569}
-.badges{display:flex;gap:5px;flex-wrap:wrap;flex:1}
-.b{font-size:11.5px;font-weight:700;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.go{font-size:23px;font-weight:800;min-width:52px}
+.go.park{font-size:18px;font-weight:700;color:#475569}
+.badges{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.b{font-size:14px;font-weight:700;border-radius:6px;padding:3px 9px;white-space:nowrap}
 .b.done{background:#e2e8f0;color:#475569}
 .b.work{background:#dbeafe;color:#1d4ed8}
 .b.none{background:#fde68a;color:#92400e}
@@ -65,14 +60,14 @@ header .upd{font-size:12px;color:var(--mut);margin-top:2px}
 .b.days.lt{background:#fee2e2;color:#b91c1c}
 .b.set{background:#ede9fe;color:#6d28d9}
 .b.col{background:#fce7f3;color:#be185d}
-.r2{font-size:13px;color:#334155;margin-top:5px;display:flex;flex-wrap:wrap;gap:3px 12px}
+.r2{font-size:16px;color:#334155;margin-top:6px;display:flex;flex-wrap:wrap;gap:3px 12px}
 .r2 .yen{font-weight:700}
 .r2 .ad{color:#0369a1;font-weight:600}
-.rkey{font-size:12.5px;color:#1d4ed8;font-weight:600;margin-top:5px}
-.memo{font-size:12.5px;color:#475569;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}
+.rkey{font-size:15px;color:#1d4ed8;font-weight:600;margin-top:6px}
+.memo{font-size:15px;color:#475569;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
 .memo b{color:#b45309}
-.empty{color:var(--mut);text-align:center;padding:30px}
-footer{text-align:center;color:var(--mut);font-size:11px;margin-top:24px}
+.empty{color:var(--mut);text-align:center;padding:30px;font-size:16px}
+footer{text-align:center;color:var(--mut);font-size:13px;margin-top:24px}
 </style></head>
 <body>
 <header>
