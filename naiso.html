@@ -21,7 +21,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 .ubtn{flex-shrink:0;border:1.5px solid #DDD;background:#fff;border-radius:24px;padding:6px 14px;font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;color:#666;font-weight:500;}
 .ubtn.active{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
 
-.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:#fff;border-bottom:1px solid #E8E6E0;}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:#fff;border-bottom:1px solid #E8E6E0;}
 .sbox{padding:10px 0;text-align:center;border-right:1px solid #E8E6E0;}
 .sbox:last-child{border-right:none;}
 .sval{font-size:22px;font-weight:700;}
@@ -189,12 +189,11 @@ function renderSummary(){
     <div class="sbox s-naiso"><div class="sval">${c['内装中']}</div><div class="slbl">内装中</div></div>
     <div class="sbox s-mi"><div class="sval">${c['未内装']}</div><div class="slbl">未内装</div></div>
     <div class="sbox s-yotei"><div class="sval">${c['空予定']}</div><div class="slbl">空予定</div></div>
-    <div class="sbox s-done"><div class="sval">${c['完了']}</div><div class="slbl">完了</div></div>
   `;
 }
 
 function renderFilters(){
-  const fs=[{id:'all',label:'すべて'},...STATUSES.map(s=>({id:s,label:s}))];
+  const fs=[{id:'all',label:'すべて'},...STATUSES.filter(s=>s!=='完了').map(s=>({id:s,label:s}))];
   document.getElementById('filters').innerHTML = fs.map(f=>
     `<div class="chip ${currentFilter===f.id?'active':''}" onclick="setFilter('${f.id}')">${f.label}</div>`
   ).join('');
