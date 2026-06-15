@@ -147,6 +147,8 @@ const SEED=[
   {c:0,n:'スリッパ',u:'組',q:0,r:6},
   {c:0,n:'玄関マット',u:'枚',q:0,r:3},
   {c:0,n:'芳香剤（消臭力 エアリーブーケ）',u:'個',q:0,r:5},
+  {c:0,n:'POP（ラミネート済）',u:'式',q:0,r:1},
+  {c:0,n:'ラミネートフィルム',u:'箱',q:0,r:1},
   {c:0,n:'レースカーテン',u:'枚',q:0,r:6},
   {c:0,n:'シーリングライト（LEDリモコン付）',u:'台',q:0,r:3},
   // 3点セット 部材
@@ -171,7 +173,17 @@ let data=[];
 let editIdx=null;
 
 function load(){
-  try{ const s=localStorage.getItem(LS_KEY); if(s){ const o=JSON.parse(s); data=o.items; window._updated=o.updated; return; } }catch(e){}
+  try{
+    const s=localStorage.getItem(LS_KEY);
+    if(s){
+      const o=JSON.parse(s); data=o.items||[]; window._updated=o.updated;
+      // SEEDに増えた項目(名前未登録)を在庫数を消さずに追加マージ
+      const names=new Set(data.map(d=>d.name)); let added=false;
+      SEED.forEach(x=>{ if(!names.has(x.n)){ data.push({id:nextId(),cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}); added=true; } });
+      if(added) save(false);
+      return;
+    }
+  }catch(e){}
   data=SEED.map((x,i)=>({id:i+1,cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}));
   save(false);
 }

@@ -2,61 +2,58 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>9点セット 施工仕様書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-  @page { size: A4 portrait; margin: 13mm 13mm 15mm; }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; color:#1b1b1b; font-size:10.5pt; line-height:1.6; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Noto Sans JP',sans-serif; color:#1a1a1a; font-size:14px; line-height:1.65; background:#F5F4F0; }
+  .page { max-width:760px; margin:0 auto; padding:0 14px 40px; }
 
-  .webnav { display:flex; gap:8px; padding:9px 12px; margin-bottom:14px; background:#15293d; border-radius:10px; }
-  .webnav a { flex:1; text-align:center; color:#fff; text-decoration:none; font-size:12px; font-weight:700; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.28); border-radius:9px; padding:9px 4px; }
+  .webnav { display:flex; gap:8px; padding:11px 12px; margin-bottom:14px; background:#15293d; border-radius:0 0 12px 12px; position:sticky; top:0; z-index:50; }
+  .webnav a { flex:1; text-align:center; color:#fff; text-decoration:none; font-size:13px; font-weight:700; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.28); border-radius:10px; padding:10px 4px; }
   .webnav a:active { background:rgba(255,255,255,.28); }
-  @media print { .webnav { display:none !important; } }
-  @media screen { body { max-width:780px; margin:0 auto; padding:14px; background:#fafafa; } }
 
-  .head { border-bottom:3px solid #1a3a5c; padding-bottom:10px; margin-bottom:13px; }
-  .doctype { font-size:10pt; color:#1a3a5c; font-weight:700; letter-spacing:.18em; }
-  h1 { font-size:18.5pt; font-weight:800; color:#15293d; margin:3px 0 2px; letter-spacing:.02em; }
-  .sub { font-size:10pt; color:#555; }
+  .head { border-bottom:3px solid #15293d; padding-bottom:11px; margin-bottom:14px; }
+  h1 { font-size:23px; font-weight:800; color:#15293d; letter-spacing:.02em; }
 
-  .meta { display:flex; border:1px solid #cdd6df; border-radius:6px; overflow:hidden; margin-bottom:13px; }
-  .meta .cell { flex:1; padding:7px 12px; font-size:9.5pt; border-right:1px solid #e3e8ee; }
-  .meta .cell:last-child { border-right:none; }
-  .meta .lbl { color:#7a8a99; font-size:8pt; display:block; margin-bottom:1px; letter-spacing:.08em; }
-  .meta .val { font-weight:700; color:#15293d; }
+  .meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .meta .cell { flex:1; min-width:150px; border:1px solid #d7dee6; border-radius:8px; padding:8px 12px; background:#fff; }
+  .meta .lbl { color:#7a8a99; font-size:11px; font-weight:700; display:block; }
+  .meta .val { font-weight:700; color:#15293d; font-size:14px; }
 
-  .lead { background:#f3f7fb; border-left:4px solid #1a3a5c; padding:9px 13px; border-radius:0 6px 6px 0; margin-bottom:12px; font-size:9.6pt; }
-  .lead b { color:#15293d; }
+  .common { background:#fffaf0; border:1px solid #f0dca8; border-radius:10px; padding:12px 15px; margin-bottom:16px; font-size:13.5px; }
+  .common .ch { font-weight:800; color:#9a6a00; margin-bottom:5px; font-size:15px; }
+  .common ul { margin:0 0 0 18px; }
+  .common li { margin:3px 0; }
 
-  .common { background:#fffaf0; border:1px solid #f0dca8; border-radius:7px; padding:9px 13px; margin-bottom:15px; font-size:9.3pt; }
-  .common .ch { font-weight:800; color:#9a6a00; margin-bottom:3px; font-size:9.6pt; }
-  .common ul { margin:0 0 0 17px; }
-
-  .item { border:1px solid #d7dee6; border-radius:8px; margin-bottom:11px; overflow:hidden; page-break-inside:avoid; }
-  .item-h { background:#15293d; color:#fff; padding:7px 13px; display:flex; align-items:center; gap:10px; }
-  .item-h .no { background:#fff; color:#15293d; font-weight:800; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11pt; flex-shrink:0; }
-  .item-h .ttl { font-size:12.5pt; font-weight:800; letter-spacing:.02em; }
-  .item-h .tag { margin-left:auto; font-size:8pt; background:#3f7cae; padding:2px 9px; border-radius:11px; font-weight:600; }
-  .item-b { padding:9px 14px 11px; }
-  .row { display:flex; gap:10px; padding:3px 0; }
-  .row .k { width:90px; flex-shrink:0; color:#1a3a5c; font-weight:700; font-size:9.3pt; }
-  .row .v { flex:1; }
+  .item { border:1px solid #d7dee6; border-radius:12px; margin-bottom:13px; overflow:hidden; background:#fff; }
+  .item-h { background:#15293d; color:#fff; padding:10px 15px; display:flex; align-items:center; gap:11px; }
+  .item-h .no { background:#fff; color:#15293d; font-weight:800; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .item-h .ttl { font-size:17px; font-weight:800; letter-spacing:.02em; }
+  .item-h .tag { margin-left:auto; font-size:11px; background:#3f7cae; padding:3px 11px; border-radius:12px; font-weight:600; }
+  .item-b { padding:12px 16px 14px; }
+  .row { display:flex; gap:12px; padding:5px 0; }
+  .row .k { width:84px; flex-shrink:0; color:#1a3a5c; font-weight:700; font-size:13.5px; }
+  .row .v { flex:1; font-size:14px; }
   .row + .row { border-top:1px dashed #e6ebf0; }
-  .v .note { color:#b3261e; font-weight:600; }
-  ul { margin:0 0 0 17px; } li { margin:1px 0; }
+  .v .note { color:#c0392b; font-weight:700; }
+  ul { margin:0 0 0 18px; } li { margin:2px 0; }
 
-  .photos { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-  .ph { width:150px; }
-  .ph img { width:100%; height:118px; object-fit:cover; border-radius:6px; border:1.5px solid #d7dee6; display:block; }
+  .photos { display:flex; gap:9px; margin-top:12px; flex-wrap:wrap; }
+  .ph { width:150px; flex:0 0 auto; }
+  .ph img { width:100%; height:124px; object-fit:cover; border-radius:8px; border:2px solid #d7dee6; display:block; }
   .ph.ng img { border-color:#e0a8a0; }
-  .ph.ok img { border-color:#9fcfb0; }
-  .ph .cap { font-size:8.2pt; color:#566; text-align:center; margin-top:3px; line-height:1.3; }
-  .ph .cap.ng { color:#b3261e; font-weight:700; }
-  .ph .cap.ok { color:#155b2e; font-weight:700; }
-  .arrow { display:flex; align-items:center; font-size:20pt; color:#3f7cae; font-weight:800; }
+  .ph.ok img { border-color:#7bbf95; }
+  .ph .cap { font-size:11.5px; color:#566; text-align:center; margin-top:4px; line-height:1.35; font-weight:500; }
+  .ph .cap.ng { color:#c0392b; font-weight:700; }
+  .ph .cap.ok { color:#157a3a; font-weight:700; }
+  .arrow { display:flex; align-items:center; font-size:26px; color:#3f7cae; font-weight:800; }
 
-  .foot { margin-top:6px; border-top:1.5px solid #cdd6df; padding-top:9px; font-size:8.7pt; color:#566; display:flex; justify-content:space-between; align-items:flex-end; }
-  .foot .co { font-weight:700; color:#15293d; font-size:9.5pt; }
-  .stamp { font-size:8pt; color:#7a8a99; }
+  .foot { margin-top:10px; border-top:1.5px solid #cdd6df; padding-top:11px; font-size:12px; color:#566; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:6px; }
+  .foot .co { font-weight:700; color:#15293d; font-size:14px; }
 </style>
 </head>
 <body>
@@ -64,24 +61,18 @@
 <div class="webnav">
   <a href="zaiko.html">🧰 在庫表</a>
   <a href="naiso.html">🗂 内装状況表</a>
-  <a href="kurume_naiso_shiyo.pdf">⬇ PDFで保存</a>
 </div>
 
+<div class="page">
+
 <div class="head">
-  <div class="doctype">内装工事 仕様書</div>
-  <h1>9点セット 工事・交換 施工仕様書</h1>
-  <div class="sub">原状回復・退去後リフォームにおける標準仕様（工事／部材交換 5項目）</div>
+  <h1>9点セット 施工仕様書</h1>
 </div>
 
 <div class="meta">
   <div class="cell"><span class="lbl">発注</span><span class="val">株式会社プライズムン　太田 圭一</span></div>
   <div class="cell"><span class="lbl">施工</span><span class="val">リプラル　本村 様</span></div>
-  <div class="cell"><span class="lbl">対象エリア</span><span class="val">久留米エリア（プライマリーシリーズ）</span></div>
-</div>
-
-<div class="lead">
-  本仕様書は当社「9点セット設置マニュアル（Ver2.1）」のうち、<b>内装工事として施工をお願いする「工事・交換系5項目」</b>を抜粋・標準化したものです。
-  スリッパ・芳香剤・POP・ウェルカムバスケット等の演出・備品設置は当社にて対応します。
+  <div class="cell"><span class="lbl">対象エリア</span><span class="val">久留米エリア</span></div>
 </div>
 
 <div class="common">
@@ -90,26 +81,67 @@
     <li><b>部材・備品の支給</b>：使用する部材・備品は<b>当社（久留米倉庫：プライマリー合川B棟101号室）にて準備・支給</b>します。買い出しは不要です。不足時は事前にご連絡ください。</li>
     <li><b>対象部屋</b>：内装状況管理アプリ（内装表）に記載の各部屋。部屋ごとに指示します。</li>
     <li><b>施工報告</b>：各項目とも<b>施工前・施工後の写真</b>を撮影し、内装アプリ／LINEにてご報告ください。</li>
-    <li><b>仕上がり基準</b>：内見者・入居者の印象を最優先。寸法・色・サイズの不一致がないようご確認ください。</li>
   </ul>
 </div>
 
 <div class="item">
-  <div class="item-h"><span class="no">1</span><span class="ttl">シーリングライト 設置</span><span class="tag">設置</span></div>
+  <div class="item-h"><span class="no">1</span><span class="ttl">スリッパ・玄関マット 設置</span><span class="tag">設置</span></div>
   <div class="item-b">
-    <div class="row"><div class="k">仕様</div><div class="v">全居室に <b>LEDリモコン付きシーリングライト</b> を設置。</div></div>
-    <div class="row"><div class="k">施工ポイント</div><div class="v">居室の広さに合った明るさ（適合畳数）を選定。リモコン・電池の動作確認まで行う。</div></div>
+    <div class="row"><div class="k">スリッパ</div><div class="v">玄関に<b>2組</b>（2DK以上の物件は3組）設置。<span class="note">100均のスリッパはNG（安っぽさを避ける）。</span></div></div>
+    <div class="row"><div class="k">玄関マット</div><div class="v"><b>剥がせる両面テープ</b>で固定し、ずれないようにする。</div></div>
+    <div class="row"><div class="k">季節交換</div><div class="v">4〜9月は夏用／10〜3月は冬用に交換。</div></div>
     <div class="photos">
-      <div class="ph"><img src="spec_img/sealing.jpg"><div class="cap">LEDリモコン付きシーリングライト（参考）</div></div>
+      <div class="ph"><img src="spec_img/slipper_mat.jpg"><div class="cap">玄関の設置例</div></div>
     </div>
   </div>
 </div>
 
 <div class="item">
-  <div class="item-h"><span class="no">2</span><span class="ttl">カーテンレース 設置</span><span class="tag">設置</span></div>
+  <div class="item-h"><span class="no">2</span><span class="ttl">芳香剤 設置</span><span class="tag">設置</span></div>
   <div class="item-b">
-    <div class="row"><div class="k">仕様</div><div class="v">カーテンレールがある<b>全ての窓</b>にレースカーテンを設置。</div></div>
-    <div class="row"><div class="k">目的</div><div class="v">特に古い物件の<b>サッシ廻りを隠す</b>こと。</div></div>
+    <div class="row"><div class="k">仕様</div><div class="v"><b>玄関付近</b>に設置。玄関を開けた瞬間に良い香りがするように。おすすめは消臭力「<b>エアリーブーケ</b>」。</div></div>
+    <div class="row"><div class="k">設置ポイント</div><div class="v">ラベルを全て剥がし、<b>なるべく見えない場所</b>に設置。<span class="note">扉の中は香りが弱まるためNG。</span></div></div>
+    <div class="photos">
+      <div class="ph"><img src="spec_img/aroma.jpg"><div class="cap">消臭力 エアリーブーケ</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">3</span><span class="ttl">POP 設置</span><span class="tag">設置</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">仕様</div><div class="v">各所に<b>ラミネートしたPOP</b>を設置（必ずラミネート）。設備に応じて該当するPOPを掲示。</div></div>
+    <div class="row"><div class="k">設置例</div><div class="v">
+      <ul>
+        <li><b>玄関</b>：クリーニング完了／シーリング・レースカーテンプレゼント</li>
+        <li><b>浴室</b>：浴槽900mm以下＝広く見せる案内／追炊あり案内</li>
+        <li><b>脱衣所</b>：シャンプードレッサー＝朝シャンPOP</li>
+        <li><b>キッチン</b>：ミニキッチン＝十分料理できる案内</li>
+        <li><b>居室</b>：エアコン／TVモニターホン／ネット無料／ロフト／和室／新品設備アピール</li>
+      </ul>
+    </div></div>
+    <div class="photos">
+      <div class="ph"><img src="spec_img/pop1.jpg"><div class="cap">POP設置例（玄関）</div></div>
+      <div class="ph"><img src="spec_img/pop2.jpg"><div class="cap">POP設置例（キッチン）</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">4</span><span class="ttl">シーリングライト 設置</span><span class="tag">設置</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">仕様</div><div class="v">全居室に <b>LEDリモコン付きシーリングライト</b> を設置。</div></div>
+    <div class="row"><div class="k">ポイント</div><div class="v">居室の広さに合った明るさ（適合畳数）を選定。リモコン・電池の動作確認まで行う。</div></div>
+    <div class="photos">
+      <div class="ph"><img src="spec_img/sealing.jpg"><div class="cap">LEDリモコン付き（参考）</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">5</span><span class="ttl">カーテンレース 設置</span><span class="tag">設置</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">仕様</div><div class="v">カーテンレールがある<b>全ての窓</b>にレースカーテンを設置（古い物件のサッシ廻りを隠す）。</div></div>
     <div class="row"><div class="k">寸法基準</div><div class="v">
       <ul>
         <li>掃き出し窓：<b>床に着くか着かないか</b>が理想。寸足らず・床に余らせるのはNG。</li>
@@ -124,7 +156,7 @@
 </div>
 
 <div class="item">
-  <div class="item-h"><span class="no">3</span><span class="ttl">カーテンレール 交換</span><span class="tag">交換</span></div>
+  <div class="item-h"><span class="no">6</span><span class="ttl">カーテンレール 交換</span><span class="tag">交換</span></div>
   <div class="item-b">
     <div class="row"><div class="k">対象</div><div class="v">カーテンレールが<b>古い場合</b>（ステンレス製が多い）に取替。</div></div>
     <div class="row"><div class="k">仕様</div><div class="v"><b>白色カーテンレール（2m）</b>を基本使用。窓幅に合わせて選定し、白で統一して清潔感を出す。</div></div>
@@ -137,47 +169,39 @@
 </div>
 
 <div class="item">
-  <div class="item-h"><span class="no">4</span><span class="ttl">トイレットペーパーホルダー 交換</span><span class="tag">交換</span></div>
+  <div class="item-h"><span class="no">7</span><span class="ttl">トイレットペーパーホルダー 交換</span><span class="tag">交換</span></div>
   <div class="item-b">
-    <div class="row"><div class="k">仕様</div><div class="v">シングルタイプのホルダーを<b>棚（物置）付きホルダー</b>へ交換。</div></div>
-    <div class="row"><div class="k">タイプ別</div><div class="v">
-      <ul>
-        <li>ファミリー物件：<b>ダブルホルダー</b>を設置。</li>
-        <li>単身物件：ダブルホルダーの使用もおすすめ。</li>
-      </ul>
-    </div></div>
+    <div class="row"><div class="k">仕様</div><div class="v">シングルタイプを<b>棚（物置）付きホルダー</b>へ交換。</div></div>
+    <div class="row"><div class="k">タイプ別</div><div class="v">ファミリー物件は<b>ダブルホルダー</b>。単身物件もダブル推奨。</div></div>
     <div class="photos">
       <div class="ph"><img src="spec_img/holder_before.jpg"><div class="cap">変更前（シングル）</div></div>
       <div class="arrow">→</div>
       <div class="ph ok"><img src="spec_img/holder_after.jpg"><div class="cap ok">変更後（棚付）</div></div>
-      <div class="ph"><img src="spec_img/holder_double.jpg"><div class="cap">ダブルホルダー（推奨）</div></div>
+      <div class="ph"><img src="spec_img/holder_double.jpg"><div class="cap">ダブル（推奨）</div></div>
     </div>
   </div>
 </div>
 
 <div class="item">
-  <div class="item-h"><span class="no">5</span><span class="ttl">コンセントプレート 交換</span><span class="tag">交換</span></div>
+  <div class="item-h"><span class="no">8</span><span class="ttl">コンセントプレート 交換</span><span class="tag">交換</span></div>
   <div class="item-b">
     <div class="row"><div class="k">対象</div><div class="v">古いタイプ・<b>黄ばんだプレート</b>を新しいものへ交換。</div></div>
-    <div class="row"><div class="k">注意（サイズ）</div><div class="v"><span class="note">スイッチに種類・サイズあり。「7000番台」はサイズ相違のためNG。正しくは「6000番台」を使用。</span></div></div>
-    <div class="row"><div class="k">施工ポイント</div><div class="v">交換前に既存プレートの口数を確認してから取付ける。</div></div>
+    <div class="row"><div class="k">サイズ注意</div><div class="v"><span class="note">「7000番台」はサイズ相違のためNG。正しくは「6000番台」を使用。</span>既存の口数を確認してから取付ける。</div></div>
     <div class="photos">
-      <div class="ph"><img src="spec_img/plate_target.jpg"><div class="cap">交換対象（黄ばみ・古い）</div></div>
+      <div class="ph"><img src="spec_img/plate_target.jpg"><div class="cap">交換対象（黄ばみ）</div></div>
       <div class="arrow">→</div>
       <div class="ph ok"><img src="spec_img/plate_after.jpg"><div class="cap ok">交換後（新品）</div></div>
-      <div class="ph ng"><img src="spec_img/plate_ng7000.jpg"><div class="cap ng">NG：7000番台（サイズ相違）</div></div>
+      <div class="ph ng"><img src="spec_img/plate_ng7000.jpg"><div class="cap ng">NG：7000番台</div></div>
       <div class="ph ok"><img src="spec_img/plate_ok6000.jpg"><div class="cap ok">正：6000番台</div></div>
     </div>
   </div>
 </div>
 
 <div class="foot">
-  <div>
-    <div class="co">株式会社プライズムン</div>
-    <div>本仕様は「9点セット設置マニュアル Ver2.1」準拠（工事・交換系抜粋）／部材は当社支給</div>
-  </div>
-  <div class="stamp">発行日：2026年6月16日</div>
+  <div class="co">株式会社プライズムン</div>
+  <div>部材は当社（久留米倉庫）支給</div>
 </div>
 
+</div>
 </body>
 </html>
