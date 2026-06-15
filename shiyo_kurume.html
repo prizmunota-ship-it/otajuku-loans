@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4 portrait; margin: 14mm 14mm 16mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; color:#1b1b1b; font-size:10.5pt; line-height:1.6; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  .head { border-bottom:3px solid #1a3a5c; padding-bottom:10px; margin-bottom:14px; }
+  .doctype { font-size:10pt; color:#1a3a5c; font-weight:700; letter-spacing:.18em; }
+  h1 { font-size:19pt; font-weight:800; color:#15293d; margin:3px 0 2px; letter-spacing:.02em; }
+  .sub { font-size:10pt; color:#555; }
+
+  .meta { display:flex; gap:0; border:1px solid #cdd6df; border-radius:6px; overflow:hidden; margin-bottom:14px; }
+  .meta .cell { flex:1; padding:7px 12px; font-size:9.5pt; border-right:1px solid #e3e8ee; }
+  .meta .cell:last-child { border-right:none; }
+  .meta .lbl { color:#7a8a99; font-size:8pt; display:block; margin-bottom:1px; letter-spacing:.08em; }
+  .meta .val { font-weight:700; color:#15293d; }
+
+  .lead { background:#f3f7fb; border-left:4px solid #1a3a5c; padding:9px 13px; border-radius:0 6px 6px 0; margin-bottom:16px; font-size:9.8pt; }
+  .lead b { color:#15293d; }
+
+  .item { border:1px solid #d7dee6; border-radius:8px; margin-bottom:11px; overflow:hidden; page-break-inside:avoid; }
+  .item-h { background:#15293d; color:#fff; padding:7px 13px; display:flex; align-items:center; gap:10px; }
+  .item-h .no { background:#fff; color:#15293d; font-weight:800; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11pt; flex-shrink:0; }
+  .item-h .ttl { font-size:12.5pt; font-weight:800; letter-spacing:.02em; }
+  .item-h .tag { margin-left:auto; font-size:8pt; background:#3f7cae; padding:2px 9px; border-radius:11px; font-weight:600; }
+  .item-b { padding:9px 14px 11px; }
+  .row { display:flex; gap:10px; padding:3px 0; }
+  .row .k { width:96px; flex-shrink:0; color:#1a3a5c; font-weight:700; font-size:9.3pt; }
+  .row .v { flex:1; }
+  .row + .row { border-top:1px dashed #e6ebf0; }
+  .v .note { color:#b3261e; font-weight:600; }
+  .v .buy { color:#155b2e; font-weight:600; }
+  ul { margin:0 0 0 17px; }
+  li { margin:1px 0; }
+
+  .foot { margin-top:6px; border-top:1.5px solid #cdd6df; padding-top:9px; font-size:8.7pt; color:#566; display:flex; justify-content:space-between; align-items:flex-end; }
+  .foot .co { font-weight:700; color:#15293d; font-size:9.5pt; }
+  .stamp { font-size:8pt; color:#7a8a99; }
+  .common { background:#fffaf0; border:1px solid #f0dca8; border-radius:7px; padding:9px 13px; margin-bottom:14px; font-size:9.3pt; }
+  .common .ch { font-weight:800; color:#9a6a00; margin-bottom:3px; font-size:9.6pt; }
+
+  .webnav { display:flex; gap:8px; padding:9px 12px; margin-bottom:14px; background:#15293d; border-radius:10px; }
+  .webnav a { flex:1; text-align:center; color:#fff; text-decoration:none; font-size:12px; font-weight:700; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.28); border-radius:9px; padding:9px 4px; }
+  .webnav a:active { background:rgba(255,255,255,.28); }
+  @media print { .webnav { display:none !important; } }
+  @media screen { body { max-width:760px; margin:0 auto; padding:14px; } }
+</style>
+</head>
+<body>
+
+<div class="webnav">
+  <a href="zaiko.html">🧰 在庫表</a>
+  <a href="naiso.html">🗂 内装状況表</a>
+  <a href="kurume_naiso_shiyo.pdf">⬇ PDFで保存</a>
+</div>
+
+<div class="head">
+  <div class="doctype">内装工事 仕様書</div>
+  <h1>9点セット 工事・交換 施工仕様書</h1>
+  <div class="sub">原状回復・退去後リフォームにおける標準仕様（工事／部材交換 5項目）</div>
+</div>
+
+<div class="meta">
+  <div class="cell"><span class="lbl">発注</span><span class="val">株式会社プライズムン　太田 圭一</span></div>
+  <div class="cell"><span class="lbl">施工</span><span class="val">リプラル　本村 様</span></div>
+  <div class="cell"><span class="lbl">対象エリア</span><span class="val">久留米エリア（プライマリーシリーズ）</span></div>
+</div>
+
+<div class="lead">
+  本仕様書は当社「9点セット設置マニュアル（Ver2.1）」のうち、<b>内装工事として施工をお願いする「工事・交換系5項目」</b>を抜粋・標準化したものです。
+  スリッパ・芳香剤・POP・ウェルカムバスケット等の演出・備品設置は当社にて対応します。
+</div>
+
+<div class="common">
+  <div class="ch">◆ 共通事項</div>
+  <ul>
+    <li><b>対象部屋</b>：内装状況管理アプリ（内装表）に記載の各部屋。部屋ごとに指示します。</li>
+    <li><b>施工報告</b>：各項目とも<b>施工前・施工後の写真</b>を撮影し、内装アプリ／LINEにてご報告ください。</li>
+    <li><b>仕上がり基準</b>：内見者・入居者の印象を最優先。寸法・色・サイズの不一致がないようご確認ください。</li>
+  </ul>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">1</span><span class="ttl">シーリングライト 設置</span><span class="tag">設置</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">仕様</div><div class="v">全居室に <b>LEDリモコン付きシーリングライト</b> を設置。</div></div>
+    <div class="row"><div class="k">使用部材</div><div class="v"><span class="buy">ニトリ製 LEDリモコン付きシーリングライト</span>（畳数に応じた適正サイズを選定）</div></div>
+    <div class="row"><div class="k">施工ポイント</div><div class="v">居室の広さに合った明るさ（適合畳数）を選ぶこと。リモコン・電池の動作確認まで行う。</div></div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">2</span><span class="ttl">カーテンレース 設置</span><span class="tag">設置</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">仕様</div><div class="v">カーテンレールがある<b>全ての窓</b>にレースカーテンを設置。</div></div>
+    <div class="row"><div class="k">目的</div><div class="v">特に古い物件の<b>サッシ廻りを隠す</b>こと。</div></div>
+    <div class="row"><div class="k">寸法基準</div><div class="v">
+      <ul>
+        <li>掃き出し窓：<b>床に着くか着かないか</b>が理想。寸足らず・床に余らせるのはNG。</li>
+        <li>小窓：窓枠から<b>100mm程度</b>多めに垂らす。<span class="note">長すぎは不自然になるためNG。</span></li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">3</span><span class="ttl">カーテンレール 交換</span><span class="tag">交換</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">対象</div><div class="v">カーテンレールが<b>古い場合</b>（ステンレス製が多い）に取替。</div></div>
+    <div class="row"><div class="k">使用部材</div><div class="v"><span class="buy">ニトリ 白色カーテンレール 2m（925円・税別）</span>を基本使用。</div></div>
+    <div class="row"><div class="k">施工ポイント</div><div class="v">窓幅に合わせて選定。白色で統一し清潔感を出す。</div></div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">4</span><span class="ttl">トイレットペーパーホルダー 交換</span><span class="tag">交換</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">仕様</div><div class="v">シングルタイプのホルダーを<b>棚（物置）付きホルダー</b>へ交換。</div></div>
+    <div class="row"><div class="k">タイプ別</div><div class="v">
+      <ul>
+        <li>ファミリー物件：<b>ダブルホルダー</b>を設置。</li>
+        <li>単身物件：ダブルホルダーの使用もおすすめ。</li>
+      </ul>
+    </div></div>
+    <div class="row"><div class="k">使用部材</div><div class="v"><span class="buy">ニトリ／カインズ で販売</span>。ダブルホルダーは参考 2,000円前後。</div></div>
+  </div>
+</div>
+
+<div class="item">
+  <div class="item-h"><span class="no">5</span><span class="ttl">コンセントプレート 交換</span><span class="tag">交換</span></div>
+  <div class="item-b">
+    <div class="row"><div class="k">対象</div><div class="v">古いタイプ・<b>黄ばんだプレート</b>を新しいものへ交換。</div></div>
+    <div class="row"><div class="k">注意（サイズ）</div><div class="v"><span class="note">スイッチに種類・サイズあり。「7000番台」はサイズ相違のためNG。正しくは「6000番台」を使用。</span></div></div>
+    <div class="row"><div class="k">施工ポイント</div><div class="v">交換前に既存プレートの型番・口数を確認してから手配する。</div></div>
+  </div>
+</div>
+
+<div class="foot">
+  <div>
+    <div class="co">株式会社プライズムン</div>
+    <div>本仕様は「9点セット設置マニュアル Ver2.1」準拠（工事・交換系抜粋）</div>
+  </div>
+  <div class="stamp">発行日：2026年6月16日</div>
+</div>
+
+</body>
+</html>
