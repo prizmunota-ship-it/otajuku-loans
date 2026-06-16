@@ -52,6 +52,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 .stepper button:active{background:#eef3f8;}
 .stepper button.minus{color:#c0392b;border-color:#e0b0aa;}
 .stepper .qty{width:46px;text-align:center;font-size:18px;font-weight:800;border:none;background:none;font-family:inherit;color:#15293d;-moz-appearance:textfield;}
+.stepper .qty.low-q{color:#c0392b;}
 .stepper .qty::-webkit-outer-spin-button,.stepper .qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 
 .empty{text-align:center;color:#aaa;padding:30px;font-size:13px;}
@@ -127,7 +128,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
     <div class="fld" style="display:flex;gap:10px;">
       <div style="flex:1;"><label>在庫数</label><input id="f-qty" type="number" inputmode="numeric" value="0"></div>
       <div style="flex:1;"><label>単位</label><input id="f-unit" placeholder="個"></div>
-      <div style="flex:1;"><label>発注点</label><input id="f-reorder" type="number" inputmode="numeric" value="0"></div>
+      <div style="flex:1;"><label>最低在庫</label><input id="f-reorder" type="number" inputmode="numeric" placeholder="未設定" value=""></div>
     </div>
     <div class="mbtns">
       <button class="mbtn del" id="delBtn" onclick="delItem()" style="display:none;">削除</button>
@@ -140,7 +141,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 <div class="toast" id="toast"></div>
 
 <script>
-const LS_KEY='zaiko_kurume_v2';
+const LS_KEY='zaiko_kurume_v3';
 const CATS=['① スリッパ','② 玄関マット','③ 芳香剤','④ POP','⑤ シーリングライト','⑥ レースカーテン','⑦ カーテンレール','⑧ ペーパーホルダー','⑨ コンセントプレート','⑩ ウェルカムバスケット','設備系'];
 // 大分類（○10点セット / ○備品（設備系））
 const SECTIONS=[
@@ -151,29 +152,31 @@ const SECTIONS=[
 const REMOVED=['ラミネートフィルム','トイレットペーパーホルダー（ダブル）'];
 
 // 初期在庫（9点セットマニュアル準拠）
+// r=最低在庫(これ以下で赤字)。null=最低在庫を設定しない
 const SEED=[
-  {c:0,n:'スリッパ',u:'組',q:0,r:6},
+  {c:0,n:'スリッパ',u:'組',q:0,r:3},
   {c:1,n:'玄関マット',u:'枚',q:0,r:3},
-  {c:2,n:'芳香剤（消臭力 エアリーブーケ）',u:'個',q:0,r:5},
-  {c:3,n:'POP（ラミネート済）',u:'式',q:0,r:1},
-  {c:4,n:'シーリングライト（LEDリモコン付）',u:'台',q:0,r:3},
-  {c:5,n:'レースカーテン',u:'枚',q:0,r:6},
-  {c:6,n:'カーテンレール（白 2m）',u:'本',q:0,r:4},
+  {c:2,n:'芳香剤（消臭力 エアリーブーケ）',u:'個',q:0,r:3},
+  {c:3,n:'POP（ラミネート済）',u:'セット',q:0,r:3},
+  {c:4,n:'シーリングライト（LEDリモコン付）',u:'台',q:0,r:5},
+  {c:5,n:'レースカーテン①（176㎝）',u:'枚',q:0,r:3},
+  {c:5,n:'レースカーテン②（133㎝）',u:'枚',q:0,r:3},
+  {c:6,n:'カーテンレール（白 2m）',u:'本',q:0,r:3},
   {c:7,n:'トイレットペーパーホルダー（棚付）',u:'個',q:0,r:3},
-  {c:8,n:'コンセントプレート（6000番台）',u:'枚',q:0,r:5},
-  {c:9,n:'ゴミ袋（もえるごみ 大）',u:'袋',q:0,r:5},
-  {c:9,n:'バスケット用かご・箱',u:'個',q:0,r:3},
-  {c:9,n:'キッチンスポンジ',u:'個',q:0,r:5},
-  {c:9,n:'食器洗剤（JOY）',u:'個',q:0,r:3},
-  {c:9,n:'お風呂スポンジ',u:'個',q:0,r:3},
-  {c:9,n:'お風呂洗剤',u:'個',q:0,r:3},
-  {c:9,n:'ハンドソープ',u:'個',q:0,r:3},
-  {c:9,n:'除菌クリーナー',u:'個',q:0,r:3},
-  {c:9,n:'トイレットペーパー',u:'パック',q:0,r:3},
-  {c:9,n:'ティッシュペーパー',u:'箱',q:0,r:3},
-  {c:10,n:'モニターホン',u:'台',q:0,r:2},
-  {c:10,n:'エアコン',u:'台',q:0,r:1},
-  {c:10,n:'洗浄便座',u:'台',q:0,r:1},
+  {c:8,n:'コンセントプレート（6000番台）',u:'枚',q:0,r:null},
+  {c:9,n:'ゴミ袋（もえるごみ 大）',u:'袋',q:0,r:null},
+  {c:9,n:'バスケット用かご・箱',u:'個',q:0,r:null},
+  {c:9,n:'キッチンスポンジ',u:'個',q:0,r:null},
+  {c:9,n:'食器洗剤（JOY）',u:'個',q:0,r:null},
+  {c:9,n:'お風呂スポンジ',u:'個',q:0,r:null},
+  {c:9,n:'お風呂洗剤',u:'個',q:0,r:null},
+  {c:9,n:'ハンドソープ',u:'個',q:0,r:null},
+  {c:9,n:'除菌クリーナー',u:'個',q:0,r:null},
+  {c:9,n:'トイレットペーパー',u:'パック',q:0,r:null},
+  {c:9,n:'ティッシュペーパー',u:'箱',q:0,r:null},
+  {c:10,n:'モニターホン',u:'台',q:0,r:3},
+  {c:10,n:'エアコン',u:'台',q:0,r:null},
+  {c:10,n:'洗浄便座',u:'台',q:0,r:null},
 ];
 
 let data=[];
@@ -207,17 +210,19 @@ function save(stamp=true){
 }
 function nextId(){ return data.length? Math.max(...data.map(d=>d.id))+1 : 1; }
 
+function isLow(it){ return it.reorder!=null && (+it.qty||0)<=it.reorder; }
 function itemRow(it){
-  const low = it.qty<=it.reorder;
+  const low = isLow(it);
+  const minTxt = it.reorder!=null ? ('最低在庫:'+it.reorder) : '最低在庫:—';
   const row=document.createElement('div'); row.className='item'+(low?' low':'');
   row.innerHTML=`
     <div class="info" onclick="openEdit(${it.id})">
       <div class="nm">${esc(it.name)}</div>
-      <div class="meta">単位:${esc(it.unit||'-')} ／ 発注点:${it.reorder} ${low?'<span class="req">⚠ 要発注</span>':''}</div>
+      <div class="meta">単位:${esc(it.unit||'-')} ／ ${minTxt} ${low?'<span class="req">⚠ 要発注</span>':''}</div>
     </div>
     <div class="stepper">
       <button class="minus" onclick="step(${it.id},-1)">−</button>
-      <input class="qty" type="number" inputmode="numeric" value="${it.qty}" onchange="setQty(${it.id},this.value)" onclick="this.select()">
+      <input class="qty${low?' low-q':''}" type="number" inputmode="numeric" value="${it.qty}" onchange="setQty(${it.id},this.value)" onclick="this.select()">
       <button onclick="step(${it.id},1)">＋</button>
     </div>`;
   return row;
@@ -249,7 +254,7 @@ function render(){
 function renderSummary(){
   document.getElementById('s-items').textContent=data.length;
   document.getElementById('s-qty').textContent=data.reduce((a,b)=>a+(+b.qty||0),0);
-  document.getElementById('s-low').textContent=data.filter(d=>d.qty<=d.reorder).length;
+  document.getElementById('s-low').textContent=data.filter(isLow).length;
 }
 function renderFoot(){
   const u=window._updated? new Date(window._updated):null;
@@ -277,7 +282,7 @@ function openAdd(){
   document.getElementById('f-cat').value='0';
   document.getElementById('f-qty').value='0';
   document.getElementById('f-unit').value='個';
-  document.getElementById('f-reorder').value='0';
+  document.getElementById('f-reorder').value='';
   document.getElementById('overlay').classList.add('show');
 }
 function openEdit(id){
@@ -289,7 +294,7 @@ function openEdit(id){
   document.getElementById('f-cat').value=it.cat;
   document.getElementById('f-qty').value=it.qty;
   document.getElementById('f-unit').value=it.unit||'';
-  document.getElementById('f-reorder').value=it.reorder;
+  document.getElementById('f-reorder').value=(it.reorder!=null?it.reorder:'');
   document.getElementById('overlay').classList.add('show');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('show'); }
@@ -299,7 +304,7 @@ function saveItem(){
   const o={ name, cat:+document.getElementById('f-cat').value,
     qty:Math.max(0,parseInt(document.getElementById('f-qty').value)||0),
     unit:document.getElementById('f-unit').value.trim()||'個',
-    reorder:Math.max(0,parseInt(document.getElementById('f-reorder').value)||0) };
+    reorder:(document.getElementById('f-reorder').value.trim()===''?null:Math.max(0,parseInt(document.getElementById('f-reorder').value)||0)) };
   if(editIdx==null){ data.push({id:nextId(),...o}); toast('追加しました'); }
   else { const it=data.find(d=>d.id===editIdx); Object.assign(it,o); toast('保存しました'); }
   save(); render(); closeModal();
