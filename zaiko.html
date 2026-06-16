@@ -139,34 +139,31 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 
 <script>
 const LS_KEY='zaiko_kurume_v2';
-const CATS=['6点セット 備品','3点セット 部材','ウェルカムバスケット'];
+const CATS=['① スリッパ','② 玄関マット','③ 芳香剤','④ POP','⑤ シーリングライト','⑥ カーテンレース','⑦ カーテンレール','⑧ ペーパーホルダー','⑨ コンセントプレート','⑩ ウェルカムバスケット'];
 
 // 初期在庫（9点セットマニュアル準拠）
 const SEED=[
-  // 6点セット 備品
   {c:0,n:'スリッパ',u:'組',q:0,r:6},
-  {c:0,n:'玄関マット',u:'枚',q:0,r:3},
-  {c:0,n:'芳香剤（消臭力 エアリーブーケ）',u:'個',q:0,r:5},
-  {c:0,n:'POP（ラミネート済）',u:'式',q:0,r:1},
-  {c:0,n:'ラミネートフィルム',u:'箱',q:0,r:1},
-  {c:0,n:'レースカーテン',u:'枚',q:0,r:6},
-  {c:0,n:'シーリングライト（LEDリモコン付）',u:'台',q:0,r:3},
-  // 3点セット 部材
-  {c:1,n:'カーテンレール（白 2m）',u:'本',q:0,r:4},
-  {c:1,n:'トイレットペーパーホルダー（棚付）',u:'個',q:0,r:3},
-  {c:1,n:'トイレットペーパーホルダー（ダブル）',u:'個',q:0,r:3},
-  {c:1,n:'コンセントプレート（6000番台）',u:'枚',q:0,r:5},
-  // ウェルカムバスケット中身
-  {c:2,n:'ゴミ袋（もえるごみ 大）',u:'袋',q:0,r:5},
-  {c:2,n:'バスケット用かご・箱',u:'個',q:0,r:3},
-  {c:2,n:'キッチンスポンジ',u:'個',q:0,r:5},
-  {c:2,n:'食器洗剤（JOY）',u:'個',q:0,r:3},
-  {c:2,n:'お風呂スポンジ',u:'個',q:0,r:3},
-  {c:2,n:'お風呂洗剤',u:'個',q:0,r:3},
-  {c:2,n:'ハンドソープ',u:'個',q:0,r:3},
-  {c:2,n:'除菌クリーナー',u:'個',q:0,r:3},
-  {c:2,n:'トイレットペーパー',u:'パック',q:0,r:3},
-  {c:2,n:'ティッシュペーパー',u:'箱',q:0,r:3},
+  {c:1,n:'玄関マット',u:'枚',q:0,r:3},
+  {c:2,n:'芳香剤（消臭力 エアリーブーケ）',u:'個',q:0,r:5},
+  {c:3,n:'POP（ラミネート済）',u:'式',q:0,r:1},
+  {c:3,n:'ラミネートフィルム',u:'箱',q:0,r:1},
+  {c:4,n:'シーリングライト（LEDリモコン付）',u:'台',q:0,r:3},
+  {c:5,n:'レースカーテン',u:'枚',q:0,r:6},
+  {c:6,n:'カーテンレール（白 2m）',u:'本',q:0,r:4},
+  {c:7,n:'トイレットペーパーホルダー（棚付）',u:'個',q:0,r:3},
+  {c:7,n:'トイレットペーパーホルダー（ダブル）',u:'個',q:0,r:3},
+  {c:8,n:'コンセントプレート（6000番台）',u:'枚',q:0,r:5},
+  {c:9,n:'ゴミ袋（もえるごみ 大）',u:'袋',q:0,r:5},
+  {c:9,n:'バスケット用かご・箱',u:'個',q:0,r:3},
+  {c:9,n:'キッチンスポンジ',u:'個',q:0,r:5},
+  {c:9,n:'食器洗剤（JOY）',u:'個',q:0,r:3},
+  {c:9,n:'お風呂スポンジ',u:'個',q:0,r:3},
+  {c:9,n:'お風呂洗剤',u:'個',q:0,r:3},
+  {c:9,n:'ハンドソープ',u:'個',q:0,r:3},
+  {c:9,n:'除菌クリーナー',u:'個',q:0,r:3},
+  {c:9,n:'トイレットペーパー',u:'パック',q:0,r:3},
+  {c:9,n:'ティッシュペーパー',u:'箱',q:0,r:3},
 ];
 
 let data=[];
@@ -177,10 +174,15 @@ function load(){
     const s=localStorage.getItem(LS_KEY);
     if(s){
       const o=JSON.parse(s); data=o.items||[]; window._updated=o.updated;
-      // SEEDに増えた項目(名前未登録)を在庫数を消さずに追加マージ
-      const names=new Set(data.map(d=>d.name)); let added=false;
-      SEED.forEach(x=>{ if(!names.has(x.n)){ data.push({id:nextId(),cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}); added=true; } });
-      if(added) save(false);
+      const byName={}; SEED.forEach((x,i)=>byName[x.n]={c:x.c,seq:i});
+      // 既存項目を名前一致で仕様書順カテゴリへ再分類(在庫数は保持)
+      data.forEach(d=>{ if(byName[d.name]) d.cat=byName[d.name].c; });
+      // SEEDに増えた項目を在庫数を消さず追加マージ
+      const names=new Set(data.map(d=>d.name));
+      SEED.forEach(x=>{ if(!names.has(x.n)) data.push({id:nextId(),cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}); });
+      // 仕様書(SEED)順に並べ替え。SEEDに無い独自追加分は末尾
+      data.sort((a,b)=>((byName[a.name]?byName[a.name].seq:999)-(byName[b.name]?byName[b.name].seq:999)));
+      save(false);
       return;
     }
   }catch(e){}
