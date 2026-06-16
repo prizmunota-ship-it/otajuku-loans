@@ -33,7 +33,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 .search{width:100%;padding:10px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;}
 .search:focus{border-color:#15293d;}
 
-.bigtitle{font-size:20px;font-weight:800;color:#15293d;letter-spacing:.04em;padding:14px 16px 2px;border-bottom:2px solid #E8E6E0;margin:4px 0 0;}
+.bigtitle{font-size:19px;font-weight:800;color:#15293d;letter-spacing:.03em;padding:6px 2px 8px;border-bottom:2.5px solid #15293d;margin:20px 0 6px;}
+.bigtitle:first-child{margin-top:4px;}
 .wrap{padding:6px 14px 0;}
 .cat{margin-top:14px;}
 .cat-h{font-size:12px;font-weight:800;color:#15293d;letter-spacing:.04em;padding:4px 2px 7px;display:flex;align-items:center;gap:7px;}
@@ -106,7 +107,6 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
   <input class="search" id="search" placeholder="🔍 備品名で検索" oninput="render()">
 </div>
 
-<div class="bigtitle">📦 備品</div>
 <div class="wrap" id="list"></div>
 
 <button class="fab" onclick="openAdd()">＋</button>
@@ -141,7 +141,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 
 <script>
 const LS_KEY='zaiko_kurume_v2';
-const CATS=['① スリッパ','② 玄関マット','③ 芳香剤','④ POP','⑤ シーリングライト','⑥ レースカーテン','⑦ カーテンレール','⑧ ペーパーホルダー','⑨ コンセントプレート','⑩ ウェルカムバスケット','⑪ モニターホン'];
+const CATS=['① スリッパ','② 玄関マット','③ 芳香剤','④ POP','⑤ シーリングライト','⑥ レースカーテン','⑦ カーテンレール','⑧ ペーパーホルダー','⑨ コンセントプレート','⑩ ウェルカムバスケット','設備系'];
+// 大分類（○10点セット / ○備品（設備系））
+const SECTIONS=[
+  {title:'○ 10点セット', cats:[0,1,2,3,4,5,6,7,8,9], catHeaders:true},
+  {title:'○ 備品（設備系）', cats:[10], catHeaders:false}
+];
 // 廃止した品目（既存localStorageから除去する）
 const REMOVED=['ラミネートフィルム','トイレットペーパーホルダー（ダブル）'];
 
@@ -167,6 +172,8 @@ const SEED=[
   {c:9,n:'トイレットペーパー',u:'パック',q:0,r:3},
   {c:9,n:'ティッシュペーパー',u:'箱',q:0,r:3},
   {c:10,n:'モニターホン',u:'台',q:0,r:2},
+  {c:10,n:'エアコン',u:'台',q:0,r:1},
+  {c:10,n:'洗浄便座',u:'台',q:0,r:1},
 ];
 
 let data=[];
@@ -200,35 +207,43 @@ function save(stamp=true){
 }
 function nextId(){ return data.length? Math.max(...data.map(d=>d.id))+1 : 1; }
 
+function itemRow(it){
+  const low = it.qty<=it.reorder;
+  const row=document.createElement('div'); row.className='item'+(low?' low':'');
+  row.innerHTML=`
+    <div class="info" onclick="openEdit(${it.id})">
+      <div class="nm">${esc(it.name)}</div>
+      <div class="meta">単位:${esc(it.unit||'-')} ／ 発注点:${it.reorder} ${low?'<span class="req">⚠ 要発注</span>':''}</div>
+    </div>
+    <div class="stepper">
+      <button class="minus" onclick="step(${it.id},-1)">−</button>
+      <input class="qty" type="number" inputmode="numeric" value="${it.qty}" onchange="setQty(${it.id},this.value)" onclick="this.select()">
+      <button onclick="step(${it.id},1)">＋</button>
+    </div>`;
+  return row;
+}
 function render(){
   const q=document.getElementById('search').value.trim();
   const wrap=document.getElementById('list'); wrap.innerHTML='';
-  let shownCats=0;
-  CATS.forEach((cn,ci)=>{
-    let items=data.filter(d=>d.cat===ci);
-    if(q) items=items.filter(d=>d.name.includes(q));
-    if(!items.length) return;
-    shownCats++;
-    const sec=document.createElement('div'); sec.className='cat';
-    sec.innerHTML=`<div class="cat-h"><span class="bar"></span>${cn}<span class="cnt">${items.length}品目</span></div>`;
-    items.forEach(it=>{
-      const low = it.qty<=it.reorder;
-      const row=document.createElement('div'); row.className='item'+(low?' low':'');
-      row.innerHTML=`
-        <div class="info" onclick="openEdit(${it.id})">
-          <div class="nm">${esc(it.name)}</div>
-          <div class="meta">単位:${esc(it.unit||'-')} ／ 発注点:${it.reorder} ${low?'<span class="req">⚠ 要発注</span>':''}</div>
-        </div>
-        <div class="stepper">
-          <button class="minus" onclick="step(${it.id},-1)">−</button>
-          <input class="qty" type="number" inputmode="numeric" value="${it.qty}" onchange="setQty(${it.id},this.value)" onclick="this.select()">
-          <button onclick="step(${it.id},1)">＋</button>
-        </div>`;
-      sec.appendChild(row);
+  let total=0;
+  SECTIONS.forEach(sec=>{
+    const groups=sec.cats.map(ci=>{
+      let items=data.filter(d=>d.cat===ci);
+      if(q) items=items.filter(d=>d.name.includes(q));
+      return {ci,items};
+    }).filter(g=>g.items.length);
+    if(!groups.length) return;
+    const bt=document.createElement('div'); bt.className='bigtitle'; bt.textContent=sec.title;
+    wrap.appendChild(bt);
+    groups.forEach(({ci,items})=>{
+      const el=document.createElement('div'); el.className='cat';
+      if(sec.catHeaders) el.innerHTML=`<div class="cat-h"><span class="bar"></span>${CATS[ci]}<span class="cnt">${items.length}品目</span></div>`;
+      items.forEach(it=>el.appendChild(itemRow(it)));
+      wrap.appendChild(el);
+      total+=items.length;
     });
-    wrap.appendChild(sec);
   });
-  if(!shownCats) wrap.innerHTML='<div class="empty">該当する備品がありません</div>';
+  if(!total) wrap.innerHTML='<div class="empty">該当する備品がありません</div>';
   renderSummary();
 }
 function renderSummary(){
