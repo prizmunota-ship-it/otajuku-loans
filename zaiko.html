@@ -33,6 +33,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 .search{width:100%;padding:10px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;}
 .search:focus{border-color:#15293d;}
 
+.bigtitle{font-size:20px;font-weight:800;color:#15293d;letter-spacing:.04em;padding:14px 16px 2px;border-bottom:2px solid #E8E6E0;margin:4px 0 0;}
 .wrap{padding:6px 14px 0;}
 .cat{margin-top:14px;}
 .cat-h{font-size:12px;font-weight:800;color:#15293d;letter-spacing:.04em;padding:4px 2px 7px;display:flex;align-items:center;gap:7px;}
@@ -105,6 +106,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
   <input class="search" id="search" placeholder="🔍 備品名で検索" oninput="render()">
 </div>
 
+<div class="bigtitle">📦 備品</div>
 <div class="wrap" id="list"></div>
 
 <button class="fab" onclick="openAdd()">＋</button>
@@ -139,7 +141,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 
 <script>
 const LS_KEY='zaiko_kurume_v2';
-const CATS=['① スリッパ','② 玄関マット','③ 芳香剤','④ POP','⑤ シーリングライト','⑥ レースカーテン','⑦ カーテンレール','⑧ ペーパーホルダー','⑨ コンセントプレート','⑩ ウェルカムバスケット'];
+const CATS=['① スリッパ','② 玄関マット','③ 芳香剤','④ POP','⑤ シーリングライト','⑥ レースカーテン','⑦ カーテンレール','⑧ ペーパーホルダー','⑨ コンセントプレート','⑩ ウェルカムバスケット','⑪ モニターホン'];
 // 廃止した品目（既存localStorageから除去する）
 const REMOVED=['ラミネートフィルム','トイレットペーパーホルダー（ダブル）'];
 
@@ -164,6 +166,7 @@ const SEED=[
   {c:9,n:'除菌クリーナー',u:'個',q:0,r:3},
   {c:9,n:'トイレットペーパー',u:'パック',q:0,r:3},
   {c:9,n:'ティッシュペーパー',u:'箱',q:0,r:3},
+  {c:10,n:'モニターホン',u:'台',q:0,r:2},
 ];
 
 let data=[];
