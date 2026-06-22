@@ -763,9 +763,11 @@ function showTab(t){
   renderFab();
 }
 
+function isOwner(){ try{ return (localStorage.getItem('otajuku_email')||'').trim().toLowerCase()==='prizmun.ota@gmail.com'; }catch(e){ return false; } }
 function renderFab(){
   const f = document.getElementById('fab');
-  const dataBtns = `<button class="f-clear" onclick="importData()">📂 読込</button><button class="f-clear" onclick="exportData()">💾 保存</button>`;
+  // データ保存/読込は太田(prizmun.ota@gmail.com)のみ表示。他の太田塾メンバーには出さない
+  const dataBtns = isOwner() ? `<button class="f-clear" onclick="importData()">📂 読込</button><button class="f-clear" onclick="exportData()">💾 保存</button>` : '';
   if(tab==='result'){
     f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`+dataBtns;
   }else{
