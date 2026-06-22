@@ -195,6 +195,7 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 <div class="wrap" id="view-result" style="display:none;"></div>
 
 <div class="fab" id="fab"></div>
+<input type="file" id="jk-import" accept="application/json,.json" style="display:none" onchange="onImportFile(event)">
 <div class="toast" id="toast"></div>
 
 <!-- PDFオーバーレイ（キャプチャ画像で表示→1画面フィット・印刷・共有に対応） -->
@@ -231,7 +232,7 @@ const blank = {
   kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
   chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
   loan:'', years:'', rate:'', bankName:'',
-  junkai:'', net:'', atamakin:'',
+  junkai:'', net:'', atamakin:'', mgmtRate:'',
   runs:[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]  // その他ランニング(手持ち用のみ反映)
 };
 let S = load();
@@ -460,6 +461,7 @@ function renderInput(){
   // ランニング・自己資金
   h += `<div class="card"><div class="card-title"><span class="dot"></span>ランニング・自己資金</div>
     <div class="row2">${field('巡回清掃(月)','junkai',{type:'number',unit:'円'})}${field('ネット等(月)','net',{type:'number',unit:'円'})}</div>
+    ${field('管理料率','mgmtRate',{type:'number',unit:'%(税込・空欄=自動5%)'})}
     <div style="font-size:11px;color:#888;margin:10px 0 5px;">その他のランニングコスト（任意・最大3件 / <b>手持ち用のみ反映</b>）</div>
     <div class="run-head"><div>項目名</div><div>月額(円)</div></div>`;
   const runEx=['共用電気','浄化槽保守','エレベーター保守'];
@@ -489,7 +491,8 @@ function renderResult(){
   const total  = isHold? c.totalHold  : c.totalSubmit;
   const fireAmt = isHold? c.fire1 : c.fire5;
   const fireLbl = isHold? '火災保険（１年）' : '火災保険（５年）';
-  const mRate = isHold? 0.05 : 0.04;
+  // 管理料率: 入力があれば税込その率(scenario内で×1.1されるため÷1.1して渡す)、空欄なら自動(手持ち5%/提出4%)
+  const mRate = (S.mgmtRate!=='' && S.mgmtRate!=null && !isNaN(parseFloat(S.mgmtRate))) ? (parseFloat(S.mgmtRate)/100/1.1) : (isHold? 0.05 : 0.04);
   const R = scenario(c,'real',mRate,total);   // 家賃
   const rentDataRows = S.rents.filter(r=> n(r.units)>0 || String(r.name).trim());
 
@@ -762,11 +765,38 @@ function showTab(t){
 
 function renderFab(){
   const f = document.getElementById('fab');
+  const dataBtns = `<button class="f-clear" onclick="importData()">📂 読込</button><button class="f-clear" onclick="exportData()">💾 保存</button>`;
   if(tab==='result'){
-    f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`;
+    f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`+dataBtns;
   }else{
-    f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>`;
+    f.innerHTML = `<button class="f-print" onclick="showTab('result')">事業計画書を見る</button>`+dataBtns;
   }
+}
+// ===== データ保存/読込（手入力で編集できるデータファイル.json）=====
+function exportData(){
+  try{
+    const name=(S.pname||'事業計画書').replace(/[\\/:*?"<>|]/g,'');
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='事業計画書データ_'+name+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{a.remove();}catch(e){} URL.revokeObjectURL(url); },4000);
+    toast('データを保存しました（.json）');
+  }catch(e){ toast('保存に失敗しました'); }
+}
+function importData(){ const i=document.getElementById('jk-import'); i.value=''; i.click(); }
+function onImportFile(ev){
+  const file=ev.target.files&&ev.target.files[0]; if(!file) return;
+  const rd=new FileReader();
+  rd.onload=function(){
+    try{
+      const o=JSON.parse(rd.result);
+      S=Object.assign(JSON.parse(JSON.stringify(blank)), o);
+      save(); showTab('input'); renderInput(); renderFab();
+      toast('データを読み込みました');
+    }catch(e){ toast('読込失敗：JSONを確認してください'); }
+  };
+  rd.readAsText(file);
 }
 // 元のExcelのように1ページ・余白少なめのきれいなPDFを直接生成（ブラウザのヘッダー/フッターなし）
 async function downloadPDF(){
