@@ -113,7 +113,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 <button class="fab" onclick="openAdd()">＋</button>
 
 <div class="footbar">
-  <div class="upd" id="upd">最終更新：—</div>
+  <div class="upd"><span id="cloud" style="font-weight:700;">接続確認中…</span><br><span id="updt">最終更新：—</span></div>
   <button class="fbtn" onclick="exportJSON()">⬇ バックアップ</button>
   <label class="fbtn" style="cursor:pointer;">⬆ 取込<input type="file" id="imp" accept="application/json" style="display:none;" onchange="importJSON(event)"></label>
 </div>
@@ -183,24 +183,19 @@ const SEED=[
 let data=[];
 let editIdx=null;
 
+// 在庫配列を正規化(廃止除去・名前一致でカテゴリ再分類・SEED新規追加・仕様書順ソート)
+function normalize(src){
+  let d=(src||[]).filter(x=>!REMOVED.includes(x.name));
+  const byName={}; SEED.forEach((x,i)=>byName[x.n]={c:x.c,seq:i});
+  d.forEach(x=>{ if(byName[x.name]) x.cat=byName[x.name].c; });
+  const names=new Set(d.map(x=>x.name));
+  let mx=d.length?Math.max(...d.map(z=>(+z.id||0))):0;
+  SEED.forEach(x=>{ if(!names.has(x.n)) d.push({id:++mx,cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}); });
+  d.sort((a,b)=>((byName[a.name]?byName[a.name].seq:999)-(byName[b.name]?byName[b.name].seq:999)));
+  return d;
+}
 function load(){
-  try{
-    const s=localStorage.getItem(LS_KEY);
-    if(s){
-      const o=JSON.parse(s); data=o.items||[]; window._updated=o.updated;
-      data=data.filter(d=>!REMOVED.includes(d.name)); // 廃止品目を除去
-      const byName={}; SEED.forEach((x,i)=>byName[x.n]={c:x.c,seq:i});
-      // 既存項目を名前一致で仕様書順カテゴリへ再分類(在庫数は保持)
-      data.forEach(d=>{ if(byName[d.name]) d.cat=byName[d.name].c; });
-      // SEEDに増えた項目を在庫数を消さず追加マージ
-      const names=new Set(data.map(d=>d.name));
-      SEED.forEach(x=>{ if(!names.has(x.n)) data.push({id:nextId(),cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}); });
-      // 仕様書(SEED)順に並べ替え。SEEDに無い独自追加分は末尾
-      data.sort((a,b)=>((byName[a.name]?byName[a.name].seq:999)-(byName[b.name]?byName[b.name].seq:999)));
-      save(false);
-      return;
-    }
-  }catch(e){}
+  try{ const s=localStorage.getItem(LS_KEY); if(s){ const o=JSON.parse(s); data=normalize(o.items); window._updated=o.updated; save(false); return; } }catch(e){}
   data=SEED.map((x,i)=>({id:i+1,cat:x.c,name:x.n,unit:x.u,qty:x.q,reorder:x.r}));
   save(false);
 }
@@ -210,6 +205,41 @@ function save(stamp=true){
   renderFoot();
 }
 function nextId(){ return data.length? Math.max(...data.map(d=>d.id))+1 : 1; }
+
+/* ===== クラウド同期(Cloudflare KV / /api/zaiko)。未設定時はlocalStorageのみで動作 ===== */
+const API='/api/zaiko';
+let cloudOn=false;
+function setCloudBadge(on){
+  const c=document.getElementById('cloud'); if(!c) return;
+  c.textContent = on?'☁ クラウド同期ON（全端末で共有）':'📱 この端末のみに保存';
+  c.style.color = on?'#15803d':'#9a6a00';
+}
+async function cloudReplaceAll(){
+  if(!cloudOn) return;
+  try{ await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'replaceAll',data:{items:data,updated:window._updated},updated:window._updated})}); }catch(e){}
+}
+async function cloudSetItem(id,fields){
+  if(!cloudOn) return;
+  try{ await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'setItem',id:id,fields:fields,updated:new Date().toISOString()})}); }catch(e){}
+}
+function editingNow(){
+  if(document.getElementById('overlay').classList.contains('show')) return true; // モーダル編集中
+  const a=document.activeElement; return !!(a && a.classList && a.classList.contains('qty')); // 数値入力中
+}
+async function syncFromCloud(){
+  try{
+    const r=await fetch(API,{cache:'no-store'}); const j=await r.json();
+    if(!j || !j.configured){ cloudOn=false; setCloudBadge(false); return; }
+    cloudOn=true; setCloudBadge(true);
+    if(j.empty || !j.data || !Array.isArray(j.data.items)){
+      await cloudReplaceAll(); // クラウド未投入→現在のローカルデータで初期化
+    } else if(!editingNow()){
+      data=normalize(j.data.items); window._updated=j.data.updated;
+      localStorage.setItem(LS_KEY, JSON.stringify({items:data,updated:window._updated}));
+      render(); renderFoot();
+    }
+  }catch(e){ cloudOn=false; setCloudBadge(false); }
+}
 
 function isLow(it){ return it.reorder!=null && (+it.qty||0)<=it.reorder; }
 function itemRow(it){
@@ -259,15 +289,15 @@ function renderSummary(){
 }
 function renderFoot(){
   const u=window._updated? new Date(window._updated):null;
-  document.getElementById('upd').textContent='最終更新：'+(u? u.toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—');
+  document.getElementById('updt').textContent='最終更新：'+(u? u.toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—');
 }
 function step(id,delta){
   const it=data.find(d=>d.id===id); if(!it) return;
-  it.qty=Math.max(0,(+it.qty||0)+delta); save(); render();
+  it.qty=Math.max(0,(+it.qty||0)+delta); save(); render(); cloudSetItem(id,{qty:it.qty});
 }
 function setQty(id,v){
   const it=data.find(d=>d.id===id); if(!it) return;
-  it.qty=Math.max(0,parseInt(v)||0); save(); render();
+  it.qty=Math.max(0,parseInt(v)||0); save(); render(); cloudSetItem(id,{qty:it.qty});
 }
 
 // モーダル
@@ -308,12 +338,12 @@ function saveItem(){
     reorder:(document.getElementById('f-reorder').value.trim()===''?null:Math.max(0,parseInt(document.getElementById('f-reorder').value)||0)) };
   if(editIdx==null){ data.push({id:nextId(),...o}); toast('追加しました'); }
   else { const it=data.find(d=>d.id===editIdx); Object.assign(it,o); toast('保存しました'); }
-  save(); render(); closeModal();
+  save(); render(); closeModal(); cloudReplaceAll();
 }
 function delItem(){
   if(editIdx==null) return;
   if(!confirm('この備品を削除しますか？')) return;
-  data=data.filter(d=>d.id!==editIdx); save(); render(); closeModal(); toast('削除しました');
+  data=data.filter(d=>d.id!==editIdx); save(); render(); closeModal(); toast('削除しました'); cloudReplaceAll();
 }
 
 function exportJSON(){
@@ -324,7 +354,7 @@ function exportJSON(){
 function importJSON(e){
   const f=e.target.files[0]; if(!f) return;
   const rd=new FileReader();
-  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(Array.isArray(o.items)){ data=o.items; save(); render(); toast('取り込みました'); } else toast('形式が不正です'); }catch(_){ toast('読み込み失敗'); } };
+  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(Array.isArray(o.items)){ data=normalize(o.items); save(); render(); cloudReplaceAll(); toast('取り込みました'); } else toast('形式が不正です'); }catch(_){ toast('読み込み失敗'); } };
   rd.readAsText(f); e.target.value='';
 }
 
@@ -333,6 +363,11 @@ function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.
 
 // init
 fillCatSelect(); load(); render(); renderFoot();
+// クラウド同期: 起動時＋画面フォーカス時＋20秒毎に最新を取得
+syncFromCloud();
+window.addEventListener('focus', syncFromCloud);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) syncFromCloud(); });
+setInterval(()=>{ if(!document.hidden && !editingNow()) syncFromCloud(); }, 20000);
 </script>
 </body>
 </html>
