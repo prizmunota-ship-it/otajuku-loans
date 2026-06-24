@@ -240,6 +240,31 @@ function toggleAll(){
 }
 document.getElementById('upd').textContent='更新日　'+(D.kpi&&D.kpi.asof||'');
 summary();render();
+
+/* ===== 内装状況をリアルタイム連動: 開いた時に内装アプリ(GAS)を直接読んで上書き→再描画 =====
+   ＝本村さんが内装表を変えたら、再生成を待たずに空室一覧へ自動反映される。 */
+const NAISO_GAS='https://script.google.com/macros/s/AKfycbzLIY3vZuxl3YqHK4xYpkuStrdD8bMVC9-kkt62G3xZ78hOWH8ypeWhHg-DQo2DyOk5/exec';
+function _normP(s){s=String(s||'').trim();for(const p of ['プライマリー','Ｐ','P']){if(s.startsWith(p))return s.slice(p.length);}return s;}
+async function liveNaiso(){
+ try{
+  const res=await fetch(NAISO_GAS+'?action=getAll');
+  const rows=await res.json();
+  if(!Array.isArray(rows))return;
+  const m={};
+  rows.forEach(x=>{m[_normP(x.name)+''+String(x.room||'').trim()]=x;});
+  let changed=false;
+  R.forEach(r=>{
+   const x=m[_normP(r.prop)+''+String(r.go).trim()];
+   if(!x)return;
+   if(x.status&&x.status!==r.naiso){r.naiso=x.status;changed=true;}
+   if(x.kanryoYotei)r.reform=x.kanryoYotei;
+   const kagi=String(x.kagi||'').trim();
+   if(kagi&&!['空予定','退去予定','確認中','未定','なし'].includes(kagi)){r.nairan=kagi;}
+  });
+  if(changed){summary();render();}
+ }catch(e){}
+}
+liveNaiso();
 </script>
 </body></html>
 `;
