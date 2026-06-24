@@ -153,14 +153,26 @@ document.getElementById('today-date').textContent =
 
 function isOwner(){ return currentUser==='owner'; }
 
+const CACHE_KEY = 'naiso_cache_v1';
 async function loadData(){
-  document.getElementById('cards').innerHTML = '<div class="loading"><div class="spin"></div><br>データを読み込み中...</div>';
+  // ① 前回のキャッシュがあれば即表示（GASを待たない＝体感が速い）
+  let hadCache = false;
+  try {
+    const c = localStorage.getItem(CACHE_KEY);
+    if (c) { const o = JSON.parse(c); if (Array.isArray(o)) { data = o; render(); hadCache = true; } }
+  } catch(e){}
+  if (!hadCache) document.getElementById('cards').innerHTML = '<div class="loading"><div class="spin"></div><br>データを読み込み中...</div>';
+  // ② 裏で最新を取得して差し替え＋キャッシュ更新
   try {
     const res = await fetch(GAS_URL + '?action=getAll');
-    data = await res.json();
-    render();
+    const fresh = await res.json();
+    if (Array.isArray(fresh)) {
+      data = fresh; render();
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(fresh)); } catch(e){}
+    }
   } catch(e) {
-    document.getElementById('cards').innerHTML = '<div class="empty">データの読み込みに失敗しました。<br>再読み込みしてください。</div>';
+    if (!hadCache) document.getElementById('cards').innerHTML = '<div class="empty">データの読み込みに失敗しました。<br>再読み込みしてください。</div>';
+    // キャッシュ表示中なら、そのまま維持（オフラインでも直近データが見える）
   }
 }
 
@@ -276,7 +288,7 @@ async function saveStatus(){
   const kanryo=document.getElementById('f-kanryo').value;
   const notes=document.getElementById('f-notes').value;
   p.status=selectedStatus; p.kanryoYotei=kanryo; p.notes=notes;
-  closeModal(); render();
+  closeModal(); render(); try{localStorage.setItem(CACHE_KEY,JSON.stringify(data));}catch(e){}
   showToast('保存中...');
   await saveUpdate({id:editingId, status:selectedStatus, kanryoYotei:kanryo, notes:notes});
   showToast('更新しました ✓');
@@ -319,7 +331,7 @@ async function saveEdit(){
   const kagi=document.getElementById('f-kagi').value;
   const notes=document.getElementById('f-notes2').value;
   p.kojihi=kojihi; p.itsukin=itsukin; p.kagi=kagi; p.notes=notes;
-  closeModal(); render();
+  closeModal(); render(); try{localStorage.setItem(CACHE_KEY,JSON.stringify(data));}catch(e){}
   showToast('保存中...');
   await saveUpdate({id:editingId, kojihi, itsukin, kagi, notes});
   showToast('保存しました ✓');
