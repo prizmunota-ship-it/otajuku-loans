@@ -422,12 +422,6 @@ function renderInput(){
     ${field('物件名','pname',{ph:'（例）プライマリー○○'})}
     <div class="fgroup"><div class="flabel">所在地<span class="unit">入力すると用途地域を自動取得</span></div>
       <input class="fval" value="${esc(S.addr)}" placeholder="（例）福岡県糸島市○○○３丁目○ー○" oninput="setAddr(this.value)"></div>
-    <div class="fgroup"><div class="flabel">ネット家賃査定<span class="unit">住所を自動コピー→査定サイトを開く</span></div>
-      <div style="display:flex;gap:8px;">
-        <button class="lookup-btn" style="flex:1;" onclick="rentAssess('smasate')">スマサテで査定</button>
-        <button class="lookup-btn" style="flex:1;background:#fff;color:#1a1a1a;" onclick="rentAssess('sumaity')">スマイティで査定</button>
-      </div>
-      <div style="font-size:10px;color:#bbb;margin-top:4px;">※ボタンを押すと所在地をコピーします。査定サイトの検索窓に貼り付けてください。</div></div>
     <div class="row3">
       ${selectF('築年(元号)','eraType',['西暦','令和','平成','昭和'])}
       ${field('年','eraYear',{type:'number',ph:'例: 1995'})}
@@ -1006,16 +1000,6 @@ function printPdf(){
   }
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
-// ===== ネット家賃査定（住所を自動コピー→査定サイトを新規タブで開く）=====
-// スマサテはログイン必須・公開APIなし、スマイティも無料査定だが住所deep-link不可のため、
-// 「住所をクリップボードへコピー → サイトを開く → 検索窓に貼り付け」の半自動が最も確実。
-function rentAssess(site){
-  const addr=(S.addr||'').trim();
-  const urls={ smasate:'https://smasate.jp/', sumaity:'https://sumaity.com/rent/' };
-  if(addr){ try{ navigator.clipboard.writeText(addr); }catch(e){} }
-  window.open(urls[site]||urls.sumaity, '_blank', 'noopener');
-  toast(addr ? '住所をコピーしました。検索窓に貼り付けてください' : '住所を入力すると自動コピーされます');
-}
 
 /* ============ 初期化 ============ */
 document.getElementById('sub-date').textContent =
