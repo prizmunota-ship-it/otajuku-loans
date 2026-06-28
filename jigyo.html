@@ -579,8 +579,8 @@ function renderResult(){
     ${kpiLine('FCR','実質利回り', isFinite(R.fcr)? R.fcr.toFixed(2):'', '％', okFcr, nt(fcrNote))}
     ${kpiLine('DCR','返済余力', isFinite(R.dcr)? R.dcr.toFixed(2):'', '', okDcr, nt('1.3以上が目安'))}
     ${kpiLine('返済比率','家賃に占める返済', isFinite(R.ratio)? Math.round(R.ratio):'', '％', okRatio, nt('60％以下が目安'))}
-    ${kpiLine('手残り率','価格への手残り', isFinite(cfRate)? cfRate.toFixed(2):'', '％', okCf, nt(cfNote))}
-    ${kpiLine('自己資金回収年数','', isFinite(kaishu)? kaishu.toFixed(1):'', '年', okKai, nt('10年以下が目安'))}
+    ${kpiLine('CF率','価格への手残り', isFinite(cfRate)? cfRate.toFixed(2):'', '％', okCf, nt(cfNote))}
+    ${kpiLine('回収年数','自己資金の回収', isFinite(kaishu)? kaishu.toFixed(1):'', '年', okKai, nt('10年以下が目安'))}
   </div></div>` : '';
 
   let h = '';
