@@ -125,12 +125,13 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;bo
 .t tr.rowtot td{font-weight:700;background:#F0EFEA;}
 .note{font-size:9.5px;color:#888;padding:4px 2px;line-height:1.4;}
 /* NOI/FCR/DCR/返済比率 の別枠（表の外） */
-.kpibox{padding:10px 10px 4px;max-width:280px;margin:2px 0 0 auto;}
-.kpi-line{display:grid;grid-template-columns:1fr 16px 92px 40px;gap:6px;align-items:baseline;font-size:12px;margin-bottom:5px;}
-.kpi-l{text-align:right;font-weight:700;}
-.kpi-eq{text-align:center;color:#444;}
-.kpi-v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;}
-.kpi-note{text-align:left;font-size:9px;color:#777;}
+.kpibox{padding:8px 6px 4px;margin:8px 0 0 0;}
+.kpi-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px;font-size:12px;margin-bottom:6px;}
+.kpi-l{font-weight:700;}
+.kpi-jp{font-weight:400;font-size:10.5px;color:#666;}
+.kpi-v{font-variant-numeric:tabular-nums;font-weight:700;}
+.kpi-v.ng{color:#C03030;}   /* 基準未達は赤字 */
+.kpi-note{font-size:9.5px;color:#999;line-height:1.2;margin-left:6px;}
 
 @media (max-width:640px){
   .xls-paper{min-width:0;}
@@ -157,8 +158,10 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 .pdf-mode .t th,.pdf-mode .t td{padding:4px 8px;}
 .pdf-mode .t td.yc,.pdf-mode .t .num .yc{font-size:11px;}
 .pdf-mode .note{font-size:11px;}
-.pdf-mode .kpibox{max-width:320px;margin-top:5px;}
-.pdf-mode .kpi-line{font-size:14px;grid-template-columns:1fr 18px 110px 46px;margin-bottom:4px;}
+.pdf-mode .kpibox{margin-top:8px;}
+.pdf-mode .kpi-line{font-size:13px;margin-bottom:5px;}
+.pdf-mode .kpi-jp{font-size:11.5px;}
+.pdf-mode .kpi-note{font-size:10.5px;}
 
 @media print{
   html, body { height:auto !important; }
@@ -217,6 +220,43 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 /* ============ 状態 ============ */
 const LS_KEY = 'jigyo_keikaku_v2';  // v2: 例を値→プレースホルダー化したため旧保存データをリセット
 const STRUCT_TAX = {'木造':0.015,'鉄骨造':0.02,'鉄筋コンクリート':0.025,'':0.03};
+// CF率の合格基準(%)＝人口動態で決定（人口上昇=2 / 人口減少4%未満=3 / 人口減少4%以上=4）
+const CF_STD = {'人口上昇':2,'人口減少4%未満':3,'人口減少4%以上':4};
+// 市区町村別 人口増減率(%)＝令和7年(2025)国勢調査 人口速報集計（2020→2025・直近5年）。
+// 出典: 福岡県=県公表Excel(全市区町村)、佐賀県=佐賀新聞ほか報道の速報値。住所文字列から照合して自動判定。
+// ※未収録の市区町村は手動選択にフォールバック。値は上書き可。確報は令和8年9月公表予定。
+const POP_DB = [
+  // ―― 佐賀県（2020→2025）――
+  {m:'上峰町',r:0.8},{m:'鳥栖市',r:0.4},{m:'基山町',r:0.2},
+  {m:'佐賀市',r:-2.4},{m:'武雄市',r:-4.5},{m:'神埼市',r:-5.2},{m:'伊万里市',r:-5.4},
+  {m:'鹿島市',r:-6.0},{m:'嬉野市',r:-6.0},{m:'唐津市',r:-6.1},
+  {m:'白石町',r:-8.3},{m:'大町町',r:-8.8},{m:'太良町',r:-11.9},{m:'玄海町',r:-17.7},
+  // ―― 福岡市（区別）――
+  {m:'福岡市東区',r:5.3},{m:'福岡市中央区',r:5.3},{m:'福岡市博多区',r:4.8},
+  {m:'福岡市南区',r:1.9},{m:'福岡市早良区',r:1.7},{m:'福岡市城南区',r:0.9},{m:'福岡市西区',r:0.5},
+  // ―― 福岡県 市町 ――
+  {m:'筑前町',r:4.2},{m:'福津市',r:3.0},{m:'筑紫野市',r:2.5},{m:'久山町',r:2.2},
+  {m:'糸島市',r:1.8},{m:'大野城市',r:1.4},{m:'粕屋町',r:0.7},{m:'宗像市',r:-0.1},
+  {m:'太宰府市',r:-0.5},{m:'古賀市',r:-0.7},{m:'小郡市',r:-1.2},{m:'春日市',r:-1.8},
+  {m:'行橋市',r:-1.9},{m:'久留米市',r:-2.1},{m:'新宮町',r:-2.2},{m:'筑後市',r:-2.3},
+  {m:'飯塚市',r:-3.2},{m:'田川市',r:-4.3},{m:'中間市',r:-4.6},{m:'那珂川市',r:-4.7},
+  {m:'直方市',r:-4.7},{m:'大木町',r:-4.7},{m:'八女市',r:-5.4},{m:'朝倉市',r:-5.6},
+  {m:'柳川市',r:-6.1},{m:'うきは市',r:-7.2},{m:'みやま市',r:-7.9},{m:'宮若市',r:-8.3},
+  {m:'大牟田市',r:-8.4},{m:'大川市',r:-9.9},{m:'嘉麻市',r:-10.1},
+  // ―― 北九州市（区別・全区減）――
+  {m:'北九州市小倉北区',r:-1.8},{m:'北九州市八幡西区',r:-3.0},{m:'北九州市小倉南区',r:-3.0},
+  {m:'北九州市若松区',r:-4.9},{m:'北九州市八幡東区',r:-6.0},{m:'北九州市戸畑区',r:-6.0},
+  {m:'北九州市門司区',r:-6.9}
+];
+// 増減率(%)→3区分。0以上=上昇 / 0〜-4=減少4%未満 / -4以下=減少4%以上
+function popCat(r){ return r>=0 ? '人口上昇' : (r>-4 ? '人口減少4%未満' : '人口減少4%以上'); }
+// 住所から市区町村を照合（区つき長称を優先）。{m,r} か null。
+function lookupPop(addr){
+  const a=(addr||'').replace(/\s/g,'');
+  if(a.length<3) return null;
+  const cand=POP_DB.filter(e=> a.includes(e.m)).sort((x,y)=>y.m.length-x.m.length);
+  return cand.length? cand[0] : null;
+}
 const YOUTO_LIST = ['','第一種低層住居専用地域','第二種低層住居専用地域','第一種中高層住居専用地域','第二種中高層住居専用地域','第一種住居地域','第二種住居地域','準住居地域','田園住居地域','近隣商業地域','商業地域','準工業地域','工業地域','工業専用地域','指定なし（非線引き等）','表示なし'];
 // 登録物件リスト（キー不要・即時自動入力）。match=住所の一部, youto/kenpei/yoseki を登録。
 // 例: {match:'博多区博多駅前1', youto:'商業地域', kenpei:80, yoseki:600}
@@ -232,7 +272,7 @@ const blank = {
   kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
   chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
   loan:'', years:'', rate:'', bankName:'',
-  junkai:'', net:'', atamakin:'', mgmtRate:'',
+  junkai:'', net:'', atamakin:'', mgmtRate:'', kpiShowSubmit:true, popTrend:'', popAuto:true, popRate:null,
   runs:[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]  // その他ランニング(手持ち用のみ反映)
 };
 let S = load();
@@ -382,6 +422,12 @@ function renderInput(){
     ${field('物件名','pname',{ph:'（例）プライマリー○○'})}
     <div class="fgroup"><div class="flabel">所在地<span class="unit">入力すると用途地域を自動取得</span></div>
       <input class="fval" value="${esc(S.addr)}" placeholder="（例）福岡県糸島市○○○３丁目○ー○" oninput="setAddr(this.value)"></div>
+    <div class="fgroup"><div class="flabel">ネット家賃査定<span class="unit">住所を自動コピー→査定サイトを開く</span></div>
+      <div style="display:flex;gap:8px;">
+        <button class="lookup-btn" style="flex:1;" onclick="rentAssess('smasate')">スマサテで査定</button>
+        <button class="lookup-btn" style="flex:1;background:#fff;color:#1a1a1a;" onclick="rentAssess('sumaity')">スマイティで査定</button>
+      </div>
+      <div style="font-size:10px;color:#bbb;margin-top:4px;">※ボタンを押すと所在地をコピーします。査定サイトの検索窓に貼り付けてください。</div></div>
     <div class="row3">
       ${selectF('築年(元号)','eraType',['西暦','令和','平成','昭和'])}
       ${field('年','eraYear',{type:'number',ph:'例: 1995'})}
@@ -461,6 +507,12 @@ function renderInput(){
   h += `<div class="card"><div class="card-title"><span class="dot"></span>ランニング・自己資金</div>
     <div class="row2">${field('巡回清掃(月)','junkai',{type:'number',unit:'円'})}${field('ネット等(月)','net',{type:'number',unit:'円'})}</div>
     ${field('管理料率','mgmtRate',{type:'number',unit:'%(税込・空欄=自動5%)'})}
+    <div class="fgroup"><div class="flabel">人口動態（CF率の合格基準）<span class="unit">所在地から自動判定・手動上書き可</span></div>
+      <select id="sel-pop" class="fval" onchange="setPopManual(this.value)">
+        ${['','人口上昇','人口減少4%未満','人口減少4%以上'].map(x=>`<option value="${esc(x)}" ${x===S.popTrend?'selected':''}>${x||'選択'}</option>`).join('')}
+      </select>
+      <div class="hint" id="pop-status" style="color:#1A7040;"></div></div>
+    <div style="font-size:10px;color:#bbb;margin:-2px 0 6px;">※CF率の合格ライン：人口上昇=2％以上／人口減少4%未満=3％以上／人口減少4%以上=4％以上</div>
     <div style="font-size:11px;color:#888;margin:10px 0 5px;">その他のランニングコスト（任意・最大3件 / <b>手持ち用のみ反映</b>）</div>
     <div class="run-head"><div>項目名</div><div>月額(円)</div></div>`;
   const runEx=['共用電気','浄化槽保守','エレベーター保守'];
@@ -474,6 +526,7 @@ function renderInput(){
     <div style="font-size:11px;color:#888;margin-top:6px;">※頭金は「購入価格−融資額」で自動計算されます<br>※管理料は月家賃収入から自動計算（手持ち5% / 提出4%・税込）</div></div>`;
 
   document.getElementById('view-input').innerHTML = h;
+  autoPop();   // 所在地から人口動態を自動判定して反映
 }
 
 /* ============ 結果UI（元のExcel「事業計画書」レイアウトを忠実に再現） ============ */
@@ -495,12 +548,54 @@ function renderResult(){
   const R = scenario(c,'real',mRate,total);   // 家賃
   const rentDataRows = S.rents.filter(r=> n(r.units)>0 || String(r.name).trim());
 
+  // ===== KPI(指標)計算 → 左カラム下部にまとめて表示 =====
+  const hideRun = !isHold;
+  const monthBal = hideRun ? (R.month - (c.pmt + R.kanri)) : R.monthBalance;
+  const yearBal  = hideRun ? (R.yearIncome - (c.pmtYear + R.yearKanri + R.koteishisan)) : R.yearBalance;
+  const jikoshikin = isHold ? (shokei + c.atamakin) : (shokei + c.jigyohi - c.loan);  // 自己資金
+  const cfRate = c.price>0 ? (yearBal / c.price * 100) : NaN;        // CF率=年間CF÷物件価格
+  const kaishu = yearBal>0 ? (jikoshikin / yearBal) : NaN;           // 現金回収率=自己資金÷年間CF(年)
+  // CF率の合格基準(%)＝人口動態で決定（未選択ならundefined＝判定しない）
+  const cfStd = CF_STD[S.popTrend];
+  // 括弧内は実際の人口増減率（自動判定時）。手動選択時は区分名を表示。
+  const popLabel = (S.popRate!=null)
+      ? `${S.popRate>=0?'人口増加':'人口減少'}${Math.abs(S.popRate)}%`
+      : (S.popTrend||'');
+  const cfNote = cfStd!=null ? `基準${cfStd}％以上エリア（${popLabel}）`
+                             : '人口上昇2％以上／減少4%未満3％以上／減少4%以上4％以上';
+  const showKpi = isHold || S.kpiShowSubmit;   // 提出用は記載ON/OFFを選択可
+  // 提出用は各項目の説明書き（note）を省く。手持ち用のみ note を表示。
+  const nt = isHold ? (s=>s) : (()=>'');
+  // 各指標の合否（ok=false で値を赤字表示）。NOI/FCRは絶対基準が無いので判定なし(null)。
+  const okDcr   = isFinite(R.dcr)   ? R.dcr   >= 1.3 : null;  // 1.3以上が目安
+  const okRatio = isFinite(R.ratio) ? R.ratio <= 60 : null;  // 60%以下が目安
+  const okCf    = (isFinite(cfRate) && cfStd!=null) ? cfRate >= cfStd : null;  // 人口動態の基準以上
+  const okKai   = isFinite(kaishu)  ? kaishu <= 10 : null;    // 10年以下が目安
+  // FCR(実質利回り)の合否＝イールドギャップ（FCR − ローン定数）で判定。
+  // 合格ライン=金融機関目線＝DCR1.3前後で融資が出る下限に相当する 1.0%。
+  const GAP_TARGET = 1.0;
+  const loanConst = c.loan>0 ? (c.pmtYear / c.loan * 100) : NaN;   // ローン定数(%)=年間返済÷借入額(返済負担)
+  const ygap = (isFinite(R.fcr) && isFinite(loanConst)) ? (R.fcr - loanConst) : NaN;
+  const reqFcr = isFinite(loanConst) ? (loanConst + GAP_TARGET) : NaN;  // 同じ土俵の合格ライン(必要FCR)
+  const okFcr = isFinite(ygap) ? ygap >= GAP_TARGET : null;
+  const fcrNote = isFinite(reqFcr)
+      ? `${reqFcr.toFixed(1)}％以上が目安（返済負担${loanConst.toFixed(1)}%＋${GAP_TARGET}%）`
+      : '総事業費に対する実質利回り';
+  const kpiHtml = showKpi ? `<div class="sec" style="border:none;"><div class="kpibox">
+    ${kpiLine('FCR','実質利回り', isFinite(R.fcr)? R.fcr.toFixed(2):'', '％', okFcr, nt(fcrNote))}
+    ${kpiLine('DCR','返済余力', isFinite(R.dcr)? R.dcr.toFixed(2):'', '', okDcr, nt('1.3以上が目安'))}
+    ${kpiLine('返済比率','家賃に占める返済', isFinite(R.ratio)? Math.round(R.ratio):'', '％', okRatio, nt('60％以下が目安'))}
+    ${kpiLine('CF率','価格への手残り', isFinite(cfRate)? cfRate.toFixed(2):'', '％', okCf, nt(cfNote))}
+    ${kpiLine('現金回収率','自己資金回収', isFinite(kaishu)? kaishu.toFixed(1):'', '年', okKai, nt('10年以下が目安'))}
+  </div></div>` : '';
+
   let h = '';
   // 手持ち/提出 トグル
   h += `<div class="seg no-print">
     <button class="seg-btn ${isHold?'active':''}" onclick="setView('standhold')">手持ち用</button>
     <button class="seg-btn ${!isHold?'active':''}" onclick="setView('submit')">金融機関提出用</button></div>`;
   h += `<div class="vlabel no-print">${isHold?'手持ち用':'金融機関提出用'}</div>`;
+  if(!isHold) h += `<div class="no-print" style="text-align:center;font-size:12px;color:#555;margin:-4px 0 8px;"><label style="cursor:pointer;">指標(KPI)を提出用にも記載する <input type="checkbox" ${S.kpiShowSubmit?'checked':''} onchange="toggleKpiSubmit(this.checked)" style="vertical-align:middle;"></label></div>`;
 
   // ===== ドキュメント本体 =====
   h += `<div class="xls" id="doc"><div class="xls-paper">`;
@@ -551,6 +646,7 @@ function renderResult(){
   h += trN('諸経費合計', shokei);
   h += trN('合計', total, true);
   h += `</table></div><div class="note">※不動産取得税は、取得から半年前後に納税通知書が届きます。</div>`;
+  h += kpiHtml;   // KPI(指標)を左カラム下部に表示
   h += `</div>`; // xls-col 左
 
   // ---- 右カラム ----
@@ -580,10 +676,7 @@ function renderResult(){
     <tr><td class="lbl">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td><td></td></tr>
     <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}</td><td class="yc">円</td></tr>
     </table></div>`;
-  // 収支計画（家賃 単一列）。金融機関提出用はランニングコスト(巡回清掃・ネット)を非表示＆合計から除外
-  const hideRun = !isHold;
-  const monthBal = hideRun ? (R.month - (c.pmt + R.kanri)) : R.monthBalance;
-  const yearBal  = hideRun ? (R.yearIncome - (c.pmtYear + R.yearKanri + R.koteishisan)) : R.yearBalance;
+  // 収支計画（家賃 単一列）。金融機関提出用はランニングコスト(巡回清掃・ネット)を非表示＆合計から除外（hideRun/monthBal/yearBalは上で計算済）
   h += `<div class="sec"><div class="sec-h">【収支計画】</div><table class="t">
     <tr><th>項目</th><th>金額</th><th style="width:26px"></th></tr>`;
   h += tr2N('月間収入', R.month);
@@ -606,13 +699,7 @@ function renderResult(){
   h += tr2N('月間収支合計', yearBal/12);
   h += tr2P('表面利回り', R.hyomen, '%');
   h += `</table></div>`;
-  // NOI / FCR / DCR / 返済比率 は収支計画の枠の外に別枠で明記（表面利回りの下で区切る）
-  h += `<div class="kpibox">
-    ${kpiLine('NOI','=', isFinite(R.noi)? num(R.noi):'')}
-    ${kpiLine('FCR','=', isFinite(R.fcr)? R.fcr.toFixed(2):'')}
-    ${kpiLine('DCR','=', isFinite(R.dcr)? R.dcr.toFixed(2):'', '＞1.3')}
-    ${kpiLine('返済比率','', isFinite(R.ratio)? Math.round(R.ratio)+' ％':'')}
-  </div>`;
+  // KPIは左カラム下部(kpiHtml)へ移動済み
   h += `</div>`; // xls-col 右
 
   h += `</div></div></div>`; // xls-cols / xls-paper / xls
@@ -646,9 +733,12 @@ function tr2P(l,a,unit,tot,dec){
   const f=v=> isFinite(v)? (dec!=null? v.toFixed(dec): (unit==='%'? v.toFixed(2): num(v))) : '';
   return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${f(a)}</td><td class="yc">${unit}</td></tr>`;
 }
-// 別枠の指標行（NOI = 値）
-function kpiLine(label, eq, val, note){
-  return `<div class="kpi-line"><span class="kpi-l">${label}</span><span class="kpi-eq">${eq||''}</span><span class="kpi-v">${val||''}</span><span class="kpi-note">${note||''}</span></div>`;
+// 別枠の指標行：「ラベル（説明）＝ 値 単位　［基準note］」の統一フォーマット。
+// ok===false（基準未達）のとき値を赤字表示。ok===null は判定なし（黒字）。
+function kpiLine(label, jpName, val, unit, ok, note){
+  const valTxt = (val===''||val==null) ? '' : (val + (unit? ' '+unit : ''));
+  const ngCls = ok===false ? ' ng' : '';
+  return `<div class="kpi-line"><span class="kpi-l">${label}<span class="kpi-jp">（${jpName}）</span>＝</span><span class="kpi-v${ngCls}">${valTxt}</span><span class="kpi-note">${note||''}</span></div>`;
 }
 // 家賃内訳テーブル（タイプ/戸数/1戸賃料/賃料合計）
 function rentTable(title, rows, key, monthTotal){
@@ -690,7 +780,29 @@ function setResi(i,on){ S.rents[i].resi=on; save(); updateInputTotals(); }
 function setRun(i,k,v){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=v; save(); }
 function setRunNum(i,k,el){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=normEl(el); save(); }
 // 住所→用途地域の自動取得。(1)登録物件リスト[キー不要・即時] → (2)公式API[キー設定後]
-function setAddr(v){ S.addr=v; save(); scheduleYouto(); }
+function setAddr(v){ S.addr=v; S.popAuto=true; save(); autoPop(); scheduleYouto(); }
+// 住所→人口増減率→3区分を自動判定し、CF率の合格基準をセット。手動上書き時(popAuto=false)は触らない。
+function autoPop(){
+  const el=document.getElementById('pop-status');
+  const sel=document.getElementById('sel-pop');
+  if(S.popAuto===false){
+    if(el){ el.style.color='#888'; el.textContent=S.popTrend?'手動選択中（自動に戻すには所在地を入力し直す）':''; }
+    return;
+  }
+  const hit=lookupPop(S.addr);
+  if(!hit){
+    S.popRate=null; save();
+    if(el){ el.style.color='#C0392B';
+      el.textContent=((S.addr||'').replace(/\s/g,'').length>3)?'人口データ未収録の地域です。下の一覧から手動で選択してください。':''; }
+    return;
+  }
+  const cat=popCat(hit.r);
+  S.popTrend=cat; S.popRate=hit.r; save();
+  if(sel) sel.value=cat;
+  if(el){ el.style.color='#1A7040';
+    el.textContent=`自動判定：${hit.m} ${hit.r>=0?'+':''}${hit.r}％（’20→’25）→ ${cat}（CF率 基準${CF_STD[cat]}％以上）`; }
+}
+function setPopManual(v){ S.popTrend=v; S.popAuto=false; S.popRate=null; save(); autoPop(); if(tab==='result') renderResult(); }
 let _youtoTimer=null;
 function scheduleYouto(){ clearTimeout(_youtoTimer); _youtoTimer=setTimeout(autoYouto, 700); }
 async function autoYouto(){
@@ -749,6 +861,7 @@ function updateInputTotals(){
   set('h-floor_area', n(S.floor_area)? tsubo(S.floor_area)+'坪':'');
 }
 function setView(v){ view=v; renderResult(); }
+function toggleKpiSubmit(on){ S.kpiShowSubmit=on; save(); renderResult(); }
 function setRentMode(m){ rentMode=m; renderResult(); }
 function showTab(t){
   tab=t;
@@ -893,6 +1006,16 @@ function printPdf(){
   }
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
+// ===== ネット家賃査定（住所を自動コピー→査定サイトを新規タブで開く）=====
+// スマサテはログイン必須・公開APIなし、スマイティも無料査定だが住所deep-link不可のため、
+// 「住所をクリップボードへコピー → サイトを開く → 検索窓に貼り付け」の半自動が最も確実。
+function rentAssess(site){
+  const addr=(S.addr||'').trim();
+  const urls={ smasate:'https://smasate.jp/', sumaity:'https://sumaity.com/rent/' };
+  if(addr){ try{ navigator.clipboard.writeText(addr); }catch(e){} }
+  window.open(urls[site]||urls.sumaity, '_blank', 'noopener');
+  toast(addr ? '住所をコピーしました。検索窓に貼り付けてください' : '住所を入力すると自動コピーされます');
+}
 
 /* ============ 初期化 ============ */
 document.getElementById('sub-date').textContent =
