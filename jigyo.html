@@ -561,7 +561,7 @@ function renderResult(){
   const popLabel = (S.popRate!=null)
       ? `${S.popRate>=0?'人口増加':'人口減少'}${Math.abs(S.popRate)}%`
       : (S.popTrend||'');
-  const cfNote = cfStd!=null ? `基準${cfStd}％以上エリア（${popLabel}）`
+  const cfNote = cfStd!=null ? `${cfStd}％以上エリア（${popLabel}）`
                              : '人口上昇2％以上／減少4%未満3％以上／減少4%以上4％以上';
   const showKpi = isHold || S.kpiShowSubmit;   // 提出用は記載ON/OFFを選択可
   // 提出用は各項目の説明書き（note）を省く。手持ち用のみ note を表示。
