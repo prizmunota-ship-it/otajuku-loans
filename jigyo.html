@@ -126,12 +126,15 @@ table.t{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;bo
 .note{font-size:9.5px;color:#888;padding:4px 2px;line-height:1.4;}
 /* NOI/FCR/DCR/返済比率 の別枠（表の外） */
 .kpibox{padding:8px 6px 4px;margin:8px 0 0 0;}
-.kpi-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px;font-size:12px;margin-bottom:6px;}
+/* 1指標=2行（○ラベル＝値／下に目安）。スマホでも縦に整列して見やすく */
+.kpi-line{font-size:12.5px;line-height:1.3;margin-bottom:8px;}
+.kpi-main{font-weight:700;}
+.kpi-mk{color:#1a1a1a;margin-right:3px;}
 .kpi-l{font-weight:700;}
-.kpi-jp{font-weight:400;font-size:10.5px;color:#666;}
+.kpi-jp{font-weight:400;font-size:11px;color:#666;}
 .kpi-v{font-variant-numeric:tabular-nums;font-weight:700;}
 .kpi-v.ng{color:#C03030;}   /* 基準未達は赤字 */
-.kpi-note{font-size:9.5px;color:#999;line-height:1.2;margin-left:6px;}
+.kpi-note{font-size:10px;color:#999;line-height:1.25;margin:1px 0 0 15px;}
 
 @media (max-width:640px){
   .xls-paper{min-width:0;}
@@ -564,7 +567,7 @@ function renderResult(){
   const okDcr   = isFinite(R.dcr)   ? R.dcr   >= 1.3 : null;  // 1.3以上が目安
   const okRatio = isFinite(R.ratio) ? R.ratio <= 60 : null;  // 60%以下が目安
   const okCf    = (isFinite(cfRate) && cfStd!=null) ? cfRate >= cfStd : null;  // 人口動態の基準以上
-  const okKai   = isFinite(kaishu)  ? kaishu <= 10 : null;    // 10年以下が目安
+  const okKai   = isFinite(kaishu)  ? kaishu <= 7 : null;     // 7年以下が目安
   // FCR(実質利回り)の合否＝イールドギャップ（FCR − ローン定数）で判定。
   // 合格ライン=金融機関目線＝DCR1.3前後で融資が出る下限に相当する 1.0%。
   const GAP_TARGET = 1.0;
@@ -578,9 +581,9 @@ function renderResult(){
   const kpiHtml = showKpi ? `<div class="sec" style="border:none;"><div class="kpibox">
     ${kpiLine('FCR','実質利回り', isFinite(R.fcr)? R.fcr.toFixed(2):'', '％', okFcr, nt(fcrNote))}
     ${kpiLine('DCR','返済余力', isFinite(R.dcr)? R.dcr.toFixed(2):'', '', okDcr, nt('1.3以上が目安'))}
-    ${kpiLine('返済比率','家賃に占める返済', isFinite(R.ratio)? Math.round(R.ratio):'', '％', okRatio, nt('60％以下が目安'))}
-    ${kpiLine('CF率','価格への手残り', isFinite(cfRate)? cfRate.toFixed(2):'', '％', okCf, nt(cfNote))}
-    ${kpiLine('自己資金回収年数','', isFinite(kaishu)? kaishu.toFixed(1):'', '年', okKai, nt('10年以下が目安'))}
+    ${kpiLine('返済比率','', isFinite(R.ratio)? Math.round(R.ratio):'', '％', okRatio, nt('60％以下が目安'))}
+    ${kpiLine('手残率','', isFinite(cfRate)? cfRate.toFixed(2):'', '％', okCf, nt(cfNote))}
+    ${kpiLine('自己資金回収年数','', isFinite(kaishu)? kaishu.toFixed(1):'', '年', okKai, nt('7年以下が目安'))}
   </div></div>` : '';
 
   let h = '';
@@ -733,7 +736,8 @@ function kpiLine(label, jpName, val, unit, ok, note){
   const valTxt = (val===''||val==null) ? '' : (val + (unit? ' '+unit : ''));
   const ngCls = ok===false ? ' ng' : '';
   const jp = jpName ? `<span class="kpi-jp">（${jpName}）</span>` : '';
-  return `<div class="kpi-line"><span class="kpi-l">${label}${jp}＝</span><span class="kpi-v${ngCls}">${valTxt}</span><span class="kpi-note">${note||''}</span></div>`;
+  const noteHtml = note ? `<div class="kpi-note">${note}</div>` : '';
+  return `<div class="kpi-line"><div class="kpi-main"><span class="kpi-mk">○</span><span class="kpi-l">${label}${jp}</span>＝<span class="kpi-v${ngCls}">${valTxt}</span></div>${noteHtml}</div>`;
 }
 // 家賃内訳テーブル（タイプ/戸数/1戸賃料/賃料合計）
 function rentTable(title, rows, key, monthTotal){
