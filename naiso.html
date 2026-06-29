@@ -237,7 +237,7 @@ function renderCards(){
         ${p.kagi?`<div class="info-item"><div class="info-lbl">鍵</div><div class="info-val">${p.kagi}</div></div>`:''}
         ${p.kanryoYotei?`<div class="info-item"><div class="info-lbl">完了予定</div><div class="info-val">${p.kanryoYotei}</div></div>`:''}
         ${p.kojihi&&p.kojihi!=0?`<div class="info-item"><div class="info-lbl">工事費</div><div class="info-val">¥${parseInt(p.kojihi).toLocaleString()}</div></div>`:''}
-        ${p.itsukin&&p.itsukin!=0?`<div class="info-item"><div class="info-lbl">違約金等</div><div class="info-val">¥${parseInt(p.itsukin).toLocaleString()}</div></div>`:''}
+        ${p.itsukin&&p.itsukin!=0?`<div class="info-item"><div class="info-lbl">違約金・過失等</div><div class="info-val">¥${parseInt(p.itsukin).toLocaleString()}</div></div>`:''}
       </div>
       ${p.notes?`<div class="note-box">${p.notes}</div>`:''}
       <div class="actions">
@@ -305,7 +305,7 @@ function openEdit(id){
       <input class="fval" type="number" id="f-kojihi" value="${p.kojihi||0}">
     </div>
     <div class="fgroup">
-      <div class="flabel">違約金・清掃代（円）</div>
+      <div class="flabel">違約金・過失・清掃代（円）</div>
       <input class="fval" type="number" id="f-itsukin" value="${p.itsukin||0}">
     </div>
     <div class="fgroup">
