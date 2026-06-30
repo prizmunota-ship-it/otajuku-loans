@@ -25,8 +25,9 @@ header .upd{font-size:15px;color:var(--mut);margin-top:3px}
 .wrap{padding:10px 12px}
 .exall{font-size:16.5px;color:var(--ac);font-weight:600;background:none;border:0;padding:7px 2px;margin-bottom:2px}
 /* ===== 物件アコーディオン ===== */
-.pcard{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:9px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
-.phead{cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;background:linear-gradient(to right,#fafbfc,#fff)}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:9px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.phead{cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;background:linear-gradient(to right,#f4f7fb,#fff);position:sticky;top:var(--hh,140px);z-index:4;border-radius:12px}
+.pcard.open .phead{border-radius:12px 12px 0 0;box-shadow:0 3px 6px -2px rgba(15,23,42,.12)}
 .phead .pmain{flex:1;min-width:0}
 .pnrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .pn{font-weight:700;font-size:22px}
@@ -149,7 +150,11 @@ function summary(){
   '<span class="chip tap'+on('needset')+'" onclick="setFilter(\\'needset\\')">要ｾｯﾄ設置 <b>'+needset+'</b></span>'+
   '<span class="chip tap'+on('gas')+'" onclick="setFilter(\\'gas\\')">ガスコンロ未 <b>'+gasmi+'</b></span>'+
   '<span class="chip tap'+on('collect')+'" onclick="setFilter(\\'collect\\')">セット回収 <b>'+setcol+'</b></span>';
+ setHH();
 }
+/* 物件ヘッダーをグローバルヘッダー直下に固定するため、ヘッダー高さを--hhに反映 */
+function setHH(){const h=document.querySelector('header');if(h)document.documentElement.style.setProperty('--hh',h.offsetHeight+'px');}
+addEventListener('resize',setHH);addEventListener('load',setHH);
 function naisoBadge(s){
  const map={'完了':['done','完了'],'内装中':['work','内装中'],'未内装':['none','未内装'],'空予定':['soon','空予定']};
  const m=map[s];return m?'<span class="b '+m[0]+'">'+m[1]+'</span>':(s?'<span class="b done">'+s+'</span>':'');
