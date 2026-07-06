@@ -219,9 +219,9 @@ function renderCards(){
   if(!list.length){ document.getElementById('cards').innerHTML='<div class="empty">該当する物件はありません</div>'; return; }
 
   document.getElementById('cards').innerHTML = list.map(p=>{
-    const isContractor = currentUser==='moto';
-    const statusBtn = `<button class="abtn ${isContractor?'primary':''}" onclick="openStatus(${p.id})">状況を更新</button>`;
-    const editBtn = isOwner() ? `<button class="abtn primary" onclick="openEdit(${p.id})">詳細編集</button>` : '';
+    // 権限区別なし＝オーナー・本村さんとも全項目を入力可
+    const statusBtn = `<button class="abtn primary" onclick="openStatus(${p.id})">状況を更新</button>`;
+    const editBtn = `<button class="abtn" onclick="openEdit(${p.id})">詳細編集</button>`;
     return `
     <div class="card">
       <div class="card-head">
@@ -266,6 +266,10 @@ function openStatus(id){
       <input class="fval" type="date" id="f-kanryo" value="${p.kanryoYotei||''}">
     </div>
     <div class="fgroup">
+      <div class="flabel">鍵所在</div>
+      <input class="fval" type="text" id="f-kagi-s" value="${p.kagi||''}" placeholder="例: 現地KEYBOX0131／縦樋KEYBOX7755">
+    </div>
+    <div class="fgroup">
       <div class="flabel">備考・メモ</div>
       <textarea class="fval" id="f-notes" placeholder="作業内容、懸念点など">${p.notes||''}</textarea>
     </div>
@@ -286,11 +290,12 @@ function selStatus(s, el){
 async function saveStatus(){
   const p=data.find(x=>x.id==editingId);
   const kanryo=document.getElementById('f-kanryo').value;
+  const kagi=document.getElementById('f-kagi-s').value;
   const notes=document.getElementById('f-notes').value;
-  p.status=selectedStatus; p.kanryoYotei=kanryo; p.notes=notes;
+  p.status=selectedStatus; p.kanryoYotei=kanryo; p.kagi=kagi; p.notes=notes;
   closeModal(); render(); try{localStorage.setItem(CACHE_KEY,JSON.stringify(data));}catch(e){}
   showToast('保存中...');
-  await saveUpdate({id:editingId, status:selectedStatus, kanryoYotei:kanryo, notes:notes});
+  await saveUpdate({id:editingId, status:selectedStatus, kanryoYotei:kanryo, kagi:kagi, notes:notes});
   showToast('更新しました ✓');
 }
 
