@@ -108,7 +108,6 @@ textarea.fval{resize:vertical;min-height:80px;}
   </div>
 </div>
 
-<div class="user-row" id="user-row"></div>
 <div class="summary" id="summary"></div>
 <div class="filters" id="filters"></div>
 <div class="cards" id="cards"></div>
@@ -184,16 +183,8 @@ async function saveUpdate(params){
 }
 
 function render(){
-  renderUsers(); renderSummary(); renderFilters(); renderCards();
+  renderSummary(); renderFilters(); renderCards();
 }
-
-function renderUsers(){
-  document.getElementById('user-row').innerHTML = USERS.map(u=>
-    `<button class="ubtn ${currentUser===u.id?'active':''}" onclick="switchUser('${u.id}')">${u.name}（${u.label}）</button>`
-  ).join('');
-}
-
-function switchUser(id){ currentUser=id; render(); }
 
 function renderSummary(){
   const c={'内装中':0,'未内装':0,'空予定':0,'完了':0};
