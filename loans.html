@@ -999,6 +999,50 @@ function renderReports(name){
   return html;
 }
 
+// ===== 売却報告データ =====
+var SALES = {};
+SALES["福岡県信用組合"] = [
+  {日付:"2025/06",氏名:"鍬野恭秀さん（サーフ）",物件:"シャロームコーポ（福岡市東区香住ケ丘・1K×8戸）",購入価格:"2,480万円",購入時利回り:"11.2%",購入時期:"2015年11月（平成27年11月）",融資:"福岡県信組 2,480万・20年・2.8%（別途 外壁塗装160万＝借入300万）",売却価格:"3,700万円",売却時利回り:"24.1%",保有期間:"9年7ヶ月",残債:"1,450万円＋外壁塗装残債120万",備考:"・売却益：2,130万円（税金・仲介手数料等を引くと約1,600万）\n・保有期間CF：約1,500万円（入居率98.7%）\n・保険見舞金等：約500万円（地震・火事含む）\n★トータル利益：売却益＋CF＋保険等＝約3,600万円",経緯:"急傾斜地だが眺望が最高（窓を開けると海が見渡せる）で即決めした物件。管理会社の2人目担当がカート好きだったためカート接待をしたところ、家賃を大幅値上げ（5,000円ほど）して決めてくれ、LUUPも6台契約（1,000円/台）。残債利回りが24%まで上がり売却を検討。\n\n買付は沢山入るも融資がつかず全滅…望み薄かと思いきや、自己資金50%出す強者が登場。280万の指値を即答OKし、なんとか売却にこぎ着けた。売却は難しいと実感。これを元手にまた物件を増やしたい。1歩下がって、3歩進む！"},
+  {日付:"2025/03",氏名:"太田圭一",物件:"福岡市東区和白東（太田の1棟目アパート）",購入価格:"2,280万円（手出し約50万）",購入時利回り:"—",購入時期:"—",融資:"福岡県信組（フルローン）",売却価格:"3,880万円",売却時利回り:"利回り8%台で設定",保有期間:"5年半",残債:"約1,750万円",備考:"・保有時（5.5年）CF：627万円\n・売却手残り：約2,000万円\n・売却税金：約500万円（1年後支払いの予測）\n★トータル収支：2,127万円の儲け（手出し50万弱が5年半で2,127万に）",経緯:"個人名義の減価償却が1年前に切れ、長期譲渡（5年超）になったタイミングで売り出し。自分で売却マイソクと売却一覧表を作成し各不動産会社へ。『この金額だと売れないだろう』という価格（利回りギリ8%台＝7.9%より8%の方が見栄えが良い）で設定したところ、募集1ヶ月未満で管理会社（アドバンス）のお客様が買付。\n\n売却は他者のコントロール領域が大きいので『売れたらラッキー』くらいがちょうど良い（あてにすると『タラレバ』になる）。ただしラッキーも準備なしには起こらない。とにかく日頃の準備・行動が必要。"}
+];
+
+function renderSales(name){
+  var list=SALES[name];
+  if(!list||list.length===0) return "";
+  var sorted=list.slice().sort(function(a,b){
+    var da=a.日付==="—"?"0000":a.日付.replace(/\//g,"");
+    var db=b.日付==="—"?"0000":b.日付.replace(/\//g,"");
+    return db.localeCompare(da);
+  });
+  var html='<div class="section"><div class="sec-title">🏷️ 売却報告</div>';
+  html+='<div class="report-count-badge" style="background:#fce4ec;color:#b83280">💰 '+sorted.length+'件の売却実績</div>';
+  html+='<div class="report-list">';
+  for(var i=0;i<sorted.length;i++){
+    var r=sorted[i];
+    html+='<div class="report-card">';
+    html+='<div class="report-header"><span class="report-icon">🏷️</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
+    html+='<div class="report-body">';
+    if(r.物件) html+='<div style="font-weight:700;color:#333;margin-bottom:6px">'+r.物件+'</div>';
+    html+='<div><span class="report-section-label spec">🏠 購入時</span><div class="report-grid">';
+    html+=scell("購入価格",r.購入価格,true)+scell("購入時利回り",r.購入時利回り)+scell("購入時期",r.購入時期);
+    if(r.融資) html+=scell("購入時融資",r.融資);
+    html+='</div></div>';
+    html+='<div><span class="report-section-label loan" style="background:#b83280">💰 売却時</span><div class="report-grid">';
+    html+=lcell("売却価格",r.売却価格,true)+lcell("売却時利回り",r.売却時利回り)+lcell("保有期間",r.保有期間)+lcell("残債",r.残債);
+    html+='</div>';
+    if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">収支・利益</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
+    if(r.経緯){
+      var sid='sale_'+Math.random().toString(36).slice(2,8);
+      html+='<button class="story-toggle" onclick="var b=document.getElementById(\''+sid+'\');b.classList.toggle(\'open\');this.classList.toggle(\'open\')">📖 売却の経緯を読む</button>';
+      html+='<div class="story-body" id="'+sid+'"><div class="story-content">'+r.経緯+'</div></div>';
+    }
+    html+='</div>';
+    html+='</div></div>';
+  }
+  html+='</div></div>';
+  return html;
+}
+
 function badgeClass(t){
   if(t==="銀行") return "b-bank";
   if(t==="信用組合") return "b-shinku";
@@ -1058,7 +1102,7 @@ function renderCard(d,idx){
 
   var bodyContent;
   if(!hasAnyInfo(d)){
-    bodyContent='<div class="no-data-section">情報収集中です。詳細が分かり次第更新します。</div>'+renderReports(d.名称);
+    bodyContent='<div class="no-data-section">情報収集中です。詳細が分かり次第更新します。</div>'+renderReports(d.名称)+renderSales(d.名称);
   } else {
     bodyContent=
       '<div class="section">'+
@@ -1080,7 +1124,7 @@ function renderCard(d,idx){
         '<div class="grid1">'+ic("保証人",d.保証人)+'</div>'+
         '<div style="margin-top:7px">'+memo(d.条件備忘)+'</div>'+
       '</div>'+
-      renderReports(d.名称);
+      renderReports(d.名称)+renderSales(d.名称);
   }
 
   return '<div class="card" id="c'+idx+'">'+
