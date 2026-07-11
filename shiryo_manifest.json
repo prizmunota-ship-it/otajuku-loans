@@ -5,10 +5,11 @@
 "catIcon": "🎓",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "動画.docx",
 "path": "shiryo/c00/f001.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 14463
 },
 {
@@ -17,10 +18,11 @@
 "catIcon": "🎓",
 "sub": "ONEチーム（０室〜１９室所有者）向け資料",
 "sub2": "",
+"sub3": "",
 "name": "０−１　金融機関物件持込までの５ステップ.pdf",
 "path": "shiryo/c00/f002.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 86870
 },
 {
@@ -29,10 +31,11 @@
 "catIcon": "🙋",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "１−１　自己紹介シート.xlsx",
 "path": "shiryo/c01/f001.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 59053
 },
 {
@@ -41,10 +44,11 @@
 "catIcon": "🙋",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "１−２　経歴書.docx",
 "path": "shiryo/c01/f002.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 10878
 },
 {
@@ -53,10 +57,11 @@
 "catIcon": "🙋",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "１−３　総合収支表（所有不動産一覧表）.xls",
 "path": "shiryo/c01/f003.xls",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 259072
 },
 {
@@ -65,10 +70,11 @@
 "catIcon": "🎯",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "２−１　人生の目標.docx",
 "path": "shiryo/c02/f001.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 15598
 },
 {
@@ -77,10 +83,11 @@
 "catIcon": "🎯",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "２−２　ライフサイクルプラン.xlsx",
 "path": "shiryo/c02/f002.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 16892
 },
 {
@@ -89,10 +96,11 @@
 "catIcon": "🎯",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "２−３　行動計画表（年間）　20260201更新.xlsx",
 "path": "shiryo/c02/f003.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 20638
 },
 {
@@ -101,10 +109,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−２　買付証明書.doc",
 "path": "shiryo/c03/f001.doc",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 28160
 },
 {
@@ -113,10 +122,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−３　希望金額趣意書.docx",
 "path": "shiryo/c03/f002.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 21565
 },
 {
@@ -125,10 +135,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−４　提出資料表紙及び目次.doc",
 "path": "shiryo/c03/f003.doc",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 28160
 },
 {
@@ -137,10 +148,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−５　物件概要書.xls",
 "path": "shiryo/c03/f004.xls",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 17920
 },
 {
@@ -149,10 +161,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−６　家賃表（レントロール）.xls",
 "path": "shiryo/c03/f005.xls",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 20992
 },
 {
@@ -161,10 +174,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−７　地図.xlsx",
 "path": "shiryo/c03/f006.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 1893108
 },
 {
@@ -173,10 +187,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−８　物件購入に際する詳細資料.doc",
 "path": "shiryo/c03/f007.doc",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 37376
 },
 {
@@ -185,10 +200,11 @@
 "catIcon": "🏦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "３−９　資金繰り表（新築）.xls",
 "path": "shiryo/c03/f008.xls",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 89600
 },
 {
@@ -197,10 +213,11 @@
 "catIcon": "🏠",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "４−１　預金支払管理表.xlsx",
 "path": "shiryo/c04/f002.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 40163
 },
 {
@@ -209,10 +226,11 @@
 "catIcon": "🏠",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "４−２　満室までの５ステップ.pdf",
 "path": "shiryo/c04/f003.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 1228963
 },
 {
@@ -221,10 +239,11 @@
 "catIcon": "🏠",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "４−３　空室管理表.xlsx",
 "path": "shiryo/c04/f004.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 141244
 },
 {
@@ -233,10 +252,11 @@
 "catIcon": "🏠",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "４−４　入退去状況一覧表.xlsx",
 "path": "shiryo/c04/f005.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 14714
 },
 {
@@ -245,10 +265,11 @@
 "catIcon": "🏠",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "動画.docx",
 "path": "shiryo/c04/f001.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 1374926
 },
 {
@@ -257,10 +278,11 @@
 "catIcon": "🏷️",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "５−１　売却物件一覧表.xlsx",
 "path": "shiryo/c05/f001.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 12423
 },
 {
@@ -269,10 +291,11 @@
 "catIcon": "🏷️",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "５−２　物件概要書（マイソク）.xlsx",
 "path": "shiryo/c05/f002.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 5053701
 },
 {
@@ -281,10 +304,11 @@
 "catIcon": "🔥",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "６−１　火災保険請求一覧表.xlsx",
 "path": "shiryo/c06/f001.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 19606
 },
 {
@@ -293,10 +317,11 @@
 "catIcon": "🌊",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "動画.docx",
 "path": "shiryo/c07/f001.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 1289284
 },
 {
@@ -305,10 +330,11 @@
 "catIcon": "📅",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "９−１　セミナー動画一覧.docx",
 "path": "shiryo/c09/f001.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 1662253
 },
 {
@@ -317,10 +343,11 @@
 "catIcon": "📅",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "９−２　物件見学会動画.docx",
 "path": "shiryo/c09/f002.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 1554092
 },
 {
@@ -329,11 +356,12 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20250521　開塾記念企画＠東京千代田区　登壇スライド.pdf",
-"path": null,
-"drive": "https://drive.google.com/file/d/1H5yn88e2Jx_SE-7bgfg2wx9YCBilSJy1/view",
-"icon": "📕",
-"size": 78159975
+"path": "shiryo/c09/f003.pdf",
+"drive": null,
+"icon": "pdf",
+"size": 10904649
 },
 {
 "cat": "９．イベント",
@@ -341,10 +369,11 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20250530　太田塾開塾記念企画＠糸島　ONEチーム向け勉強会　登壇スライド.pdf",
-"path": "shiryo/c09/f003.pdf",
+"path": "shiryo/c09/f004.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 1441381
 },
 {
@@ -353,11 +382,12 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20250530　太田塾開塾記念企画＠糸島　登壇スライド.pdf",
-"path": null,
-"drive": "https://drive.google.com/file/d/1oz9pcVvd7doDeQf8h3Fy6wPPqMCGsOqk/view",
-"icon": "📕",
-"size": 74591447
+"path": "shiryo/c09/f005.pdf",
+"drive": null,
+"icon": "pdf",
+"size": 10421483
 },
 {
 "cat": "９．イベント",
@@ -365,10 +395,11 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20250612　城島リーダープレゼンツ　ONEチーム賃貸募集勉強会.pdf",
-"path": "shiryo/c09/f004.pdf",
+"path": "shiryo/c09/f006.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 2389987
 },
 {
@@ -377,10 +408,11 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20250719　第２回太田塾勉強会.pdf",
-"path": "shiryo/c09/f005.pdf",
+"path": "shiryo/c09/f007.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 6350694
 },
 {
@@ -389,10 +421,11 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20251210　エナジーライフ株式会社_サービスご提案資料 .pdf",
-"path": "shiryo/c09/f006.pdf",
+"path": "shiryo/c09/f008.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 1060162
 },
 {
@@ -401,10 +434,11 @@
 "catIcon": "📅",
 "sub": "セミナースライド",
 "sub2": "",
+"sub3": "",
 "name": "20260226　金融機関祭り Vol.2　スライド.pdf",
-"path": "shiryo/c09/f007.pdf",
+"path": "shiryo/c09/f009.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 13600206
 },
 {
@@ -413,10 +447,11 @@
 "catIcon": "✈️",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "2020年　マイル修行11サービス概要まとめ（誰が作ったか覚えてないため、情報漏洩厳禁）.xlsx",
 "path": "shiryo/c10/f001.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 13721
 },
 {
@@ -425,10 +460,11 @@
 "catIcon": "✈️",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "2020年　マイル修行計画（太田の例）.xlsx",
 "path": "shiryo/c10/f002.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 54851
 },
 {
@@ -437,10 +473,11 @@
 "catIcon": "📦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "１０−１　紹介料請求書.xlsx",
 "path": "shiryo/c11/f001.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 19535
 },
 {
@@ -449,10 +486,11 @@
 "catIcon": "📦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "１０−２　企画立ち上げ謝礼.xlsx",
 "path": "shiryo/c11/f002.xlsx",
 "drive": null,
-"icon": "📊",
+"icon": "excel",
 "size": 26555
 },
 {
@@ -461,10 +499,11 @@
 "catIcon": "📦",
 "sub": "",
 "sub2": "",
+"sub3": "",
 "name": "１０−３　相談事項.docx",
 "path": "shiryo/c11/f003.docx",
 "drive": null,
-"icon": "📄",
+"icon": "word",
 "size": 15894
 },
 {
@@ -473,10 +512,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　0123　新年会＠福岡.pdf",
 "path": "shiryo/c11/f004.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164943
 },
 {
@@ -485,10 +525,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　0127　新年会＠東京品川.pdf",
 "path": "shiryo/c11/f005.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164757
 },
 {
@@ -497,10 +538,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　0213　第１回金融機関グループ勉強会＠横浜幸銀.pdf",
 "path": "shiryo/c11/f006.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164952
 },
 {
@@ -509,10 +551,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　0423　勉強会＠糸島.pdf",
 "path": "shiryo/c11/f007.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 263189
 },
 {
@@ -521,10 +564,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　20260226　金融機関祭りVol.2.pdf",
 "path": "shiryo/c11/f008.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164784
 },
 {
@@ -533,10 +577,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　20260618　不動産業者座談会.pdf",
 "path": "shiryo/c11/f009.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 102776
 },
 {
@@ -545,10 +590,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "イベント",
+"sub3": "",
 "name": "令和８年　20260618　二次会分.pdf",
 "path": "shiryo/c11/f010.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 103638
 },
 {
@@ -557,10 +603,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　６月分.pdf",
+"sub3": "令和７年",
+"name": "６月分.pdf",
 "path": "shiryo/c11/f014.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164044
 },
 {
@@ -569,10 +616,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　７月分.pdf",
+"sub3": "令和７年",
+"name": "７月分.pdf",
 "path": "shiryo/c11/f015.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 163931
 },
 {
@@ -581,10 +629,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　８月分.pdf",
+"sub3": "令和７年",
+"name": "８月分.pdf",
 "path": "shiryo/c11/f016.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164074
 },
 {
@@ -593,10 +642,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　９月分.png",
+"sub3": "令和７年",
+"name": "９月分.png",
 "path": "shiryo/c11/f017.png",
 "drive": null,
-"icon": "🖼️",
+"icon": "image",
 "size": 192039
 },
 {
@@ -605,10 +655,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　１０月分.pdf",
+"sub3": "令和７年",
+"name": "１０月分.pdf",
 "path": "shiryo/c11/f011.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164068
 },
 {
@@ -617,10 +668,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　１１月分.pdf",
+"sub3": "令和７年",
+"name": "１１月分.pdf",
 "path": "shiryo/c11/f012.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 163983
 },
 {
@@ -629,10 +681,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和７年　１２月分.pdf",
+"sub3": "令和７年",
+"name": "１２月分.pdf",
 "path": "shiryo/c11/f013.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164138
 },
 {
@@ -641,10 +694,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　１月分.pdf",
+"sub3": "令和８年",
+"name": "１月分.pdf",
 "path": "shiryo/c11/f018.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164035
 },
 {
@@ -653,10 +707,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　２月分.pdf",
+"sub3": "令和８年",
+"name": "２月分.pdf",
 "path": "shiryo/c11/f022.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164073
 },
 {
@@ -665,10 +720,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　３月分.pdf",
+"sub3": "令和８年",
+"name": "３月分.pdf",
 "path": "shiryo/c11/f023.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 164093
 },
 {
@@ -677,10 +733,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　４月分.pdf",
+"sub3": "令和８年",
+"name": "４月分.pdf",
 "path": "shiryo/c11/f024.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262339
 },
 {
@@ -689,10 +746,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　５月分.pdf",
+"sub3": "令和８年",
+"name": "５月分.pdf",
 "path": "shiryo/c11/f025.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262352
 },
 {
@@ -701,10 +759,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　６月分.pdf",
+"sub3": "令和８年",
+"name": "６月分.pdf",
 "path": "shiryo/c11/f026.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262367
 },
 {
@@ -713,10 +772,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　７月分.pdf",
+"sub3": "令和８年",
+"name": "７月分.pdf",
 "path": "shiryo/c11/f027.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262309
 },
 {
@@ -725,10 +785,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　８月分.pdf",
+"sub3": "令和８年",
+"name": "８月分.pdf",
 "path": "shiryo/c11/f028.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262258
 },
 {
@@ -737,10 +798,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　９月分.pdf",
+"sub3": "令和８年",
+"name": "９月分.pdf",
 "path": "shiryo/c11/f029.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262368
 },
 {
@@ -749,10 +811,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　１０月分.pdf",
+"sub3": "令和８年",
+"name": "１０月分.pdf",
 "path": "shiryo/c11/f019.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262411
 },
 {
@@ -761,10 +824,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　１１月分.pdf",
+"sub3": "令和８年",
+"name": "１１月分.pdf",
 "path": "shiryo/c11/f020.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262332
 },
 {
@@ -773,10 +837,11 @@
 "catIcon": "📦",
 "sub": "領収書",
 "sub2": "月会費",
-"name": "令和８年　１２月分.pdf",
+"sub3": "令和８年",
+"name": "１２月分.pdf",
 "path": "shiryo/c11/f021.pdf",
 "drive": null,
-"icon": "📕",
+"icon": "pdf",
 "size": 262424
 }
 ]
