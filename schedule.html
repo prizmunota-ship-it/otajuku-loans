@@ -83,6 +83,7 @@
     };
 
     function ScheduleRoadmap() {
+      const hasChousei = scheduleData.some(m => m.events.some(e => e.chousei));
       return (
         <div className="min-h-screen bg-amber-50/50 p-2 sm:p-4 font-sans text-slate-800 flex flex-col items-center">
           <div className="w-full max-w-lg mb-3">
@@ -110,6 +111,11 @@
                   <span>リアル＆オンライン</span>
                 </div>
               </div>
+              {hasChousei && (
+                <div className="mt-3 mx-auto w-fit max-w-full bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1.5 rounded-full leading-snug">
+                  📋 のイベントは<span className="underline decoration-orange-400">タイトルをタップ</span>で詳細・参加表明（調整さん）へ
+                </div>
+              )}
             </div>
 
             <div className="space-y-8 sm:space-y-10">
