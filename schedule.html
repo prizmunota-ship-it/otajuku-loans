@@ -1,104 +1,231 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>令和8年 太田塾 年間スケジュール</title>
-<script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}var ts=parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);if(Date.now()-ts<86400000){return;}window._rc=function(r){if(r==="ok"){localStorage.setItem("otajuku_auth_ts",""+Date.now());}else{localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");localStorage.removeItem("otajuku_auth_ts");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FFFBEA 0%,#FFF3B0 55%,#FFE566 100%);min-height:100vh;color:#1C1400;}
-.wrap{max-width:560px;margin:0 auto;padding:0 0 40px;}
-header{background:linear-gradient(135deg,#F5C400 0%,#D4920A 60%,#C47800 100%);padding:18px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 3px 16px rgba(180,110,0,.35);}
-.back{display:inline-block;color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:.95;margin-bottom:8px;}
-header h1{color:#fff;font-size:18px;font-weight:900;letter-spacing:.02em;}
-header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;}
-.legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;background:#FFF8E1;border-bottom:1.5px solid #EDD97A;padding:9px 16px;font-size:11px;font-weight:700;}
-.legend .lg{display:flex;align-items:center;gap:5px;}
-.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.d-online{background:#3B82F6;} .d-real{background:#10B981;} .d-both{background:#A855F7;}
-.legend .l-online{color:#2563EB;} .legend .l-real{color:#059669;} .legend .l-both{color:#9333EA;}
-.body{padding:12px 14px;}
-.month{background:#fff;border:1.5px solid rgba(245,196,0,.4);border-radius:14px;margin-bottom:11px;overflow:hidden;box-shadow:0 4px 14px rgba(180,130,0,.08);}
-.m-head{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#FFE9A8,#FFD866);padding:9px 15px;}
-.m-badge{background:#D4920A;color:#fff;font-weight:900;font-size:13px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(180,110,0,.3);}
-.m-badge small{font-size:8px;margin-left:1px;}
-.m-name{font-size:13px;font-weight:800;color:#8A5A00;}
-.evs{padding:6px 14px 10px;}
-.ev{display:flex;gap:9px;padding:8px 0;border-bottom:1px dashed #F0DFA0;}
-.ev:last-child{border-bottom:none;}
-.ev .dot{margin-top:5px;}
-.ev .ec{flex:1;min-width:0;}
-.ev .edate{font-size:11px;font-weight:700;color:#8A7020;}
-.ev .etitle{font-size:12.5px;font-weight:700;color:#2A2008;line-height:1.4;margin-top:1px;word-break:break-word;}
-.ev .eloc{font-size:10.5px;color:#A0863A;margin-top:1px;}
-.foot{text-align:center;font-size:10px;color:#A89050;margin-top:14px;line-height:1.6;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>令和8年 太田塾 年間スケジュール</title>
+  <script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}var ts=parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);if(Date.now()-ts<86400000){return;}window._rc=function(r){if(r==="ok"){localStorage.setItem("otajuku_auth_ts",""+Date.now());}else{localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");localStorage.removeItem("otajuku_auth_ts");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+  <style> body { background: #fefce8; } </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <a class="back" href="/">‹ メニューに戻る</a>
-  <h1>🌻 令和8年 太田塾 年間スケジュール</h1>
-  <div class="sub">下半期（7月〜12月）の予定</div>
-</header>
-<div class="legend">
-  <div class="lg l-online"><span class="dot d-online"></span>オンライン</div>
-  <div class="lg l-real"><span class="dot d-real"></span>リアル</div>
-  <div class="lg l-both"><span class="dot d-both"></span>リアル＆オンライン</div>
-</div>
-<div class="body" id="body"></div>
-<div class="foot">© 太田塾 メンバー専用<br>最新情報に随時更新されます</div>
-</div>
-<script>
-var scheduleData = [
-  {month:"7月", events:[
-    {date:"7(火)", type:"オンライン", title:"エンパワータイム", location:""},
-    {date:"9(木)", type:"リアル", title:"第3回 金融機関グループ勉強会(融資編)", location:"福岡中央銀行西新支店"},
-    {date:"23(木)", type:"リアル", title:"エンパワータイム", location:"天神ワンビルB1"}
-  ]},
-  {month:"8月", events:[
-    {date:"2(日)", type:"リアル", title:"BBQ", location:"福岡糸島"},
-    {date:"4(火)", type:"オンライン", title:"エンパワータイム", location:""},
-    {date:"27(木)", type:"リアル", title:"エンパワータイム", location:"天神ワンビルB1"}
-  ]},
-  {month:"9月", events:[
-    {date:"1(火)", type:"オンライン", title:"エンパワータイム", location:""},
-    {date:"17(木)", type:"リアル", title:"第4回 金融機関グループ勉強会", location:"大分銀行"},
-    {date:"24(木)", type:"リアル", title:"エンパワータイム", location:"天神ワンビルB1"},
-    {date:"26(土)", type:"リアル", title:"【仮】檜原新築AP完成見学会", location:""}
-  ]},
-  {month:"10月", events:[
-    {date:"6(火)", type:"オンライン", title:"エンパワータイム", location:""},
-    {date:"15(木)", type:"リアル", title:"金融機関祭りVol.3", location:"博多"},
-    {date:"22(木)", type:"リアル", title:"エンパワータイム", location:"天神ワンビルB1"}
-  ]},
-  {month:"11月", events:[
-    {date:"10(火)", type:"オンライン", title:"エンパワータイム", location:""},
-    {date:"26(木)", type:"リアル", title:"エンパワータイム", location:"天神ワンビルB1"}
-  ]},
-  {month:"12月", events:[
-    {date:"1(火)", type:"オンライン", title:"エンパワータイム", location:""},
-    {date:"10(木)〜11(金)", type:"リアル", title:"忘年会", location:"福岡"},
-    {date:"24(木)", type:"リアル", title:"エンパワータイム", location:"天神ワンビルB1"}
-  ]}
-];
-function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function dotClass(t){ return t==="リアル＆オンライン"?"d-both":(t==="オンライン"?"d-online":"d-real"); }
-var h="";
-scheduleData.forEach(function(m){
-  var num=m.month.replace("月","");
-  h+='<div class="month"><div class="m-head"><span class="m-badge">'+num+'</span><span class="m-name">'+esc(m.month)+'</span></div><div class="evs">';
-  m.events.forEach(function(e){
-    h+='<div class="ev"><span class="dot '+dotClass(e.type)+'"></span><div class="ec">'+
-       '<div class="edate">'+esc(e.date)+'</div><div class="etitle">'+esc(e.title)+'</div>'+
-       (e.location?'<div class="eloc">@'+esc(e.location)+'</div>':'')+'</div></div>';
-  });
-  h+='</div></div>';
-});
-document.getElementById("body").innerHTML=h;
-</script>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // lucide-react のアイコンをインラインSVGで代替
+    const Download = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+    );
+
+    const scheduleData = [
+      {
+        month: "7月",
+        events: [
+          { date: "7(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "9(木)", type: "リアル", title: "第3回 金融機関グループ勉強会(融資編)", location: "福岡中央銀行西新支店" },
+          { date: "23(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+        ]
+      },
+      {
+        month: "8月",
+        events: [
+          { date: "2(日)", type: "リアル", title: "BBQ", location: "福岡糸島", chousei: "https://chouseisan.com/s?h=fd6b4f428e8a48fcacfc27ebfee1d433" },
+          { date: "4(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "27(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+        ]
+      },
+      {
+        month: "9月",
+        events: [
+          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "17(木)", type: "リアル", title: "第4回 金融機関グループ勉強会", location: "大分銀行" },
+          { date: "24(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+          { date: "26(土)", type: "リアル", title: "【仮】檜原新築AP完成見学会", location: "" },
+        ]
+      },
+      {
+        month: "10月",
+        events: [
+          { date: "6(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "15(木)", type: "リアル", title: "金融機関祭りVol.3", location: "博多" },
+          { date: "22(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+        ]
+      },
+      {
+        month: "11月",
+        events: [
+          { date: "10(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "26(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+        ]
+      },
+      {
+        month: "12月",
+        events: [
+          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "10(木)〜11(金)", type: "リアル", title: "忘年会", location: "福岡" },
+          { date: "24(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+        ]
+      }
+    ];
+
+    // 3ヶ月ごとに分割（行にするため）
+    const rows = [];
+    for (let i = 0; i < scheduleData.length; i += 3) {
+      const chunk = scheduleData.slice(i, i + 3);
+      while (chunk.length < 3) {
+        chunk.push(null);
+      }
+      rows.push(chunk);
+    }
+
+    const getDotColor = (type) => {
+      if (type === 'リアル＆オンライン') return 'bg-purple-500';
+      if (type === 'オンライン') return 'bg-blue-500';
+      return 'bg-emerald-500';
+    };
+
+    function ScheduleRoadmap() {
+      const handleDownload = async () => {
+        const element = document.getElementById('roadmap-container');
+        if (!element) return;
+        try {
+          if (!window.htmlToImage) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
+            document.body.appendChild(script);
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = reject;
+            });
+          }
+          setTimeout(async () => {
+            try {
+              const dataUrl = await window.htmlToImage.toPng(element, {
+                pixelRatio: 3,
+                backgroundColor: '#fefce8',
+                style: { transform: 'scale(1)', transformOrigin: 'top left' }
+              });
+              const link = document.createElement('a');
+              link.href = dataUrl;
+              link.download = 'ota_juku_schedule_2026.png';
+              link.click();
+            } catch (err) {
+              console.error("生成処理エラー:", err);
+              alert("画像の生成に失敗しました。");
+            }
+          }, 150);
+        } catch (error) {
+          console.error("ライブラリの読み込みに失敗", error);
+          alert("画像の保存準備に失敗しました。");
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-amber-50/50 p-2 sm:p-4 font-sans text-slate-800 flex flex-col items-center">
+          <div className="w-full max-w-lg flex justify-between items-center mb-3">
+            <a href="/" className="text-amber-800 text-xs font-bold no-underline">‹ メニューに戻る</a>
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-md transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              画像として保存
+            </button>
+          </div>
+
+          <div id="roadmap-container" className="w-full max-w-lg bg-yellow-50 p-5 rounded-3xl shadow-xl border border-white relative">
+            <div className="mb-6 text-center">
+              <h1 className="text-[1.15rem] sm:text-2xl font-black text-amber-900 flex items-center justify-center gap-2 mb-3 tracking-tight">
+                <span className="text-2xl sm:text-3xl drop-shadow-sm">🌻</span>
+                <span>令和８年太田塾年間スケジュール</span>
+                <span className="text-2xl sm:text-3xl drop-shadow-sm">🌻</span>
+              </h1>
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-bold bg-white px-4 py-2 rounded-full shadow-sm border border-amber-200 mx-auto w-fit">
+                <div className="flex items-center gap-1 text-blue-600">
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                  <span>オンライン</span>
+                </div>
+                <div className="flex items-center gap-1 text-emerald-600">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  <span>リアル</span>
+                </div>
+                <div className="flex items-center gap-1 text-purple-600">
+                  <div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
+                  <span>リアル＆オンライン</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-8 sm:space-y-10">
+              {rows.map((row, rowIdx) => {
+                const validItemCount = row.filter(Boolean).length;
+                const rightPos = validItemCount === 3 ? 'right-[15%]' : 'right-[48%]';
+                return (
+                  <div key={rowIdx} className="relative flex justify-between gap-1.5 sm:gap-3">
+                    <div className={`absolute top-[18px] left-[15%] ${rightPos} h-0.5 border-t-[3px] border-dashed border-amber-300/80 z-0`}></div>
+                    {row.map((data, colIdx) => {
+                      if (!data) {
+                        return <div key={colIdx} className="flex-1 opacity-0 pointer-events-none"></div>;
+                      }
+                      return (
+                        <div key={colIdx} className="flex-1 relative z-10 flex flex-col">
+                          <div className="mx-auto bg-amber-500 text-white w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-black text-sm sm:text-base border-[3px] border-white shadow-sm z-20 relative">
+                            <span>{data.month.replace('月', '')}</span><span className="text-[10px] sm:text-xs ml-0.5">月</span>
+                          </div>
+                          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-2 sm:p-3 pt-6 sm:pt-7 -mt-5 flex-1 z-10 relative">
+                            <div className="space-y-2.5">
+                              {data.events.map((event, eIdx) => (
+                                <div key={eIdx} className="flex items-start gap-1">
+                                  <div className="flex-shrink-0 pt-[3px]">
+                                    <div className={`w-2 h-2 rounded-full ${getDotColor(event.type)}`}></div>
+                                  </div>
+                                  <div className="leading-tight flex-1 min-w-0">
+                                    <div className="text-[10px] sm:text-[11px] font-bold text-slate-500">
+                                      {event.date}
+                                    </div>
+                                    <div className="text-[10px] sm:text-[11px] font-bold text-slate-800 break-words mt-0.5 tracking-tight">
+                                      {event.title}
+                                    </div>
+                                    {event.location && (
+                                      <div className={`mt-0.5 ${event.highlight ? 'text-red-600 font-extrabold text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px] text-slate-400 font-semibold'}`}>
+                                        @{event.location}
+                                      </div>
+                                    )}
+                                    {event.chousei && (
+                                      <a href={event.chousei} target="_blank" rel="noopener"
+                                        className="inline-flex items-center gap-0.5 mt-1 bg-orange-500 hover:bg-orange-600 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full no-underline shadow-sm">
+                                        📋 出欠（調整さん）
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<ScheduleRoadmap />);
+  </script>
 </body>
 </html>
