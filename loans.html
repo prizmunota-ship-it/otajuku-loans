@@ -1006,6 +1006,34 @@ function renderReports(name){
   return html;
 }
 
+// ===== 運転資金・資金調達データ（物件購入とは別）=====
+var FUNDING = {};
+FUNDING["福岡信用金庫"] = [
+  {日付:"令和8年2月",氏名:"太田圭一",商品名:"100周年記念 運転資金（オリックス保証）",融資額:"500万円",融資期間:"7年",金利:"1.95%",保証料:"26万円",備考:"・2度目の正直で本日承認㊗️\n・2期以上経過している法人が融資対象。資金調達を必要とする方は太田が繋ぎます（要連絡）"}
+];
+function renderFunding(name){
+  var list=FUNDING[name];
+  if(!list||list.length===0) return "";
+  var sorted=list.slice().sort(function(a,b){ return reiwaKey(b.日付) - reiwaKey(a.日付); });
+  var html='<div class="section"><div class="sec-title">💰 運転資金・資金調達</div>';
+  html+='<div class="report-count-badge">💴 '+sorted.length+'件（物件購入とは別）</div>';
+  html+='<div class="report-list">';
+  for(var i=0;i<sorted.length;i++){
+    var r=sorted[i];
+    html+='<div class="report-card">';
+    html+='<div class="report-header"><span class="report-icon">💴</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
+    html+='<div class="report-body">';
+    if(r.商品名) html+='<div style="font-weight:700;color:#333;margin-bottom:6px">'+r.商品名+'</div>';
+    html+='<div class="report-grid">';
+    html+=lcell("融資額",r.融資額,true)+lcell("融資期間",r.融資期間)+lcell("金利",r.金利,true)+lcell("保証料",r.保証料);
+    html+='</div>';
+    if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">備考</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
+    html+='</div></div>';
+  }
+  html+='</div></div>';
+  return html;
+}
+
 function badgeClass(t){
   if(t==="銀行") return "b-bank";
   if(t==="信用組合") return "b-shinku";
@@ -1065,7 +1093,7 @@ function renderCard(d,idx){
 
   var bodyContent;
   if(!hasAnyInfo(d)){
-    bodyContent='<div class="no-data-section">情報収集中です。詳細が分かり次第更新します。</div>'+renderReports(d.名称);
+    bodyContent='<div class="no-data-section">情報収集中です。詳細が分かり次第更新します。</div>'+renderReports(d.名称)+renderFunding(d.名称);
   } else {
     bodyContent=
       '<div class="section">'+
@@ -1087,7 +1115,7 @@ function renderCard(d,idx){
         '<div class="grid1">'+ic("保証人",d.保証人)+'</div>'+
         '<div style="margin-top:7px">'+memo(d.条件備忘)+'</div>'+
       '</div>'+
-      renderReports(d.名称);
+      renderReports(d.名称)+renderFunding(d.名称);
   }
 
   return '<div class="card" id="c'+idx+'">'+
