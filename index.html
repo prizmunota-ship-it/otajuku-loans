@@ -112,7 +112,8 @@ var GAS_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgM
 // 認証済みなら入口を閉じてメニュー表示。ただし毎回「在籍」を再確認（退会者を締め出すため）
 if(localStorage.getItem("otajuku_auth") === "ok" && localStorage.getItem("otajuku_email")){
   document.getElementById("loginOverlay").style.display = "none";
-  revalidate();
+  var _ts = parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);
+  if(Date.now()-_ts >= 86400000){ revalidate(); }   // 前回照合から24時間以内なら在籍照合をスキップ＝即メニュー表示
 } else {
   localStorage.removeItem("otajuku_auth");   // 旧セッション(メール未保存)は再ログインさせる
 }
@@ -121,9 +122,11 @@ function revalidate(){
   var em = localStorage.getItem("otajuku_email"); if(!em) return;
   window._recheck = function(r){
     if(r !== "ok"){
-      localStorage.removeItem("otajuku_auth"); localStorage.removeItem("otajuku_email");
+      localStorage.removeItem("otajuku_auth"); localStorage.removeItem("otajuku_email"); localStorage.removeItem("otajuku_auth_ts");
       var ov=document.getElementById("loginOverlay"); ov.style.display="flex";
       var m=document.getElementById("loginMsg"); m.className="login-msg error"; m.textContent="登録が確認できませんでした。再度ログインしてください。";
+    } else {
+      localStorage.setItem("otajuku_auth_ts", ""+Date.now());   // 照合OK→24時間の期限を更新
     }
   };
   var s=document.createElement("script");
@@ -149,6 +152,7 @@ function doLogin(){
     if(result === "ok"){
       localStorage.setItem("otajuku_auth", "ok");
       localStorage.setItem("otajuku_email", email.toLowerCase());
+      localStorage.setItem("otajuku_auth_ts", ""+Date.now());   // ログイン成功→24時間の期限をセット
       msg.className="login-msg success";
       msg.textContent="認証成功！";
       setTimeout(function(){ document.getElementById("loginOverlay").style.display="none"; }, 500);
