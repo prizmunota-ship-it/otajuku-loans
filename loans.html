@@ -1019,12 +1019,12 @@ function saleCardHTML(r){
   html+='<div class="report-body">';
   var title=(r.物件||'');
   if(title) html+='<div style="font-weight:700;color:#333;margin-bottom:2px">'+title+'</div>';
-  if(r.金融機関) html+='<div style="margin-bottom:6px"><span style="font-size:11px;color:#b83280;background:#fce4ec;border-radius:10px;padding:2px 9px">購入時の融資：'+r.金融機関+'</span></div>';
+  if(r.金融機関) html+='<div style="margin-bottom:6px"><span style="font-size:11px;color:#1A7A3A;background:#E8F7EE;border:1px solid #A8D8AA;border-radius:10px;padding:2px 9px">購入時の融資：'+r.金融機関+'</span></div>';
   html+='<div><span class="report-section-label spec">🏠 購入時</span><div class="report-grid">';
   html+=scell("購入価格",r.購入価格,true)+scell("購入時利回り",r.購入時利回り)+scell("購入時期",r.購入時期);
   if(r.融資) html+=scell("購入時融資",r.融資);
   html+='</div></div>';
-  html+='<div><span class="report-section-label loan" style="background:#b83280">💰 売却時</span><div class="report-grid">';
+  html+='<div><span class="report-section-label loan">💰 売却時</span><div class="report-grid">';
   html+=lcell("売却価格",r.売却価格,true)+lcell("売却時利回り",r.売却時利回り)+lcell("保有期間",r.保有期間)+lcell("残債",r.残債);
   html+='</div>';
   if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">収支・利益</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
