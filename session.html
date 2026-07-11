@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>個人セッション予約</title>
+<script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}var ts=parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);if(Date.now()-ts<86400000){return;}window._rc=function(r){if(r==="ok"){localStorage.setItem("otajuku_auth_ts",""+Date.now());}else{localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");localStorage.removeItem("otajuku_auth_ts");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FFFBEA 0%,#FFF3B0 55%,#FFE566 100%);min-height:100vh;color:#1C1400;}
+.wrap{max-width:600px;margin:0 auto;padding:0 0 40px;}
+header{background:linear-gradient(135deg,#F5C400 0%,#D4920A 60%,#C47800 100%);padding:18px 16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 3px 16px rgba(180,110,0,.35);}
+.back{display:inline-block;color:#fff;font-size:12px;font-weight:700;text-decoration:none;opacity:.95;margin-bottom:8px;}
+header h1{color:#fff;font-size:20px;font-weight:900;letter-spacing:.04em;}
+header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
+.body{padding:14px;}
+.intro{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;padding:15px 16px;margin-bottom:14px;box-shadow:0 4px 14px rgba(180,130,0,.08);}
+.intro .t{font-size:14px;font-weight:800;color:#9A6D00;margin-bottom:6px;}
+.intro p{font-size:12.5px;line-height:1.8;color:#4A3A10;}
+.frame-wrap{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(180,130,0,.08);}
+iframe{width:100%;height:70vh;min-height:560px;border:0;display:block;}
+.fallback{text-align:center;margin-top:14px;}
+.fallback a{display:inline-block;font-size:13px;font-weight:800;color:#fff;background:linear-gradient(135deg,#F5C400,#D4920A);border-radius:10px;padding:12px 22px;text-decoration:none;box-shadow:0 3px 12px rgba(180,110,0,.3);}
+.fallback .hint{font-size:11px;color:#8A6D1F;margin-top:8px;line-height:1.6;}
+.foot{text-align:center;font-size:10px;color:#A89050;margin-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="back" href="/">‹ メニューに戻る</a>
+  <h1>📅 個人セッション予約</h1>
+  <div class="sub">太田との1対1・個人セッションの予約窓口</div>
+</header>
+<div class="body">
+  <div class="intro">
+    <div class="t">ご予約について</div>
+    <p>太田塾メンバー向けの、太田との1対1個人セッションの予約窓口です。下のカレンダーから空いている日時を選んでご予約ください。所要時間や内容の詳細は予約画面内に表示されます。</p>
+  </div>
+  <div class="frame-wrap">
+    <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2E6mPKhNaWVlubK3uv3Q3wTgB10SN4GC_Fr06KYVs0mchO7Sr9Q43C_Wge5K01_TqtYvDwMT3q?gv=true" title="個人セッション予約カレンダー" loading="lazy"></iframe>
+  </div>
+  <div class="fallback">
+    <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2E6mPKhNaWVlubK3uv3Q3wTgB10SN4GC_Fr06KYVs0mchO7Sr9Q43C_Wge5K01_TqtYvDwMT3q" target="_blank" rel="noopener">別画面で予約ページを開く</a>
+    <div class="hint">上のカレンダーがうまく表示されない場合はこちらから</div>
+  </div>
+</div>
+<div class="foot">© 太田塾 メンバー専用</div>
+</div>
+</body>
+</html>
