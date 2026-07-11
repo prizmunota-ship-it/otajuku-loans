@@ -29,22 +29,22 @@ body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FF
 .login-msg.success{color:#1A7A3A;font-weight:700;}
 
 /* ===== メニュー ===== */
-.wrap{max-width:480px;margin:0 auto;padding:16px 15px 12px;}
+.wrap{max-width:480px;margin:0 auto;padding:12px 15px 10px;}
 .brand{text-align:center;margin-bottom:2px;}
-.brand .logo{font-size:30px;line-height:1.1;}
-.brand h1{font-size:20px;font-weight:900;letter-spacing:.04em;}
-.brand .badge{display:inline-block;background:linear-gradient(135deg,#F5C400,#E8A000);color:#fff;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;margin-top:4px;letter-spacing:.12em;box-shadow:0 2px 8px rgba(232,160,0,0.35);}
-.menu-title{text-align:center;font-size:11.5px;color:#7A5800;margin:11px 0 8px;font-weight:700;}
-.app-card{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;padding:10px 13px;margin-bottom:8px;cursor:pointer;text-decoration:none;color:inherit;box-shadow:0 4px 14px rgba(180,130,0,.09);transition:transform .12s,box-shadow .12s;}
+.brand .logo{font-size:26px;line-height:1.05;}
+.brand h1{font-size:19px;font-weight:900;letter-spacing:.04em;}
+.brand .badge{display:inline-block;background:linear-gradient(135deg,#F5C400,#E8A000);color:#fff;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;margin-top:3px;letter-spacing:.12em;box-shadow:0 2px 8px rgba(232,160,0,0.35);}
+.menu-title{text-align:center;font-size:11px;color:#7A5800;margin:8px 0 7px;font-weight:700;}
+.app-card{display:flex;align-items:center;gap:11px;background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:13px;padding:8px 12px;margin-bottom:7px;cursor:pointer;text-decoration:none;color:inherit;box-shadow:0 3px 12px rgba(180,130,0,.09);transition:transform .12s,box-shadow .12s;}
 .app-card:active{transform:scale(.985);}
-.app-card .ic{font-size:24px;width:36px;text-align:center;flex-shrink:0;}
+.app-card .ic{font-size:22px;width:34px;text-align:center;flex-shrink:0;}
 .app-card .t{flex:1;min-width:0;}
-.app-card .t .nm{font-size:14.5px;font-weight:800;line-height:1.25;}
-.app-card .t .ds{font-size:10px;color:#8A6D1F;margin-top:2px;line-height:1.4;}
-.app-card .arrow{color:#E8A000;font-size:22px;font-weight:900;flex-shrink:0;}
+.app-card .t .nm{font-size:14px;font-weight:800;line-height:1.25;}
+.app-card .t .ds{font-size:9.5px;color:#8A6D1F;margin-top:2px;line-height:1.35;}
+.app-card .arrow{color:#E8A000;font-size:21px;font-weight:900;flex-shrink:0;}
 .app-card.soon{opacity:.6;cursor:default;border-style:dashed;box-shadow:none;background:#FFFDF3;}
-.logout{display:block;margin:11px auto 0;font-size:11px;color:#9A8030;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;}
-.foot{text-align:center;font-size:10px;color:#A89050;margin-top:9px;}
+.logout{display:block;margin:9px auto 0;font-size:11px;color:#9A8030;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;}
+.foot{text-align:center;font-size:10px;color:#A89050;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -104,6 +104,12 @@ body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FF
   <a class="app-card" href="shiryo.html">
     <div class="ic">🗄️</div>
     <div class="t"><div class="nm">資料データ・動画格納庫</div><div class="ds">レントロール・各種ひな型・教材・領収書などをExcel/Word/PDFで</div></div>
+    <div class="arrow">›</div>
+  </a>
+
+  <a class="app-card" href="schedule.html">
+    <div class="ic">🗓️</div>
+    <div class="t"><div class="nm">年間スケジュール</div><div class="ds">勉強会・エンパワータイム・イベントの年間予定（随時更新）</div></div>
     <div class="arrow">›</div>
   </a>
 
