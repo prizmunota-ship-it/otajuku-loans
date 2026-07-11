@@ -35,6 +35,9 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .chip { padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:600; color:var(--mid); cursor:pointer; font-family:inherit; }
 .chip.active { background:var(--gold-lt); border-color:var(--amber); color:var(--dark2); }
 .count { font-size:11px; color:var(--muted); }
+.dl-btn { margin-left:auto; padding:6px 13px; border-radius:8px; border:1.5px solid var(--amber); background:linear-gradient(135deg,var(--gold-lt) 0%,var(--gold) 100%); color:#fff; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; box-shadow:0 1px 5px rgba(180,110,0,0.28); white-space:nowrap; }
+.dl-btn:hover { filter:brightness(1.06); }
+.dl-btn:active { transform:translateY(1px); }
 .cards { max-width:700px; margin:0 auto; padding:14px 12px 40px; display:flex; flex-direction:column; gap:12px; }
 .card { background:var(--card-bg); border-radius:14px; border:1.5px solid var(--border); box-shadow:0 2px 12px var(--shadow); overflow:hidden; }
 .card-head { padding:13px 16px 11px; display:flex; align-items:flex-start; gap:10px; cursor:pointer; background:linear-gradient(to right,#FFFBEC,#FFF8D6); border-bottom:1.5px solid transparent; }
@@ -183,6 +186,7 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
       <button class="chip" data-type="ノンバンク">ノンバンク</button>
     </div>
     <span class="count" id="countLabel">33件</span>
+    <button id="dlExcelBtn" class="dl-btn" onclick="downloadExcel()" title="表示中の金融機関をExcelでダウンロード">📊 Excelでダウンロード</button>
   </div>
 </div>
 <div class="cards" id="cardContainer"><div class="card" id="c0"><div class="card-head" onclick="tog(0)"><span class="type-badge b-shinku">信用組合</span><div class="card-title-area"><div class="card-name">横浜幸銀信用組合</div><div class="card-meta"><span class="meta-pill">年収 決まりなし</span><span class="meta-pill">支店のある地域</span></div><div class="eval-row"><div class="eval-item"><span class="em em-caut">▲</span>個人</div><div class="eval-item"><span class="em em-ok">○</span>法人</div><div class="eval-item" style="margin-left:4px">金利&nbsp;<span class="rate-val">3%</span></div></div></div><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div><div class="card-body"><div class="card-body-inner"><div class="section"><div class="sec-title">契約者条件</div><div class="grid2"><div class="ic"><div class="lb">契約エリア</div><div class="vl">支店のある地域</div></div><div class="ic"><div class="lb">年収目安</div><div class="vl">決まりなし</div></div></div><div class="memo">・一見は断られるケース大
@@ -1117,6 +1121,28 @@ function render(){
     box.innerHTML=html;
   }
   document.getElementById("countLabel").textContent=filtered.length+"件";
+}
+// ===== Excel(CSV)ダウンロード：現在の絞り込み結果に連動 =====
+var EXPORT_COLS=["更新日","種類","名称","契約エリア","年収","個人","法人","契約備忘","物件エリア","物件ポジ","物件ネガ","木造","軽鉄","重鉄","RC","新築MAX","期間備忘","自己資金","金利","保証人","保証料","出資金","事務手数料","条件備忘"];
+function csvCell(v){ v=(v==null?"":String(v)); if(/[",\n\r]/.test(v)){ v='"'+v.replace(/"/g,'""')+'"'; } return v; }
+function downloadExcel(){
+  var rows=DATA.filter(function(d){
+    var tok=(curType==="all"||d.種類===curType);
+    var sq=(!curQ||d.名称.indexOf(curQ)>=0||(d.契約エリア||"").indexOf(curQ)>=0||(d.物件エリア||"").indexOf(curQ)>=0||(d.種類||"").indexOf(curQ)>=0);
+    return tok&&sq;
+  });
+  if(rows.length===0){ alert("該当する金融機関がありません。絞り込み条件を変えてください。"); return; }
+  var lines=[EXPORT_COLS.map(csvCell).join(",")];
+  for(var i=0;i<rows.length;i++){ lines.push(EXPORT_COLS.map(function(c){return csvCell(rows[i][c]);}).join(",")); }
+  var csv="﻿"+lines.join("\r\n"); // BOM付きUTF-8＝Excelで文字化けせず列展開
+  var d=new Date(),p=function(n){return(n<10?"0":"")+n;};
+  var stamp=""+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate());
+  var scope=(curType==="all"?"全機関":curType)+(curQ?"_"+curQ:"");
+  var fname="太田塾_金融機関融資情報_"+scope+"_"+stamp+".csv";
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  var url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url; a.download=fname; document.body.appendChild(a); a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
 }
 document.querySelectorAll(".chip").forEach(function(btn){
   btn.addEventListener("click",function(){
