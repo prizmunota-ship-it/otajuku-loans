@@ -177,8 +177,7 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 <div class="filter-bar">
   <div class="filter-inner">
     <div class="mode-tabs">
-      <button class="mtab active" data-mode="banks">🏦 機関別</button>
-      <button class="mtab" data-mode="purchases">🏡 購入実績</button>
+      <button class="mtab active" data-mode="banks">🏦 物件融資</button>
       <button class="mtab" data-mode="funding">💰 資金調達</button>
     </div>
     <div class="search-wrap">
@@ -1115,7 +1114,7 @@ function renderCard(d,idx){
 
   var bodyContent;
   if(!hasAnyInfo(d)){
-    bodyContent='<div class="no-data-section">情報収集中です。詳細が分かり次第更新します。</div>'+renderReports(d.名称)+renderFunding(d.名称);
+    bodyContent='<div class="no-data-section">情報収集中です。詳細が分かり次第更新します。</div>'+renderReports(d.名称);
   } else {
     bodyContent=
       '<div class="section">'+
@@ -1137,7 +1136,7 @@ function renderCard(d,idx){
         '<div class="grid1">'+ic("保証人",d.保証人)+'</div>'+
         '<div style="margin-top:7px">'+memo(d.条件備忘)+'</div>'+
       '</div>'+
-      renderReports(d.名称)+renderFunding(d.名称);
+      renderReports(d.名称);
   }
 
   return '<div class="card" id="c'+idx+'">'+
@@ -1164,7 +1163,6 @@ function tog(idx){ document.getElementById("c"+idx).classList.toggle("open"); }
 var curType="all", curQ="", curMode="banks";
 function render(){
   var box=document.getElementById("cardContainer");
-  if(curMode==="purchases"){ box.innerHTML=renderAllPurchases(); return; }
   if(curMode==="funding"){ box.innerHTML=renderAllFunding(); return; }
   var filtered=DATA.filter(function(d){
     var tok=(curType==="all"||d.種類===curType);
@@ -1194,7 +1192,7 @@ document.querySelectorAll(".mtab").forEach(function(btn){
     btn.classList.add("active");
     curMode=btn.getAttribute("data-mode");
     document.querySelector(".chips").style.display=(curMode==="banks")?"":"none";
-    document.getElementById("searchInput").placeholder=(curMode==="banks")?"金融機関名・エリアで検索…":(curMode==="purchases"?"氏名・物件・金融機関で検索…":"氏名・商品名・金融機関で検索…");
+    document.getElementById("searchInput").placeholder=(curMode==="banks")?"金融機関名・エリアで検索…":"氏名・商品名・金融機関で検索…";
     render();
   });
 });
