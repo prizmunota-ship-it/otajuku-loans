@@ -31,7 +31,9 @@ h1{ color:#fff; font-size:24px; font-weight:900; letter-spacing:.03em; margin-to
 .cta{ flex:1; }
 .c-title{ font-size:15px; font-weight:800; color:var(--dark); line-height:1.4; }
 .c-sub{ font-size:12px; color:var(--mid); margin-top:3px; line-height:1.5; }
-.chev{ width:20px; height:20px; color:var(--gold); flex-shrink:0; transition:transform .2s; margin-top:2px; }
+.c-meta{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+.c-date{ font-size:10px; font-weight:800; color:var(--amber); background:rgba(232,160,0,0.12); border:1px solid rgba(232,160,0,0.3); border-radius:6px; padding:2px 7px; white-space:nowrap; font-family:'Courier New',monospace; }
+.chev{ width:20px; height:20px; color:var(--gold); flex-shrink:0; transition:transform .2s; }
 .card.open .chev{ transform:rotate(180deg); }
 .card-body{ max-height:0; overflow:hidden; transition:max-height .3s ease; }
 .card.open .card-body{ max-height:3000px; }
@@ -109,7 +111,7 @@ var CATS = [
 var CATMAP = {gas:{name:"ガス会社",cls:"b-gas"},hoken:{name:"保険",cls:"b-hoken"},creka:{name:"クレカ",cls:"b-creka"},fuku:{name:"副収入",cls:"b-fuku"},zei:{name:"税金・資金繰り",cls:"b-zei"}};
 
 var DATA = [
-{cat:"gas", title:"TOKAI（全国対応の給湯器・無償貸与）", sub:"給湯器フルメンテ＋切替5万/戸＋毎月300〜500円/戸が大家に入る", body:`
+{cat:"gas", date:"2025/04/27", title:"TOKAI（全国対応の給湯器・無償貸与）", sub:"給湯器フルメンテ＋切替5万/戸＋毎月300〜500円/戸が大家に入る", body:`
 <p>ガス会社が給湯器を<b>フルメンテナンス</b>してくれ、さらに切替時と毎月の手数料が大家に入るスキーム。</p>
 <ul>
 <li>切替時：<b>5万円/戸</b>の手数料</li>
@@ -118,11 +120,11 @@ var DATA = [
 <div class="note">ガス会社と<b>管理会社</b>が契約し、管理会社経由で大家に入る形。＝管理会社の協力が必要。太田は2物件で切替段取り中。</div>
 <p>公式：<a href="https://www.lpg.tokai.jp" target="_blank" rel="noopener">https://www.lpg.tokai.jp</a>（多分全国対応）</p>`},
 
-{cat:"gas", title:"榊ガス（福岡エリア）", sub:"給湯器＋2口グリル付きビルトインコンロを貸与", body:`
+{cat:"gas", date:"2025/04/27", title:"榊ガス（福岡エリア）", sub:"給湯器＋2口グリル付きビルトインコンロを貸与", body:`
 <p>エリアは<b>福岡</b>で絞られるが、<b>給湯器＋2口グリル付きのビルトインタイプ</b>を貸与してくれた（切替済み）。</p>
 <p>公式：<a href="https://gasuyanomadoguchi.com/gclist/fukuoka_438/" target="_blank" rel="noopener">ガス屋の窓口（福岡）</a></p>`},
 
-{cat:"hoken", title:"少額短期保険で手数料を得る（大家が代理店になる）", sub:"入居者の家財保険の手数料40%前後をオーナーが受け取る小銭チャリンスキーム", body:`
+{cat:"hoken", date:"2025/04/28", title:"少額短期保険で手数料を得る（大家が代理店になる）", sub:"入居者の家財保険の手数料40%前後をオーナーが受け取る小銭チャリンスキーム", body:`
 <p>入居者が加入する家財保険の手数料の受取人を、通常の「保険会社」or「保険会社＋管理会社で折半」から、<b>オーナー（40%前後）＋保険会社（60%前後）</b>に変える。小規模から可能で、オーナーがやるのは<b>申込書作成（2〜3分）</b>くらい。</p>
 <div class="note">管理会社が保証会社とのセット契約等でこの手数料をあてにしている場合もあるので、<b>管理会社の状況を必ず確認</b>してから相談を。</div>
 <h4>やり方（手順）</h4>
@@ -137,7 +139,7 @@ var DATA = [
 <li>⑧保険金の入金確認後に鍵渡し（※入金確認後の鍵渡しを管理会社と整合しておく）</li>
 </ul>`},
 
-{cat:"hoken", title:"火災・地震保険の請求ノウハウ", sub:"保険金はフルマックス／一部損の取り方／請求が通る切り口", body:`
+{cat:"hoken", date:"2025/08", title:"火災・地震保険の請求ノウハウ", sub:"保険金はフルマックス／一部損の取り方／請求が通る切り口", body:`
 <h4>保険金はフルマックスでかける</h4>
 <p>購入金額以上にかける発想を持つ。地震リスクが高いと思うエリアは、オーナー側で保険金額を操作する。</p>
 <h4>地震保険（現地鑑定人立会の実例）</h4>
@@ -151,7 +153,7 @@ var DATA = [
 <li>有効な切り口（岡さん）：<b>排水管（軒天内を通る管）の接続部から水漏れ→軒天が濡れた</b>。これなら水漏れ原因を問わない（劣化でもOK）で対象になりやすい（認定 約15万前後の例）。</li>
 </ul>`},
 
-{cat:"creka", title:"固定資産税・税金をクレカ払い→ポイント/マイル化", sub:"eltaxでクレカ払い。高還元カードなら手数料負けせず『むしろお得』", body:`
+{cat:"creka", date:"2025/09", title:"固定資産税・税金をクレカ払い→ポイント/マイル化", sub:"eltaxでクレカ払い。高還元カードなら手数料負けせず『むしろお得』", body:`
 <p>税金は現金でなく<b>クレジットカード払い</b>でポイント/マイルが貯まる。手数料はかかるが、還元率の高いカードなら手数料負けせず得。</p>
 <p>支払サイト：<a href="https://www.payment.eltax.lta.go.jp/pbuser" target="_blank" rel="noopener">地方税お支払サイト（eltax）</a></p>
 <div class="note">実例：<b>ANA VISAプラチナ（1.5%）</b>で 748,000円の支払い→手数料6,145円だが <b>11,220 ANAマイル</b>が付与。福岡⇔羽田は7,500マイル（航空券なら25,000円前後）＝手数料を上回るお得。</div>
@@ -163,7 +165,7 @@ var DATA = [
 </ul>
 <div class="contact">ANA VISA は<b>紹介で入会するとポイント</b>が付きます。太田が紹介可（紹介番号 <b>00125434</b>／オオタ ケイイチ）。ご連絡ください。</div>`},
 
-{cat:"fuku", title:"自販機設置（売上の25%前後が大家収入）", sub:"アサヒ／伊藤園／ワールドサンフーズ／サンエイ／ネオス", body:`
+{cat:"fuku", date:"2025/08", title:"自販機設置（売上の25%前後が大家収入）", sub:"アサヒ／伊藤園／ワールドサンフーズ／サンエイ／ネオス", body:`
 <p>敷地に自販機を置き、売上の一部（<b>25%前後</b>）が大家に入る副収入。エリアや設置条件は各社次第（近年はコスト高で設置が厳しめの会社も）。</p>
 <div class="contact"><b>アサヒ飲料</b>：藤本さん <a href="tel:08027910391">080-2791-0391</a>（太田から紹介可・条件は現地確認後・過去 売上25%の実績）／経営企画部 丹野さん</div>
 <div class="contact"><b>伊藤園</b>：売上25%（エリアで変動）・対応エリア制限なし・最近はコスト高で設置が厳しくなってきている</div>
@@ -171,11 +173,11 @@ var DATA = [
 <div class="contact"><b>サンエイ自販機（100円飲料）</b>：古賀さん <a href="tel:08046443156">080-4644-3156</a>（福岡市中心）</div>
 <div class="contact"><b>ネオス</b>：担当 <a href="tel:09060816331">090-6081-6331</a></div>`},
 
-{cat:"fuku", title:"バイク駐輪スペース賃貸（遊休地の副収入）", sub:"パーキングマーケット", body:`
+{cat:"fuku", date:"2025/08/11", title:"バイク駐輪スペース賃貸（遊休地の副収入）", sub:"パーキングマーケット", body:`
 <p>不動産の<b>遊休地にバイク駐輪スペース</b>を貸し出し（大家→同社へ賃貸）、副収入を得る。</p>
 <div class="contact"><b>パーキングマーケット</b>：矢越（やごし）さん <a href="tel:08080014576">080-8001-4576</a></div>`},
 
-{cat:"zei", title:"不動産取得税の支払いを『先延ばし』（回転差資金の確保）", sub:"「お知らせ」段階なら未納・遅延にならず期日変更できる", body:`
+{cat:"zei", date:"2025/06/17", title:"不動産取得税の支払いを『先延ばし』（回転差資金の確保）", sub:"「お知らせ」段階なら未納・遅延にならず期日変更できる", body:`
 <p>不動産購入後、だいたい<b>半年後</b>に不動産取得税の納付書が届く。高額（概ね3,000万以上）だと納付書の前に「<b>お知らせ</b>」という紙が届く。</p>
 <div class="note">この<b>お知らせの段階なら</b>、もっともらしい理由で支払期日を後ろ倒しにしても<b>未納・遅延にならない</b>（信用情報に響かない）。太田は毎回これで支払いを遅らせて回転差資金を確保（例：7月末→11月末に変更してもらった実績）。</div>
 <ul>
@@ -197,7 +199,7 @@ function cardHTML(d,i){
   return '<div class="card" id="oc'+i+'"><div class="card-head" onclick="tg('+i+')">'+
     '<span class="cat-badge '+cm.cls+'">'+cm.name+'</span>'+
     '<div class="cta"><div class="c-title">'+d.title+'</div><div class="c-sub">'+d.sub+'</div></div>'+
-    '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>'+
+    '<div class="c-meta">'+(d.date?'<span class="c-date">📅 '+d.date+'</span>':'')+'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></div>'+
     '</div><div class="card-body"><div class="body-inner">'+d.body+'</div></div></div>';
 }
 function tg(i){ document.getElementById("oc"+i).classList.toggle("open"); }

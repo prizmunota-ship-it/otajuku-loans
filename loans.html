@@ -34,9 +34,6 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .chips { display:flex; gap:6px; flex-wrap:wrap; }
 .chip { padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:600; color:var(--mid); cursor:pointer; font-family:inherit; }
 .chip.active { background:var(--gold-lt); border-color:var(--amber); color:var(--dark2); }
-.mode-tabs { display:flex; gap:6px; width:100%; margin-bottom:2px; }
-.mtab { flex:1; padding:9px 10px; border:1.5px solid var(--border); background:#fff; border-radius:10px; font-weight:800; font-size:13px; color:var(--mid); cursor:pointer; font-family:inherit; }
-.mtab.active { background:var(--gold); border-color:var(--amber); color:#fff; box-shadow:0 2px 8px rgba(180,110,0,0.25); }
 .count { font-size:11px; color:var(--muted); }
 .cards { max-width:700px; margin:0 auto; padding:14px 12px 40px; display:flex; flex-direction:column; gap:12px; }
 .card { background:var(--card-bg); border-radius:14px; border:1.5px solid var(--border); box-shadow:0 2px 12px var(--shadow); overflow:hidden; }
@@ -173,10 +170,6 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 </header>
 <div class="filter-bar">
   <div class="filter-inner">
-    <div class="mode-tabs">
-      <button class="mtab active" data-mode="loans">🏦 融資機関一覧</button>
-      <button class="mtab" data-mode="sales">🏷️ 売却報告</button>
-    </div>
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
       <input type="text" id="searchInput" placeholder="金融機関名・エリアで検索…">
@@ -1005,54 +998,6 @@ function renderReports(name){
   return html;
 }
 
-// ===== 売却報告データ =====
-var SALES_LIST = [
-  {日付:"2026/06",氏名:"福田さん",物件:"東区筥松アパート",購入価格:"3,000万円",購入時利回り:"9.06%",購入時期:"2020年10月（購入時 築15年）",融資:"福岡県信組 2,600万円",売却価格:"4,800万円",売却時利回り:"5.87%",保有期間:"約5年8ヶ月（売却時 築21年）",残債:"2,170万円",金融機関:"福岡県信用組合",備考:"・購入3,000万→売却4,800万（売買差益 約1,800万円・税/諸費用別）\n・売却時手残り目安：売却4,800万−残債2,170万＝約2,630万円（税金・諸費用別）\n・購入1年後に入居者の自死、連帯保証人から回収できず等の苦労もあった",経緯:"2020年10月に太田塾長のサポートで初購入したアパート。先月、無事に売却決済。\n\nアパート向かいの月極駐車場オーナーが駐車場を売却することになり、祖父から続く思い入れのある土地の代替として、すぐ近くの当アパートを購入してくれた（ラッキー）。\n\n購入1年後に入居者が自死で亡くなったり、連帯保証人から1円も回収できなかったりと色々あったが、関係者の皆様に感謝しかない。来月からは法人名義物件の初売却チャレンジ予定。"},
-  {日付:"2025/06",氏名:"鍬野恭秀さん（サーフ）",物件:"シャロームコーポ（福岡市東区香住ケ丘・1K×8戸）",購入価格:"2,480万円",購入時利回り:"11.2%",購入時期:"2015年11月（平成27年11月）",融資:"福岡県信組 2,480万・20年・2.8%（別途 外壁塗装160万＝借入300万）",売却価格:"3,700万円",売却時利回り:"24.1%",保有期間:"9年7ヶ月",残債:"1,450万円＋外壁塗装残債120万",備考:"・売却益：2,130万円（税金・仲介手数料等を引くと約1,600万）\n・保有期間CF：約1,500万円（入居率98.7%）\n・保険見舞金等：約500万円（地震・火事含む）\n★トータル利益：売却益＋CF＋保険等＝約3,600万円",経緯:"急傾斜地だが眺望が最高（窓を開けると海が見渡せる）で即決めした物件。管理会社の2人目担当がカート好きだったためカート接待をしたところ、家賃を大幅値上げ（5,000円ほど）して決めてくれ、LUUPも6台契約（1,000円/台）。残債利回りが24%まで上がり売却を検討。\n\n買付は沢山入るも融資がつかず全滅…望み薄かと思いきや、自己資金50%出す強者が登場。280万の指値を即答OKし、なんとか売却にこぎ着けた。売却は難しいと実感。これを元手にまた物件を増やしたい。1歩下がって、3歩進む！",金融機関:"福岡県信用組合"},
-  {日付:"2025/03",氏名:"太田圭一",物件:"福岡市東区和白東（太田の1棟目アパート）",購入価格:"2,280万円（手出し約50万）",購入時利回り:"—",購入時期:"—",融資:"福岡県信組（フルローン）",売却価格:"3,880万円",売却時利回り:"利回り8%台で設定",保有期間:"5年半",残債:"約1,750万円",備考:"・保有時（5.5年）CF：627万円\n・売却手残り：約2,000万円\n・売却税金：約500万円（1年後支払いの予測）\n★トータル収支：2,127万円の儲け（手出し50万弱が5年半で2,127万に）",経緯:"個人名義の減価償却が1年前に切れ、長期譲渡（5年超）になったタイミングで売り出し。自分で売却マイソクと売却一覧表を作成し各不動産会社へ。『この金額だと売れないだろう』という価格（利回りギリ8%台＝7.9%より8%の方が見栄えが良い）で設定したところ、募集1ヶ月未満で管理会社（アドバンス）のお客様が買付。\n\n売却は他者のコントロール領域が大きいので『売れたらラッキー』くらいがちょうど良い（あてにすると『タラレバ』になる）。ただしラッキーも準備なしには起こらない。とにかく日頃の準備・行動が必要。",金融機関:"福岡県信用組合"}
-];
-
-function saleCardHTML(r){
-  var html='<div class="report-card">';
-  html+='<div class="report-header"><span class="report-icon">🏷️</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
-  html+='<div class="report-body">';
-  var title=(r.物件||'');
-  if(title) html+='<div style="font-weight:700;color:#333;margin-bottom:2px">'+title+'</div>';
-  if(r.金融機関) html+='<div style="margin-bottom:6px"><span style="font-size:11px;color:#1A7A3A;background:#E8F7EE;border:1px solid #A8D8AA;border-radius:10px;padding:2px 9px">購入時の融資：'+r.金融機関+'</span></div>';
-  html+='<div><span class="report-section-label spec">🏠 購入時</span><div class="report-grid">';
-  html+=scell("購入価格",r.購入価格,true)+scell("購入時利回り",r.購入時利回り)+scell("購入時期",r.購入時期);
-  if(r.融資) html+=scell("購入時融資",r.融資);
-  html+='</div></div>';
-  html+='<div><span class="report-section-label loan">💰 売却時</span><div class="report-grid">';
-  html+=lcell("売却価格",r.売却価格,true)+lcell("売却時利回り",r.売却時利回り)+lcell("保有期間",r.保有期間)+lcell("残債",r.残債);
-  html+='</div>';
-  if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">収支・利益</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
-  if(r.経緯){
-    var sid='sale_'+Math.random().toString(36).slice(2,8);
-    html+='<button class="story-toggle" onclick="var b=document.getElementById(\''+sid+'\');b.classList.toggle(\'open\');this.classList.toggle(\'open\')">📖 売却の経緯を読む</button>';
-    html+='<div class="story-body" id="'+sid+'"><div class="story-content">'+r.経緯+'</div></div>';
-  }
-  html+='</div></div>';
-  return html;
-}
-function renderSalesView(){
-  var list=SALES_LIST.filter(function(r){
-    return !curQ || (r.氏名||'').indexOf(curQ)>=0 || (r.物件||'').indexOf(curQ)>=0 || (r.金融機関||'').indexOf(curQ)>=0;
-  });
-  var sorted=list.slice().sort(function(a,b){
-    var da=a.日付==="—"?"0000":a.日付.replace(/\//g,"");
-    var db=b.日付==="—"?"0000":b.日付.replace(/\//g,"");
-    return db.localeCompare(da);
-  });
-  document.getElementById("countLabel").textContent=sorted.length+"件";
-  if(sorted.length===0) return '<div class="empty-state">売却報告が見つかりません</div>';
-  var html='<div style="max-width:700px;margin:0 auto 8px;color:#8a6d3b;font-size:12px">🏷️ 売却報告（時系列・金融機関に紐づかない独立ビュー）／買主の融資先とは別です</div>';
-  html+='<div class="report-list" style="max-width:700px;margin:0 auto">';
-  for(var i=0;i<sorted.length;i++) html+=saleCardHTML(sorted[i]);
-  html+='</div>';
-  return html;
-}
-
 function badgeClass(t){
   if(t==="銀行") return "b-bank";
   if(t==="信用組合") return "b-shinku";
@@ -1158,10 +1103,8 @@ function renderCard(d,idx){
 
 function tog(idx){ document.getElementById("c"+idx).classList.toggle("open"); }
 
-var curType="all", curQ="", curMode="loans";
+var curType="all", curQ="";
 function render(){
-  var box0=document.getElementById("cardContainer");
-  if(curMode==="sales"){ box0.innerHTML=renderSalesView(); return; }
   var filtered=DATA.filter(function(d){
     var tok=(curType==="all"||d.種類===curType);
     var sq=(!curQ||d.名称.indexOf(curQ)>=0||(d.契約エリア||"").indexOf(curQ)>=0||(d.物件エリア||"").indexOf(curQ)>=0||(d.種類||"").indexOf(curQ)>=0);
@@ -1182,16 +1125,6 @@ document.querySelectorAll(".chip").forEach(function(btn){
     document.querySelectorAll(".chip").forEach(function(b){b.classList.remove("active");});
     btn.classList.add("active");
     curType=btn.getAttribute("data-type");
-    render();
-  });
-});
-document.querySelectorAll(".mtab").forEach(function(btn){
-  btn.addEventListener("click",function(){
-    document.querySelectorAll(".mtab").forEach(function(b){b.classList.remove("active");});
-    btn.classList.add("active");
-    curMode=btn.getAttribute("data-mode");
-    document.querySelector(".chips").style.display=(curMode==="sales")?"none":"";
-    document.getElementById("searchInput").placeholder=(curMode==="sales")?"氏名・物件・金融機関で検索…":"金融機関名・エリアで検索…";
     render();
   });
 });

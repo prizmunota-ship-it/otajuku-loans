@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>売却事例一覧｜太田塾</title>
+<script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}window._rc=function(r){if(r!=="ok"){localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
+<style>
+:root{ --gold:#D4920A; --gold-lt:#F5C400; --gold-bg:#FFF8E1; --gold-mid:#FFE082; --amber:#E8A000; --border:#EDD97A; --mid:#8A6D3B; --muted:#A08A55; --dark:#1C1400; --dark2:#3D2B00; }
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif; background:var(--gold-bg); color:var(--dark2); -webkit-text-size-adjust:100%; }
+header{ background:linear-gradient(135deg,#F5C400 0%,var(--gold) 60%,#C47800 100%); padding:18px 16px 14px; position:sticky; top:0; z-index:100; box-shadow:0 3px 16px rgba(180,110,0,0.35); }
+.header-inner{ max-width:700px; margin:0 auto; }
+.header-top{ display:flex; justify-content:space-between; align-items:center; }
+.header-label{ font-size:11px; color:#fff; font-weight:700; opacity:.95; }
+.menu-btn{ background:rgba(255,255,255,0.9); color:#B4700A; font-size:12px; font-weight:800; padding:6px 12px; border-radius:20px; text-decoration:none; }
+h1{ color:#fff; font-size:24px; font-weight:900; letter-spacing:.03em; margin-top:2px; text-shadow:0 1px 3px rgba(120,70,0,0.3); }
+.filter-bar{ background:var(--gold-bg); border-bottom:1.5px solid var(--border); padding:10px 16px; position:sticky; top:98px; z-index:90; }
+.filter-inner{ max-width:700px; margin:0 auto; }
+.search-wrap{ display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--border); border-radius:10px; padding:8px 12px; }
+.search-wrap svg{ width:16px; height:16px; color:var(--mid); flex-shrink:0; }
+#searchInput{ border:none; outline:none; width:100%; font-size:14px; font-family:inherit; color:var(--dark2); background:transparent; }
+.wrap{ max-width:700px; margin:0 auto; padding:14px 16px 60px; }
+.count{ font-size:12px; color:var(--mid); text-align:right; margin-bottom:8px; }
+.intro{ color:var(--mid); font-size:12px; margin-bottom:10px; }
+/* report/sale cards */
+.report-list{ display:flex; flex-direction:column; gap:12px; }
+.report-card{ background:#FFFDF5; border:1.5px solid #F5C400; border-radius:10px; overflow:hidden; }
+.report-header{ background:linear-gradient(to right,#FFF3B0,#FFE566); padding:10px 12px; display:flex; align-items:center; gap:8px; }
+.report-icon{ font-size:16px; }
+.report-name{ font-size:13px; font-weight:800; color:var(--dark2); }
+.report-date{ font-size:13px; font-weight:800; color:var(--amber); font-family:'Courier New',monospace; margin-left:auto; background:rgba(232,160,0,0.12); padding:3px 8px; border-radius:6px; border:1px solid rgba(232,160,0,0.3); }
+.report-body{ padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+.report-section-label{ font-size:9px; font-weight:800; letter-spacing:0.12em; padding:4px 8px; border-radius:4px; margin-bottom:4px; display:inline-block; }
+.report-section-label.spec{ background:#E8F4FF; color:#1558A7; border:1px solid #A8CCEE; }
+.report-section-label.loan{ background:#E8F7EE; color:#1A7A3A; border:1px solid #A8D8AA; }
+.report-grid{ display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.report-cell{ border-radius:6px; border:1px solid transparent; padding:5px 8px; }
+.report-cell.spec-cell{ background:#F0F8FF; border-color:rgba(21,88,167,0.15); }
+.report-cell.loan-cell{ background:#F0FFF4; border-color:rgba(26,122,58,0.15); }
+.report-cell .rl{ font-size:9px; font-weight:700; color:var(--muted); margin-bottom:2px; letter-spacing:0.06em; }
+.report-cell .rv{ font-size:12px; font-weight:600; color:var(--dark2); line-height:1.4; }
+.report-cell .rv.highlight-blue{ color:#1558A7; font-family:'Courier New',monospace; font-size:13px; font-weight:700; }
+.report-cell .rv.highlight-green{ color:#1A7A3A; font-family:'Courier New',monospace; font-size:13px; font-weight:700; }
+.story-toggle{ width:100%; margin-top:8px; padding:8px 12px; background:linear-gradient(135deg,#FFF8E1,#FFF3B0); border:1.5px solid #F5C400; border-radius:8px; font-size:12px; font-weight:700; color:var(--amber); cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+.story-toggle:after{ content:'▼'; font-size:10px; transition:transform .3s; }
+.story-toggle.open:after{ transform:rotate(180deg); }
+.story-body{ max-height:0; overflow:hidden; transition:max-height .4s ease; }
+.story-body.open{ max-height:2000px; }
+.story-content{ padding:10px 12px; background:#FFFDF5; border:1.5px solid #F5C400; border-top:none; border-radius:0 0 8px 8px; font-size:12px; color:var(--dark2); line-height:1.8; white-space:pre-wrap; }
+.empty-state{ text-align:center; padding:60px 20px; color:var(--muted); font-size:14px; }
+/* login */
+#loginOverlay{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(145deg,#FFFBEA 0%,#FFF3B0 50%,#FFE566 100%); }
+.login-box{ background:#fff; border-radius:24px; padding:44px 32px 36px; max-width:360px; width:100%; text-align:center; box-shadow:0 16px 48px rgba(180,130,0,0.18); border:1.5px solid rgba(245,196,0,0.4); }
+.login-logo{ font-size:48px; margin-bottom:10px; } .login-title{ font-size:24px; font-weight:900; color:#1C1400; margin-bottom:4px; }
+.login-badge{ display:inline-block; background:linear-gradient(135deg,#F5C400,#E8A000); color:#fff; font-size:10px; font-weight:800; padding:4px 12px; border-radius:20px; margin-bottom:18px; letter-spacing:.12em; }
+.login-sub{ font-size:12px; color:#7A5800; margin-bottom:24px; line-height:1.8; }
+.login-input{ width:100%; padding:13px 16px; background:#FFFDF5; border:1.5px solid #EDD97A; border-radius:10px; font-size:14px; font-family:inherit; color:#3D2B00; outline:none; margin-bottom:12px; }
+.login-input:focus{ border-color:#E8A000; }
+.login-btn{ width:100%; padding:14px; background:linear-gradient(135deg,#F5C400,#E8A000); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:900; font-family:inherit; cursor:pointer; letter-spacing:.08em; }
+.login-btn:disabled{ opacity:.6; } .login-msg{ font-size:12px; margin-top:10px; min-height:18px; }
+.login-msg.error{ color:#B52020; } .login-msg.loading{ color:#A08040; } .login-msg.success{ color:#1A7A3A; font-weight:700; }
+</style>
+</head>
+<body>
+<div id="loginOverlay" style="display:none;">
+  <div class="login-box">
+    <div class="login-logo">🏠</div>
+    <div class="login-title">太田塾</div>
+    <div class="login-badge">㊙️ MEMBERS ONLY</div>
+    <div class="login-sub">入会時アンケートに登録頂いた<br>Gmailアドレスを入力してください。</div>
+    <input type="email" id="loginEmail" class="login-input" placeholder="example@gmail.com" autocomplete="email">
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">ログイン</button>
+    <div class="login-msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<header><div class="header-inner">
+  <div class="header-top">
+    <div class="header-label">太田塾㊙️ 内部情報</div>
+    <a class="menu-btn" href="/">≡ メニュー</a>
+  </div>
+  <h1>売却事例一覧</h1>
+</div></header>
+
+<div class="filter-bar"><div class="filter-inner">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+    <input type="text" id="searchInput" placeholder="氏名・物件・金融機関で検索…">
+  </div>
+</div></div>
+
+<div class="wrap">
+  <div class="count" id="countLabel"></div>
+  <div class="intro">🏷️ 太田塾メンバーの売却実績（新しい順）。購入時の融資先とは別物です。</div>
+  <div class="report-list" id="cardList"></div>
+</div>
+
+<script>
+var GAS_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
+
+var SALES_LIST = [
+  {日付:"2026/06",氏名:"福田さん",物件:"東区筥松アパート",購入価格:"3,000万円",購入時利回り:"9.06%",購入時期:"2020年10月（購入時 築15年）",融資:"福岡県信組 2,600万円",売却価格:"4,800万円",売却時利回り:"5.87%",保有期間:"約5年8ヶ月（売却時 築21年）",残債:"2,170万円",金融機関:"福岡県信用組合",備考:"・購入3,000万→売却4,800万（売買差益 約1,800万円・税/諸費用別）\n・売却時手残り目安：売却4,800万−残債2,170万＝約2,630万円（税金・諸費用別）\n・購入1年後に入居者の自死、連帯保証人から回収できず等の苦労もあった",経緯:"2020年10月に太田塾長のサポートで初購入したアパート。先月、無事に売却決済。\n\nアパート向かいの月極駐車場オーナーが駐車場を売却することになり、祖父から続く思い入れのある土地の代替として、すぐ近くの当アパートを購入してくれた（ラッキー）。\n\n購入1年後に入居者が自死で亡くなったり、連帯保証人から1円も回収できなかったりと色々あったが、関係者の皆様に感謝しかない。来月からは法人名義物件の初売却チャレンジ予定。"},
+  {日付:"2025/06",氏名:"鍬野恭秀さん（サーフ）",物件:"シャロームコーポ（福岡市東区香住ケ丘・1K×8戸）",購入価格:"2,480万円",購入時利回り:"11.2%",購入時期:"2015年11月（平成27年11月）",融資:"福岡県信組 2,480万・20年・2.8%（別途 外壁塗装160万＝借入300万）",売却価格:"3,700万円",売却時利回り:"24.1%",保有期間:"9年7ヶ月",残債:"1,450万円＋外壁塗装残債120万",金融機関:"福岡県信用組合",備考:"・売却益：2,130万円（税金・仲介手数料等を引くと約1,600万）\n・保有期間CF：約1,500万円（入居率98.7%）\n・保険見舞金等：約500万円（地震・火事含む）\n★トータル利益：売却益＋CF＋保険等＝約3,600万円",経緯:"急傾斜地だが眺望が最高（窓を開けると海が見渡せる）で即決めした物件。管理会社の2人目担当がカート好きだったためカート接待をしたところ、家賃を大幅値上げ（5,000円ほど）して決めてくれ、LUUPも6台契約（1,000円/台）。残債利回りが24%まで上がり売却を検討。\n\n買付は沢山入るも融資がつかず全滅…望み薄かと思いきや、自己資金50%出す強者が登場。280万の指値を即答OKし、なんとか売却にこぎ着けた。売却は難しいと実感。これを元手にまた物件を増やしたい。1歩下がって、3歩進む！"},
+  {日付:"2025/03",氏名:"太田圭一",物件:"福岡市東区和白東（太田の1棟目アパート）",購入価格:"2,280万円（手出し約50万）",購入時利回り:"—",購入時期:"—",融資:"福岡県信組（フルローン）",売却価格:"3,880万円",売却時利回り:"利回り8%台で設定",保有期間:"5年半",残債:"約1,750万円",金融機関:"福岡県信用組合",備考:"・保有時（5.5年）CF：627万円\n・売却手残り：約2,000万円\n・売却税金：約500万円（1年後支払いの予測）\n★トータル収支：2,127万円の儲け（手出し50万弱が5年半で2,127万に）",経緯:"個人名義の減価償却が1年前に切れ、長期譲渡（5年超）になったタイミングで売り出し。自分で売却マイソクと売却一覧表を作成し各不動産会社へ。『この金額だと売れないだろう』という価格（利回りギリ8%台＝7.9%より8%の方が見栄えが良い）で設定したところ、募集1ヶ月未満で管理会社（アドバンス）のお客様が買付。\n\n売却は他者のコントロール領域が大きいので『売れたらラッキー』くらいがちょうど良い（あてにすると『タラレバ』になる）。ただしラッキーも準備なしには起こらない。とにかく日頃の準備・行動が必要。"}
+];
+
+function scell(label,val,highlight){ return '<div class="report-cell spec-cell"><div class="rl">'+label+'</div><div class="rv'+(highlight?" highlight-blue":"")+'">'+val+'</div></div>'; }
+function lcell(label,val,highlight){ return '<div class="report-cell loan-cell"><div class="rl">'+label+'</div><div class="rv'+(highlight?" highlight-green":"")+'">'+val+'</div></div>'; }
+
+function saleCardHTML(r){
+  var html='<div class="report-card">';
+  html+='<div class="report-header"><span class="report-icon">🏷️</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
+  html+='<div class="report-body">';
+  if(r.物件) html+='<div style="font-weight:700;color:#333;margin-bottom:2px">'+r.物件+'</div>';
+  if(r.金融機関) html+='<div style="margin-bottom:6px"><span style="font-size:11px;color:#1A7A3A;background:#E8F7EE;border:1px solid #A8D8AA;border-radius:10px;padding:2px 9px">購入時の融資：'+r.金融機関+'</span></div>';
+  html+='<div><span class="report-section-label spec">🏠 購入時</span><div class="report-grid">';
+  html+=scell("購入価格",r.購入価格,true)+scell("購入時利回り",r.購入時利回り)+scell("購入時期",r.購入時期);
+  if(r.融資) html+=scell("購入時融資",r.融資);
+  html+='</div></div>';
+  html+='<div><span class="report-section-label loan">💰 売却時</span><div class="report-grid">';
+  html+=lcell("売却価格",r.売却価格,true)+lcell("売却時利回り",r.売却時利回り)+lcell("保有期間",r.保有期間)+lcell("残債",r.残債);
+  html+='</div>';
+  if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">収支・利益</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
+  if(r.経緯){
+    var sid='sale_'+Math.random().toString(36).slice(2,8);
+    html+='<button class="story-toggle" onclick="var b=document.getElementById(\''+sid+'\');b.classList.toggle(\'open\');this.classList.toggle(\'open\')">📖 売却の経緯を読む</button>';
+    html+='<div class="story-body" id="'+sid+'"><div class="story-content">'+r.経緯+'</div></div>';
+  }
+  html+='</div></div>';
+  return html;
+}
+var curQ="";
+function render(){
+  var list=SALES_LIST.filter(function(r){
+    return !curQ || (r.氏名||'').indexOf(curQ)>=0 || (r.物件||'').indexOf(curQ)>=0 || (r.金融機関||'').indexOf(curQ)>=0;
+  });
+  var sorted=list.slice().sort(function(a,b){
+    var da=a.日付==="—"?"0000":a.日付.replace(/\//g,"");
+    var db=b.日付==="—"?"0000":b.日付.replace(/\//g,"");
+    return db.localeCompare(da);
+  });
+  document.getElementById("countLabel").textContent=sorted.length+"件";
+  document.getElementById("cardList").innerHTML = sorted.length? sorted.map(saleCardHTML).join("") : '<div class="empty-state">売却事例が見つかりません</div>';
+}
+document.getElementById("searchInput").addEventListener("input",function(e){ curQ=e.target.value; render(); });
+render();
+
+// ===== 認証 =====
+if(localStorage.getItem("otajuku_auth")==="ok"){ document.getElementById("loginOverlay").style.display="none"; }
+function doLogin(){
+  var email=document.getElementById("loginEmail").value.trim();
+  var msg=document.getElementById("loginMsg"), btn=document.getElementById("loginBtn");
+  if(!email||!email.includes("@")){ msg.className="login-msg error"; msg.textContent="正しいメールアドレスを入力してください"; return; }
+  btn.disabled=true; msg.className="login-msg loading"; msg.textContent="確認中...";
+  var script=document.createElement("script");
+  window._loginCallback=function(result){
+    if(document.body.contains(script)) document.body.removeChild(script);
+    if(result==="ok"){
+      localStorage.setItem("otajuku_auth","ok"); localStorage.setItem("otajuku_email",email.toLowerCase());
+      msg.className="login-msg success"; msg.textContent="認証成功！";
+      setTimeout(function(){ document.getElementById("loginOverlay").style.display="none"; },600);
+    } else { msg.className="login-msg error"; msg.textContent="このメールアドレスは登録されていません。太田までご連絡ください。"; btn.disabled=false; }
+  };
+  script.src=GAS_URL+"?email="+encodeURIComponent(email)+"&callback=_loginCallback";
+  document.body.appendChild(script);
+}
+document.getElementById("loginEmail").addEventListener("keydown",function(e){ if(e.key==="Enter") doLogin(); });
+</script>
+</body></html>
