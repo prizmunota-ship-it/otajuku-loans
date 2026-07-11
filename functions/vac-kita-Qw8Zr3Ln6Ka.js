@@ -146,10 +146,7 @@ function summary(){
  const on=k=>FILTER===k?' on':'';
  document.getElementById('chips').innerHTML=
   '<span class="chip">空室 <b>'+vac+'</b> 戸</span>'+
-  '<span class="chip'+(occ<90?' bad':'')+'">稼働 <b>'+occ.toFixed(1)+'</b>％</span>'+
-  '<span class="chip tap'+on('needset')+'" onclick="setFilter(\\'needset\\')">要ｾｯﾄ設置 <b>'+needset+'</b></span>'+
-  '<span class="chip tap'+on('gas')+'" onclick="setFilter(\\'gas\\')">ガスコンロ未 <b>'+gasmi+'</b></span>'+
-  '<span class="chip tap'+on('collect')+'" onclick="setFilter(\\'collect\\')">セット回収 <b>'+setcol+'</b></span>';
+  '<span class="chip'+(occ<90?' bad':'')+'">稼働 <b>'+occ.toFixed(1)+'</b>％</span>';
  setHH();
 }
 /* 物件ヘッダーをグローバルヘッダー直下に固定するため、ヘッダー高さを--hhに反映 */
@@ -170,10 +167,6 @@ function roomCard(r){
   if(r.broker)badges+='<span class="b apply">申込中'+(r.nyukyo?'・'+r.nyukyo+'入居':'')+'</span>';
   else if(r.markstate==='cancel_new'||(typeof r.days==='number'&&r.days<0))badges+='<span class="b soon">退去予定'+(r.taikyo&&r.taikyo!=='-'?'・'+r.taikyo:'')+'</span>';
   if(typeof r.days==='number'&&!r.broker)badges+='<span class="b days'+(r.days>=60?' lt':'')+'">空室'+r.days+'日</span>';
-  if(!r.broker&&r.naiso==='完了'&&r.set6!=='完')badges+='<span class="b set">6点未</span>';
-  if(!r.broker&&r.naiso==='完了'&&r.set3!=='完')badges+='<span class="b set">3点未</span>';
-  if(r.gas==='未')badges+='<span class="b set">ガス未</span>';
-  if(r.broker&&r.set6==='完')badges+='<span class="b col">セット回収</span>';
  }
  let r2='';
  if(!park){
