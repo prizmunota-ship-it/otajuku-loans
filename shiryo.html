@@ -24,11 +24,11 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .cat-head{display:flex;align-items:center;gap:10px;padding:14px 15px;cursor:pointer;}
 .cat-head .ci{font-size:22px;flex-shrink:0;}
 .cat-head .cn{flex:1;font-size:14px;font-weight:800;min-width:0;}
-.cat-head .cc{font-size:11px;color:#B08420;font-weight:700;background:#FFF3C4;border-radius:20px;padding:2px 9px;flex-shrink:0;}
-.cat-head .chev{color:#E8A000;font-size:15px;transition:transform .2s;flex-shrink:0;}
-.cat.open .chev{transform:rotate(90deg);}
+.cc{font-size:11px;color:#B08420;font-weight:700;background:#FFF3C4;border-radius:20px;padding:2px 9px;flex-shrink:0;}
+.chev{color:#E8A000;font-size:15px;transition:transform .2s;flex-shrink:0;}
+.cat.open>.cat-head .chev{transform:rotate(90deg);}
 .files{display:none;border-top:1px solid #F3E4A8;}
-.cat.open .files{display:block;}
+.cat.open>.files{display:block;}
 .frow{display:flex;align-items:center;gap:11px;padding:11px 15px;border-bottom:1px solid #F7EDC4;text-decoration:none;color:inherit;}
 .frow:last-child{border-bottom:none;}
 .frow:active{background:#FFFBEA;}
@@ -36,10 +36,18 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .frow .ft{flex:1;min-width:0;}
 .frow .fn{font-size:13px;font-weight:600;line-height:1.4;word-break:break-word;}
 .frow .fm{font-size:10px;color:#9A8030;margin-top:2px;}
-.frow .fm .sub{color:#C08A20;}
 .frow .fm .drive{color:#C47800;font-weight:700;}
 .frow .dl{flex-shrink:0;font-size:11px;font-weight:800;color:#fff;background:linear-gradient(135deg,#F5C400,#D4920A);border-radius:8px;padding:6px 11px;box-shadow:0 1px 5px rgba(180,110,0,.28);white-space:nowrap;}
 .frow .dl.ext{background:linear-gradient(135deg,#7FB3E8,#4A82C4);}
+.subcat{border-bottom:1px solid #F7EDC4;}
+.subcat:last-child{border-bottom:none;}
+.subcat-head{display:flex;align-items:center;gap:9px;padding:12px 15px;cursor:pointer;background:#FFFCF2;}
+.subcat-head .sfi{font-size:18px;flex-shrink:0;width:24px;text-align:center;}
+.subcat-head .scn{flex:1;font-size:13px;font-weight:800;color:#9A6D00;min-width:0;}
+.subcat.open>.subcat-head .chev{transform:rotate(90deg);}
+.subfiles{display:none;background:#FFFDF7;}
+.subcat.open>.subfiles{display:block;}
+.subfiles .frow{padding-left:30px;}
 .empty{text-align:center;color:#9A8030;font-size:13px;padding:40px 0;}
 .foot{text-align:center;font-size:10px;color:#A89050;margin-top:16px;}
 </style>
@@ -52,52 +60,62 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   <div class="sub">太田塾の教材・ひな型をダウンロード（Excel・Word・PDF）</div>
 </header>
 <div class="searchbar">
-  <input type="text" id="q" placeholder="ファイル名で検索…（例：レントロール、事業計画）">
-  <div class="note">📊Excel ／ 📄Word ／ 📕PDF ／ 🖼️画像。タップでダウンロード。青ボタンの大容量スライドはGoogleドライブで開きます。</div>
+  <input type="text" id="q" placeholder="ファイル名で検索…（例：レントロール、資金繰り）">
+  <div class="note">📊Excel ／ 📄Word ／ 📕PDF ／ 🖼️画像。タップでダウンロード。青ボタン（大容量スライド・領収書）はGoogleドライブで開きます。</div>
 </div>
 <div class="body" id="body"></div>
 <div class="foot">© 太田塾 メンバー専用</div>
 </div>
 <script>
-var SHIRYO = [{"cat": "０．入会後の確認ファイル", "catOrder": 0, "catIcon": "🎓", "sub": "", "name": "動画.docx", "path": "shiryo/c00/f001.docx", "drive": null, "icon": "📄", "size": 14463}, {"cat": "０．入会後の確認ファイル", "catOrder": 0, "catIcon": "🎓", "sub": "ONEチーム（０室〜１９室所有者）向け資料", "name": "０−１　金融機関物件持込までの５ステップ.pdf", "path": "shiryo/c00/f002.pdf", "drive": null, "icon": "📕", "size": 86870}, {"cat": "１．セルフイントロダクション", "catOrder": 1, "catIcon": "🙋", "sub": "", "name": "１−１　自己紹介シート.xlsx", "path": "shiryo/c01/f001.xlsx", "drive": null, "icon": "📊", "size": 59053}, {"cat": "１．セルフイントロダクション", "catOrder": 1, "catIcon": "🙋", "sub": "", "name": "１−２　経歴書.docx", "path": "shiryo/c01/f002.docx", "drive": null, "icon": "📄", "size": 10878}, {"cat": "１．セルフイントロダクション", "catOrder": 1, "catIcon": "🙋", "sub": "", "name": "１−３　総合収支表（所有不動産一覧表）.xls", "path": "shiryo/c01/f003.xls", "drive": null, "icon": "📊", "size": 259072}, {"cat": "２．目標設定（行動予定表）", "catOrder": 2, "catIcon": "🎯", "sub": "", "name": "２−１　人生の目標.docx", "path": "shiryo/c02/f001.docx", "drive": null, "icon": "📄", "size": 15598}, {"cat": "２．目標設定（行動予定表）", "catOrder": 2, "catIcon": "🎯", "sub": "", "name": "２−２　ライフサイクルプラン.xlsx", "path": "shiryo/c02/f002.xlsx", "drive": null, "icon": "📊", "size": 16892}, {"cat": "２．目標設定（行動予定表）", "catOrder": 2, "catIcon": "🎯", "sub": "", "name": "２−３　行動計画表（年間）　20260201更新.xlsx", "path": "shiryo/c02/f003.xlsx", "drive": null, "icon": "📊", "size": 20638}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−１　事業計画書.xls", "path": "shiryo/c03/f001.xls", "drive": null, "icon": "📊", "size": 36864}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−１　事業計画書（バージョン２）.xlsx", "path": "shiryo/c03/f002.xlsx", "drive": null, "icon": "📊", "size": 326053}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−１０　金融機関融資情報一覧表　.xlsx", "path": "shiryo/c03/f003.xlsx", "drive": null, "icon": "📊", "size": 73458}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−２　買付証明書.doc", "path": "shiryo/c03/f004.doc", "drive": null, "icon": "📄", "size": 28160}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−３　希望金額趣意書.docx", "path": "shiryo/c03/f005.docx", "drive": null, "icon": "📄", "size": 21565}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−４　提出資料表紙及び目次.doc", "path": "shiryo/c03/f006.doc", "drive": null, "icon": "📄", "size": 28160}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−５　物件概要書.xls", "path": "shiryo/c03/f007.xls", "drive": null, "icon": "📊", "size": 17920}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−６　家賃表（レントロール）.xls", "path": "shiryo/c03/f008.xls", "drive": null, "icon": "📊", "size": 20992}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−７　地図.xlsx", "path": "shiryo/c03/f009.xlsx", "drive": null, "icon": "📊", "size": 1893108}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−８　物件購入に際する詳細資料.doc", "path": "shiryo/c03/f010.doc", "drive": null, "icon": "📄", "size": 37376}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−９　資金繰り表（新築）.xls", "path": "shiryo/c03/f011.xls", "drive": null, "icon": "📊", "size": 89600}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "動画.docx", "path": "shiryo/c04/f001.docx", "drive": null, "icon": "📄", "size": 1374926}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−１　預金支払管理表.xlsx", "path": "shiryo/c04/f002.xlsx", "drive": null, "icon": "📊", "size": 40163}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−２　満室までの５ステップ.pdf", "path": "shiryo/c04/f003.pdf", "drive": null, "icon": "📕", "size": 1228963}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−３　空室管理表.xlsx", "path": "shiryo/c04/f004.xlsx", "drive": null, "icon": "📊", "size": 141244}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−４　入退去状況一覧表.xlsx", "path": "shiryo/c04/f005.xlsx", "drive": null, "icon": "📊", "size": 14714}, {"cat": "５．売却", "catOrder": 5, "catIcon": "🏷️", "sub": "", "name": "５−１　売却物件一覧表.xlsx", "path": "shiryo/c05/f001.xlsx", "drive": null, "icon": "📊", "size": 12423}, {"cat": "５．売却", "catOrder": 5, "catIcon": "🏷️", "sub": "", "name": "５−２　物件概要書（マイソク）.xlsx", "path": "shiryo/c05/f002.xlsx", "drive": null, "icon": "📊", "size": 5053701}, {"cat": "６．火災保険", "catOrder": 6, "catIcon": "🔥", "sub": "", "name": "６−１　火災保険請求一覧表.xlsx", "path": "shiryo/c06/f001.xlsx", "drive": null, "icon": "📊", "size": 19606}, {"cat": "７．地震保険", "catOrder": 7, "catIcon": "🌊", "sub": "", "name": "動画.docx", "path": "shiryo/c07/f001.docx", "drive": null, "icon": "📄", "size": 1289284}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "", "name": "年間スケジュール.png", "path": "shiryo/c09/f001.png", "drive": null, "icon": "🖼️", "size": 449759}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "", "name": "９−１　セミナー動画一覧.docx", "path": "shiryo/c09/f002.docx", "drive": null, "icon": "📄", "size": 1662253}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "", "name": "９−２　物件見学会動画.docx", "path": "shiryo/c09/f003.docx", "drive": null, "icon": "📄", "size": 1554092}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250521　開塾記念企画＠東京千代田区　登壇スライド.pdf", "path": null, "drive": "https://drive.google.com/file/d/1H5yn88e2Jx_SE-7bgfg2wx9YCBilSJy1/view", "icon": "📕", "size": 78159975}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250530　太田塾開塾記念企画＠糸島　ONEチーム向け勉強会　登壇スライド.pdf", "path": "shiryo/c09/f004.pdf", "drive": null, "icon": "📕", "size": 1441381}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250530　太田塾開塾記念企画＠糸島　登壇スライド.pdf", "path": null, "drive": "https://drive.google.com/file/d/1oz9pcVvd7doDeQf8h3Fy6wPPqMCGsOqk/view", "icon": "📕", "size": 74591447}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250612　城島リーダープレゼンツ　ONEチーム賃貸募集勉強会.pdf", "path": "shiryo/c09/f005.pdf", "drive": null, "icon": "📕", "size": 2389987}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250719　第２回太田塾勉強会.pdf", "path": "shiryo/c09/f006.pdf", "drive": null, "icon": "📕", "size": 6350694}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20251210　エナジーライフ株式会社_サービスご提案資料 .pdf", "path": "shiryo/c09/f007.pdf", "drive": null, "icon": "📕", "size": 1060162}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20260226　金融機関祭り Vol.2　スライド.pdf", "path": "shiryo/c09/f008.pdf", "drive": null, "icon": "📕", "size": 13600206}, {"cat": "１０．クレカ　マイル関連", "catOrder": 10, "catIcon": "✈️", "sub": "", "name": "2020年　マイル修行11サービス概要まとめ（誰が作ったか覚えてないため、情報漏洩厳禁）.xlsx", "path": "shiryo/c10/f001.xlsx", "drive": null, "icon": "📊", "size": 13721}, {"cat": "１０．クレカ　マイル関連", "catOrder": 10, "catIcon": "✈️", "sub": "", "name": "2020年　マイル修行計画（太田の例）.xlsx", "path": "shiryo/c10/f002.xlsx", "drive": null, "icon": "📊", "size": 54851}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "領収書（月会費・イベント等）", "path": null, "drive": "https://drive.google.com/drive/folders/1pgUIKmRFtzMta_jJgcm_dMv_SqgkMTSY", "folder": true, "icon": "📕", "size": 0}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "１０−１　紹介料請求書.xlsx", "path": "shiryo/c11/f001.xlsx", "drive": null, "icon": "📊", "size": 19535}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "１０−２　企画立ち上げ謝礼.xlsx", "path": "shiryo/c11/f002.xlsx", "drive": null, "icon": "📊", "size": 26555}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "１０−３　相談事項.docx", "path": "shiryo/c11/f003.docx", "drive": null, "icon": "📄", "size": 15894}];
+var SHIRYO = [{"cat": "０．入会後の確認ファイル", "catOrder": 0, "catIcon": "🎓", "sub": "", "name": "動画.docx", "path": "shiryo/c00/f001.docx", "drive": null, "icon": "📄", "size": 14463}, {"cat": "０．入会後の確認ファイル", "catOrder": 0, "catIcon": "🎓", "sub": "ONEチーム（０室〜１９室所有者）向け資料", "name": "０−１　金融機関物件持込までの５ステップ.pdf", "path": "shiryo/c00/f002.pdf", "drive": null, "icon": "📕", "size": 86870}, {"cat": "１．セルフイントロダクション", "catOrder": 1, "catIcon": "🙋", "sub": "", "name": "１−１　自己紹介シート.xlsx", "path": "shiryo/c01/f001.xlsx", "drive": null, "icon": "📊", "size": 59053}, {"cat": "１．セルフイントロダクション", "catOrder": 1, "catIcon": "🙋", "sub": "", "name": "１−２　経歴書.docx", "path": "shiryo/c01/f002.docx", "drive": null, "icon": "📄", "size": 10878}, {"cat": "１．セルフイントロダクション", "catOrder": 1, "catIcon": "🙋", "sub": "", "name": "１−３　総合収支表（所有不動産一覧表）.xls", "path": "shiryo/c01/f003.xls", "drive": null, "icon": "📊", "size": 259072}, {"cat": "２．目標設定（行動予定表）", "catOrder": 2, "catIcon": "🎯", "sub": "", "name": "２−１　人生の目標.docx", "path": "shiryo/c02/f001.docx", "drive": null, "icon": "📄", "size": 15598}, {"cat": "２．目標設定（行動予定表）", "catOrder": 2, "catIcon": "🎯", "sub": "", "name": "２−２　ライフサイクルプラン.xlsx", "path": "shiryo/c02/f002.xlsx", "drive": null, "icon": "📊", "size": 16892}, {"cat": "２．目標設定（行動予定表）", "catOrder": 2, "catIcon": "🎯", "sub": "", "name": "２−３　行動計画表（年間）　20260201更新.xlsx", "path": "shiryo/c02/f003.xlsx", "drive": null, "icon": "📊", "size": 20638}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−２　買付証明書.doc", "path": "shiryo/c03/f001.doc", "drive": null, "icon": "📄", "size": 28160}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−３　希望金額趣意書.docx", "path": "shiryo/c03/f002.docx", "drive": null, "icon": "📄", "size": 21565}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−４　提出資料表紙及び目次.doc", "path": "shiryo/c03/f003.doc", "drive": null, "icon": "📄", "size": 28160}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−５　物件概要書.xls", "path": "shiryo/c03/f004.xls", "drive": null, "icon": "📊", "size": 17920}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−６　家賃表（レントロール）.xls", "path": "shiryo/c03/f005.xls", "drive": null, "icon": "📊", "size": 20992}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−７　地図.xlsx", "path": "shiryo/c03/f006.xlsx", "drive": null, "icon": "📊", "size": 1893108}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−８　物件購入に際する詳細資料.doc", "path": "shiryo/c03/f007.doc", "drive": null, "icon": "📄", "size": 37376}, {"cat": "３．融資・物件購入", "catOrder": 3, "catIcon": "🏦", "sub": "", "name": "３−９　資金繰り表（新築）.xls", "path": "shiryo/c03/f008.xls", "drive": null, "icon": "📊", "size": 89600}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "動画.docx", "path": "shiryo/c04/f001.docx", "drive": null, "icon": "📄", "size": 1374926}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−１　預金支払管理表.xlsx", "path": "shiryo/c04/f002.xlsx", "drive": null, "icon": "📊", "size": 40163}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−２　満室までの５ステップ.pdf", "path": "shiryo/c04/f003.pdf", "drive": null, "icon": "📕", "size": 1228963}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−３　空室管理表.xlsx", "path": "shiryo/c04/f004.xlsx", "drive": null, "icon": "📊", "size": 141244}, {"cat": "４．賃貸運営", "catOrder": 4, "catIcon": "🏠", "sub": "", "name": "４−４　入退去状況一覧表.xlsx", "path": "shiryo/c04/f005.xlsx", "drive": null, "icon": "📊", "size": 14714}, {"cat": "５．売却", "catOrder": 5, "catIcon": "🏷️", "sub": "", "name": "５−１　売却物件一覧表.xlsx", "path": "shiryo/c05/f001.xlsx", "drive": null, "icon": "📊", "size": 12423}, {"cat": "５．売却", "catOrder": 5, "catIcon": "🏷️", "sub": "", "name": "５−２　物件概要書（マイソク）.xlsx", "path": "shiryo/c05/f002.xlsx", "drive": null, "icon": "📊", "size": 5053701}, {"cat": "６．火災保険", "catOrder": 6, "catIcon": "🔥", "sub": "", "name": "６−１　火災保険請求一覧表.xlsx", "path": "shiryo/c06/f001.xlsx", "drive": null, "icon": "📊", "size": 19606}, {"cat": "７．地震保険", "catOrder": 7, "catIcon": "🌊", "sub": "", "name": "動画.docx", "path": "shiryo/c07/f001.docx", "drive": null, "icon": "📄", "size": 1289284}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "", "name": "９−１　セミナー動画一覧.docx", "path": "shiryo/c09/f001.docx", "drive": null, "icon": "📄", "size": 1662253}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "", "name": "９−２　物件見学会動画.docx", "path": "shiryo/c09/f002.docx", "drive": null, "icon": "📄", "size": 1554092}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250521　開塾記念企画＠東京千代田区　登壇スライド.pdf", "path": null, "drive": "https://drive.google.com/file/d/1H5yn88e2Jx_SE-7bgfg2wx9YCBilSJy1/view", "icon": "📕", "size": 78159975}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250530　太田塾開塾記念企画＠糸島　ONEチーム向け勉強会　登壇スライド.pdf", "path": "shiryo/c09/f003.pdf", "drive": null, "icon": "📕", "size": 1441381}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250530　太田塾開塾記念企画＠糸島　登壇スライド.pdf", "path": null, "drive": "https://drive.google.com/file/d/1oz9pcVvd7doDeQf8h3Fy6wPPqMCGsOqk/view", "icon": "📕", "size": 74591447}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250612　城島リーダープレゼンツ　ONEチーム賃貸募集勉強会.pdf", "path": "shiryo/c09/f004.pdf", "drive": null, "icon": "📕", "size": 2389987}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20250719　第２回太田塾勉強会.pdf", "path": "shiryo/c09/f005.pdf", "drive": null, "icon": "📕", "size": 6350694}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20251210　エナジーライフ株式会社_サービスご提案資料 .pdf", "path": "shiryo/c09/f006.pdf", "drive": null, "icon": "📕", "size": 1060162}, {"cat": "９．イベント", "catOrder": 9, "catIcon": "📅", "sub": "セミナースライド", "name": "20260226　金融機関祭り Vol.2　スライド.pdf", "path": "shiryo/c09/f007.pdf", "drive": null, "icon": "📕", "size": 13600206}, {"cat": "１０．クレカ　マイル関連", "catOrder": 10, "catIcon": "✈️", "sub": "", "name": "2020年　マイル修行11サービス概要まとめ（誰が作ったか覚えてないため、情報漏洩厳禁）.xlsx", "path": "shiryo/c10/f001.xlsx", "drive": null, "icon": "📊", "size": 13721}, {"cat": "１０．クレカ　マイル関連", "catOrder": 10, "catIcon": "✈️", "sub": "", "name": "2020年　マイル修行計画（太田の例）.xlsx", "path": "shiryo/c10/f002.xlsx", "drive": null, "icon": "📊", "size": 54851}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "領収書（月会費・イベント等）", "path": null, "drive": "https://drive.google.com/drive/folders/1pgUIKmRFtzMta_jJgcm_dMv_SqgkMTSY", "folder": true, "icon": "📕", "size": 0}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "１０−１　紹介料請求書.xlsx", "path": "shiryo/c11/f001.xlsx", "drive": null, "icon": "📊", "size": 19535}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "１０−２　企画立ち上げ謝礼.xlsx", "path": "shiryo/c11/f002.xlsx", "drive": null, "icon": "📊", "size": 26555}, {"cat": "１１．その他データ", "catOrder": 11, "catIcon": "📦", "sub": "", "name": "１０−３　相談事項.docx", "path": "shiryo/c11/f003.docx", "drive": null, "icon": "📄", "size": 15894}];
 function fmtSize(b){ if(b>=1048576) return (b/1048576).toFixed(1)+"MB"; if(b>=1024) return Math.round(b/1024)+"KB"; return b+"B"; }
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fileRow(f){
+  if(f.path){
+    return '<a class="frow" href="'+esc(f.path)+'" download="'+esc(f.name)+'">'+
+      '<span class="fi">'+f.icon+'</span><span class="ft"><div class="fn">'+esc(f.name)+'</div>'+
+      '<div class="fm">'+fmtSize(f.size)+'</div></span><span class="dl">⬇ 保存</span></a>';
+  } else if(f.folder){
+    return '<a class="frow" href="'+esc(f.drive)+'" target="_blank" rel="noopener">'+
+      '<span class="fi">'+f.icon+'</span><span class="ft"><div class="fn">'+esc(f.name)+'</div>'+
+      '<div class="fm"><span class="drive">ドライブのフォルダで閲覧</span></div></span>'+
+      '<span class="dl ext">↗ 開く</span></a>';
+  } else {
+    return '<a class="frow" href="'+esc(f.drive)+'" target="_blank" rel="noopener">'+
+      '<span class="fi">'+f.icon+'</span><span class="ft"><div class="fn">'+esc(f.name)+'</div>'+
+      '<div class="fm">'+fmtSize(f.size)+' · <span class="drive">大容量のためドライブ</span></div></span>'+
+      '<span class="dl ext">↗ 開く</span></a>';
+  }
+}
 function groupByCat(list){
   var order=[],map={};
   list.forEach(function(x){ if(!map[x.cat]){ map[x.cat]=[]; order.push(x.cat); } map[x.cat].push(x); });
   return order.map(function(c){ return {cat:c, icon:map[c][0].catIcon, files:map[c]}; });
 }
 function render(q){
-  q=(q||"").trim().toLowerCase();
-  var list = q ? SHIRYO.filter(function(x){ return (x.name+" "+x.cat+" "+(x.sub||"")).toLowerCase().indexOf(q)>=0; }) : SHIRYO;
+  q=(q||"").trim().toLowerCase().normalize("NFC");  // 入力もNFC化（濁点カナの取りこぼし防止）
+  var list = q ? SHIRYO.filter(function(x){ return (x.name+" "+x.cat+" "+(x.sub||"")).toLowerCase().normalize("NFC").indexOf(q)>=0; }) : SHIRYO;
   var box=document.getElementById("body");
   if(list.length===0){ box.innerHTML='<div class="empty">該当する資料が見つかりません</div>'; return; }
-  var groups=groupByCat(list), h="";
+  var groups=groupByCat(list), h="", op = q ? " open" : "";
   groups.forEach(function(g){
-    var openCls = q ? " open" : "";
-    h+='<div class="cat'+openCls+'"><div class="cat-head" onclick="this.parentNode.classList.toggle(&#39;open&#39;)">'+
-       '<span class="ci">'+g.icon+'</span><span class="cn">'+esc(g.cat)+'</span>'+
-       '<span class="cc">'+g.files.length+'</span><span class="chev">›</span></div><div class="files">';
+    // カテゴリー内を「直下ファイル」と「サブフォルダ別グループ」に分ける
+    var direct=[], subMap={}, subOrder=[];
     g.files.forEach(function(f){
-      if(f.path){
-        var meta = fmtSize(f.size) + (f.sub?' · <span class="sub">'+esc(f.sub)+'</span>':'');
-        h+='<a class="frow" href="'+esc(f.path)+'" download="'+esc(f.name)+'">'+
-           '<span class="fi">'+f.icon+'</span><span class="ft"><div class="fn">'+esc(f.name)+'</div>'+
-           '<div class="fm">'+meta+'</div></span><span class="dl">⬇ 保存</span></a>';
-      } else if(f.folder){
-        h+='<a class="frow" href="'+esc(f.drive)+'" target="_blank" rel="noopener">'+
-           '<span class="fi">'+f.icon+'</span><span class="ft"><div class="fn">'+esc(f.name)+'</div>'+
-           '<div class="fm"><span class="drive">ドライブのフォルダで閲覧</span></div></span>'+
-           '<span class="dl ext">↗ 開く</span></a>';
-      } else {
-        var meta = fmtSize(f.size) + (f.sub?' · <span class="sub">'+esc(f.sub)+'</span>':'');
-        h+='<a class="frow" href="'+esc(f.drive)+'" target="_blank" rel="noopener">'+
-           '<span class="fi">'+f.icon+'</span><span class="ft"><div class="fn">'+esc(f.name)+'</div>'+
-           '<div class="fm">'+meta+' · <span class="drive">大容量のためドライブ</span></div></span>'+
-           '<span class="dl ext">↗ 開く</span></a>';
-      }
+      if(f.sub){ if(!subMap[f.sub]){ subMap[f.sub]=[]; subOrder.push(f.sub); } subMap[f.sub].push(f); }
+      else direct.push(f);
     });
-    h+='</div></div>';
+    var inner = direct.map(fileRow).join("");
+    subOrder.forEach(function(s){
+      var sf=subMap[s];
+      inner += '<div class="subcat'+op+'"><div class="subcat-head" onclick="this.parentNode.classList.toggle(&#39;open&#39;)">'+
+        '<span class="sfi">🗂️</span><span class="scn">'+esc(s)+'</span><span class="cc">'+sf.length+'</span><span class="chev">›</span></div>'+
+        '<div class="subfiles">'+sf.map(fileRow).join("")+'</div></div>';
+    });
+    h+='<div class="cat'+op+'"><div class="cat-head" onclick="this.parentNode.classList.toggle(&#39;open&#39;)">'+
+       '<span class="ci">'+g.icon+'</span><span class="cn">'+esc(g.cat)+'</span>'+
+       '<span class="cc">'+g.files.length+'</span><span class="chev">›</span></div>'+
+       '<div class="files">'+inner+'</div></div>';
   });
   box.innerHTML=h;
 }
