@@ -38,6 +38,9 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .mtab { flex:1; padding:9px 6px; border:1.5px solid var(--border); background:#fff; border-radius:10px; font-weight:800; font-size:12.5px; color:var(--mid); cursor:pointer; font-family:inherit; }
 .mtab.active { background:var(--gold); border-color:var(--amber); color:#fff; box-shadow:0 2px 8px rgba(180,110,0,0.25); }
 .bank-tag { font-size:11px; font-weight:700; color:#B4700A; background:#FFF3B0; border:1px solid #F5C400; border-radius:10px; padding:2px 9px; }
+.ftype-badge { font-size:11px; font-weight:800; padding:2px 10px; border-radius:20px; letter-spacing:0.04em; }
+.ft-unten { background:#E4F7E9; color:#1E8A46; border:1px solid #A8D8AA; }
+.ft-setsubi { background:#EDE6FF; color:#6B44C4; border:1px solid #C9B8F0; }
 .agg-intro { max-width:700px; margin:0 auto 10px; color:var(--mid); font-size:12px; }
 .count { font-size:11px; color:var(--muted); }
 .cards { max-width:700px; margin:0 auto; padding:14px 12px 40px; display:flex; flex-direction:column; gap:12px; }
@@ -1017,13 +1020,14 @@ function renderAllPurchases(){
 // ===== 運転資金・資金調達データ（物件購入とは別）=====
 var FUNDING = {};
 FUNDING["福岡信用金庫"] = [
-  {日付:"令和8年2月",氏名:"太田圭一",商品名:"100周年記念 運転資金（オリックス保証）",融資額:"500万円",融資期間:"7年",金利:"1.95%",保証料:"26万円",備考:"・2度目の正直で本日承認㊗️\n・2期以上経過している法人が融資対象。資金調達を必要とする方は太田が繋ぎます（要連絡）"}
+  {日付:"令和8年2月",種別:"運転資金",氏名:"太田圭一",商品名:"100周年記念 運転資金（オリックス保証）",融資額:"500万円",融資期間:"7年",金利:"1.95%",保証料:"26万円",備考:"・2度目の正直で本日承認㊗️\n・2期以上経過している法人が融資対象。資金調達を必要とする方は太田が繋ぎます（要連絡）"}
 ];
 function fundingCardHTML(r, bankName){
   var html='<div class="report-card">';
   html+='<div class="report-header"><span class="report-icon">💴</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
   html+='<div class="report-body">';
   if(bankName) html+='<div style="margin-bottom:6px"><span class="bank-tag">🏦 '+bankName+'</span></div>';
+  if(r.種別) html+='<div style="margin-bottom:5px"><span class="ftype-badge '+(r.種別==="設備資金"?"ft-setsubi":"ft-unten")+'">'+r.種別+'</span></div>';
   if(r.商品名) html+='<div style="font-weight:700;color:#333;margin-bottom:6px">'+r.商品名+'</div>';
   html+='<div class="report-grid">';
   html+=lcell("融資額",r.融資額,true)+lcell("融資期間",r.融資期間)+lcell("金利",r.金利,true)+lcell("保証料",r.保証料);
@@ -1043,16 +1047,36 @@ function renderFunding(name){
   html+='</div></div>';
   return html;
 }
-// 全金融機関の資金調達を横断表示
+// 資金調達：金融機関ごとのカード（タップで展開）
 function renderAllFunding(){
-  var all=[]; for(var bank in FUNDING){ if(FUNDING.hasOwnProperty(bank)){ FUNDING[bank].forEach(function(r){ all.push({r:r,bank:bank}); }); } }
-  all=all.filter(function(x){ return !curQ || (x.r.氏名+(x.r.商品名||'')+x.bank+(x.r.備考||'')).indexOf(curQ)>=0; });
-  all.sort(function(a,b){ return reiwaKey(b.r.日付) - reiwaKey(a.r.日付); });
-  document.getElementById("countLabel").textContent=all.length+"件";
-  if(!all.length) return '<div class="empty-state">該当する資金調達がありません</div>';
-  var html='<div class="agg-intro">💰 全金融機関の運転資金・資金調達（物件購入とは別／新しい順）</div><div class="report-list" style="max-width:700px;margin:0 auto">';
-  all.forEach(function(x){ html+=fundingCardHTML(x.r,x.bank); });
-  return html+'</div>';
+  var banks=[]; for(var bnk in FUNDING){ if(FUNDING.hasOwnProperty(bnk) && FUNDING[bnk] && FUNDING[bnk].length) banks.push(bnk); }
+  banks=banks.filter(function(b){
+    if(!curQ) return true;
+    if(b.indexOf(curQ)>=0) return true;
+    return FUNDING[b].some(function(r){ return ((r.氏名||'')+(r.商品名||'')+(r.種別||'')+(r.備考||'')).indexOf(curQ)>=0; });
+  });
+  document.getElementById("countLabel").textContent=banks.length+"機関";
+  if(!banks.length) return '<div class="empty-state">資金調達の実績がありません</div>';
+  var html='<div class="agg-intro">💰 資金調達（運転資金・設備資金）｜金融機関をタップで詳細</div>';
+  for(var i=0;i<banks.length;i++){
+    var b=banks[i];
+    var list=FUNDING[b].slice().sort(function(x,y){ return reiwaKey(y.日付) - reiwaKey(x.日付); });
+    var dd=null; for(var j=0;j<DATA.length;j++){ if(DATA[j].名称===b){ dd=DATA[j]; break; } }
+    var kind=dd?dd.種類:"銀行";
+    var types=[]; list.forEach(function(r){ if(r.種別 && types.indexOf(r.種別)<0) types.push(r.種別); });
+    html+='<div class="card" id="fc'+i+'">';
+    html+='<div class="card-head" onclick="ftog('+i+')">';
+    html+='<span class="type-badge '+badgeClass(kind)+'">'+kind+'</span>';
+    html+='<div class="card-title-area"><div class="card-name">'+b+'</div>';
+    html+='<div class="card-meta">'+types.map(function(t){return '<span class="meta-pill">'+t+'</span>';}).join('')+'<span class="meta-pill">'+list.length+'件</span></div></div>';
+    html+='<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>';
+    html+='</div>';
+    html+='<div class="card-body"><div class="card-body-inner"><div class="report-list">';
+    for(var k=0;k<list.length;k++) html+=fundingCardHTML(list[k]);
+    html+='</div></div></div>';
+    html+='</div>';
+  }
+  return html;
 }
 
 function badgeClass(t){
@@ -1159,6 +1183,7 @@ function renderCard(d,idx){
 }
 
 function tog(idx){ document.getElementById("c"+idx).classList.toggle("open"); }
+function ftog(i){ document.getElementById("fc"+i).classList.toggle("open"); }
 
 var curType="all", curQ="", curMode="banks";
 function render(){
