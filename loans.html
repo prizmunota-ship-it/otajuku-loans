@@ -34,6 +34,11 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .chips { display:flex; gap:6px; flex-wrap:wrap; }
 .chip { padding:5px 12px; border-radius:20px; border:1.5px solid var(--border); background:#fff; font-size:12px; font-weight:600; color:var(--mid); cursor:pointer; font-family:inherit; }
 .chip.active { background:var(--gold-lt); border-color:var(--amber); color:var(--dark2); }
+.mode-tabs { display:flex; gap:6px; width:100%; margin-bottom:8px; }
+.mtab { flex:1; padding:9px 6px; border:1.5px solid var(--border); background:#fff; border-radius:10px; font-weight:800; font-size:12.5px; color:var(--mid); cursor:pointer; font-family:inherit; }
+.mtab.active { background:var(--gold); border-color:var(--amber); color:#fff; box-shadow:0 2px 8px rgba(180,110,0,0.25); }
+.bank-tag { font-size:11px; font-weight:700; color:#B4700A; background:#FFF3B0; border:1px solid #F5C400; border-radius:10px; padding:2px 9px; }
+.agg-intro { max-width:700px; margin:0 auto 10px; color:var(--mid); font-size:12px; }
 .count { font-size:11px; color:var(--muted); }
 .cards { max-width:700px; margin:0 auto; padding:14px 12px 40px; display:flex; flex-direction:column; gap:12px; }
 .card { background:var(--card-bg); border-radius:14px; border:1.5px solid var(--border); box-shadow:0 2px 12px var(--shadow); overflow:hidden; }
@@ -171,6 +176,11 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 </header>
 <div class="filter-bar">
   <div class="filter-inner">
+    <div class="mode-tabs">
+      <button class="mtab active" data-mode="banks">🏦 機関別</button>
+      <button class="mtab" data-mode="purchases">🏡 購入実績</button>
+      <button class="mtab" data-mode="funding">💰 資金調達</button>
+    </div>
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
       <input type="text" id="searchInput" placeholder="金融機関名・エリアで検索…">
@@ -960,50 +970,49 @@ function lcell(label,val,highlight){
   return '<div class="report-cell loan-cell"><div class="rl">'+label+'</div><div class="rv'+(highlight?" highlight-green":"")+'">'+val+'</div></div>';
 }
 function reiwaKey(s){ if(!s) return 0; var m=String(s).match(/令和(\d+)年(\d+)月/); return m ? (2018+parseInt(m[1],10))*100+parseInt(m[2],10) : 0; }
+function purchaseCardHTML(r, bankName){
+  var html='<div class="report-card">';
+  html+='<div class="report-header"><span class="report-icon">🏠</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
+  html+='<div class="report-body">';
+  if(bankName) html+='<div style="margin-bottom:6px"><span class="bank-tag">🏦 '+bankName+'</span></div>';
+  html+='<div><span class="report-section-label spec">🏠 物件スペック</span><div class="report-grid">';
+  html+=scell("購入金額",r.購入金額,true)+scell("利回り",r.利回り,true)+scell("所在地",r.所在地)+scell("築年数",r.築年数)+scell("構造",r.構造)+scell("部屋数",r.部屋数);
+  if(r.課税評価額) html+=scell("課税評価額",r.課税評価額);
+  html+='</div></div>';
+  html+='<div><span class="report-section-label loan">💴 融資条件</span><div class="report-grid">';
+  html+=lcell("融資金額",r.融資金額,true)+lcell("金利",r.金利,true)+lcell("融資期間",r.融資期間)+lcell("返済比率",r.返済比率);
+  if(r.支店) html+=lcell("支店",r.支店);
+  html+='</div>';
+  if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">内訳・備考</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
+  if(r.経緯){
+    var sid='story_'+Math.random().toString(36).slice(2,8);
+    html+='<button class="story-toggle" onclick="var b=document.getElementById(\''+sid+'\');b.classList.toggle(\'open\');this.classList.toggle(\'open\')">📖 購入経緯を読む</button>';
+    html+='<div class="story-body" id="'+sid+'"><div class="story-content">'+r.経緯+'</div></div>';
+  }
+  html+='</div></div>';
+  return html;
+}
 function renderReports(name){
   var list=REPORTS[name];
   if(!list||list.length===0) return "";
-  // 日付で新しい順にソート（令和表記対応。"—"は最後）
   var sorted = list.slice().sort(function(a,b){ return reiwaKey(b.日付) - reiwaKey(a.日付); });
   var html='<div class="section"><div class="sec-title">🏡 購入報告</div>';
   html+='<div class="report-count-badge">🎉 '+sorted.length+'件の実績</div>';
   html+='<div class="report-list">';
-  for(var i=0;i<sorted.length;i++){
-    var r=sorted[i];
-    html+='<div class="report-card">';
-    html+='<div class="report-header"><span class="report-icon">🏠</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
-    html+='<div class="report-body">';
-    // 物件スペック（青）
-    html+='<div><span class="report-section-label spec">🏠 物件スペック</span>';
-    html+='<div class="report-grid">';
-    html+=scell("購入金額",r.購入金額,true);
-    html+=scell("利回り",r.利回り,true);
-    html+=scell("所在地",r.所在地);
-    html+=scell("築年数",r.築年数);
-    html+=scell("構造",r.構造);
-    html+=scell("部屋数",r.部屋数);
-    if(r.課税評価額) html+=scell("課税評価額",r.課税評価額);
-    html+='</div></div>';
-    // 融資条件（緑）
-    html+='<div><span class="report-section-label loan">💴 融資条件</span>';
-    html+='<div class="report-grid">';
-    html+=lcell("融資金額",r.融資金額,true);
-    html+=lcell("金利",r.金利,true);
-    html+=lcell("融資期間",r.融資期間);
-    html+=lcell("返済比率",r.返済比率);
-    if(r.支店) html+=lcell("支店",r.支店);
-    html+='</div>';
-    if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">内訳・備考</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
-    if(r.経緯){
-      var sid='story_'+Math.random().toString(36).slice(2,8);
-      html+='<button class="story-toggle" onclick="var b=document.getElementById(\''+sid+'\');b.classList.toggle(\'open\');this.classList.toggle(\'open\')">📖 購入経緯を読む</button>';
-      html+='<div class="story-body" id="'+sid+'"><div class="story-content">'+r.経緯+'</div></div>';
-    }
-    html+='</div>';
-    html+='</div></div>';
-  }
+  for(var i=0;i<sorted.length;i++) html+=purchaseCardHTML(sorted[i]);
   html+='</div></div>';
   return html;
+}
+// 全金融機関の購入実績を横断表示
+function renderAllPurchases(){
+  var all=[]; for(var bank in REPORTS){ if(REPORTS.hasOwnProperty(bank)){ REPORTS[bank].forEach(function(r){ all.push({r:r,bank:bank}); }); } }
+  all=all.filter(function(x){ return !curQ || (x.r.氏名+x.r.所在地+x.bank+(x.r.購入金額||'')+(x.r.構造||'')).indexOf(curQ)>=0; });
+  all.sort(function(a,b){ return reiwaKey(b.r.日付) - reiwaKey(a.r.日付); });
+  document.getElementById("countLabel").textContent=all.length+"件";
+  if(!all.length) return '<div class="empty-state">該当する購入実績がありません</div>';
+  var html='<div class="agg-intro">🏡 全金融機関の購入実績（新しい順）</div><div class="report-list" style="max-width:700px;margin:0 auto">';
+  all.forEach(function(x){ html+=purchaseCardHTML(x.r,x.bank); });
+  return html+'</div>';
 }
 
 // ===== 運転資金・資金調達データ（物件購入とは別）=====
@@ -1011,6 +1020,19 @@ var FUNDING = {};
 FUNDING["福岡信用金庫"] = [
   {日付:"令和8年2月",氏名:"太田圭一",商品名:"100周年記念 運転資金（オリックス保証）",融資額:"500万円",融資期間:"7年",金利:"1.95%",保証料:"26万円",備考:"・2度目の正直で本日承認㊗️\n・2期以上経過している法人が融資対象。資金調達を必要とする方は太田が繋ぎます（要連絡）"}
 ];
+function fundingCardHTML(r, bankName){
+  var html='<div class="report-card">';
+  html+='<div class="report-header"><span class="report-icon">💴</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
+  html+='<div class="report-body">';
+  if(bankName) html+='<div style="margin-bottom:6px"><span class="bank-tag">🏦 '+bankName+'</span></div>';
+  if(r.商品名) html+='<div style="font-weight:700;color:#333;margin-bottom:6px">'+r.商品名+'</div>';
+  html+='<div class="report-grid">';
+  html+=lcell("融資額",r.融資額,true)+lcell("融資期間",r.融資期間)+lcell("金利",r.金利,true)+lcell("保証料",r.保証料);
+  html+='</div>';
+  if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">備考</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
+  html+='</div></div>';
+  return html;
+}
 function renderFunding(name){
   var list=FUNDING[name];
   if(!list||list.length===0) return "";
@@ -1018,20 +1040,20 @@ function renderFunding(name){
   var html='<div class="section"><div class="sec-title">💰 運転資金・資金調達</div>';
   html+='<div class="report-count-badge">💴 '+sorted.length+'件（物件購入とは別）</div>';
   html+='<div class="report-list">';
-  for(var i=0;i<sorted.length;i++){
-    var r=sorted[i];
-    html+='<div class="report-card">';
-    html+='<div class="report-header"><span class="report-icon">💴</span><span class="report-name">'+r.氏名+'</span><span class="report-date">'+r.日付+'</span></div>';
-    html+='<div class="report-body">';
-    if(r.商品名) html+='<div style="font-weight:700;color:#333;margin-bottom:6px">'+r.商品名+'</div>';
-    html+='<div class="report-grid">';
-    html+=lcell("融資額",r.融資額,true)+lcell("融資期間",r.融資期間)+lcell("金利",r.金利,true)+lcell("保証料",r.保証料);
-    html+='</div>';
-    if(r.備考) html+='<div style="margin-top:5px"><div class="report-cell loan-cell" style="grid-column:1/-1"><div class="rl">備考</div><div class="rv" style="white-space:pre-wrap">'+r.備考+'</div></div></div>';
-    html+='</div></div>';
-  }
+  for(var i=0;i<sorted.length;i++) html+=fundingCardHTML(sorted[i]);
   html+='</div></div>';
   return html;
+}
+// 全金融機関の資金調達を横断表示
+function renderAllFunding(){
+  var all=[]; for(var bank in FUNDING){ if(FUNDING.hasOwnProperty(bank)){ FUNDING[bank].forEach(function(r){ all.push({r:r,bank:bank}); }); } }
+  all=all.filter(function(x){ return !curQ || (x.r.氏名+(x.r.商品名||'')+x.bank+(x.r.備考||'')).indexOf(curQ)>=0; });
+  all.sort(function(a,b){ return reiwaKey(b.r.日付) - reiwaKey(a.r.日付); });
+  document.getElementById("countLabel").textContent=all.length+"件";
+  if(!all.length) return '<div class="empty-state">該当する資金調達がありません</div>';
+  var html='<div class="agg-intro">💰 全金融機関の運転資金・資金調達（物件購入とは別／新しい順）</div><div class="report-list" style="max-width:700px;margin:0 auto">';
+  all.forEach(function(x){ html+=fundingCardHTML(x.r,x.bank); });
+  return html+'</div>';
 }
 
 function badgeClass(t){
@@ -1139,14 +1161,16 @@ function renderCard(d,idx){
 
 function tog(idx){ document.getElementById("c"+idx).classList.toggle("open"); }
 
-var curType="all", curQ="";
+var curType="all", curQ="", curMode="banks";
 function render(){
+  var box=document.getElementById("cardContainer");
+  if(curMode==="purchases"){ box.innerHTML=renderAllPurchases(); return; }
+  if(curMode==="funding"){ box.innerHTML=renderAllFunding(); return; }
   var filtered=DATA.filter(function(d){
     var tok=(curType==="all"||d.種類===curType);
     var sq=(!curQ||d.名称.indexOf(curQ)>=0||(d.契約エリア||"").indexOf(curQ)>=0||(d.物件エリア||"").indexOf(curQ)>=0||(d.種類||"").indexOf(curQ)>=0);
     return tok&&sq;
   });
-  var box=document.getElementById("cardContainer");
   if(filtered.length===0){
     box.innerHTML='<div class="empty-state">該当する金融機関が見つかりません</div>';
   } else {
@@ -1161,6 +1185,16 @@ document.querySelectorAll(".chip").forEach(function(btn){
     document.querySelectorAll(".chip").forEach(function(b){b.classList.remove("active");});
     btn.classList.add("active");
     curType=btn.getAttribute("data-type");
+    render();
+  });
+});
+document.querySelectorAll(".mtab").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    document.querySelectorAll(".mtab").forEach(function(b){b.classList.remove("active");});
+    btn.classList.add("active");
+    curMode=btn.getAttribute("data-mode");
+    document.querySelector(".chips").style.display=(curMode==="banks")?"":"none";
+    document.getElementById("searchInput").placeholder=(curMode==="banks")?"金融機関名・エリアで検索…":(curMode==="purchases"?"氏名・物件・金融機関で検索…":"氏名・商品名・金融機関で検索…");
     render();
   });
 });
