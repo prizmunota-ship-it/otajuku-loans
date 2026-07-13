@@ -180,7 +180,7 @@ function roomCard(r){
   const yen=r.rent?'¥'+Number(r.rent).toLocaleString()+(r.kyoeki?'＋'+Number(r.kyoeki).toLocaleString():''):'';
   const adnum=r.ad!==''&&r.ad!=null?(typeof r.ad==='number'?r.ad:parseFloat(r.ad)):NaN;
   const ad=!isNaN(adnum)?Math.round(adnum*100)+'％':'';
-  const adhot=(!isNaN(adnum)&&adnum*100>=500)?' style="color:#dc2626;font-weight:700"':'';
+  const adhot=(!isNaN(adnum)&&adnum*100>=400)?' style="color:#dc2626;font-weight:700"':'';
   r2='<div class="r2">'+(yen?'<span class="yen">'+yen+'</span>':'')+(r.model&&r.model!=='-'?'<span>'+esc(r.model)+'</span>':'')+(ad?'<span class="ad"'+adhot+'>広告料 '+ad+'</span>':'')+'</div>';
  }
  const k=isKey(r.nairan);
