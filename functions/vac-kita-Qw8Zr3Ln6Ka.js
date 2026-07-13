@@ -145,8 +145,7 @@ function summary(){
  const occ=tj?((tj-tv)/tj*100):0;
  const on=k=>FILTER===k?' on':'';
  document.getElementById('chips').innerHTML=
-  '<span class="chip">空室 <b>'+vac+'</b> 戸</span>'+
-  '<span class="chip'+(occ<90?' bad':'')+'">稼働 <b>'+occ.toFixed(1)+'</b>％</span>';
+  '<span class="chip">空室 <b>'+vac+'</b> 戸</span>';
  setHH();
 }
 /* 物件ヘッダーをグローバルヘッダー直下に固定するため、ヘッダー高さを--hhに反映 */
@@ -161,15 +160,15 @@ function roomCard(r){
  const park=String(r.go).startsWith('P');
  const mk={apply_new:'mk-an',apply:'mk',cancel_new:'mk-cn'}[r.markstate]||'';
  let badges='';
- if(park){badges='<span class="b done">駐車場</span>'+(r.broker?'<span class="b apply">申込</span>':'<span class="b none">空車</span>');}
+ if(park){badges=(r.broker?'<span class="b apply">申込</span>':'<span class="b none">空車</span>');}
  else{
   badges+=naisoBadge(r.naiso);
   if(r.broker)badges+='<span class="b apply">申込中'+(r.nyukyo?'・'+r.nyukyo+'入居':'')+'</span>';
   else if(r.markstate==='cancel_new'||(typeof r.days==='number'&&r.days<0))badges+='<span class="b soon">退去予定'+(r.taikyo&&r.taikyo!=='-'?'・'+r.taikyo:'')+'</span>';
-  if(typeof r.days==='number'&&!r.broker)badges+='<span class="b days'+(r.days>=60?' lt':'')+'">空室'+r.days+'日</span>';
  }
  let r2='';
- if(!park){
+ if(park){ if(r.rent)r2='<div class="r2"><span class="yen">¥'+Number(r.rent).toLocaleString()+'</span></div>'; }
+ else if(!park){
   const yen=r.rent?'¥'+Number(r.rent).toLocaleString()+(r.kyoeki?'＋'+Number(r.kyoeki).toLocaleString():''):'';
   const adnum=r.ad!==''&&r.ad!=null?(typeof r.ad==='number'?r.ad:parseFloat(r.ad)):NaN;
   const ad=!isNaN(adnum)?Math.round(adnum*100)+'％':'';
@@ -180,7 +179,7 @@ function roomCard(r){
  const rkey=(!park&&k)?'<div class="rkey">🔑 '+esc(k)+'</div>':'';
  const memo=(!park&&r.memo&&r.memo.trim())?'<div class="memo"><b>メモ</b>　'+esc(r.memo)+'</div>':'';
  const tanto=(r.broker&&r.tanto&&r.tanto.trim())?'<div class="memo">担当：'+esc(r.tanto)+'</div>':'';
- return '<div class="room '+mk+'"><div class="r1"><div class="go'+(park?' park':'')+'">'+esc(r.go)+'</div><div class="badges">'+badges+'</div></div>'+r2+rkey+memo+tanto+'</div>';
+ return '<div class="room '+mk+'"><div class="r1"><div class="go'+(park?' park':'')+'">'+esc((park&&r.golabel)?r.golabel:r.go)+'</div><div class="badges">'+badges+'</div></div>'+r2+rkey+memo+tanto+'</div>';
 }
 function render(){
  const flt=FILTER?FILT[FILTER]:null;
@@ -207,8 +206,8 @@ function render(){
   let cnt=[];
   if(flt){cnt.push('該当 '+rooms.length+'室');}
   else{if(vac)cnt.push('空室 '+vac);if(apl)cnt.push('<span class="ap">申込 '+apl+'</span>');if(pvac)cnt.push('駐車 '+pvac+'空');}
-  const react=(!flt&&(toi!==''||nai!==''))?'<span class="react">　今週 問合 '+(toi||0)+'・内見 '+(nai||0)+'</span>':'';
-  const krHtml=kr!=null?'<span class="kr'+(kr<90?' lo':'')+'">稼働 '+kr+'％</span>':'';
+  const react='';
+  const krHtml='';
   const comp=any.comp||'';
   const ctag=comp?'<span class="ptag" data-c="'+esc(comp)+'" onclick="openContact(event)">'+esc(comp)+'</span>':'';
   html+='<div class="pcard'+(open?' open':'')+'" id="pc-'+esc(prop)+'">'
