@@ -725,7 +725,7 @@ function renderResult(){
   h += `<div class="sec"><div class="sec-h">【返済計画】</div><table class="t">
     <tr><th>融資期間</th><th>融資条件</th><th>月間返済額</th><th style="width:24px"></th></tr>
     <tr><td>${kikan}</td><td>${joken}</td><td class="num">${num(c.pmt)}</td><td class="yc">円</td></tr>
-    <tr><td class="lbl">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td><td></td></tr>
+    <tr><td class="lbl" colspan="2">${esc(S.bankName)||'◯◯銀行'}</td><td></td><td></td></tr>
     <tr class="rowtot"><td>合計</td><td></td><td class="num">${num(c.pmt)}</td><td class="yc">円</td></tr>
     </table></div>`;
   // 収支計画（家賃 単一列）。金融機関提出用はランニングコスト(巡回清掃・ネット)を非表示＆合計から除外（hideRun/monthBal/yearBalは上で計算済）
