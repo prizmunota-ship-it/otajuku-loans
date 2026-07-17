@@ -46,15 +46,28 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 .lookup-btn{flex-shrink:0;border:1.5px solid #1a1a1a;background:#1a1a1a;color:#fff;border-radius:10px;padding:10px 12px;font-size:12px;font-family:'Noto Sans JP',sans-serif;font-weight:500;cursor:pointer;white-space:nowrap;}
 
 /* rent type rows */
-.rent-head{display:grid;grid-template-columns:26px 1fr 0.5fr 0.95fr 0.95fr;gap:5px;font-size:9.5px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;align-items:end;}
+.rent-head{display:grid;grid-template-columns:26px 1fr 0.5fr 0.95fr 0.95fr 22px;gap:5px;font-size:9.5px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;align-items:end;}
 .rent-head>div:first-child{text-align:center;}
-.rent-row{display:grid;grid-template-columns:26px 1fr 0.5fr 0.95fr 0.95fr;gap:5px;margin-bottom:6px;align-items:center;}
+.rent-row{display:grid;grid-template-columns:26px 1fr 0.5fr 0.95fr 0.95fr 22px;gap:5px;margin-bottom:6px;align-items:center;}
 .rent-row .fval{padding:9px 6px;font-size:12.5px;}
 .resi-box{display:flex;align-items:center;justify-content:center;}
 .resi-box input{width:20px;height:20px;accent-color:#1a1a1a;cursor:pointer;}
 .run-head{display:grid;grid-template-columns:1.6fr 1fr;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;}
 .run-row{display:grid;grid-template-columns:1.6fr 1fr;gap:6px;margin-bottom:6px;}
 .run-row .fval{padding:9px 10px;font-size:13px;}
+.free-head{display:grid;grid-template-columns:1.6fr 1fr 34px;gap:6px;font-size:10px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;}
+.free-row{display:grid;grid-template-columns:1.6fr 1fr 34px;gap:6px;margin-bottom:6px;align-items:center;}
+.free-row .fval{padding:9px 10px;font-size:13px;}
+.free-del{border:none;background:#f4f4f4;color:#c0392b;border-radius:8px;cursor:pointer;font-size:13px;padding:0;height:38px;line-height:38px;font-family:inherit;}
+.free-del:hover{background:#fbe9e7;}
+.free-add{margin-top:2px;width:100%;padding:11px;border:1px dashed #cfcfcf;background:#fafafa;color:#555;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;}
+.free-add:hover{background:#f2f2f2;border-color:#bbb;}
+.run4-head{display:grid;grid-template-columns:1.25fr 0.9fr 60px 28px;gap:6px;font-size:9px;color:#999;font-weight:500;margin-bottom:5px;padding:0 2px;text-align:center;line-height:1.2;}
+.run4-head>div:first-child{text-align:left;}
+.run4-row{display:grid;grid-template-columns:1.25fr 0.9fr 60px 28px;gap:6px;margin-bottom:6px;align-items:center;}
+.run4-row .fval{padding:9px 10px;font-size:13px;}
+.run-sub{display:flex;align-items:center;justify-content:center;}
+.run-sub input{width:18px;height:18px;accent-color:#1a1a1a;cursor:pointer;}
 
 .seg{display:flex;gap:0;background:#F0EEE8;border-radius:10px;padding:3px;margin-bottom:12px;}
 .seg-btn{flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:700;color:#888;border-radius:8px;cursor:pointer;border:none;background:transparent;font-family:'Noto Sans JP',sans-serif;}
@@ -223,7 +236,7 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 <script>
 /* ============ 状態 ============ */
 const LS_KEY = 'jigyo_keikaku_v2';  // v2: 例を値→プレースホルダー化したため旧保存データをリセット
-const STRUCT_TAX = {'木造':0.015,'鉄骨造':0.02,'鉄筋コンクリート':0.025,'':0.03};
+const STRUCT_TAX = {'木造':0.015,'木造（準耐火）':0.015,'木造（劣化等級2）':0.015,'木造（劣化等級3）':0.015,'鉄骨造':0.02,'重量鉄骨造':0.022,'鉄筋コンクリート':0.025,'鉄骨鉄筋コンクリート':0.025,'':0.03};
 // CF率の合格基準(%)＝人口動態で決定（人口上昇=2 / 人口減少4%未満=3 / 人口減少4%以上=4）
 const CF_STD = {'人口上昇':2,'人口減少4%未満':3,'人口減少4%以上':4};
 // 市区町村別 人口増減率(%)＝令和7年(2025)国勢調査 人口速報集計（2020→2025・直近5年）。
@@ -271,13 +284,13 @@ const blank = {
   buyer:'', pname:'', addr:'',
   eraType:'西暦', eraYear:'', builtMonth:'', youto:'',
   struct:'', scale:'', kenpei:'', yoseki:'', land_area:'', floor_area:'',
-  price_all:'', price_land:'', price_bldg:'', priceMode:'all',
-  rents:[ {name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true},{name:'',units:'',rent:'',resi:true} ],
+  price_all:'', price_land:'', price_bldg:'', priceMode:'all', buildType:'new',
+  rents:[ {name:'',units:'',rent:'',resi:true} ],
   kotoze:'', bankfee:'', iten:'', teito:'', shihoshoshi:'', inshi:'',
-  chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, shusshi:'',
+  chukai:'', chukai_auto:true, fire1:'', shutoku:'', shutoku_auto:true, freeCosts:[],
   loan:'', years:'', rate:'', bankName:'',
-  junkai:'', net:'', atamakin:'', mgmtRate:'', kpiShowSubmit:true, popTrend:'', popAuto:true, popRate:null,
-  runs:[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]  // その他ランニング(手持ち用のみ反映)
+  junkai:'', net:'', junkaiSubmit:false, netSubmit:false, atamakin:'', mgmtRate:'', kpiShowSubmit:true, popTrend:'', popAuto:true, popRate:null,
+  runs:[]  // その他ランニング(＋で動的追加。各行のsubmitで提出用反映を項目ごとに選択)
 };
 let S = load();
 let view = 'standhold'; // 手持ち用 / 提出用
@@ -317,10 +330,13 @@ function calc(){
   c.shutoku = S.shutoku_auto ? Math.round(c.price*(STRUCT_TAX[S.struct]??0.03)) : n(S.shutoku);
   // 火災保険（手持ち=1年 / 提出=5年）
   c.fire1 = n(S.fire1); c.fire5 = c.fire1*5;
-  // 諸経費 各項目（出資金その他C40は元の出力シートでは諸経費合計に含めない）
+  // 諸経費 各項目
   c.kotoze=n(S.kotoze); c.bankfee=n(S.bankfee); c.iten=n(S.iten); c.teito=n(S.teito);
-  c.shihoshoshi=n(S.shihoshoshi); c.inshi=n(S.inshi); c.shusshi=n(S.shusshi);
-  const base = c.kotoze+c.bankfee+c.iten+c.teito+c.shihoshoshi+c.inshi+c.chukai+c.shutoku;
+  c.shihoshoshi=n(S.shihoshoshi); c.inshi=n(S.inshi);
+  // 自由入力の諸経費（金額のある行だけ集計・計画書に表示、諸経費合計に算入）
+  c.freeCostList=[]; c.freeCost=0;
+  (S.freeCosts||[]).forEach(f=>{ const a=n(f.amt), nm=String(f.name||'').trim(); if(a>0){ c.freeCostList.push({name:nm||'その他諸経費', amt:a}); c.freeCost+=a; } });
+  const base = c.kotoze+c.bankfee+c.iten+c.teito+c.shihoshoshi+c.inshi+c.chukai+c.shutoku+c.freeCost;
   c.shokeiHold   = base + c.fire1;   // 手持ち用 諸経費合計（火災1年）
   c.shokeiSubmit = base + c.fire5;   // 提出用 諸経費合計（火災5年）
   // 総事業費
@@ -335,9 +351,9 @@ function calc(){
   // ランニング
   c.junkai=n(S.junkai); c.net=n(S.net);
   // その他ランニング(追加枠・手持ち用のみ反映)。入力のある行だけ集計
-  c.extraRunList=[]; c.extraRun=0;
-  (S.runs||[]).forEach(r=>{ const a=n(r.amt), nm=String(r.name||'').trim(); if(a>0||nm){ c.extraRunList.push({name:nm||'その他', amt:a}); c.extraRun+=a; } });
-  c.extraRunYear=c.extraRun*12;
+  c.extraRunList=[]; c.extraRun=0; c.extraRunSubmit=0;
+  (S.runs||[]).forEach(r=>{ const a=n(r.amt), nm=String(r.name||'').trim(); if(a>0||nm){ const sub=r.submit===true; c.extraRunList.push({name:nm||'その他', amt:a, submit:sub}); c.extraRun+=a; if(sub) c.extraRunSubmit+=a; } });
+  c.extraRunYear=c.extraRun*12; c.extraRunSubmitYear=c.extraRunSubmit*12;
   return c;
 }
 function pmt(principal, ratePct, years){
@@ -437,7 +453,7 @@ function renderInput(){
       <div class="hint" id="youto-status" style="color:#1A7040;"></div>
     </div>
     <div class="row2">
-      ${selectF('構造','struct',['','木造','鉄骨造','鉄筋コンクリート'])}
+      ${selectF('構造','struct',['','木造','木造（準耐火）','木造（劣化等級2）','木造（劣化等級3）','鉄骨造','重量鉄骨造','鉄筋コンクリート','鉄骨鉄筋コンクリート'])}
       ${field('規模','scale',{ph:'例: 3階建'})}
     </div>
     <div class="row2">
@@ -451,6 +467,10 @@ function renderInput(){
 
   // 購入価格
   h += `<div class="card"><div class="card-title"><span class="dot"></span>購入価格</div>
+    <div class="seg" style="margin-bottom:6px;">
+      <button class="seg-btn ${S.buildType==='new'?'active':''}" onclick="setBuild('new')">新築</button>
+      <button class="seg-btn ${S.buildType!=='new'?'active':''}" onclick="setBuild('used')">中古</button>
+    </div>
     <div class="seg">
       <button class="seg-btn ${S.priceMode==='all'?'active':''}" onclick="setF('priceMode','all')">一括</button>
       <button class="seg-btn ${S.priceMode==='split'?'active':''}" onclick="setF('priceMode','split')">土地+建物</button>
@@ -463,8 +483,8 @@ function renderInput(){
   h += `<div class="line total" style="margin-top:6px;"><span class="lbl">合計</span><span class="val" id="t-price">${yen(c.price)}</span></div></div>`;
 
   // 家賃
-  h += `<div class="card"><div class="card-title"><span class="dot"></span>間取り・家賃<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">最大5タイプ</span></div>
-    <div class="rent-head"><div>住居</div><div>タイプ</div><div>戸数</div><div>1戸家賃</div><div>合計(月)</div></div>`;
+  h += `<div class="card"><div class="card-title"><span class="dot"></span>間取り・家賃</div>
+    <div class="rent-head"><div>住居</div><div>タイプ</div><div>戸数/区画</div><div>1戸家賃</div><div>合計(月)</div><div></div></div>`;
   S.rents.forEach((r,i)=>{
     const tot=(n(r.units)&&n(r.rent))? String(n(r.units)*n(r.rent)) : '';
     h += `<div class="rent-row">
@@ -473,8 +493,10 @@ function renderInput(){
       <input class="fval" inputmode="decimal" value="${esc(r.units)}" placeholder="戸" oninput="setRentNum(${i},'units',this)">
       <input class="fval" inputmode="decimal" value="${esc(r.rent)}" placeholder="1戸" oninput="setRentNum(${i},'rent',this)">
       <input class="fval" inputmode="decimal" value="${tot}" placeholder="合計" oninput="setRentTotal(${i},this)">
+      <button type="button" class="free-del" onclick="removeRent(${i})" title="この行を削除">✕</button>
     </div>`;
   });
+  h += `<button type="button" class="free-add" onclick="addRent()">＋ 間取りタイプを追加</button>`;
   h += `<div style="font-size:10px;color:#bbb;margin:2px 2px 6px;">※「合計(月)」に総額を入れると1戸家賃(平均)を自動計算。1戸家賃の手打ちもOK（その場合は合計を自動計算）。<br>※「住居」のチェックを外すと戸数合計に数えません（駐車場・倉庫など）。家賃は合計に含みます。</div>
     <div class="line total" style="margin-top:6px;"><span class="lbl">月額家賃合計</span><span class="val" id="t-rent">${yen(c.monthReal)} / 住居${c.unitsResi}戸</span></div></div>`;
 
@@ -482,44 +504,66 @@ function renderInput(){
   h += `<div class="card"><div class="card-title"><span class="dot"></span>諸経費<span style="font-weight:400;color:#bbb;font-size:11px;margin-left:6px;">円</span></div>
     <div class="row2">${field('固都税','kotoze',{type:'number'})}${field('銀行事務手数料','bankfee',{type:'number'})}</div>
     <div class="row2">${field('登記司法書士費用等','iten',{type:'number'})}${field('印紙代','inshi',{type:'number'})}</div>
+    ${field('火災保険(1年)','fire1',{type:'number'})}
     <div class="fgroup"><div class="flabel">仲介手数料 <span class="autonote" id="chukai-note">${S.chukai_auto?'自動: '+yen(c.chukai):''}</span></div>
       <input id="f-chukai" class="fval ${S.chukai_auto?'auto':''}" inputmode="decimal" value="${S.chukai_auto?'':esc(S.chukai)}" placeholder="${S.chukai_auto?yen(c.chukai)+'(自動)':'円'}" oninput="setNum('chukai',this)">
       <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.chukai_auto?'checked':''} onchange="toggleAuto('chukai',this.checked)">自動計算</label></div>
-    ${field('火災保険(1年)','fire1',{type:'number'})}
     <div class="fgroup"><div class="flabel">取得税 <span class="autonote" id="shutoku-note">${S.shutoku_auto?'自動: '+yen(c.shutoku):''}</span></div>
       <input id="f-shutoku" class="fval ${S.shutoku_auto?'auto':''}" inputmode="decimal" value="${S.shutoku_auto?'':esc(S.shutoku)}" placeholder="${S.shutoku_auto?yen(c.shutoku)+'(自動)':'円'}" oninput="setNum('shutoku',this)">
-      <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.shutoku_auto?'checked':''} onchange="toggleAuto('shutoku',this.checked)">自動計算（構造別）</label></div>
-    ${field('出資金その他','shusshi',{type:'number'})}
-    <div style="font-size:10px;color:#bbb;margin-top:-8px;">※出資金その他は計画書の諸経費合計には含みません（参考）</div>
+      <label style="font-size:11px;color:#888;display:flex;gap:5px;align-items:center;margin-top:5px;"><input type="checkbox" ${S.shutoku_auto?'checked':''} onchange="toggleAuto('shutoku',this.checked)">自動計算（構造別）</label>
+      <div style="font-size:10px;color:#c0392b;margin-top:5px;line-height:1.5;">※あくまで<b>目安</b>です。構造別の概算で、軽減措置・評価額・自治体により実額は変わります（新築賃貸は各戸40㎡以上で1,200万/戸控除＝実質0のことも）。正確な額は納税通知書でご確認ください。</div></div>
+    <div style="font-size:11px;color:#888;margin:12px 0 5px;">その他の諸経費（任意・項目名は自由入力／諸経費合計に算入）<br><span style="font-size:10px;color:#bbb;">建物表示登記・保存登記・ガス工事・水道引込・地盤改良費・受変電・リフォーム等、案件に応じて必要な分だけ追加</span></div>
+    ${(S.freeCosts&&S.freeCosts.length)?`<div class="free-head"><div>項目名</div><div>金額(円)</div><div></div></div>`:``}
+    ${(S.freeCosts||[]).map((f,i)=>`<div class="free-row">
+      <input class="fval" value="${esc(f.name)}" placeholder="（例）建物表示登記・地盤改良費 等" oninput="setFree(${i},'name',this.value)">
+      <input class="fval" inputmode="decimal" value="${esc(f.amt)}" placeholder="円" oninput="setFreeNum(${i},'amt',this)">
+      <button type="button" class="free-del" onclick="removeFree(${i})" title="この項目を削除">✕</button>
+    </div>`).join('')}
+    <button type="button" class="free-add" onclick="addFree()">＋ 諸経費の項目を追加</button>
     <div class="line total" style="margin-top:8px;"><span class="lbl">諸経費合計(手持・火災1年)</span><span class="val" id="t-shokei">${yen(c.shokeiHold)}</span></div>
     <div class="line" style="font-size:12px;"><span class="lbl" style="color:#999;">諸経費合計(提出・火災5年)</span><span class="val" id="t-shokei5">${yen(c.shokeiSubmit)}</span></div></div>`;
 
   // 融資条件
   h += `<div class="card"><div class="card-title"><span class="dot"></span>融資条件</div>
-    ${field('銀行名','bankName',{ph:'（例）○○銀行 △△支店'})}
+    ${field('銀行名','bankName',{ph:'（例）○○銀行'})}
     ${field('融資額','loan',{type:'number',unit:'万円'})}
     <div class="row2">${field('期間','years',{type:'number',unit:'年'})}${field('金利','rate',{type:'number',unit:'%(年率)'})}</div>
     <div class="line total" style="margin-top:6px;"><span class="lbl">月返済額(元利均等)</span><span class="val" id="t-pmt">${yen(c.pmt)}</span></div></div>`;
 
   // ランニング・自己資金
   h += `<div class="card"><div class="card-title"><span class="dot"></span>ランニング・自己資金</div>
-    <div class="row2">${field('巡回清掃(月)','junkai',{type:'number',unit:'円'})}${field('ネット等(月)','net',{type:'number',unit:'円'})}</div>
+    <div class="run4-head"><div>項目</div><div>月額(円)</div><div>提出資料反映</div><div></div></div>
+    <div class="run4-row">
+      <div class="flabel" style="align-self:center;margin:0;">巡回清掃(月)</div>
+      <input class="fval" inputmode="decimal" value="${esc(S.junkai)}" placeholder="円/月" oninput="setNum('junkai',this)">
+      <label class="run-sub" title="金融機関提出用にも反映"><input type="checkbox" ${S.junkaiSubmit?'checked':''} onchange="setF('junkaiSubmit',this.checked)"></label>
+      <div></div>
+    </div>
+    <div class="run4-row">
+      <div class="flabel" style="align-self:center;margin:0;">ネット等(月)</div>
+      <input class="fval" inputmode="decimal" value="${esc(S.net)}" placeholder="円/月" oninput="setNum('net',this)">
+      <label class="run-sub" title="金融機関提出用にも反映"><input type="checkbox" ${S.netSubmit?'checked':''} onchange="setF('netSubmit',this.checked)"></label>
+      <div></div>
+    </div>
+    <div style="font-size:10px;color:#bbb;margin:2px 2px 8px;">※巡回清掃・ネットは「提出資料反映」にチェックすると金融機関提出用の収支にも反映されます（無印は手持ち用のみ）。</div>
     ${field('管理料率','mgmtRate',{type:'number',unit:'%(税込・空欄=自動5%)'})}
-    <div class="fgroup"><div class="flabel">人口動態（CF率の合格基準）<span class="unit">所在地から自動判定・手動上書き可</span></div>
+    <div style="font-size:11px;color:#888;margin:10px 0 5px;">その他のランニングコスト（任意）<br><span style="font-size:10px;color:#bbb;">共用電気・浄化槽保守・EV保守・消防点検等。「提出資料反映」にチェックした項目だけ金融機関提出用にも反映（無印は手持ち用のみ）</span></div>
+    ${(S.runs&&S.runs.length)?`<div class="run4-head"><div>項目名</div><div>月額(円)</div><div>提出資料反映</div><div></div></div>`:``}`;
+  (S.runs||[]).forEach((r,i)=>{
+    h += `<div class="run4-row">
+      <input class="fval" value="${esc(r.name)}" placeholder="（例）共用電気・浄化槽保守 等" oninput="setRun(${i},'name',this.value)">
+      <input class="fval" inputmode="decimal" value="${esc(r.amt)}" placeholder="円/月" oninput="setRunNum(${i},'amt',this)">
+      <label class="run-sub" title="金融機関提出用にも反映"><input type="checkbox" ${r.submit?'checked':''} onchange="setRunSub(${i},this.checked)"></label>
+      <button type="button" class="free-del" onclick="removeRun(${i})" title="この項目を削除">✕</button>
+    </div>`;
+  });
+  h += `<button type="button" class="free-add" onclick="addRun()">＋ ランニングの項目を追加</button>`;
+  h += `<div class="fgroup" style="margin-top:12px;"><div class="flabel">人口動態（CF率の合格基準）<span class="unit">所在地から自動判定・手動上書き可</span></div>
       <select id="sel-pop" class="fval" onchange="setPopManual(this.value)">
         ${['','人口上昇','人口減少4%未満','人口減少4%以上'].map(x=>`<option value="${esc(x)}" ${x===S.popTrend?'selected':''}>${x||'選択'}</option>`).join('')}
       </select>
       <div class="hint" id="pop-status" style="color:#1A7040;"></div></div>
-    <div style="font-size:10px;color:#bbb;margin:-2px 0 6px;">※CF率の合格ライン：人口上昇=2％以上／人口減少4%未満=3％以上／人口減少4%以上=4％以上</div>
-    <div style="font-size:11px;color:#888;margin:10px 0 5px;">その他のランニングコスト（任意・最大3件 / <b>手持ち用のみ反映</b>）</div>
-    <div class="run-head"><div>項目名</div><div>月額(円)</div></div>`;
-  const runEx=['共用電気','浄化槽保守','エレベーター保守'];
-  (S.runs||[]).forEach((r,i)=>{
-    h += `<div class="run-row">
-      <input class="fval" value="${esc(r.name)}" placeholder="（例）${runEx[i]||'共用電気'}" oninput="setRun(${i},'name',this.value)">
-      <input class="fval" inputmode="decimal" value="${esc(r.amt)}" placeholder="円/月" oninput="setRunNum(${i},'amt',this)">
-    </div>`;
-  });
+    <div style="font-size:10px;color:#bbb;margin:-2px 0 6px;">※CF率の合格ライン：人口上昇=2％以上／人口減少4%未満=3％以上／人口減少4%以上=4％以上</div>`;
   h += `<div class="line total" style="margin-top:6px;"><span class="lbl">頭金（購入価格−融資額・自動）</span><span class="val" id="t-atama">${yen(c.atamakin)}</span></div>
     <div style="font-size:11px;color:#888;margin-top:6px;">※頭金は「購入価格−融資額」で自動計算されます<br>※管理料は月家賃収入から自動計算（手持ち5% / 提出4%・税込）</div></div>`;
 
@@ -548,9 +592,11 @@ function renderResult(){
 
   // ===== KPI(指標)計算 → 左カラム下部にまとめて表示 =====
   const hideRun = !isHold;
-  const monthBal = hideRun ? (R.month - (c.pmt + R.kanri)) : R.monthBalance;
-  const yearBal  = hideRun ? (R.yearIncome - (c.pmtYear + R.yearKanri + R.koteishisan)) : R.yearBalance;
-  const jikoshikin = isHold ? (shokei + c.atamakin) : (shokei + c.jigyohi - c.loan);  // 自己資金
+  const junkaiSub = S.junkaiSubmit ? c.junkai : 0;   // 巡回清掃を提出用にも反映
+  const netSub    = S.netSubmit    ? c.net    : 0;   // ネット等を提出用にも反映
+  const monthBal = hideRun ? (R.month - (c.pmt + R.kanri + c.extraRunSubmit + junkaiSub + netSub)) : R.monthBalance;
+  const yearBal  = hideRun ? (R.yearIncome - (c.pmtYear + R.yearKanri + R.koteishisan + c.extraRunSubmitYear + junkaiSub*12 + netSub*12)) : R.yearBalance;
+  const jikoshikin = Math.max(0, (isHold ? c.totalHold : c.totalSubmit) - c.loan);  // 自己資金＝総事業費−融資（0クランプ・オーバーローンは0）
   const cfRate = c.price>0 ? (yearBal / c.price * 100) : NaN;        // CF率=年間CF÷物件価格
   const kaishu = yearBal>0 ? (jikoshikin / yearBal) : NaN;           // 現金回収率=自己資金÷年間CF(年)
   // CF率の合格基準(%)＝人口動態で決定（未選択ならundefined＝判定しない）
@@ -629,13 +675,14 @@ function renderResult(){
   h += `</table></div>`;
   // 諸経費
   h += `<div class="sec"><div class="sec-h">【諸経費】</div><table class="t">`;
-  h += trN('固都税', c.kotoze);
-  h += trN('銀行手数料・出資金', c.bankfee);
-  h += trN('登記司法書士費用等', c.iten + c.teito + c.shihoshoshi);
-  h += trN('契約書印紙代', c.inshi);
-  h += trN('仲介手数料', c.chukai);
-  h += trN(fireLbl, fireAmt);
-  h += trN('不動産取得税', c.shutoku);
+  h += trNz('固都税', c.kotoze);
+  h += trNz('銀行事務手数料', c.bankfee);
+  h += trNz('登記司法書士費用等', c.iten + c.teito + c.shihoshoshi);
+  h += trNz('契約書印紙代', c.inshi);
+  h += trNz('仲介手数料', c.chukai);
+  (c.freeCostList||[]).forEach(f=>{ h += trN(f.name, f.amt); });
+  h += trNz(fireLbl, fireAmt);
+  h += trNz('不動産取得税', c.shutoku);
   h += trN('諸経費合計', shokei, true);
   h += `</table></div>`;
   // 総事業費
@@ -651,16 +698,23 @@ function renderResult(){
   h += `<div class="xls-col">`;
   // 資金計画
   h += `<div class="sec"><div class="sec-h">【資金計画】</div><table class="t">`;
-  if(isHold){
-    h += trN('諸経費', shokei);
-    h += trN('頭金', c.atamakin);
-    h += trN('借入金', c.loan);
-    h += trN('合計', shokei+c.atamakin+c.loan, true);
-    h += trN('自己資金', shokei+c.atamakin);
-  }else{
-    h += trN('諸経費', shokei + c.jigyohi - c.loan);  // 自己資金必要額
-    h += trN('借入金', c.loan);
-    h += trN('合計', (shokei+c.jigyohi-c.loan)+c.loan, true);
+  {
+    const totalCost = isHold ? c.totalHold : c.totalSubmit;   // 総事業費（物件＋諸経費）
+    const jiko  = Math.max(0, totalCost - c.loan);            // 自己資金（0クランプ）
+    const over  = Math.max(0, c.loan - totalCost);            // オーバーローン手残り
+    const isOver = c.loan > c.price;                          // 融資>物件価格＝頭金0のオーバーローン
+    if(isHold){
+      h += trN('諸経費', shokei);
+      h += trN(isOver?'頭金（オーバーローン）':'頭金', c.atamakin);
+      h += trN('借入金', c.loan);
+      h += trN('合計', totalCost, true);
+      h += trN('自己資金', jiko);
+      if(over>0) h += `<tr><td class="lbl" style="color:#1A7040;">手元に残る資金（ｵｰﾊﾞｰﾛｰﾝ）</td><td class="num" style="color:#1A7040;">${num(over)}</td><td class="yc">円</td></tr>`;
+    }else{
+      h += trN('自己資金必要額', jiko);
+      h += trN('借入金', c.loan);
+      h += trN('合計', totalCost, true);
+    }
   }
   h += `</table></div>`;
   // 家賃収入内訳
@@ -680,19 +734,17 @@ function renderResult(){
   h += tr2N('月間収入', R.month);
   h += tr2N('月間借入支払', c.pmt);
   h += tr2N('月間管理料', R.kanri);
-  if(!hideRun){
-    h += tr2N('巡回清掃', c.junkai); h += tr2N('インターネット', c.net);
-    c.extraRunList.forEach(r=>{ h += tr2N(esc(r.name), r.amt); });   // その他ランニング(手持ち用のみ)
-  }
+  if(!hideRun || S.junkaiSubmit) h += tr2N('巡回清掃', c.junkai);
+  if(!hideRun || S.netSubmit)    h += tr2N('インターネット', c.net);
+  c.extraRunList.forEach(r=>{ if(!hideRun || r.submit) h += tr2N(esc(r.name), r.amt); });   // その他ランニング(提出用は項目ごとに選択)
   h += tr2N('月間収支合計', monthBal, true);
   h += tr2N('年間収入', R.yearIncome);
   h += tr2N('年間借入支払', c.pmtYear);
   h += tr2N('年間管理料', R.yearKanri);
   h += tr2N('固定資産税', R.koteishisan);
-  if(!hideRun){
-    h += tr2N('巡回清掃', R.yearJunkai); h += tr2N('インターネット', R.yearNet);
-    c.extraRunList.forEach(r=>{ h += tr2N(esc(r.name), r.amt*12); });  // その他ランニング 年額(手持ち用のみ)
-  }
+  if(!hideRun || S.junkaiSubmit) h += tr2N('巡回清掃', R.yearJunkai);
+  if(!hideRun || S.netSubmit)    h += tr2N('インターネット', R.yearNet);
+  c.extraRunList.forEach(r=>{ if(!hideRun || r.submit) h += tr2N(esc(r.name), r.amt*12); });  // その他ランニング 年額(提出用は項目ごとに選択)
   h += tr2N('年間収支合計', yearBal, true);
   h += tr2N('月間収支合計', yearBal/12);
   h += tr2P('表面利回り', R.hyomen, '%');
@@ -724,6 +776,7 @@ function fitResult(){
 function tr2(l,v){ return `<tr><td class="lbl">${l}</td><td>${v||''}</td></tr>`; }
 // ラベル+金額+円（合計行は太字）
 function trN(l,v,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(v)}</td><td class="yc">円</td></tr>`; }
+function trNz(l,v){ return n(v)? trN(l,v) : ''; }
 // 収支計画 3列（項目/金額/円）— 左側の表と同じく数字と「円」の間に区切り線
 function tr2N(l,a,tot){ return `<tr class="${tot?'rowtot':''}"><td class="lbl">${l}</td><td class="num">${num(a)}</td><td class="yc">円</td></tr>`; }
 // 指標行（％や倍率）— 単位も別セルにして区切り線を入れる
@@ -777,8 +830,17 @@ function syncRentTotalCell(i){
   if(row){ const ins=row.querySelectorAll('input'); if(ins[4]) ins[4].value=(u>0&&rent)? String(u*rent):''; }
 }
 function setResi(i,on){ S.rents[i].resi=on; save(); updateInputTotals(); }
-function setRun(i,k,v){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=v; save(); }
-function setRunNum(i,k,el){ if(!S.runs) S.runs=[{name:'',amt:''},{name:'',amt:''},{name:'',amt:''}]; S.runs[i][k]=normEl(el); save(); }
+function addRent(){ if(!S.rents) S.rents=[]; S.rents.push({name:'',units:'',rent:'',resi:true}); save(); renderInput(); }
+function removeRent(i){ if(!S.rents) return; S.rents.splice(i,1); if(!S.rents.length) S.rents.push({name:'',units:'',rent:'',resi:true}); save(); renderInput(); }
+function setRun(i,k,v){ if(!S.runs) S.runs=[]; if(S.runs[i]) S.runs[i][k]=v; save(); }
+function setRunNum(i,k,el){ if(!S.runs) S.runs=[]; if(S.runs[i]) S.runs[i][k]=normEl(el); save(); }
+function addRun(){ if(!S.runs) S.runs=[]; S.runs.push({name:'',amt:''}); save(); renderInput(); }
+function removeRun(i){ if(!S.runs) return; S.runs.splice(i,1); save(); renderInput(); }
+function setRunSub(i,on){ if(!S.runs) S.runs=[]; if(S.runs[i]) S.runs[i].submit=on; save(); }
+function setFree(i,k,v){ if(!S.freeCosts) S.freeCosts=[]; if(S.freeCosts[i]) S.freeCosts[i][k]=v; save(); }
+function setFreeNum(i,k,el){ if(!S.freeCosts) S.freeCosts=[]; if(S.freeCosts[i]) S.freeCosts[i][k]=normEl(el); save(); updateInputTotals(); }
+function addFree(){ if(!S.freeCosts) S.freeCosts=[]; S.freeCosts.push({name:'',amt:''}); save(); renderInput(); }
+function removeFree(i){ if(!S.freeCosts) return; S.freeCosts.splice(i,1); save(); renderInput(); }
 // 住所→用途地域の自動取得。(1)登録物件リスト[キー不要・即時] → (2)公式API[キー設定後]
 function setAddr(v){ S.addr=v; S.popAuto=true; save(); autoPop(); scheduleYouto(); }
 // 住所→人口増減率→3区分を自動判定し、CF率の合格基準をセット。手動上書き時(popAuto=false)は触らない。
@@ -842,6 +904,7 @@ function applyYouto(res, src){
 function setYoutoStatus(msg,color){ const el=document.getElementById('youto-status'); if(el){ el.textContent=msg||''; if(color) el.style.color=color; } }
 // セレクト/ボタン/チェックは確定操作なので作り直してOK
 function setF(k,v){ S[k]=v; save(); renderInput(); }
+function setBuild(v){ S.buildType=v; S.priceMode=(v==='new'?'split':'all'); save(); renderInput(); }
 function toggleAuto(which,on){ S[which+'_auto']=on; save(); renderInput(); }
 function updateInputTotals(){
   if(tab!=='input') return;
@@ -885,12 +948,25 @@ function renderFab(){
   }
 }
 // ===== データ保存/読込（手入力で編集できるデータファイル.json）=====
-function exportData(){
+async function exportData(){
+  const name=(S.pname||'事業計画書').replace(/[\\/:*?"<>|]/g,'');
+  const fname='事業計画書データ_'+name+'.json';
+  const json=JSON.stringify(S,null,2);
+  // 保存先を選べるブラウザ（Chrome/Edge等）はダイアログでフォルダ・ファイル名を指定
+  if(window.showSaveFilePicker){
+    try{
+      const handle=await window.showSaveFilePicker({ suggestedName:fname,
+        types:[{description:'JSONデータ',accept:{'application/json':['.json']}}] });
+      const w=await handle.createWritable(); await w.write(json); await w.close();
+      toast('データを保存しました（保存先を選択）');
+      return;
+    }catch(e){ if(e&&e.name==='AbortError') return;  /* キャンセルは無視。その他は従来DLへ */ }
+  }
+  // フォールバック：従来どおりダウンロード（Downloadsフォルダ）
   try{
-    const name=(S.pname||'事業計画書').replace(/[\\/:*?"<>|]/g,'');
-    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url; a.download='事業計画書データ_'+name+'.json';
+    const a=document.createElement('a'); a.href=url; a.download=fname;
     document.body.appendChild(a); a.click();
     setTimeout(function(){ try{a.remove();}catch(e){} URL.revokeObjectURL(url); },4000);
     toast('データを保存しました（.json）');
