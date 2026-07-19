@@ -27,11 +27,28 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .zoombtn{display:block;text-align:center;background:#fff;color:#1466CE;font-size:14.5px;font-weight:900;border-radius:8px;padding:10px 8px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.15);}
 .zoominfo{display:flex;flex-wrap:wrap;gap:2px 14px;justify-content:center;margin-top:6px;font-size:10.5px;color:#E4F0FF;}
 .zoominfo b{color:#fff;font-weight:800;}
-.frame-wrap{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(180,130,0,.08);}
-iframe{width:100%;height:70vh;min-height:560px;border:0;display:block;}
-.fallback{text-align:center;margin-top:14px;}
-.fallback a{display:inline-block;font-size:13px;font-weight:800;color:#fff;background:linear-gradient(135deg,#F5C400,#D4920A);border-radius:10px;padding:12px 22px;text-decoration:none;box-shadow:0 3px 12px rgba(180,110,0,.3);}
-.fallback .hint{font-size:11px;color:#8A6D1F;margin-top:8px;line-height:1.6;}
+.bk{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;padding:14px;box-shadow:0 4px 14px rgba(180,130,0,.08);}
+.bk h2{font-size:14px;font-weight:900;color:#9A6D00;margin-bottom:4px;}
+.bk .lead{font-size:11px;color:#8A6D1F;line-height:1.6;margin-bottom:10px;}
+.bk .step{font-size:11.5px;font-weight:800;color:#C47800;margin:2px 0 8px;}
+.bk .dates{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;}
+.bk .dchip{flex:0 0 auto;min-width:56px;text-align:center;background:#FFF7DC;border:1.5px solid #F0DFA0;border-radius:10px;padding:8px 6px;font-size:12.5px;font-weight:800;color:#7A5E12;cursor:pointer;}
+.bk .dchip.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
+.bk .dchip small{display:block;font-size:9px;font-weight:700;margin-top:2px;opacity:.85;}
+.bk .times{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px;}
+.bk .tchip{text-align:center;background:#FFF7DC;border:1.5px solid #F0DFA0;border-radius:9px;padding:10px 4px;font-size:13px;font-weight:800;color:#7A5E12;cursor:pointer;}
+.bk .tchip.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
+.bk .field{margin-top:11px;}
+.bk label{display:block;font-size:11px;font-weight:800;color:#9A6D00;margin-bottom:4px;}
+.bk input,.bk textarea{width:100%;border:1.5px solid #E7D48A;border-radius:9px;padding:10px;font-size:14px;font-family:inherit;background:#FFFDF5;color:#1C1400;}
+.bk textarea{min-height:60px;resize:vertical;}
+.bk .go{display:block;width:100%;margin-top:13px;background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;font-size:16px;font-weight:900;border:0;border-radius:11px;padding:14px;cursor:pointer;box-shadow:0 3px 12px rgba(180,110,0,.3);}
+.bk .go:disabled{opacity:.55;}
+.bk .muted{font-size:11px;color:#8A6D1F;line-height:1.6;}
+.bk .done{text-align:center;padding:6px 4px;}
+.bk .done .ck{font-size:42px;line-height:1;}
+.bk .done h3{font-size:16px;font-weight:900;color:#2E7D32;margin:8px 0 4px;}
+.bk .done .dt{font-size:14px;font-weight:800;color:#4A3A10;margin-bottom:10px;}
 .foot{text-align:center;font-size:10px;color:#A89050;margin-top:16px;}
 </style>
 </head>
@@ -54,15 +71,106 @@ iframe{width:100%;height:70vh;min-height:560px;border:0;display:block;}
     <a class="zoombtn" href="https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1" target="_blank" rel="noopener">🎥 ▶ ZOOMに入室する（オンラインの方）</a>
     <div class="zoominfo"><span>ID：<b>891 0827 0464</b></span><span>パスコード：<b>454615</b></span></div>
   </div>
-  <div class="frame-wrap">
-    <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2E6mPKhNaWVlubK3uv3Q3wTgB10SN4GC_Fr06KYVs0mchO7Sr9Q43C_Wge5K01_TqtYvDwMT3q?gv=true" title="個別相談予約カレンダー" loading="lazy"></iframe>
-  </div>
-  <div class="fallback">
-    <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2E6mPKhNaWVlubK3uv3Q3wTgB10SN4GC_Fr06KYVs0mchO7Sr9Q43C_Wge5K01_TqtYvDwMT3q" target="_blank" rel="noopener">別画面で予約ページを開く</a>
-    <div class="hint">上のカレンダーがうまく表示されない場合はこちらから</div>
+  <div class="bk" id="bk">
+    <h2>📅 日時を選んで予約</h2>
+    <div class="lead">太田の空いている時間だけ表示しています。日付 → 時間 → お名前 の順でタップするだけ。</div>
+    <div id="bkbody"><div class="muted">空き状況を読み込み中…</div></div>
   </div>
 </div>
 <div class="foot">© 太田塾 メンバー専用</div>
 </div>
+<script>
+(function(){
+  var API='https://script.google.com/macros/s/AKfycbzkmpheqYz2C6qaBKWTjNqyIRNtklED1DC8-g37Q8bgFRTuC4Pp2zpp7IUMog5KDF0f_Q/exec';
+  var body=document.getElementById('bkbody');
+  var DAYS=[], sel={date:null,time:null};
+  var email=localStorage.getItem('otajuku_email')||'';
+  var name=localStorage.getItem('otajuku_name')||'';
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function dayLabel(dt){var x=DAYS.filter(function(y){return y.date===dt;})[0];return x?x.label:dt;}
+
+  function jsonp(params){
+    return new Promise(function(res,rej){
+      var cb='_bk'+Math.floor(Math.random()*1e9)+(''+new Date().getTime());
+      var s=document.createElement('script');
+      var to=setTimeout(function(){cleanup();rej(new Error('timeout'));},25000);
+      function cleanup(){clearTimeout(to);try{delete window[cb];}catch(e){window[cb]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+      window[cb]=function(d){cleanup();res(d);};
+      var q=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+      s.src=API+'?'+q+'&callback='+cb;
+      s.onerror=function(){cleanup();rej(new Error('network'));};
+      document.head.appendChild(s);
+    });
+  }
+
+  function capture(){var n=document.getElementById('bkname');if(n)name=n.value;var m=document.getElementById('bkmail');if(m)email=m.value;}
+
+  function loadSlots(){
+    sel={date:null,time:null};
+    body.innerHTML='<div class="muted">空き状況を読み込み中…</div>';
+    jsonp({action:'slots'}).then(function(d){
+      if(!d||!d.ok){body.innerHTML='<div class="muted">空き状況を取得できませんでした。時間をおいて再度お試しください。</div>';return;}
+      DAYS=d.days||[];
+      if(!DAYS.length){body.innerHTML='<div class="muted">現在ご案内できる空き枠がありません。<a href="https://line.me/ti/p/8GcbgI0sTQ" target="_blank" rel="noopener">太田LINE</a>へご連絡ください。</div>';return;}
+      render();
+    }).catch(function(){body.innerHTML='<div class="muted">読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。</div>';});
+  }
+
+  function render(){
+    var h='<div class="step">① 日付を選ぶ</div><div class="dates">';
+    DAYS.forEach(function(dd,i){
+      h+='<div class="dchip'+(sel.date===dd.date?' on':'')+'" data-i="'+i+'">'+esc(dd.label).replace(/\((.)\)/,'<small>($1)</small>')+'</div>';
+    });
+    h+='</div>';
+    if(sel.date){
+      var day=DAYS.filter(function(x){return x.date===sel.date;})[0];
+      h+='<div class="step" style="margin-top:13px;">② 時間を選ぶ</div><div class="times">';
+      day.slots.forEach(function(t){ h+='<div class="tchip'+(sel.time===t?' on':'')+'" data-t="'+t+'">'+t+'</div>'; });
+      h+='</div>';
+    }
+    if(sel.date&&sel.time){
+      h+='<div class="field"><label>お名前 <span style="color:#c22">*</span></label><input id="bkname" value="'+esc(name)+'" placeholder="山田 太郎"></div>';
+      h+='<div class="field"><label>メール（確認メールの送付先）</label><input id="bkmail" type="email" value="'+esc(email)+'" placeholder="you@example.com"></div>';
+      h+='<div class="field"><label>相談したいこと（任意）</label><textarea id="bkmemo" placeholder="ざっくりでOK。書くと当日スムーズです"></textarea></div>';
+      h+='<button class="go" id="bkgo">この日時で予約する</button>';
+      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜</b>　／　オンラインの方は当日、上の青いボタンからZOOM入室</div>';
+    }
+    body.innerHTML=h;
+  }
+
+  function submit(){
+    capture();
+    var memoEl=document.getElementById('bkmemo'); var memo=memoEl?memoEl.value:'';
+    if(!name.trim()){alert('お名前を入力してください');return;}
+    var btn=document.getElementById('bkgo'); if(btn){btn.disabled=true;btn.textContent='予約中…';}
+    localStorage.setItem('otajuku_name',name.trim());
+    if(email.trim())localStorage.setItem('otajuku_email',email.trim());
+    jsonp({action:'book',date:sel.date,time:sel.time,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
+      if(d&&d.ok){ done(d); }
+      else if(d&&d.taken){ alert('申し訳ありません、その枠は直前に埋まりました。別の時間をお選びください。'); loadSlots(); }
+      else { alert('予約に失敗しました：'+((d&&d.error)||'不明なエラー')); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} }
+    }).catch(function(){ alert('通信に失敗しました。もう一度お試しください。'); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} });
+  }
+
+  function done(d){
+    body.innerHTML='<div class="done"><div class="ck">✅</div><h3>予約が完了しました</h3><div class="dt">'+esc(d.label||'')+'</div>'
+      +'<div class="muted">確認メールをお送りしました（届かない場合は迷惑メールもご確認を）。<br>オンラインの方は当日、上の青い「ZOOMに入室する」からご参加ください。<br>日時変更・キャンセルは太田LINEへ。</div>'
+      +'<button class="go" style="margin-top:14px;" id="bkagain">別の日時を予約する</button></div>';
+    var a=document.getElementById('bkagain'); if(a)a.addEventListener('click',loadSlots);
+  }
+
+  body.addEventListener('click',function(e){
+    var dc=e.target.closest?e.target.closest('.dchip'):null;
+    var tc=e.target.closest?e.target.closest('.tchip'):null;
+    var go=e.target.closest?e.target.closest('#bkgo'):null;
+    if(dc){capture();sel.date=DAYS[+dc.getAttribute('data-i')].date;sel.time=null;render();return;}
+    if(tc){capture();sel.time=tc.getAttribute('data-t');render();return;}
+    if(go){submit();return;}
+  });
+
+  loadSlots();
+})();
+</script>
 </body>
 </html>
