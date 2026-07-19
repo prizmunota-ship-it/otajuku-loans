@@ -16,9 +16,14 @@ header{background:linear-gradient(135deg,#F5C400 0%,#D4920A 60%,#C47800 100%);pa
 header h1{color:#fff;font-size:20px;font-weight:900;letter-spacing:.04em;}
 header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .body{padding:14px;}
-.intro{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;padding:13px 15px;margin-bottom:14px;box-shadow:0 4px 14px rgba(180,130,0,.08);}
+.intro{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;margin-bottom:14px;box-shadow:0 4px 14px rgba(180,130,0,.08);overflow:hidden;}
+.intro>summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:12px;font-weight:800;color:#9A6D00;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.intro>summary::-webkit-details-marker{display:none;}
+.intro>summary::after{content:'ひらく ▾';font-size:10px;font-weight:800;color:#C47800;white-space:nowrap;}
+.intro[open]>summary::after{content:'とじる ▴';}
+.intro .ibody{padding:2px 14px 12px;}
 .intro .ir{display:flex;gap:9px;font-size:12px;line-height:1.7;color:#4A3A10;padding:9px 0;border-bottom:1px dashed #F0DFA0;}
-.intro .ir:first-child{padding-top:0;}
+.intro .ir:first-child{padding-top:4px;}
 .intro .ir:last-child{border-bottom:none;padding-bottom:0;}
 .intro .ir .ico{font-size:16px;flex-shrink:0;line-height:1.5;}
 .intro .ir b{color:#9A6D00;font-weight:800;}
@@ -49,6 +54,19 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .bk .done .ck{font-size:42px;line-height:1;}
 .bk .done h3{font-size:16px;font-weight:900;color:#2E7D32;margin:8px 0 4px;}
 .bk .done .dt{font-size:14px;font-weight:800;color:#4A3A10;margin-bottom:10px;}
+.bk .vtoggle{display:flex;gap:6px;margin-bottom:11px;}
+.bk .vbtn{flex:1;text-align:center;font-size:12px;font-weight:800;padding:8px 4px;border-radius:9px;border:1.5px solid #E7D48A;background:#FFFDF5;color:#9A6D00;cursor:pointer;}
+.bk .vbtn.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
+.bk .caltitle{font-size:12px;font-weight:800;color:#C47800;margin:2px 0 8px;text-align:center;}
+.bk .cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.bk .cwd{text-align:center;font-size:10px;font-weight:800;color:#9A6D00;padding:1px 0;}
+.bk .cwd.sun{color:#c0392b;}
+.bk .cwd.sat{color:#2670c0;}
+.bk .cday{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;font-weight:800;position:relative;}
+.bk .cday.mut{color:#CDC29A;background:#FBF6E3;}
+.bk .cday.av{background:#FFF7DC;border:1.5px solid #E7C24A;color:#7A5E12;cursor:pointer;}
+.bk .cday.av.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
+.bk .cday .m{position:absolute;top:2px;left:4px;font-size:7px;font-weight:700;opacity:.75;}
 .foot{text-align:center;font-size:10px;color:#A89050;margin-top:16px;}
 </style>
 </head>
@@ -60,20 +78,19 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   <div class="sub">太田とマンツーマン。何でも相談OK・無料で何度でも</div>
 </header>
 <div class="body">
-  <div class="intro">
+  <details class="intro"><summary class="isum">ℹ️ 事務所の場所・オンライン・事前のご準備・相談できる内容</summary><div class="ibody">
     <div class="ir"><span class="ico">🅿️</span><div><b>事務所にお越しの方</b>／福岡県糸島市有田中央2-14-64 プライマリー糸島中央203号室（<a href="https://share.google/EjjZlCoRuqfkuhqjr" target="_blank" rel="noopener">地図を見る</a>）。敷地内に来客用駐車場が2台（1番・2番）あります。</div></div>
     <div class="ir"><span class="ico">💻</span><div><b>オンライン・夜をご希望の方</b>／日時は <a href="https://line.me/ti/p/8GcbgI0sTQ" target="_blank" rel="noopener">太田LINE</a> で個別調整します。当日は下の<b style="color:#1466CE;">青いボタン</b>を押すだけでZOOM入室できます。</div></div>
     <div class="ir"><span class="ico">📝</span><div><b>事前のご準備</b>／個別相談前に <a href="/shiryo/c01/f001.xlsx" download="１−１　自己紹介シート.xlsx">自己紹介資料（Excel）</a> を、可能なら <a href="/shiryo/c11/f003.docx" download="１０−３　相談事項.docx">相談事項ワンペーパー（Word）</a> もダウンロードしてご提出を。書くだけで悩みがかなり整理されます。</div></div>
     <div class="ir"><span class="ico">💬</span><div><b>相談は何でもOK・無料で何度でも</b>／不動産の購入/売買・管理、業者や金融機関の紹介、マイル/クレカ、人間関係、行動の手順、マインドセット、人生の目的（最重要）など。太田との接点をどんどん増やしてください。</div></div>
     <div class="ir"><span class="ico">🗣️</span><div><b>個別相談後</b>／オープンチャットに感想（①内容 ②次の行動）の投稿がおすすめ。頭が整理でき、行動に移りやすく、他メンバーへのギブにもなります。</div></div>
-  </div>
+  </div></details>
   <div class="zoombox">
     <a class="zoombtn" href="https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1" target="_blank" rel="noopener">🎥 ▶ ZOOMに入室する（オンラインの方）</a>
     <div class="zoominfo"><span>ID：<b>891 0827 0464</b></span><span>パスコード：<b>454615</b></span></div>
   </div>
   <div class="bk" id="bk">
     <h2>📅 日時を選んで予約</h2>
-    <div class="lead">太田の空いている時間だけ表示しています。日付 → 時間 → お名前 の順でタップするだけ。</div>
     <div id="bkbody"><div class="muted">空き状況を読み込み中…</div></div>
   </div>
 </div>
@@ -83,12 +100,35 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 (function(){
   var API='https://script.google.com/macros/s/AKfycbzkmpheqYz2C6qaBKWTjNqyIRNtklED1DC8-g37Q8bgFRTuC4Pp2zpp7IUMog5KDF0f_Q/exec';
   var body=document.getElementById('bkbody');
-  var DAYS=[], sel={date:null,time:null};
+  var DAYS=[], sel={date:null,time:null}, view='list';
   var email=localStorage.getItem('otajuku_email')||'';
   var name=localStorage.getItem('otajuku_name')||'';
 
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function dayLabel(dt){var x=DAYS.filter(function(y){return y.date===dt;})[0];return x?x.label:dt;}
+  function pad2(n){return('0'+n).slice(-2);}
+  function ymd(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+  function parseYMD(s){var a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);}
+  var WDJP=['日','月','火','水','木','金','土'];
+  function calHTML(){
+    var avail={}; DAYS.forEach(function(d){avail[d.date]=true;});
+    var today=new Date();today.setHours(0,0,0,0);
+    var last=DAYS.length?parseYMD(DAYS[DAYS.length-1].date):today;
+    var start=new Date(today);start.setDate(start.getDate()-start.getDay());
+    var end=new Date(last);end.setDate(end.getDate()+(6-end.getDay()));
+    var mA=today.getMonth()+1,mB=last.getMonth()+1;
+    var h='<div class="caltitle">'+today.getFullYear()+'年 '+mA+'月'+(mB!==mA?'〜'+mB+'月':'')+'</div><div class="cgrid">';
+    WDJP.forEach(function(w,i){h+='<div class="cwd'+(i===0?' sun':i===6?' sat':'')+'">'+w+'</div>';});
+    var cur=new Date(start);
+    while(cur<=end){
+      var k=ymd(cur), av=avail[k];
+      var cls='cday'+(av?(' av'+(sel.date===k?' on':'')):' mut');
+      var m=(cur.getDate()===1)?'<span class="m">'+(cur.getMonth()+1)+'月</span>':'';
+      h+='<div class="'+cls+'"'+(av?(' data-d="'+k+'"'):'')+'>'+m+cur.getDate()+'</div>';
+      cur=new Date(cur.getTime()+86400000);
+    }
+    return h+'</div>';
+  }
 
   function jsonp(params){
     return new Promise(function(res,rej){
@@ -118,11 +158,17 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   }
 
   function render(){
-    var h='<div class="step">① 日付を選ぶ</div><div class="dates">';
-    DAYS.forEach(function(dd,i){
-      h+='<div class="dchip'+(sel.date===dd.date?' on':'')+'" data-i="'+i+'">'+esc(dd.label).replace(/\((.)\)/,'<small>($1)</small>')+'</div>';
-    });
-    h+='</div>';
+    var h='<div class="vtoggle"><div class="vbtn'+(view==='list'?' on':'')+'" data-v="list">📋 リスト</div><div class="vbtn'+(view==='cal'?' on':'')+'" data-v="cal">📅 カレンダー表記</div></div>';
+    h+='<div class="step">① 日付を選ぶ</div>';
+    if(view==='cal'){
+      h+=calHTML();
+    }else{
+      h+='<div class="dates">';
+      DAYS.forEach(function(dd,i){
+        h+='<div class="dchip'+(sel.date===dd.date?' on':'')+'" data-i="'+i+'">'+esc(dd.label).replace(/\((.)\)/,'<small>($1)</small>')+'</div>';
+      });
+      h+='</div>';
+    }
     if(sel.date){
       var day=DAYS.filter(function(x){return x.date===sel.date;})[0];
       h+='<div class="step" style="margin-top:13px;">② 時間を選ぶ</div><div class="times">';
@@ -161,10 +207,15 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   }
 
   body.addEventListener('click',function(e){
-    var dc=e.target.closest?e.target.closest('.dchip'):null;
-    var tc=e.target.closest?e.target.closest('.tchip'):null;
-    var go=e.target.closest?e.target.closest('#bkgo'):null;
+    if(!e.target.closest)return;
+    var vb=e.target.closest('.vbtn');
+    var dc=e.target.closest('.dchip');
+    var cd=e.target.closest('.cday.av');
+    var tc=e.target.closest('.tchip');
+    var go=e.target.closest('#bkgo');
+    if(vb){capture();view=vb.getAttribute('data-v');render();return;}
     if(dc){capture();sel.date=DAYS[+dc.getAttribute('data-i')].date;sel.time=null;render();return;}
+    if(cd){capture();sel.date=cd.getAttribute('data-d');sel.time=null;render();return;}
     if(tc){capture();sel.time=tc.getAttribute('data-t');render();return;}
     if(go){submit();return;}
   });
