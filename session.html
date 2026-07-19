@@ -56,6 +56,10 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .bk .vbtn{flex:1;text-align:center;font-size:12px;font-weight:800;padding:8px 4px;border-radius:9px;border:1.5px solid #E7D48A;background:#FFFDF5;color:#9A6D00;cursor:pointer;}
 .bk .vbtn.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
 .bk .caltitle{font-size:12px;font-weight:800;color:#C47800;margin:2px 0 8px;text-align:center;}
+.bk .calnav{display:flex;align-items:center;justify-content:space-between;margin:2px 0 9px;}
+.bk .cnavttl{font-size:13.5px;font-weight:900;color:#C47800;}
+.bk .cnav{width:36px;height:31px;border-radius:8px;border:1.5px solid #E7D48A;background:#FFFDF5;color:#9A6D00;font-size:17px;font-weight:900;line-height:1;cursor:pointer;}
+.bk .cnav.dis{opacity:.35;cursor:default;}
 .bk .cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .bk .cwd{text-align:center;font-size:10px;font-weight:800;color:#9A6D00;padding:1px 0;}
 .bk .cwd.sun{color:#c0392b;}
@@ -100,7 +104,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 (function(){
   var API='https://script.google.com/macros/s/AKfycbzkmpheqYz2C6qaBKWTjNqyIRNtklED1DC8-g37Q8bgFRTuC4Pp2zpp7IUMog5KDF0f_Q/exec';
   var body=document.getElementById('bkbody');
-  var DAYS=[], sel={date:null,time:null,dur:null}, view='list';
+  var DAYS=[], sel={date:null,time:null,dur:null}, view='list', calYM=null;
   var email=localStorage.getItem('otajuku_email')||'';
   var name=localStorage.getItem('otajuku_name')||'';
 
@@ -114,15 +118,21 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     var avail={}; DAYS.forEach(function(d){avail[d.date]=true;});
     var today=new Date();today.setHours(0,0,0,0);
     var last=DAYS.length?parseYMD(DAYS[DAYS.length-1].date):today;
-    var h='', y=today.getFullYear(), m=today.getMonth();
-    var endY=last.getFullYear(), endM=last.getMonth();
-    while(y<endY || (y===endY && m<=endM)){ h+=monthGrid(y,m,avail); m++; if(m>11){m=0;y++;} }
-    return h;
+    var minY=today.getFullYear(), minM=today.getMonth();
+    var maxY=last.getFullYear(), maxM=last.getMonth();
+    if(!calYM){ calYM={y:minY,m:minM}; }
+    var cy=calYM.y, cm=calYM.m;
+    var prev=(cy>minY)||(cy===minY&&cm>minM), next=(cy<maxY)||(cy===maxY&&cm<maxM);
+    var h='<div class="calnav">'
+      +'<button class="cnav'+(prev?'':' dis')+'" data-mo="prev"'+(prev?'':' disabled')+'>‹</button>'
+      +'<div class="cnavttl">'+cy+'年 '+(cm+1)+'月</div>'
+      +'<button class="cnav'+(next?'':' dis')+'" data-mo="next"'+(next?'':' disabled')+'>›</button></div>';
+    return h+monthGrid(cy,cm,avail);
   }
   function monthGrid(y,m,avail){
     var startWd=new Date(y,m,1).getDay();
     var dim=new Date(y,m+1,0).getDate();
-    var h='<div class="cmonth"><div class="caltitle">'+y+'年 '+(m+1)+'月</div><div class="cgrid">';
+    var h='<div class="cmonth"><div class="cgrid">';
     WDJP.forEach(function(w,i){h+='<div class="cwd'+(i===0?' sun':i===6?' sat':'')+'">'+w+'</div>';});
     for(var i=0;i<startWd;i++) h+='<div class="cday empty"></div>';
     for(var d=1;d<=dim;d++){
@@ -223,9 +233,11 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     var vb=e.target.closest('.vbtn');
     var dc=e.target.closest('.dchip');
     var cd=e.target.closest('.cday.av');
+    var mo=e.target.closest('.cnav');
     var tc=e.target.closest('.tchip');
     var du=e.target.closest('.durchip');
     var go=e.target.closest('#bkgo');
+    if(mo&&!mo.disabled){var y=calYM.y,m=calYM.m+(mo.getAttribute('data-mo')==='next'?1:-1);if(m>11){m=0;y++;}if(m<0){m=11;y--;}calYM={y:y,m:m};render();return;}
     if(vb){capture();view=vb.getAttribute('data-v');render();return;}
     if(dc){capture();sel.date=DAYS[+dc.getAttribute('data-i')].date;sel.time=null;sel.dur=null;render();return;}
     if(cd){capture();sel.date=cd.getAttribute('data-d');sel.time=null;sel.dur=null;render();return;}
