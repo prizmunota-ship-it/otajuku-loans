@@ -38,6 +38,9 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .bk .times{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px;}
 .bk .tchip{text-align:center;background:#FFF7DC;border:1.5px solid #F0DFA0;border-radius:9px;padding:10px 4px;font-size:13px;font-weight:800;color:#7A5E12;cursor:pointer;}
 .bk .tchip.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
+.bk .durs{display:flex;gap:8px;margin-top:10px;}
+.bk .durchip{flex:1;text-align:center;background:#FFF7DC;border:1.5px solid #F0DFA0;border-radius:9px;padding:12px 4px;font-size:14px;font-weight:800;color:#7A5E12;cursor:pointer;}
+.bk .durchip.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
 .bk .field{margin-top:11px;}
 .bk label{display:block;font-size:11px;font-weight:800;color:#9A6D00;margin-bottom:4px;}
 .bk input,.bk textarea{width:100%;border:1.5px solid #E7D48A;border-radius:9px;padding:10px;font-size:14px;font-family:inherit;background:#FFFDF5;color:#1C1400;}
@@ -97,7 +100,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 (function(){
   var API='https://script.google.com/macros/s/AKfycbzkmpheqYz2C6qaBKWTjNqyIRNtklED1DC8-g37Q8bgFRTuC4Pp2zpp7IUMog5KDF0f_Q/exec';
   var body=document.getElementById('bkbody');
-  var DAYS=[], sel={date:null,time:null}, view='list';
+  var DAYS=[], sel={date:null,time:null,dur:null}, view='list';
   var email=localStorage.getItem('otajuku_email')||'';
   var name=localStorage.getItem('otajuku_name')||'';
 
@@ -145,9 +148,12 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   }
 
   function capture(){var n=document.getElementById('bkname');if(n)name=n.value;var m=document.getElementById('bkmail');if(m)email=m.value;}
+  function curSlot(){ if(!sel.date||!sel.time)return null; var day=DAYS.filter(function(x){return x.date===sel.date;})[0]; if(!day)return null; return day.slots.filter(function(s){return s.t===sel.time;})[0]||null; }
+  function durLabel(m){ return m===60?'1時間':(m+'分'); }
+  function endHM(hm,m){ var p=hm.split(':'); var t=(+p[0])*60+(+p[1])+m; return pad2(Math.floor(t/60)%24)+':'+pad2(t%60); }
 
   function loadSlots(){
-    sel={date:null,time:null};
+    sel={date:null,time:null,dur:null};
     body.innerHTML='<div class="muted">空き状況を読み込み中…</div>';
     jsonp({action:'slots'}).then(function(d){
       if(!d||!d.ok){body.innerHTML='<div class="muted">空き状況を取得できませんでした。時間をおいて再度お試しください。</div>';return;}
@@ -172,15 +178,21 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     if(sel.date){
       var day=DAYS.filter(function(x){return x.date===sel.date;})[0];
       h+='<div class="step" style="margin-top:13px;">② 時間を選ぶ</div><div class="times">';
-      day.slots.forEach(function(t){ h+='<div class="tchip'+(sel.time===t?' on':'')+'" data-t="'+t+'">'+t+'</div>'; });
+      day.slots.forEach(function(s){ h+='<div class="tchip'+(sel.time===s.t?' on':'')+'" data-t="'+s.t+'">'+s.t+'</div>'; });
       h+='</div>';
     }
     if(sel.date&&sel.time){
+      var slot=curSlot(); var durs=(slot&&slot.d&&slot.d.length)?slot.d:[60];
+      h+='<div class="step" style="margin-top:13px;">③ 相談時間を選ぶ<span style="font-weight:600;color:#8A6D1F;">（最大1時間）</span></div><div class="durs">';
+      durs.forEach(function(m){ h+='<div class="durchip'+(sel.dur===m?' on':'')+'" data-dur="'+m+'">'+durLabel(m)+'</div>'; });
+      h+='</div>';
+    }
+    if(sel.date&&sel.time&&sel.dur){
       h+='<div class="field"><label>お名前 <span style="color:#c22">*</span></label><input id="bkname" value="'+esc(name)+'" placeholder="山田 太郎"></div>';
       h+='<div class="field"><label>メール（確認メールの送付先）</label><input id="bkmail" type="email" value="'+esc(email)+'" placeholder="you@example.com"></div>';
       h+='<div class="field"><label>相談したいこと（任意）</label><textarea id="bkmemo" placeholder="ざっくりでOK。書くと当日スムーズです"></textarea></div>';
       h+='<button class="go" id="bkgo">この日時で予約する</button>';
-      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜</b>　／　オンラインの方は当日、上の青いボタンからZOOM入室</div>';
+      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜'+endHM(sel.time,sel.dur)+'（'+durLabel(sel.dur)+'）</b>　／　オンラインの方は当日、上の青いボタンからZOOM入室</div>';
     }
     body.innerHTML=h;
   }
@@ -192,7 +204,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     var btn=document.getElementById('bkgo'); if(btn){btn.disabled=true;btn.textContent='予約中…';}
     localStorage.setItem('otajuku_name',name.trim());
     if(email.trim())localStorage.setItem('otajuku_email',email.trim());
-    jsonp({action:'book',date:sel.date,time:sel.time,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
+    jsonp({action:'book',date:sel.date,time:sel.time,dur:sel.dur,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
       if(d&&d.ok){ done(d); }
       else if(d&&d.taken){ alert('申し訳ありません、その枠は直前に埋まりました。別の時間をお選びください。'); loadSlots(); }
       else { alert('予約に失敗しました：'+((d&&d.error)||'不明なエラー')); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} }
@@ -212,11 +224,13 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     var dc=e.target.closest('.dchip');
     var cd=e.target.closest('.cday.av');
     var tc=e.target.closest('.tchip');
+    var du=e.target.closest('.durchip');
     var go=e.target.closest('#bkgo');
     if(vb){capture();view=vb.getAttribute('data-v');render();return;}
-    if(dc){capture();sel.date=DAYS[+dc.getAttribute('data-i')].date;sel.time=null;render();return;}
-    if(cd){capture();sel.date=cd.getAttribute('data-d');sel.time=null;render();return;}
-    if(tc){capture();sel.time=tc.getAttribute('data-t');render();return;}
+    if(dc){capture();sel.date=DAYS[+dc.getAttribute('data-i')].date;sel.time=null;sel.dur=null;render();return;}
+    if(cd){capture();sel.date=cd.getAttribute('data-d');sel.time=null;sel.dur=null;render();return;}
+    if(tc){capture();sel.time=tc.getAttribute('data-t');var s=curSlot();sel.dur=(s&&s.d&&s.d.length===1)?s.d[0]:null;render();return;}
+    if(du){capture();sel.dur=parseInt(du.getAttribute('data-dur'),10);render();return;}
     if(go){submit();return;}
   });
 
