@@ -89,13 +89,13 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     <div class="ir"><span class="ico">💬</span><div><b>相談は何でもOK・無料で何度でも</b>／不動産の購入/売買・管理、業者や金融機関の紹介、マイル/クレカ、人間関係、行動の手順、マインドセット、人生の目的（最重要）など。太田との接点をどんどん増やしてください。</div></div>
     <div class="ir"><span class="ico">🗣️</span><div><b>個別相談後</b>／オープンチャットに感想（①内容 ②次の行動）の投稿がおすすめ。頭が整理でき、行動に移りやすく、他メンバーへのギブにもなります。</div></div>
   </div>
-  <div class="zoombox">
-    <a class="zoombtn" href="https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1" target="_blank" rel="noopener">🎥 ▶ ZOOMに入室する（オンラインの方）</a>
-    <div class="zoominfo"><span>ID：<b>891 0827 0464</b></span><span>パスコード：<b>454615</b></span></div>
-  </div>
   <div class="bk" id="bk">
     <h2>📅 日時を選んで予約</h2>
     <div id="bkbody"><div class="muted">空き状況を読み込み中…</div></div>
+  </div>
+  <div class="zoombox">
+    <a class="zoombtn" href="https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1" target="_blank" rel="noopener">🎥 ▶ ZOOMに入室する（オンラインの方）</a>
+    <div class="zoominfo"><span>ID：<b>891 0827 0464</b></span><span>パスコード：<b>454615</b></span></div>
   </div>
 </div>
 <div class="foot">© 太田塾 メンバー専用</div>
@@ -202,7 +202,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
       h+='<div class="field"><label>メール（確認メールの送付先）</label><input id="bkmail" type="email" value="'+esc(email)+'" placeholder="you@example.com"></div>';
       h+='<div class="field"><label>相談したいこと（任意）</label><textarea id="bkmemo" placeholder="ざっくりでOK。書くと当日スムーズです"></textarea></div>';
       h+='<button class="go" id="bkgo">この日時で予約する</button>';
-      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜'+endHM(sel.time,sel.dur)+'（'+durLabel(sel.dur)+'）</b>　／　オンラインの方は当日、上の青いボタンからZOOM入室</div>';
+      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜'+endHM(sel.time,sel.dur)+'（'+durLabel(sel.dur)+'）</b>　／　オンラインの方は当日、下の青いボタンからZOOM入室</div>';
     }
     body.innerHTML=h;
   }
@@ -223,7 +223,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 
   function done(d){
     body.innerHTML='<div class="done"><div class="ck">✅</div><h3>予約が完了しました</h3><div class="dt">'+esc(d.label||'')+'</div>'
-      +'<div class="muted">確認メールをお送りしました（届かない場合は迷惑メールもご確認を）。<br>オンラインの方は当日、上の青い「ZOOMに入室する」からご参加ください。<br>日時変更・キャンセルは太田LINEへ。</div>'
+      +'<div class="muted">確認メールをお送りしました（届かない場合は迷惑メールもご確認を）。<br>オンラインの方は当日、下の青い「ZOOMに入室する」からご参加ください。<br>日時変更・キャンセルは太田LINEへ。</div>'
       +'<button class="go" style="margin-top:14px;" id="bkagain">別の日時を予約する</button></div>';
     var a=document.getElementById('bkagain'); if(a)a.addEventListener('click',loadSlots);
   }
