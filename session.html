@@ -41,6 +41,9 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .bk .durs{display:flex;gap:8px;margin-top:10px;}
 .bk .durchip{flex:1;text-align:center;background:#FFF7DC;border:1.5px solid #F0DFA0;border-radius:9px;padding:12px 4px;font-size:14px;font-weight:800;color:#7A5E12;cursor:pointer;}
 .bk .durchip.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
+.bk .places{display:flex;gap:8px;}
+.bk .plchip{flex:1;text-align:center;background:#FFF7DC;border:1.5px solid #F0DFA0;border-radius:9px;padding:12px 4px;font-size:13.5px;font-weight:800;color:#7A5E12;cursor:pointer;}
+.bk .plchip.on{background:linear-gradient(135deg,#F5C400,#D4920A);color:#fff;border-color:#D4920A;}
 .bk .field{margin-top:11px;}
 .bk label{display:block;font-size:11px;font-weight:800;color:#9A6D00;margin-bottom:4px;}
 .bk input,.bk textarea{width:100%;border:1.5px solid #E7D48A;border-radius:9px;padding:10px;font-size:14px;font-family:inherit;background:#FFFDF5;color:#1C1400;}
@@ -102,7 +105,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 (function(){
   var API='https://script.google.com/macros/s/AKfycbzkmpheqYz2C6qaBKWTjNqyIRNtklED1DC8-g37Q8bgFRTuC4Pp2zpp7IUMog5KDF0f_Q/exec';
   var body=document.getElementById('bkbody');
-  var DAYS=[], sel={date:null,time:null,dur:null}, view='list', calYM=null;
+  var DAYS=[], sel={date:null,time:null,dur:null,place:null}, view='list', calYM=null;
   var email=localStorage.getItem('otajuku_email')||'';
   var name=localStorage.getItem('otajuku_name')||'';
 
@@ -158,10 +161,11 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   function capture(){var n=document.getElementById('bkname');if(n)name=n.value;var m=document.getElementById('bkmail');if(m)email=m.value;}
   function curSlot(){ if(!sel.date||!sel.time)return null; var day=DAYS.filter(function(x){return x.date===sel.date;})[0]; if(!day)return null; return day.slots.filter(function(s){return s.t===sel.time;})[0]||null; }
   function durLabel(m){ return m===60?'1時間':(m+'分'); }
+  function placeLabel(p){ return p==='office'?'事務所訪問':(p==='online'?'オンライン':''); }
   function endHM(hm,m){ var p=hm.split(':'); var t=(+p[0])*60+(+p[1])+m; return pad2(Math.floor(t/60)%24)+':'+pad2(t%60); }
 
   function loadSlots(){
-    sel={date:null,time:null,dur:null};
+    sel={date:null,time:null,dur:null,place:null};
     body.innerHTML='<div class="muted">空き状況を読み込み中…</div>';
     jsonp({action:'slots'}).then(function(d){
       if(!d||!d.ok){body.innerHTML='<div class="muted">空き状況を取得できませんでした。時間をおいて再度お試しください。</div>';return;}
@@ -196,11 +200,12 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
       h+='</div>';
     }
     if(sel.date&&sel.time&&sel.dur){
+      h+='<div class="field"><label>来所方法 <span style="color:#c22">*</span></label><div class="places"><div class="plchip'+(sel.place==='office'?' on':'')+'" data-place="office">🏢 事務所訪問</div><div class="plchip'+(sel.place==='online'?' on':'')+'" data-place="online">💻 オンライン</div></div></div>';
       h+='<div class="field"><label>お名前 <span style="color:#c22">*</span></label><input id="bkname" value="'+esc(name)+'" placeholder="山田 太郎"></div>';
       h+='<div class="field"><label>メール（確認メールの送付先）</label><input id="bkmail" type="email" value="'+esc(email)+'" placeholder="you@example.com"></div>';
       h+='<div class="field"><label>相談したいこと（任意）</label><textarea id="bkmemo" placeholder="ざっくりでOK。書くと当日スムーズです"></textarea></div>';
       h+='<button class="go" id="bkgo">この日時で予約する</button>';
-      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜'+endHM(sel.time,sel.dur)+'（'+durLabel(sel.dur)+'）</b>　／　オンラインの方は当日、下の青いボタンからZOOM入室</div>';
+      h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜'+endHM(sel.time,sel.dur)+'（'+durLabel(sel.dur)+'）'+(sel.place?'・'+placeLabel(sel.place):'')+'</b></div>';
     }
     body.innerHTML=h;
   }
@@ -208,11 +213,12 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   function submit(){
     capture();
     var memoEl=document.getElementById('bkmemo'); var memo=memoEl?memoEl.value:'';
+    if(!sel.place){alert('来所方法（🏢事務所訪問／💻オンライン）を選んでください');return;}
     if(!name.trim()){alert('お名前を入力してください');return;}
     var btn=document.getElementById('bkgo'); if(btn){btn.disabled=true;btn.textContent='予約中…';}
     localStorage.setItem('otajuku_name',name.trim());
     if(email.trim())localStorage.setItem('otajuku_email',email.trim());
-    jsonp({action:'book',date:sel.date,time:sel.time,dur:sel.dur,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
+    jsonp({action:'book',date:sel.date,time:sel.time,dur:sel.dur,place:sel.place,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
       if(d&&d.ok){ done(d); }
       else if(d&&d.taken){ alert('申し訳ありません、その枠は直前に埋まりました。別の時間をお選びください。'); loadSlots(); }
       else { alert('予約に失敗しました：'+((d&&d.error)||'不明なエラー')); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} }
@@ -220,8 +226,11 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   }
 
   function done(d){
-    body.innerHTML='<div class="done"><div class="ck">✅</div><h3>予約が完了しました</h3><div class="dt">'+esc(d.label||'')+'</div>'
-      +'<div class="muted">確認メールをお送りしました（届かない場合は迷惑メールもご確認を）。<br>オンラインの方は当日、下の青い「ZOOMに入室する」からご参加ください。<br>日時変更・キャンセルは太田LINEへ。</div>'
+    var guide = sel.place==='office'
+      ? '当日は<b>事務所</b>（福岡県糸島市有田中央2-14-64 プライマリー糸島中央203号室・駐車場あり）へお越しください。'
+      : '当日は<b>下の青い「ZOOMに入室する」</b>からご参加ください。';
+    body.innerHTML='<div class="done"><div class="ck">✅</div><h3>予約が完了しました</h3><div class="dt">'+esc(d.label||'')+(sel.place?'／'+placeLabel(sel.place):'')+'</div>'
+      +'<div class="muted">確認メールをお送りしました（届かない場合は迷惑メールもご確認を）。<br>'+guide+'<br>日時変更・キャンセルは太田LINEへ。</div>'
       +'<button class="go" style="margin-top:14px;" id="bkagain">別の日時を予約する</button></div>';
     var a=document.getElementById('bkagain'); if(a)a.addEventListener('click',loadSlots);
   }
@@ -234,6 +243,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     var mo=e.target.closest('.cnav');
     var tc=e.target.closest('.tchip');
     var du=e.target.closest('.durchip');
+    var pl=e.target.closest('.plchip');
     var go=e.target.closest('#bkgo');
     if(mo&&!mo.disabled){var y=calYM.y,m=calYM.m+(mo.getAttribute('data-mo')==='next'?1:-1);if(m>11){m=0;y++;}if(m<0){m=11;y--;}calYM={y:y,m:m};render();return;}
     if(vb){capture();view=vb.getAttribute('data-v');render();return;}
@@ -241,6 +251,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     if(cd){capture();sel.date=cd.getAttribute('data-d');sel.time=null;sel.dur=null;render();return;}
     if(tc){capture();sel.time=tc.getAttribute('data-t');var s=curSlot();sel.dur=(s&&s.d&&s.d.length===1)?s.d[0]:null;render();return;}
     if(du){capture();sel.dur=parseInt(du.getAttribute('data-dur'),10);render();return;}
+    if(pl){capture();sel.place=pl.getAttribute('data-place');render();return;}
     if(go){submit();return;}
   });
 
