@@ -217,7 +217,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     if(!name.trim()){alert('お名前を入力してください');return;}
     var btn=document.getElementById('bkgo'); if(btn){btn.disabled=true;btn.textContent='予約中…';}
     localStorage.setItem('otajuku_name',name.trim());
-    if(email.trim())localStorage.setItem('otajuku_email',email.trim());
+    /* メール欄は毎回ログインアドレス(otajuku_email)を初期表示。手打ちは送信のみに使い、認証IDを上書きしない(非メンバー宛を打つと在籍チェックで締め出される事故を防ぐ) */
     jsonp({action:'book',date:sel.date,time:sel.time,dur:sel.dur,place:sel.place,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
       if(d&&d.ok){ done(d); }
       else if(d&&d.taken){ alert('申し訳ありません、その枠は直前に埋まりました。別の時間をお選びください。'); loadSlots(); }
