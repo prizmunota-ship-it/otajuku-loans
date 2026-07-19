@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>個別相談予約</title>
+<title>太田と個別相談（何度でも無料）</title>
 <script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}var ts=parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);if(Date.now()-ts<86400000){return;}window._rc=function(r){if(r==="ok"){localStorage.setItem("otajuku_auth_ts",""+Date.now());}else{localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");localStorage.removeItem("otajuku_auth_ts");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -23,6 +23,13 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
 .intro .ir .ico{font-size:16px;flex-shrink:0;line-height:1.5;}
 .intro .ir b{color:#9A6D00;font-weight:800;}
 .intro a{color:#C47800;font-weight:700;text-decoration:underline;word-break:break-all;}
+.zoombox{background:linear-gradient(135deg,#2D8CFF 0%,#1466CE 100%);border-radius:16px;padding:17px 16px;margin-bottom:14px;box-shadow:0 6px 18px rgba(20,102,206,.32);color:#fff;}
+.zoombox .zt{font-size:14px;font-weight:900;display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.zoombox .zd{font-size:11.5px;line-height:1.75;color:#E4F0FF;margin-bottom:13px;}
+.zoombtn{display:block;text-align:center;background:#fff;color:#1466CE;font-size:18px;font-weight:900;border-radius:12px;padding:15px 12px;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.18);letter-spacing:.02em;}
+.zoombtn small{display:block;font-size:10px;font-weight:700;color:#7FA4D6;margin-top:3px;letter-spacing:0;}
+.zoominfo{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-top:12px;font-size:11.5px;color:#E4F0FF;}
+.zoominfo b{color:#fff;font-weight:800;letter-spacing:.03em;}
 .frame-wrap{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(180,130,0,.08);}
 iframe{width:100%;height:70vh;min-height:560px;border:0;display:block;}
 .fallback{text-align:center;margin-top:14px;}
@@ -35,16 +42,22 @@ iframe{width:100%;height:70vh;min-height:560px;border:0;display:block;}
 <div class="wrap">
 <header>
   <a class="back" href="/">‹ メニューに戻る</a>
-  <h1>📅 個別相談予約</h1>
-  <div class="sub">太田との1対1・個別相談の予約窓口</div>
+  <h1>🗣️ 太田と個別相談<span style="font-size:13px;font-weight:800;">（何度でも無料）</span></h1>
+  <div class="sub">太田とマンツーマン。何でも相談OK・無料で何度でも</div>
 </header>
 <div class="body">
   <div class="intro">
     <div class="ir"><span class="ico">🅿️</span><div><b>事務所にお越しの方</b>／福岡県糸島市有田中央2-14-64 プライマリー糸島中央203号室（<a href="https://share.google/EjjZlCoRuqfkuhqjr" target="_blank" rel="noopener">地図を見る</a>）。敷地内に来客用駐車場が2台（1番・2番）あります。</div></div>
-    <div class="ir"><span class="ico">💻</span><div><b>オンライン・夜をご希望の方</b>／日時は <a href="https://line.me/ti/p/8GcbgI0sTQ" target="_blank" rel="noopener">太田LINE</a> で個別調整します。当日は下記の固定ZOOMからご参加ください（毎回同じURLでOK）。<br><a href="https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1" target="_blank" rel="noopener">▶ ZOOMに参加する</a><br>ミーティングID：891 0827 0464／パスコード：454615</div></div>
+    <div class="ir"><span class="ico">💻</span><div><b>オンライン・夜をご希望の方</b>／日時は <a href="https://line.me/ti/p/8GcbgI0sTQ" target="_blank" rel="noopener">太田LINE</a> で個別調整します。当日は下の<b style="color:#1466CE;">青いボタン</b>を押すだけでZOOM入室できます。</div></div>
     <div class="ir"><span class="ico">📝</span><div><b>事前のご準備</b>／個別相談前に <a href="/shiryo/c01/f001.xlsx" download="１−１　自己紹介シート.xlsx">自己紹介資料（Excel）</a> を、可能なら <a href="/shiryo/c11/f003.docx" download="１０−３　相談事項.docx">相談事項ワンペーパー（Word）</a> もダウンロードしてご提出を。書くだけで悩みがかなり整理されます。</div></div>
     <div class="ir"><span class="ico">💬</span><div><b>相談は何でもOK・無料で何度でも</b>／不動産の購入/売買・管理、業者や金融機関の紹介、マイル/クレカ、人間関係、行動の手順、マインドセット、人生の目的（最重要）など。太田との接点をどんどん増やしてください。</div></div>
     <div class="ir"><span class="ico">🗣️</span><div><b>個別相談後</b>／オープンチャットに感想（①内容 ②次の行動）の投稿がおすすめ。頭が整理でき、行動に移りやすく、他メンバーへのギブにもなります。</div></div>
+  </div>
+  <div class="zoombox">
+    <div class="zt">🎥 オンラインで相談する方の入室はこちら</div>
+    <div class="zd">予約した時間になったら、下のボタンを押すだけでZOOMに入室できます。毎回この同じボタンでOK（パスコードは自動で入ります）。※事務所に来られる方はボタン不要です。</div>
+    <a class="zoombtn" href="https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1" target="_blank" rel="noopener">▶ ZOOMに入室する<small>タップするとZoomが開きます</small></a>
+    <div class="zoominfo"><span>ミーティングID：<b>891 0827 0464</b></span><span>パスコード：<b>454615</b></span></div>
   </div>
   <div class="frame-wrap">
     <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2E6mPKhNaWVlubK3uv3Q3wTgB10SN4GC_Fr06KYVs0mchO7Sr9Q43C_Wge5K01_TqtYvDwMT3q?gv=true" title="個別相談予約カレンダー" loading="lazy"></iframe>
