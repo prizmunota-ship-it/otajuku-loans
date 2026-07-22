@@ -95,7 +95,7 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   <div class="intro">
     <div class="ir"><span class="ico">🅿️</span><div><b>事務所にお越しの方</b>／福岡県糸島市有田中央2-14-64 プライマリー糸島中央203号室（<a href="https://share.google/EjjZlCoRuqfkuhqjr" target="_blank" rel="noopener">地図を見る</a>）。敷地内に来客用駐車場が2台（1番・2番）あります。</div></div>
     <div class="ir"><span class="ico">💻</span><div><b>オンライン・夜をご希望の方</b>／日時は <a href="https://line.me/ti/p/8GcbgI0sTQ" target="_blank" rel="noopener">太田LINE</a> で個別調整します。当日は下の<b style="color:#1466CE;">青いボタン</b>を押すだけでZOOM入室できます。</div></div>
-    <div class="ir"><span class="ico">📝</span><div><b>事前のご準備</b>／個別相談前に <a href="/shiryo/c01/f001.xlsx" download="１−１　自己紹介シート.xlsx">自己紹介資料（Excel）</a> を、可能なら <a href="/shiryo/c11/f003.docx" download="１０−３　相談事項.docx">相談事項ワンペーパー（Word）</a> もダウンロードしてご提出を。書くだけで悩みがかなり整理されます。</div></div>
+    <div class="ir"><span class="ico">📝</span><div><b>事前のご準備</b>／<a href="/shiryo/c01/f001.xlsx" download="１−１　自己紹介シート.xlsx">自己紹介資料（Excel）</a> と、可能なら <a href="/shiryo/c11/f003.docx" download="１０−３　相談事項.docx">相談事項ワンペーパー（Word）</a> をダウンロードして記入を。書くだけで悩みがかなり整理されます。記入後は<b>下の予約フォームの「資料の添付」から一緒に送れます</b>（太田にだけ届きます）。</div></div>
     <div class="ir"><span class="ico">💬</span><div><b>相談は何でもOK・無料で何度でも</b>／不動産の購入/売買・管理、業者や金融機関の紹介、マイル/クレカ、人間関係、行動の手順、マインドセット、人生の目的（最重要）など。太田との接点をどんどん増やしてください。</div></div>
     <div class="ir"><span class="ico">🗣️</span><div><b>個別相談後</b>／オープンチャットに感想（①内容 ②次の行動）の投稿がおすすめ。頭が整理でき、行動に移りやすく、他メンバーへのギブにもなります。</div></div>
   </div>
@@ -117,6 +117,8 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
   var DAYS=[], sel={date:null,time:null,dur:null,place:null}, view='list', calYM=null;
   var email=localStorage.getItem('otajuku_email')||'';
   var name=localStorage.getItem('otajuku_name')||'';
+  var picked=[];               // 添付ファイル(File)。再描画で input は消えるが選択は保持する
+  var MAX_ATTACH=20*1024*1024; // 添付合計の上限（20MB）
 
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function dayLabel(dt){var x=DAYS.filter(function(y){return y.date===dt;})[0];return x?x.label:dt;}
@@ -213,12 +215,43 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
       h+='<div class="field"><label>お名前 <span style="color:#c22">*</span></label><input id="bkname" value="'+esc(name)+'" placeholder="山田 太郎"></div>';
       h+='<div class="field"><label>メール（確認メールの送付先）</label><input id="bkmail" type="email" value="'+esc(email)+'" placeholder="you@example.com"></div>';
       h+='<div class="field"><label>相談したいこと（任意）</label><textarea id="bkmemo" placeholder="ざっくりでOK。書くと当日スムーズです"></textarea></div>';
+      h+='<div class="field"><label>資料の添付（任意）<span style="font-weight:600;color:#8A6D1F;">／自己紹介シート・相談事項など。太田にだけ届きます</span></label>'
+        +'<input id="bkfiles" type="file" multiple accept=".xlsx,.xls,.xlsm,.docx,.doc,.pdf,.png,.jpg,.jpeg,.heic,.gif">'
+        +'<div class="muted" id="bkfileinfo" style="margin-top:5px;"></div></div>';
       h+='<button class="go" id="bkgo">この日時で予約する</button>';
       h+='<div class="muted" style="margin-top:8px;">選択中：<b>'+esc(dayLabel(sel.date))+' '+esc(sel.time)+'〜'+endHM(sel.time,sel.dur)+'（'+durLabel(sel.dur)+'）'+(sel.place?'・'+placeLabel(sel.place):'')+'</b></div>';
     }
     body.innerHTML=h;
+    updateFileInfo(); // 再描画後に、選択済みの添付ファイル名を復元表示
   }
 
+  function updateFileInfo(){
+    var el=document.getElementById('bkfileinfo'); if(!el) return;
+    if(!picked.length){ el.textContent=''; return; }
+    var names=picked.map(function(f){return f.name;}).join(' , ');
+    var mb=picked.reduce(function(a,f){return a+f.size;},0)/1048576;
+    el.innerHTML='📎 添付：<b>'+esc(names)+'</b>（'+mb.toFixed(1)+'MB）<span style="color:#C47800;">／再選択で差し替え</span>';
+  }
+  function readB64(file){
+    return new Promise(function(res,rej){
+      var fr=new FileReader();
+      fr.onload=function(){ var s=String(fr.result||''); res({name:file.name, mime:file.type||'application/octet-stream', data:s.substring(s.indexOf(',')+1)}); };
+      fr.onerror=function(){ rej(new Error('read')); };
+      fr.readAsDataURL(file);
+    });
+  }
+  function postBook(payload){
+    // text/plain(既定)で送る＝プリフライトを避け、GASのdoPostがJSONを読める
+    return fetch(API,{method:'POST',body:JSON.stringify(payload)}).then(function(r){return r.text();})
+      .then(function(t){ try{return JSON.parse(t);}catch(e){return {ok:false,error:'応答を解析できませんでした'};} });
+  }
+
+  function resetGo(){ var btn=document.getElementById('bkgo'); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} }
+  function handleBookResult(d){
+    if(d&&d.ok){ done(d); }
+    else if(d&&d.taken){ alert('申し訳ありません、その枠は直前に埋まりました。別の時間をお選びください。'); loadSlots(); }
+    else { alert('予約に失敗しました：'+((d&&d.error)||'不明なエラー')); resetGo(); }
+  }
   function submit(){
     capture();
     var memoEl=document.getElementById('bkmemo'); var memo=memoEl?memoEl.value:'';
@@ -227,14 +260,23 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     var btn=document.getElementById('bkgo'); if(btn){btn.disabled=true;btn.textContent='予約中…';}
     localStorage.setItem('otajuku_name',name.trim());
     /* メール欄は毎回ログインアドレス(otajuku_email)を初期表示。手打ちは送信のみに使い、認証IDを上書きしない(非メンバー宛を打つと在籍チェックで締め出される事故を防ぐ) */
-    jsonp({action:'book',date:sel.date,time:sel.time,dur:sel.dur,place:sel.place,name:name.trim(),email:email.trim(),memo:memo.trim()}).then(function(d){
-      if(d&&d.ok){ done(d); }
-      else if(d&&d.taken){ alert('申し訳ありません、その枠は直前に埋まりました。別の時間をお選びください。'); loadSlots(); }
-      else { alert('予約に失敗しました：'+((d&&d.error)||'不明なエラー')); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} }
-    }).catch(function(){ alert('通信に失敗しました。もう一度お試しください。'); if(btn){btn.disabled=false;btn.textContent='この日時で予約する';} });
+    var base={action:'book',date:sel.date,time:sel.time,dur:sel.dur,place:sel.place,name:name.trim(),email:email.trim(),memo:memo.trim()};
+    if(picked.length){
+      // 添付あり＝ファイルを送れる fetch(POST) 経路。合計サイズを先にチェック
+      var total=picked.reduce(function(a,f){return a+f.size;},0);
+      if(total>MAX_ATTACH){ alert('添付ファイルの合計が大きすぎます（20MBまで）。ファイルを減らすか、圧縮してお試しください。'); resetGo(); return; }
+      Promise.all(picked.map(readB64)).then(function(files){ base.files=files; return postBook(base); })
+        .then(handleBookResult)
+        .catch(function(){ alert('添付付きの送信に失敗しました。通信環境をご確認のうえ、もう一度お試しください。\n（お急ぎの場合は添付なしでご予約いただき、資料は太田LINEへ送っていただいてもOKです）'); resetGo(); });
+    }else{
+      // 添付なし＝従来どおり JSONP(GET)
+      jsonp(base).then(handleBookResult)
+        .catch(function(){ alert('通信に失敗しました。もう一度お試しください。'); resetGo(); });
+    }
   }
 
   function done(d){
+    picked=[]; // 添付は送信済みなのでクリア
     var guide = sel.place==='office'
       ? '当日は<b>事務所</b>（福岡県糸島市有田中央2-14-64 プライマリー糸島中央203号室・駐車場あり）へお越しください。'
       : '当日は<b>下の青い「ZOOMに入室する」</b>からご参加ください。';
@@ -262,6 +304,13 @@ header .sub{color:#FFF3C4;font-size:11px;margin-top:3px;line-height:1.5;}
     if(du){capture();sel.dur=parseInt(du.getAttribute('data-dur'),10);render();return;}
     if(pl){capture();sel.place=pl.getAttribute('data-place');render();return;}
     if(go){submit();return;}
+  });
+
+  body.addEventListener('change',function(e){
+    if(e.target && e.target.id==='bkfiles'){
+      picked=Array.prototype.slice.call(e.target.files||[]);
+      updateFileInfo();
+    }
   });
 
   loadSlots();
