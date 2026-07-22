@@ -15,27 +15,28 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    // 太田塾オンライン用 固定ZOOM（定期・固定期間なし・パスコード埋込・待機室なし＝押すだけ入室）
+    const ZOOM_ONLINE = "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1";
+
     const scheduleData = [
       {
         month: "7月",
         events: [
-          { date: "7(火)", type: "オンライン", title: "エンパワータイム", location: "" },
-          { date: "9(木)", type: "リアル", title: "第3回 金融機関グループ勉強会(融資編)", location: "福岡中央銀行西新支店" },
-          { date: "23(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+          { date: "28(火)", type: "オンライン", title: "失敗ネタ座談会(21時〜)", location: "", zoom: ZOOM_ONLINE },
         ]
       },
       {
         month: "8月",
         events: [
           { date: "2(日)", type: "リアル", title: "BBQ", location: "福岡糸島", chousei: "https://chouseisan.com/s?h=fd6b4f428e8a48fcacfc27ebfee1d433" },
-          { date: "4(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "4(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
           { date: "27(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
         ]
       },
       {
         month: "9月",
         events: [
-          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
           { date: "17(木)", type: "リアル", title: "第4回 金融機関グループ勉強会", location: "大分銀行" },
           { date: "24(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
           { date: "26(土)", type: "リアル", title: "【仮】檜原新築AP完成見学会", location: "" },
@@ -44,7 +45,7 @@
       {
         month: "10月",
         events: [
-          { date: "6(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "6(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
           { date: "15(木)", type: "リアル", title: "金融機関祭りVol.3", location: "博多" },
           { date: "22(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
         ]
@@ -52,14 +53,14 @@
       {
         month: "11月",
         events: [
-          { date: "10(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "10(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
           { date: "26(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
         ]
       },
       {
         month: "12月",
         events: [
-          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "" },
+          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
           { date: "10(木)〜11(金)", type: "リアル", title: "忘年会", location: "福岡" },
           { date: "24(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
         ]
@@ -84,6 +85,7 @@
 
     function ScheduleRoadmap() {
       const hasChousei = scheduleData.some(m => m.events.some(e => e.chousei));
+      const hasZoom = scheduleData.some(m => m.events.some(e => e.zoom));
       return (
         <div className="min-h-screen bg-amber-50/50 p-2 sm:p-4 font-sans text-slate-800 flex flex-col items-center">
           <div className="w-full max-w-lg mb-3">
@@ -111,9 +113,11 @@
                   <span>リアル＆オンライン</span>
                 </div>
               </div>
-              {hasChousei && (
+              {(hasChousei || hasZoom) && (
                 <div className="mt-3 mx-auto w-fit max-w-full bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1.5 rounded-full leading-snug">
-                  📋 のイベントは<span className="underline decoration-orange-400">タイトルをタップ</span>で詳細・参加表明（調整さん）へ
+                  {hasChousei && <span>📋 は<span className="underline decoration-orange-400">タイトルをタップ</span>で参加表明（調整さん）</span>}
+                  {hasChousei && hasZoom && <span> / </span>}
+                  {hasZoom && <span>🎥 は<span className="underline decoration-blue-400">タップ</span>でZOOM入室</span>}
                 </div>
               )}
             </div>
@@ -149,6 +153,11 @@
                                       <a href={event.chousei} target="_blank" rel="noopener"
                                         className="block text-[10px] sm:text-[11px] font-bold text-orange-600 underline decoration-orange-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
                                         {event.title} 📋
+                                      </a>
+                                    ) : event.zoom ? (
+                                      <a href={event.zoom} target="_blank" rel="noopener"
+                                        className="block text-[10px] sm:text-[11px] font-bold text-blue-600 underline decoration-blue-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
+                                        {event.title} 🎥
                                       </a>
                                     ) : (
                                       <div className="text-[10px] sm:text-[11px] font-bold text-slate-800 break-words mt-0.5 tracking-tight">
