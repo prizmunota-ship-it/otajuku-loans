@@ -121,7 +121,7 @@
 </div>
 
 <script>
-  let KADO = { asof:"2026/7/24", total:256, vacant:27, target:97 };
+  let KADO = { asof:"2026/7/24", total:256, vacant:31, target:97 };
   function render(){
     const rate=(KADO.total-KADO.vacant)/KADO.total*100;
     const need=Math.max(0,Math.ceil(KADO.total*KADO.target/100)-(KADO.total-KADO.vacant));
