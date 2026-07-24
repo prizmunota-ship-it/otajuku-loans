@@ -35,6 +35,9 @@
   .goal .g{opacity:.7;font-size:10px}
   .goal .chip{background:rgba(255,255,255,.13);border-radius:7px;padding:3px 9px;font-weight:700}
   .goal .chip small{font-weight:400;opacity:.82}
+  .goal .chip.big{font-size:15px;padding:4px 12px;background:rgba(255,255,255,.18)}
+  .goal .nums{font-size:13px;opacity:.92}
+  .goal .nums b{font-size:16px;font-weight:800}
 
   /* categories */
   .cat{background:var(--card);border:1px solid var(--line);border-radius:13px;
@@ -58,10 +61,9 @@
   <h1>太田 タスク管理</h1>
 
   <div class="goal">
-    <span class="g">今年</span>
-    <span class="chip">5千万 <small>購入</small></span>
-    <span class="chip">CF100万 <small>/月</small></span>
-    <span class="chip">100室 <small>現44・残56</small></span>
+    <span class="g">今年の目標</span>
+    <span class="chip big">100室 購入</span>
+    <span class="nums">現 <b>44</b>室 ／ 残 <b>56</b>室</span>
   </div>
 
   <div id="board"></div>
