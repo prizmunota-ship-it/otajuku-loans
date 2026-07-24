@@ -71,14 +71,14 @@
     <span class="g">今年</span>
     <span class="chip">5千万 <small>購入</small></span>
     <span class="chip">CF100万 <small>/月</small></span>
-    <span class="chip">100室</span>
+    <span class="chip">100室 <small>現44・残56</small></span>
   </div>
   <div id="board"></div>
 </div>
 
 <script>
   // ===== 稼働率（既定値。ページ表示時に /kado.json を読んで最新へ自動更新）=====
-  let KADO = { asof:"2026/7/23", total:266, vacant:28, applied:5, taikyo:4, lossMan:304, target:97 };
+  let KADO = { asof:"2026/7/24", total:256, vacant:27, applied:4, taikyo:4, lossMan:262, target:97 };
 
   // ===== タスク（追加=1行 / 完了=done:true / 削除=行削除 / 移動=cat変更）=====
   const CATS = [
@@ -92,15 +92,14 @@
     { cat:"plan", text:"法人 名称・住所変更", done:false },
     { cat:"plan", text:"宅建業申請", done:false },
 
-    { cat:"now",  text:"北九州リーシング開拓", done:false },
+    { cat:"now",  text:"三浦くん 登記簿・印鑑証明 メール提出", done:false },
+    { cat:"now",  text:"阿南さん 金消時 必要資料準備", done:false },
 
-    { cat:"juku", text:"BBQ案内・Tシャツ案 作成必須", done:false },
     { cat:"juku", text:"ONEチーム向け勉強会 企画", sub:"城島さん", done:false },
-    { cat:"juku", text:"スレッド → ノートに移行", sub:"徐々に", done:false },
+    { cat:"juku", text:"BBQ段取り", done:false },
 
     { cat:"sale", text:"マイソク完成させる", done:false },
     { cat:"sale", text:"上ノ原建設 社長あいさつ", sub:"廣瀬さん同行", done:false },
-    { cat:"sale", text:"糸山建設さん 備忘", done:false },
   ];
   // ===== ここまでデータ =====
 
