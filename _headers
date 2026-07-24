@@ -2,3 +2,9 @@
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
+
+/task-269aab001cc4*
+  X-Robots-Tag: noindex, nofollow
+
+/hub-ea215b88d552*
+  X-Robots-Tag: noindex, nofollow

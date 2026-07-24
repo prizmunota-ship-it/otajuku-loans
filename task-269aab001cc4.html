@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>太田 タスク管理</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1b2430; --sub:#647084; --line:#e6e9ee;
+    --focus:#c2410c; --focus-bar:#ea580c; --good:#16a34a; --track:#e2e6ec;
+    --now:#dc2626; --sale:#d97706; --plan:#2563eb; --juku:#15803d;
+    --goal1:#0f172a; --goal2:#1e293b;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0e1116;--card:#171b22;--ink:#e8ebf0;--sub:#94a3b8;--line:#262c36;
+      --focus:#fb923c;--focus-bar:#f97316;--good:#22c55e;--track:#262c36;
+      --goal1:#1e293b;--goal2:#0b1220;}
+  }
+  :root[data-theme="light"]{--bg:#f4f6f8;--card:#fff;--ink:#1b2430;--sub:#647084;--line:#e6e9ee;
+    --focus:#c2410c;--focus-bar:#ea580c;--good:#16a34a;--track:#e2e6ec;--goal1:#0f172a;--goal2:#1e293b;}
+  :root[data-theme="dark"]{--bg:#0e1116;--card:#171b22;--ink:#e8ebf0;--sub:#94a3b8;--line:#262c36;
+    --focus:#fb923c;--focus-bar:#f97316;--good:#22c55e;--track:#262c36;--goal1:#1e293b;--goal2:#0b1220;}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    line-height:1.32;-webkit-text-size-adjust:100%}
+  .wrap{max-width:480px;margin:0 auto;padding:9px 11px 12px}
+  .tnum{font-variant-numeric:tabular-nums}
+  .head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px}
+  h1{font-size:15px;margin:0;font-weight:800;letter-spacing:.01em}
+  .asof{font-size:10px;color:var(--sub);white-space:nowrap}
+  .focus{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--focus-bar);
+    border-radius:11px;padding:8px 11px;margin-bottom:7px}
+  .frow{display:flex;align-items:baseline;gap:8px}
+  .flab{font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--focus)}
+  .rate{font-size:27px;font-weight:800;line-height:1;letter-spacing:-.02em}
+  .rate small{font-size:15px}
+  .rsub{font-size:11px;color:var(--sub);margin-left:auto;text-align:right}
+  .gauge{margin:7px 0 5px;height:7px;background:var(--track);border-radius:99px;position:relative}
+  .gauge>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--focus-bar),var(--focus))}
+  .gauge .tgt{position:absolute;top:-3px;width:2px;height:13px;background:var(--good);border-radius:2px}
+  .fstats{display:flex;gap:12px;font-size:11px;color:var(--sub)}
+  .fstats b{color:var(--ink);font-weight:800}
+  .goal{display:flex;gap:6px;background:linear-gradient(135deg,var(--goal1),var(--goal2));color:#fff;
+    border-radius:10px;padding:6px 10px;margin-bottom:8px;font-size:11px;align-items:center}
+  .goal .g{opacity:.7;font-size:9px}
+  .goal .chip{background:rgba(255,255,255,.13);border-radius:6px;padding:2px 7px;font-weight:700}
+  .goal .chip small{font-weight:400;opacity:.8}
+  .cat{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:2px 11px 7px;margin-bottom:7px}
+  .ch{display:flex;align-items:center;gap:7px;padding:7px 0 4px;font-size:12px;font-weight:800}
+  .dot{width:8px;height:8px;border-radius:99px;flex:none}
+  .cnt{margin-left:auto;font-size:10px;color:var(--sub);font-weight:600}
+  .item{display:flex;gap:9px;padding:5px 0;align-items:flex-start}
+  .item+.item{border-top:1px solid var(--line)}
+  .box{width:16px;height:16px;border:2px solid var(--line);border-radius:5px;flex:none;margin-top:1px;position:relative}
+  .item.done .box{background:var(--good);border-color:var(--good)}
+  .item.done .box::after{content:"✓";position:absolute;left:2px;top:-3px;color:#fff;font-size:11px;font-weight:800}
+  .txt{font-size:13px;line-height:1.28}
+  .item.done .txt{color:var(--sub);text-decoration:line-through}
+  .sub{font-size:10.5px;color:var(--sub)}
+  .empty{font-size:11px;color:var(--sub);padding:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><h1>太田 タスク管理</h1><span class="asof" id="asof"></span></div>
+  <div class="focus" id="focus"></div>
+  <div class="goal">
+    <span class="g">今年</span>
+    <span class="chip">5千万 <small>購入</small></span>
+    <span class="chip">CF100万 <small>/月</small></span>
+    <span class="chip">100室</span>
+  </div>
+  <div id="board"></div>
+</div>
+
+<script>
+  // ===== 稼働率（既定値。ページ表示時に /kado.json を読んで最新へ自動更新）=====
+  let KADO = { asof:"2026/7/23", total:266, vacant:28, applied:5, taikyo:4, lossMan:304, target:97 };
+
+  // ===== タスク（追加=1行 / 完了=done:true / 削除=行削除 / 移動=cat変更）=====
+  const CATS = [
+    { key:"plan", name:"重要だが先（計画）", note:"",           color:"var(--plan)" },
+    { key:"now",  name:"目の前",            note:"稼働率UP最優先", color:"var(--now)" },
+    { key:"juku", name:"太田塾",            note:"63名 ▲37",     color:"var(--juku)" },
+    { key:"sale", name:"売買",              note:"",             color:"var(--sale)" },
+  ];
+  const TASKS = [
+    { cat:"plan", text:"ガス切り替え3件", sub:"八幡・久留米IC・神﨑", done:false },
+    { cat:"plan", text:"法人 名称・住所変更", done:false },
+    { cat:"plan", text:"宅建業申請", done:false },
+
+    { cat:"now",  text:"北九州リーシング開拓", done:false },
+
+    { cat:"juku", text:"BBQ案内・Tシャツ案 作成必須", done:false },
+    { cat:"juku", text:"ONEチーム向け勉強会 企画", sub:"城島さん", done:false },
+    { cat:"juku", text:"スレッド → ノートに移行", sub:"徐々に", done:false },
+
+    { cat:"sale", text:"マイソク完成させる", done:false },
+    { cat:"sale", text:"上ノ原建設 社長あいさつ", sub:"廣瀬さん同行", done:false },
+    { cat:"sale", text:"糸山建設さん 備忘", done:false },
+  ];
+  // ===== ここまでデータ =====
+
+  function renderFocus(){
+    const rate=(KADO.total-KADO.vacant)/KADO.total*100;
+    const occ=KADO.total-KADO.vacant;
+    const need=Math.max(0,Math.ceil(KADO.total*KADO.target/100)-occ);
+    document.getElementById('asof').textContent=KADO.asof+" 時点";
+    document.getElementById('focus').innerHTML=
+      `<div class="frow"><span class="flab">🔥 稼働率を上げる</span>
+         <span class="rate tnum">${rate.toFixed(1)}<small>%</small></span>
+         <span class="rsub">満室まで<b class="tnum">${KADO.vacant}</b>室<br>目標97%まで<b class="tnum">${need}</b>室</span></div>
+       <div class="gauge"><i style="width:${rate.toFixed(1)}%"></i><div class="tgt" style="left:${KADO.target}%"></div></div>
+       <div class="fstats"><span>空室 <b class="tnum">${KADO.vacant}</b></span><span>申込 <b class="tnum">${KADO.applied}</b></span>
+         <span>退去予定 <b class="tnum">${KADO.taikyo}</b></span><span>損失 <b class="tnum">${KADO.lossMan}</b>万/月</span></div>`;
+  }
+  function renderBoard(){
+    const board=document.getElementById('board'); board.innerHTML='';
+    CATS.forEach(c=>{
+      const items=TASKS.filter(t=>t.cat===c.key), open=items.filter(t=>!t.done).length;
+      const el=document.createElement('div');el.className='cat';
+      let h=`<div class="ch"><span class="dot" style="background:${c.color}"></span>${c.name}`+
+            `<span class="cnt">${c.note?c.note+' · ':''}残${open}/${items.length}</span></div>`;
+      if(!items.length)h+=`<div class="empty">（なし）</div>`;
+      items.forEach(t=>{h+=`<div class="item${t.done?' done':''}"><span class="box"></span>`+
+        `<span class="txt">${t.text}${t.sub?`<span class="sub">（${t.sub}）</span>`:''}</span></div>`;});
+      el.innerHTML=h;board.appendChild(el);
+    });
+  }
+  renderFocus(); renderBoard();
+  // 稼働率を空室一覧の最新値に自動同期
+  fetch('/kado.json?_='+Date.now()).then(r=>r.ok?r.json():null).then(d=>{
+    if(d){ KADO=Object.assign(KADO,d); renderFocus(); }
+  }).catch(()=>{});
+</script>
+</body>
+</html>
