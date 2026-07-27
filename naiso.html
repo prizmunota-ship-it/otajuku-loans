@@ -206,7 +206,9 @@ function renderFilters(){
 function setFilter(f){ currentFilter=f; renderFilters(); renderCards(); }
 
 function renderCards(){
-  const list = currentFilter==='all' ? data : data.filter(p=>p.status===currentFilter);
+  // 内装完了はアプリ一覧から除外（完了は表示しない＝一覧をスッキリ保つ）。データはシートに残る。
+  const active = data.filter(p=>p.status!=='完了');
+  const list = currentFilter==='all' ? active : active.filter(p=>p.status===currentFilter);
   if(!list.length){ document.getElementById('cards').innerHTML='<div class="empty">該当する物件はありません</div>'; return; }
 
   document.getElementById('cards').innerHTML = list.map(p=>{
