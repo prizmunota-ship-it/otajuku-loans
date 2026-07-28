@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>太田塾 夏のBBQ 買い物リスト</title>
+<style>
+  :root{
+    --bg:#EDF1F0; --card:#FFFFFF; --ink:#15302E; --muted:#5F7673;
+    --line:#DCE4E2; --teal:#0F766E; --coral:#DE5A3A; --amber:#C7902B;
+    --done-bg:#EAF3F1; --shadow:0 1px 2px rgba(20,48,46,.05),0 6px 20px rgba(20,48,46,.06);
+    --t-ota:#159A8C; --t-ice:#3B82C4; --t-cool:#C7902B; --t-tate:#DE5A3A;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0D1817; --card:#152625; --ink:#E9EFEE; --muted:#8AA4A0;
+      --line:#243B39; --teal:#46CBBE; --coral:#FF7C5D; --amber:#EBB04A;
+      --done-bg:#122523; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#EDF1F0; --card:#FFFFFF; --ink:#15302E; --muted:#5F7673;
+    --line:#DCE4E2; --teal:#0F766E; --coral:#DE5A3A; --amber:#C7902B;
+    --done-bg:#EAF3F1; --shadow:0 1px 2px rgba(20,48,46,.05),0 6px 20px rgba(20,48,46,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1817; --card:#152625; --ink:#E9EFEE; --muted:#8AA4A0;
+    --line:#243B39; --teal:#46CBBE; --coral:#FF7C5D; --amber:#EBB04A;
+    --done-bg:#122523; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    min-height:100vh; padding:0 0 48px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .inner{max-width:560px; margin:0 auto; padding:0 16px}
+
+  /* Header */
+  header{
+    position:sticky; top:0; z-index:10;
+    background:var(--bg);
+    padding:18px 0 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--coral); font-weight:800; margin:0 0 4px;
+  }
+  h1{font-size:22px; line-height:1.25; margin:0; letter-spacing:.01em; text-wrap:balance}
+  .meta{font-size:12.5px; color:var(--muted); margin:5px 0 0; line-height:1.5}
+  .prog{display:flex; align-items:center; gap:10px; margin-top:13px}
+  .bar{flex:1; height:9px; border-radius:99px; background:var(--line); overflow:hidden}
+  .bar>span{display:block; height:100%; width:0;
+    background:linear-gradient(90deg,var(--teal),var(--amber));
+    border-radius:99px; transition:width .35s cubic-bezier(.4,0,.2,1)}
+  .count{font-size:12.5px; font-weight:800; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap}
+
+  /* Sections */
+  section{margin-top:20px}
+  .shead{display:flex; align-items:baseline; gap:8px; margin:0 2px 9px}
+  .shead .ic{font-size:16px}
+  .shead h2{font-size:14px; margin:0; letter-spacing:.02em}
+  .shead .n{margin-left:auto; font-size:11.5px; color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden}
+
+  .row{
+    display:flex; align-items:center; gap:13px; width:100%;
+    background:transparent; border:0; border-top:1px solid var(--line);
+    padding:14px 15px; text-align:left; cursor:pointer; color:inherit;
+    font-family:inherit; transition:background .15s;
+  }
+  .row:first-child{border-top:0}
+  .row:active{background:var(--done-bg)}
+  .box{
+    flex:0 0 24px; height:24px; border-radius:8px;
+    border:2px solid var(--line); position:relative; transition:.18s;
+    display:grid; place-items:center;
+  }
+  .box svg{width:15px; height:15px; stroke:#fff; stroke-width:3.2; fill:none;
+    stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:22; stroke-dashoffset:22; transition:stroke-dashoffset .2s}
+  .txt{flex:1; min-width:0}
+  .name{font-size:15px; line-height:1.4; font-weight:600}
+  .sub{font-size:11.5px; color:var(--muted); margin-top:2px}
+  .who{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:800; margin-top:6px; letter-spacing:.01em}
+  .who::before{content:""; width:8px; height:8px; border-radius:99px; background:currentColor; flex:0 0 auto}
+  .w-ota{color:var(--t-ota)} .w-ice{color:var(--t-ice)} .w-cool{color:var(--t-cool)} .w-tate{color:var(--t-tate)}
+  .row[aria-checked="true"] .who{color:var(--muted)}
+  .legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin:12px 4px 0}
+  .legend span{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; color:var(--muted)}
+  .legend span::before{content:""; width:8px; height:8px; border-radius:99px}
+  .lg-ota::before{background:var(--t-ota)} .lg-ice::before{background:var(--t-ice)}
+  .lg-cool::before{background:var(--t-cool)} .lg-tate::before{background:var(--t-tate)}
+  .qty{
+    flex:0 0 auto; font-size:12.5px; font-weight:800; color:var(--teal);
+    background:var(--done-bg); border-radius:99px; padding:4px 10px;
+    font-variant-numeric:tabular-nums; white-space:nowrap;
+  }
+  .row[aria-checked="true"] .box{background:var(--teal); border-color:var(--teal)}
+  .row[aria-checked="true"] .box svg{stroke-dashoffset:0}
+  .row[aria-checked="true"] .name{text-decoration:line-through; color:var(--muted); text-decoration-color:var(--muted)}
+  .row[aria-checked="true"] .qty{color:var(--muted); background:transparent; border:1px solid var(--line)}
+  .row:focus-visible{outline:2.5px solid var(--coral); outline-offset:-2px}
+
+  .note{font-size:12px; color:var(--muted); line-height:1.55; margin:8px 4px 0; padding-left:2px}
+
+  /* Info card */
+  .info{margin-top:24px; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; box-shadow:var(--shadow); padding:16px 16px 6px}
+  .info h2{font-size:13px; letter-spacing:.02em; margin:0 0 4px; color:var(--coral)}
+  .info .grp{padding:9px 0; border-top:1px solid var(--line)}
+  .info .grp:first-of-type{border-top:0}
+  .info .lab{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:800}
+  .info .val{font-size:14px; margin-top:3px; line-height:1.5}
+  .info .val b{color:var(--teal)}
+
+  .foot{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:20px; padding:0 4px}
+  .budget{font-size:13px; color:var(--muted)}
+  .budget b{color:var(--ink); font-size:15px}
+  .reset{
+    font-family:inherit; font-size:12.5px; font-weight:700; color:var(--muted);
+    background:transparent; border:1px solid var(--line); border-radius:99px;
+    padding:8px 14px; cursor:pointer; transition:.15s;
+  }
+  .reset:hover{color:var(--coral); border-color:var(--coral)}
+  .reset:focus-visible{outline:2.5px solid var(--coral); outline-offset:2px}
+  .saved{text-align:center; font-size:11px; color:var(--muted); margin-top:22px; opacity:.85}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<div class="inner">
+  <header>
+    <p class="eyebrow">太田塾 夏の大BBQ大会</p>
+    <h1>買い物リスト 🛒</h1>
+    <p class="meta">8/2(日) 海の家ふかえ・総勢41名／買い出しチーム用</p>
+    <div class="prog">
+      <div class="bar"><span id="fill"></span></div>
+      <div class="count"><span id="done">0</span> / <span id="total">0</span> 完了</div>
+    </div>
+  </header>
+
+  <div class="legend">
+    <span class="lg-ota">太田（前日+当日氷）</span>
+    <span class="lg-ice">緒方・王丸（氷）</span>
+    <span class="lg-tate">舘ご夫婦（備品）</span>
+    <span class="lg-cool">広瀬・中堂（クーラー持参のみ）</span>
+  </div>
+
+  <main id="list"></main>
+
+  <div class="info">
+    <h2>段取り・担当</h2>
+    <div class="grp">
+      <div class="lab">太田</div>
+      <div class="val"><b>前日8/1</b>：飲み物・スイカを購入→海の家の冷蔵庫へ／<b>当日</b>：氷をクーラーに満タン購入して現地へ</div>
+    </div>
+    <div class="grp">
+      <div class="lab">緒方・王丸さん</div>
+      <div class="val"><b>氷担当</b>。姪浜漁港で氷を購入、クーラーをパンパンにして現地へ（アイスも氷に埋めて運搬）</div>
+    </div>
+    <div class="grp">
+      <div class="lab">広瀬・中堂さん</div>
+      <div class="val"><b>空のクーラーボックス持参のみ</b>（買い物なし）。現地で氷を均すのを手伝い</div>
+    </div>
+    <div class="grp">
+      <div class="lab">舘ご夫婦</div>
+      <div class="val"><b>備品メイン</b>（紙コップ・ウェット類・ゴミ袋・スイカ割り道具・救急など）</div>
+    </div>
+    <div class="grp">
+      <div class="lab">当日の氷の流れ</div>
+      <div class="val">緒方・王丸・太田の氷クーラー → 広瀬・中堂の空クーラーへ均す → 冷蔵庫の飲み物を各クーラーへ</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="budget">概算 <b>約¥30,000</b><br><span style="font-size:11.5px">うちお酒 約¥15,000</span></div>
+    <button class="reset" id="reset" type="button">チェックをリセット</button>
+  </div>
+
+  <p class="saved">✓ チェックはこの端末に自動保存されます</p>
+</div>
+</div>
+
+<script>
+(function(){
+  var SECTIONS = [
+    {t:"お酒・飲み物", ic:"🍺", items:[
+      {id:"beer",  n:"ビール（350ml）", q:"24本", w:"太田", wc:"w-ota"},
+      {id:"high",  n:"ハイボール缶（350ml）", q:"24本", w:"太田", wc:"w-ota"},
+      {id:"chu",   n:"缶チューハイ／サワー（350ml）", q:"18本", w:"太田", wc:"w-ota"},
+      {id:"non",   n:"ノンアルビール", s:"運転手用", q:"24本", w:"太田", wc:"w-ota"},
+      {id:"tea",   n:"お茶 2L", q:"4本", w:"太田", wc:"w-ota"},
+      {id:"water", n:"水 2L", q:"6本", w:"太田", wc:"w-ota"}
+    ], note:"※太田が前日8/1に購入→海の家の冷蔵庫へ。子どもの飲み物は各家庭持参、足りなければ現地の自販機・売店で買い足しOK"},
+    {t:"スイカ＆スイカ割り", ic:"🍉", items:[
+      {id:"suikaL", n:"スイカ 大玉", s:"割る用＋食べる用", q:"2玉", w:"太田", wc:"w-ota"},
+      {id:"suikaS", n:"スイカ 小玉", s:"子どもが割りやすい", q:"1玉", w:"太田", wc:"w-ota"},
+      {id:"mekaku", n:"目隠しタオル／割る棒（新聞棒 or プラバット）", w:"舘ご夫婦", wc:"w-tate"},
+      {id:"sheet",  n:"ブルーシート＋段ボール", s:"下敷き・砂よけ", w:"舘ご夫婦", wc:"w-tate"},
+      {id:"knife",  n:"包丁・まな板／塩少々（カット用）", s:"海の家の貸出があれば不要", w:"舘ご夫婦", wc:"w-tate"}
+    ], note:"※スイカ本体は太田が前日購入→冷蔵庫。割り道具は舘ご夫婦。海の家に「持ち込みOK・包丁貸出」可否だけ要確認"},
+    {t:"氷・保冷", ic:"🧊", items:[
+      {id:"ice", n:"氷（クーラー用）", s:"姪浜漁港で調達", q:"クーラー満タン", w:"緒方・王丸・太田", wc:"w-ice"}
+    ], note:"👉 緒方・王丸・太田はクーラーを氷でパンパンに／広瀬・中堂は空クーラー持参→現地で氷を均す"},
+    {t:"子ども・こまごま", ic:"🛍️", items:[
+      {id:"cream",  n:"アイス", s:"氷に埋めて保冷運搬", q:"約30個", w:"緒方・王丸", wc:"w-ice"},
+      {id:"cups",   n:"紙コップ（お酒・2Lドリンク用・多め）＋油性マジック", s:"お店が出せば不要・要確認", w:"舘ご夫婦", wc:"w-tate"},
+      {id:"wipe",   n:"ウェットティッシュ・おしぼり・ティッシュ・キッチンペーパー", w:"舘ご夫婦", wc:"w-tate"},
+      {id:"trash",  n:"ゴミ袋（分別・持ち帰り用）", w:"舘ご夫婦", wc:"w-tate"},
+      {id:"aid",    n:"簡易救急（絆創膏・虫刺され）／日焼け止め共用予備", w:"舘ご夫婦", wc:"w-tate"},
+      {id:"jelly",  n:"クラゲ対策クリーム", q:"持参・済", w:"太田", wc:"w-ota", def:true}
+    ], note:"※紙皿・小皿・割り箸・ようじなど食器類は海の家が用意（買い物不要）"}
+  ];
+  var KEY="bbq-shopping-v1";
+  var CHECK = svgCheck();
+  function svgCheck(){return '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>';}
+
+  var state = load();
+  function load(){
+    var s={};
+    SECTIONS.forEach(function(sec){sec.items.forEach(function(it){s[it.id]=!!it.def;});});
+    try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); for(var k in o){if(k in s)s[k]=!!o[k];}}}catch(e){}
+    return s;
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+  var list=document.getElementById("list");
+  SECTIONS.forEach(function(sec){
+    var el=document.createElement("section");
+    var head='<div class="shead"><span class="ic">'+sec.ic+'</span><h2>'+sec.t+'</h2><span class="n" data-n="'+sec.t+'"></span></div>';
+    var card='<div class="card">';
+    sec.items.forEach(function(it){
+      card+='<button class="row" type="button" role="checkbox" data-id="'+it.id+'">'+
+        '<span class="box">'+CHECK+'</span>'+
+        '<span class="txt"><span class="name">'+it.n+'</span>'+(it.s?'<span class="sub">'+it.s+'</span>':'')+(it.w?'<span class="who '+it.wc+'">'+it.w+'</span>':'')+'</span>'+
+        (it.q?'<span class="qty">'+it.q+'</span>':'')+
+      '</button>';
+    });
+    card+='</div>';
+    var note=sec.note?'<p class="note">'+sec.note+'</p>':'';
+    el.innerHTML=head+card+note;
+    list.appendChild(el);
+  });
+
+  var rows=Array.prototype.slice.call(document.querySelectorAll(".row"));
+  rows.forEach(function(r){
+    r.addEventListener("click",function(){toggle(r.getAttribute("data-id"),r);});
+  });
+  function toggle(id,r){state[id]=!state[id]; save(); paintRow(id,r); paintProgress();}
+  function paintRow(id,r){r.setAttribute("aria-checked", state[id]?"true":"false");}
+  function paintProgress(){
+    var total=rows.length, done=0;
+    rows.forEach(function(r){if(state[r.getAttribute("data-id")])done++;});
+    document.getElementById("done").textContent=done;
+    document.getElementById("total").textContent=total;
+    document.getElementById("fill").style.width=(total?Math.round(done/total*100):0)+"%";
+    document.querySelectorAll(".shead .n").forEach(function(n){
+      var sec=SECTIONS.filter(function(s){return s.t===n.getAttribute("data-n");})[0];
+      var d=sec.items.filter(function(it){return state[it.id];}).length;
+      n.textContent=d+"/"+sec.items.length;
+    });
+  }
+  rows.forEach(function(r){paintRow(r.getAttribute("data-id"),r);});
+  paintProgress();
+
+  document.getElementById("reset").addEventListener("click",function(){
+    SECTIONS.forEach(function(sec){sec.items.forEach(function(it){state[it.id]=!!it.def;});});
+    save();
+    rows.forEach(function(r){paintRow(r.getAttribute("data-id"),r);});
+    paintProgress();
+  });
+})();
+</script>
+</body>
+</html>
