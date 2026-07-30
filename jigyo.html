@@ -181,13 +181,11 @@ body.fit-result #view-result .xls{width:700px !important;overflow:visible;zoom:1
 
 @media print{
   html, body { height:auto !important; }
-  /* visibilityトリック: 全要素を不可視にしてPDF画像のみ可視にする */
-  body * { visibility:hidden !important; }
-  #pdf-print-target, #pdf-print-target * { visibility:visible !important; }
-  #pdf-print-target { position:fixed; top:0; left:0; right:0; bottom:0; width:100%; height:100%; z-index:99999;
-    display:flex; align-items:flex-start; justify-content:center; overflow:hidden; }
-  /* 横幅だけでなく高さもページ内に収め、長い文書でも全体を1ページに表示 */
-  #pdf-print-target img { width:auto; height:auto; max-width:100%; max-height:100%; }
+  /* 印刷はPDF画像のみ本文フローに残す方式（旧visibility方式は隠れた本文の高さでページ数が増え、
+     fixed配置の画像が全ページに複製されて「同じ紙が2枚」出る不具合があった） */
+  body.print-pdf > *:not(#pdf-print-target){ display:none !important; }
+  body.print-pdf #pdf-print-target{ display:flex !important; position:static !important; width:100% !important; height:auto !important; align-items:flex-start; justify-content:center; overflow:visible; }
+  body.print-pdf #pdf-print-target img{ width:auto; height:auto; max-width:100%; max-height:286mm; }
   @page{ margin:5mm; size:A4 portrait; }
 }
 .doc-print-only{display:none;}
@@ -1075,9 +1073,10 @@ function printPdf(){
     var img=document.getElementById('pdfImg').src;
     var tgt=document.getElementById('pdf-print-target');
     tgt.querySelector('img').src=img; tgt.style.display='block';
+    document.body.classList.add('print-pdf');
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
       window.print();
-      setTimeout(function(){ tgt.style.display='none'; }, 800);
+      setTimeout(function(){ tgt.style.display='none'; document.body.classList.remove('print-pdf'); }, 800);
     }); });
   }
 }
