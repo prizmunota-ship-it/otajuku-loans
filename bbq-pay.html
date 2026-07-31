@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>太田塾BBQ 参加費 入金管理</title>
+<style>
+  :root{
+    --bg:#EDF1F0; --card:#FFFFFF; --ink:#15302E; --muted:#5F7673;
+    --line:#DCE4E2; --teal:#0F766E; --coral:#DE5A3A; --amber:#C7902B;
+    --done-bg:#EAF3F1; --shadow:0 1px 2px rgba(20,48,46,.05),0 6px 20px rgba(20,48,46,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0D1817; --card:#152625; --ink:#E9EFEE; --muted:#8AA4A0;
+      --line:#243B39; --teal:#46CBBE; --coral:#FF7C5D; --amber:#EBB04A;
+      --done-bg:#122523; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#EDF1F0; --card:#FFFFFF; --ink:#15302E; --muted:#5F7673;
+    --line:#DCE4E2; --teal:#0F766E; --coral:#DE5A3A; --amber:#C7902B;
+    --done-bg:#EAF3F1; --shadow:0 1px 2px rgba(20,48,46,.05),0 6px 20px rgba(20,48,46,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1817; --card:#152625; --ink:#E9EFEE; --muted:#8AA4A0;
+    --line:#243B39; --teal:#46CBBE; --coral:#FF7C5D; --amber:#EBB04A;
+    --done-bg:#122523; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); min-height:100vh; padding:0 0 48px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .inner{max-width:560px; margin:0 auto; padding:0 16px}
+  header{position:sticky; top:0; z-index:10; background:var(--bg); padding:18px 0 14px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--coral); font-weight:800; margin:0 0 4px}
+  h1{font-size:21px; line-height:1.25; margin:0; letter-spacing:.01em}
+  .meta{font-size:12px; color:var(--muted); margin:5px 0 0; line-height:1.5}
+  .money{display:flex; align-items:baseline; gap:8px; margin-top:13px; font-variant-numeric:tabular-nums}
+  .money .big{font-size:26px; font-weight:900; color:var(--teal); letter-spacing:.01em}
+  .money .of{font-size:14px; color:var(--muted); font-weight:700}
+  .money .cnt{margin-left:auto; font-size:12.5px; font-weight:800; color:var(--ink)}
+  .bar{height:10px; border-radius:99px; background:var(--line); overflow:hidden; margin-top:10px}
+  .bar>span{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--teal),var(--amber)); border-radius:99px; transition:width .35s cubic-bezier(.4,0,.2,1)}
+
+  section{margin-top:20px}
+  .shead{display:flex; align-items:center; gap:8px; margin:0 2px 9px}
+  .shead h2{font-size:14px; margin:0; letter-spacing:.02em}
+  .shead .n{margin-left:auto; font-size:11.5px; color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); overflow:hidden}
+  .row{display:flex; align-items:center; gap:13px; width:100%; background:transparent; border:0; border-top:1px solid var(--line);
+    padding:14px 15px; text-align:left; cursor:pointer; color:inherit; font-family:inherit; transition:background .15s}
+  .row:first-child{border-top:0}
+  .row:active{background:var(--done-bg)}
+  .box{flex:0 0 24px; height:24px; border-radius:8px; border:2px solid var(--line); transition:.18s; display:grid; place-items:center}
+  .box svg{width:15px; height:15px; stroke:#fff; stroke-width:3.2; fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:22; stroke-dashoffset:22; transition:stroke-dashoffset .2s}
+  .txt{flex:1; min-width:0}
+  .name{font-size:15px; line-height:1.4; font-weight:600}
+  .amt{flex:0 0 auto; font-size:13.5px; font-weight:800; color:var(--teal); background:var(--done-bg); border-radius:99px; padding:4px 11px; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .paid-tag{display:none; font-size:11px; font-weight:800; color:var(--teal); margin-left:8px}
+  .row[aria-checked="true"] .box{background:var(--teal); border-color:var(--teal)}
+  .row[aria-checked="true"] .box svg{stroke-dashoffset:0}
+  .row[aria-checked="true"] .name{color:var(--muted)}
+  .row[aria-checked="true"] .paid-tag{display:inline}
+  .row[aria-checked="true"] .amt{color:var(--muted); background:transparent; border:1px solid var(--line)}
+  .row:focus-visible{outline:2.5px solid var(--coral); outline-offset:-2px}
+
+  .info{margin-top:24px; background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:15px 16px}
+  .info p{margin:0; font-size:12.5px; color:var(--muted); line-height:1.6}
+  .info b{color:var(--ink)}
+  .foot{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding:0 4px}
+  .rest{font-size:13px; color:var(--muted)}
+  .rest b{color:var(--coral); font-size:15px; font-variant-numeric:tabular-nums}
+  .reset{font-family:inherit; font-size:12.5px; font-weight:700; color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:99px; padding:8px 14px; cursor:pointer}
+  .reset:hover{color:var(--coral); border-color:var(--coral)}
+  .saved{text-align:center; font-size:11px; color:var(--muted); margin-top:20px; opacity:.85}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="inner">
+  <header>
+    <p class="eyebrow">太田塾 夏の大BBQ大会</p>
+    <h1>参加費 入金管理 💰</h1>
+    <p class="meta">太田用・PayPayで確認したらタップで✅（この端末に保存）</p>
+    <div class="money">
+      <span class="big" id="got">¥0</span>
+      <span class="of">/ ¥145,000</span>
+      <span class="cnt"><span id="pc">0</span>/17 家庭</span>
+    </div>
+    <div class="bar"><span id="fill"></span></div>
+  </header>
+
+  <main id="list"></main>
+
+  <div class="info">
+    <p>※ 大人5,000円／小学生2,500円／幼児無料（実費＋500円は備品協力分）。<b>PayPayは自動連携できない</b>ため、入金を確認したら各行をタップして✅にしてください。</p>
+  </div>
+
+  <div class="foot">
+    <div class="rest">未入金 残り <b id="rest">¥145,000</b></div>
+    <button class="reset" id="reset" type="button">リセット</button>
+  </div>
+
+  <p class="saved">✓ チェックはこの端末に自動保存されます</p>
+</div>
+</div>
+
+<script>
+(function(){
+  var GROUPS = [
+    {t:"個人（各5,000円）", items:[
+      {id:"p_hirosemie", n:"廣瀬美恵さん", amt:5000},
+      {id:"p_omaru",     n:"王丸大治さん", amt:5000},
+      {id:"p_misogawa",  n:"操川真一さん", amt:5000},
+      {id:"p_takewaka",  n:"武若勇志さん", amt:5000},
+      {id:"p_harada",    n:"原田拓さん", amt:5000},
+      {id:"p_tanaka",    n:"田中基靖さん", amt:5000},
+      {id:"p_chudo",     n:"中堂健次さん", amt:5000}
+    ]},
+    {t:"ご家族", items:[
+      {id:"f_kuwano",    n:"鍬野家（大1＋小1＋幼3）", amt:7500},
+      {id:"f_uchimura",  n:"内村家（大2＋小1＋幼1）", amt:12500},
+      {id:"f_fujita",    n:"藤田家（大1＋小2）", amt:10000},
+      {id:"f_shibata",   n:"柴田家（大2＋小2＋幼1）", amt:15000},
+      {id:"f_hiratsuka", n:"平塚家（大2＋幼1）", amt:10000},
+      {id:"f_hirose",    n:"広瀬家（大1＋小2）", amt:10000},
+      {id:"f_ogata",     n:"緒方家（大1＋小2）", amt:10000},
+      {id:"f_tachi",     n:"舘家（大2）", amt:10000},
+      {id:"f_yokota",    n:"横田家（大2＋幼2）", amt:10000},
+      {id:"f_ota",       n:"太田家（大2＋小2）", amt:15000}
+    ]}
+  ];
+  var KEY="bbq-pay-v1";
+  var TOTAL=0, N=0;
+  GROUPS.forEach(function(g){g.items.forEach(function(it){TOTAL+=it.amt; N++;});});
+  var CHECK='<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg>';
+  function yen(v){return "¥"+v.toLocaleString("en-US");}
+
+  var state={};
+  (function load(){
+    GROUPS.forEach(function(g){g.items.forEach(function(it){state[it.id]=false;});});
+    try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); for(var k in o){if(k in state)state[k]=!!o[k];}}}catch(e){}
+  })();
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+  var list=document.getElementById("list");
+  GROUPS.forEach(function(g){
+    var el=document.createElement("section");
+    var h='<div class="shead"><h2>'+g.t+'</h2><span class="n" data-n="'+g.t+'"></span></div><div class="card">';
+    g.items.forEach(function(it){
+      h+='<button class="row" type="button" role="checkbox" data-id="'+it.id+'" data-amt="'+it.amt+'">'+
+         '<span class="box">'+CHECK+'</span>'+
+         '<span class="txt"><span class="name">'+it.n+'</span><span class="paid-tag">入金済み</span></span>'+
+         '<span class="amt">'+yen(it.amt)+'</span></button>';
+    });
+    h+='</div>';
+    el.innerHTML=h;
+    list.appendChild(el);
+  });
+
+  var rows=Array.prototype.slice.call(document.querySelectorAll(".row"));
+  rows.forEach(function(r){r.addEventListener("click",function(){var id=r.getAttribute("data-id"); state[id]=!state[id]; save(); paint();});});
+
+  function paint(){
+    var got=0, pc=0;
+    rows.forEach(function(r){
+      var id=r.getAttribute("data-id"), on=!!state[id];
+      r.setAttribute("aria-checked", on?"true":"false");
+      if(on){got+=parseInt(r.getAttribute("data-amt"),10); pc++;}
+    });
+    document.getElementById("got").textContent=yen(got);
+    document.getElementById("pc").textContent=pc;
+    document.getElementById("rest").textContent=yen(TOTAL-got);
+    document.getElementById("fill").style.width=Math.round(got/TOTAL*100)+"%";
+    document.querySelectorAll(".shead .n").forEach(function(n){
+      var g=GROUPS.filter(function(x){return x.t===n.getAttribute("data-n");})[0];
+      var d=g.items.filter(function(it){return state[it.id];}).length;
+      n.textContent=d+"/"+g.items.length;
+    });
+  }
+  paint();
+
+  document.getElementById("reset").addEventListener("click",function(){
+    for(var k in state)state[k]=false; save(); paint();
+  });
+})();
+</script>
+</body>
+</html>
