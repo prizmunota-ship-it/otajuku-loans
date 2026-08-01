@@ -90,7 +90,7 @@
     <p class="meta">太田用・PayPayで確認したらタップで✅（この端末に保存）</p>
     <div class="money">
       <span class="big" id="got">¥0</span>
-      <span class="of">/ ¥145,000</span>
+      <span class="of">/ <span id="totlbl"></span></span>
       <span class="cnt"><span id="pc">0</span>/17 家庭</span>
     </div>
     <div class="bar"><span id="fill"></span></div>
@@ -174,6 +174,7 @@
       r.setAttribute("aria-checked", on?"true":"false");
       if(on){got+=parseInt(r.getAttribute("data-amt"),10); pc++;}
     });
+    document.getElementById("totlbl").textContent=yen(TOTAL);
     document.getElementById("got").textContent=yen(got);
     document.getElementById("pc").textContent=pc;
     document.getElementById("rest").textContent=yen(TOTAL-got);
