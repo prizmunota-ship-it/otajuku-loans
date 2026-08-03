@@ -37,6 +37,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:#F5F4F0;color:#1a1a1a;min-
 .chip.active{background:#1a1a1a;border-color:#1a1a1a;color:#fff;}
 .chip-done{margin-left:auto;border-color:#3A9060;color:#0E5030;background:#EAF7EF;font-weight:600;}
 .chip-done.active{background:#1A7040;border-color:#1A7040;color:#fff;}
+.set-row{display:flex;gap:8px;margin-top:10px;}
+.setchip{flex:1;border:1.5px solid #DDD;background:#fff;border-radius:10px;padding:9px 6px;font-size:12.5px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;color:#777;font-weight:600;text-align:center;}
+.setchip.on{background:#EAF7EF;border-color:#3A9060;color:#0E5030;}
 
 .cards{padding:10px 12px 100px;display:flex;flex-direction:column;gap:8px;}
 
@@ -163,6 +166,7 @@ async function loadData(){
     if (c) { const o = JSON.parse(c); if (Array.isArray(o)) { data = o; render(); hadCache = true; } }
   } catch(e){}
   if (!hadCache) document.getElementById('cards').innerHTML = '<div class="loading"><div class="spin"></div><br>データを読み込み中...</div>';
+  loadSetFlags();   // セット設置/回収フラグをクラウドから取得（非同期・取得後に再描画）
   // ② 裏で最新を取得して差し替え＋キャッシュ更新
   try {
     const res = await fetch(GAS_URL + '?action=getAll');
@@ -183,6 +187,37 @@ async function saveUpdate(params){
     return true;
   } catch(e){ return false; }
 }
+
+// ===== セット設置／セット回収の完了フラグ（Cloudflare KV: /api/naiso-set）=====
+const SET_KEY = 'naiso_setflags_v1';
+let setFlags = {};
+try { const c = localStorage.getItem(SET_KEY); if (c) setFlags = JSON.parse(c) || {}; } catch(e){}
+function setFlag(id, key){ const f = setFlags[String(id)]; return !!(f && f[key]); }
+async function loadSetFlags(){
+  try {
+    const r = await fetch('/api/naiso-set');
+    const j = await r.json();
+    if (j && j.configured && j.data && j.data.flags){
+      setFlags = j.data.flags; render();
+      try { localStorage.setItem(SET_KEY, JSON.stringify(setFlags)); } catch(e){}
+    }
+  } catch(e){}
+}
+async function toggleSet(id, key, ev){
+  if (ev) ev.stopPropagation();
+  const sid = String(id);
+  if (!setFlags[sid]) setFlags[sid] = {};
+  setFlags[sid][key] = !setFlags[sid][key];
+  render();
+  try { localStorage.setItem(SET_KEY, JSON.stringify(setFlags)); } catch(e){}
+  const label = key==='install' ? 'セット設置' : 'セット回収';
+  showToast(setFlags[sid][key] ? `${label}を完了にしました ✓` : `${label}を未に戻しました`);
+  try {
+    await fetch('/api/naiso-set', { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ action:'setRoom', id:sid, fields:{ [key]: setFlags[sid][key] } }) });
+  } catch(e){}
+}
+window.addEventListener('focus', loadSetFlags);
 
 function render(){
   renderSummary(); renderFilters(); renderCards();
@@ -242,6 +277,10 @@ function renderCards(){
         ${p.itsukin&&p.itsukin!=0?`<div class="info-item"><div class="info-lbl">違約金・過失等</div><div class="info-val">¥${parseInt(p.itsukin).toLocaleString()}</div></div>`:''}
       </div>
       ${p.notes?`<div class="note-box">${p.notes}</div>`:''}
+      <div class="set-row">
+        <button class="setchip ${setFlag(p.id,'install')?'on':''}" onclick="toggleSet('${p.id}','install',event)">${setFlag(p.id,'install')?'✅':'⬜'} セット設置${setFlag(p.id,'install')?'（済）':''}</button>
+        <button class="setchip ${setFlag(p.id,'recover')?'on':''}" onclick="toggleSet('${p.id}','recover',event)">${setFlag(p.id,'recover')?'✅':'⬜'} セット回収${setFlag(p.id,'recover')?'（済）':''}</button>
+      </div>
       <div class="actions">
         ${statusBtn}
         ${editBtn}
