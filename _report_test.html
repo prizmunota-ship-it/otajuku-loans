@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.4</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -113,8 +113,8 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
       <div class="fld"><label>還元利回り %</label><input id="acap" type="number" step="0.1" value="8.0"></div>
     </div>
   </details>
-  <details class="opt"><summary>▶ 類似物件の募集状況を追加（任意｜賃料の妥当性資料）</summary>
-    <div class="qhint" style="margin:6px 0 8px">SUUMO・アットホーム等で調べた「現在募集中」の類似物件を入れると、比較表と<b>賃料設定の考え方（本物件が有利に見える分析文）</b>を自動作成します。</div>
+  <details class="opt"><summary>▶ 類似物件の賃貸情報を追加（任意｜賃料の妥当性資料）</summary>
+    <div class="qhint" style="margin:6px 0 8px">SUUMO・アットホーム・HOME'S など<b>お好きなポータルサイト</b>で調べた「募集中」の類似物件を入れると、比較表と<b>賃料設定の考え方（本物件が有利に見える分析文）</b>を自動作成します。</div>
     <div class="subhd2">本物件の想定</div>
     <div class="grid">
       <div class="fld"><label>間取り</label><input id="pmadori" placeholder="例：1LDK"></div>
@@ -122,10 +122,10 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
       <div class="fld"><label>月額総額 下限 円</label><input id="prentmin" type="number" placeholder="例：63500"></div>
       <div class="fld"><label>月額総額 上限 円</label><input id="prentmax" type="number" placeholder="例：66000"></div>
     </div>
-    <div class="subhd2">🔍 募集中の類似物件を探す</div>
-    <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンクがここに表示されます。</div>
-    <div class="subhd2">📋 まとめて貼り付け（物件情報をコピーして貼ると自動で行になります）</div>
-    <textarea id="cmppaste" style="width:100%;height:70px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例：アルカンシエルII 築4年 50.08㎡ 61,200円（1行に1物件）"></textarea>
+    <div class="subhd2">🔍 募集中の類似物件を探す（ポータルサイト）</div>
+    <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンク（SUUMO／アットホーム／HOME'S／スマサテ）がここに表示されます。</div>
+    <div class="subhd2">📋 まとめて貼り付け（ポータルの物件情報をコピーして貼ると自動で行になります）</div>
+    <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※「6.1万円」表記や、物件名と賃料が別の行になっている貼り付けにも対応しています"></textarea>
     <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
     <div class="subhd2">比較物件（現在募集中）— 物件名／築年／面積㎡／月額総額（賃料＋共益費）円</div>
     <div id="cmpRows"></div>
@@ -171,30 +171,54 @@ window.addEventListener('DOMContentLoaded',()=>{for(let i=0;i<3;i++)addCmpRow();
 function parseCmp(){
   const txt=document.getElementById('cmppaste').value;
   let added=0;const seen=new Set();
+  /* 物件ブロック方式：賃料が2回目に出たら前の物件を確定（複数行の貼り付けに対応） */
+  let pend=null;
+  const flush=()=>{
+    if(pend&&pend.total){
+      const key=(pend.name||'')+'_'+pend.total;
+      if(!seen.has(key)){seen.add(key);addCmpRow([pend.name||'物件',pend.addr||'',pend.age||'',pend.men||'',pend.total]);added++;}
+    }
+    pend=null;
+  };
   for(const ln of txt.split(/\n+/)){
     const t=ln.trim();if(!t)continue;
     const addrM=(t.match(/([一-龯]{2,3}[都道府県][^\s¥￥]{3,25})/)||[])[1]||'';
     /* --- スマサテ形式：「カーサ フィオーレ ¥53,300 ¥1,217 ¥4,023 43.79m² 3年 1LDK 4分 2階 … 福岡県筑後市…」 --- */
     const sm=t.match(/^(.+?)\s*[¥￥]([\d,]+)\s+[¥￥][\d,]+\s+[¥￥][\d,]+\s+([\d.]+)\s*(?:m²|m2|㎡)\s+(\d+)\s*年/);
     if(sm){
-      const name=sm[1].trim(),total=parseInt(sm[2].replace(/,/g,'')),men=sm[3],age=sm[4];
-      const key=name+'_'+total;
-      if(!seen.has(key)){seen.add(key);addCmpRow([name,addrM.replace(/詳細未定$/,''),age,men,total]);added++;}
+      flush();
+      pend={name:sm[1].trim(),total:parseInt(sm[2].replace(/,/g,'')),men:sm[3],age:sm[4],addr:addrM.replace(/詳細未定$/,'')};
       continue;
     }
-    /* --- 汎用形式：「物件名 築4年 50.08㎡ 61,200円」 --- */
+    /* --- 汎用形式：「物件名 築4年 50.08㎡ 61,200円」／ポータルの複数行貼り付けにも対応 --- */
     const age=(t.match(/築\s*(\d+)\s*年/)||[])[1];
     const men=(t.match(/([\d.]+)\s*(?:㎡|m2|m²)/)||[])[1];
     let total=null;
     const man=t.match(/([\d.]+)\s*万円/);
     if(man)total=Math.round(parseFloat(man[1])*10000);
     else{const en=t.match(/([\d,]{4,9})\s*円/);if(en)total=parseInt(en[1].replace(/,/g,''));}
-    if(!total)continue;
-    let name=t.split(/[ 　\t]/)[0].replace(/築.*$/,'')||'物件';
-    addCmpRow([name,addrM,age||'',men||'',total]);added++;
+    if(!total){
+      /* 賃料が無い行＝同じ物件の付随情報（面積・築年・住所・物件名）として蓄積 */
+      if(!pend)pend={};
+      if(addrM)pend.addr=pend.addr||addrM.replace(/詳細未定$/,'');
+      if(age)pend.age=pend.age||age;
+      if(men)pend.men=pend.men||men;
+      if(!pend.name&&!addrM&&!/^[\d.,¥￥]/.test(t)&&t.length<=40&&!/^[0-9]/.test(t))pend.name=t.replace(/\s*[／/].*$/,'').trim();
+      continue;
+    }
+    /* 賃料行：すでに賃料を持つ物件があれば確定して次の物件へ */
+    if(pend&&pend.total)flush();
+    if(!pend)pend={};
+    let nm=t.split(/[ 　\t]/)[0].replace(/築.*$/,'');
+    if(nm&&!/^[\d.,¥￥]/.test(nm))pend.name=pend.name||nm;
+    pend.total=total;
+    if(age)pend.age=pend.age||age;
+    if(men)pend.men=pend.men||men;
+    if(addrM)pend.addr=pend.addr||addrM.replace(/詳細未定$/,'');
   }
+  flush();
   if(added){document.getElementById('cmppaste').value='';}
-  else alert('物件情報を読み取れませんでした。スマサテの事例一覧をそのままコピーするか、「物件名 築◯年 ◯◯㎡ ◯◯円」の形で1行ずつ貼ってください。');
+  else alert('物件情報を読み取れませんでした。SUUMO・アットホーム等の物件情報やスマサテの事例一覧をそのままコピーするか、「物件名 築◯年 ◯◯㎡ ◯◯円」の形で貼ってください。');
 }
 function collectCmp(){
   const rows=[];document.querySelectorAll('#cmpRows .cmprow').forEach(r=>{
@@ -228,8 +252,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr){
   const note=`<div class="pos-note">【賃料設定の考え方】周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
   const body=`<div class="subttl">同賃料帯の募集実例</div>${areaWarn}
     <table class="lst"><tr><th>物件名</th><th>所在地</th><th style="width:64px;text-align:right">築年</th><th style="width:76px;text-align:right">面積</th><th style="width:104px;text-align:right">月額総額</th></tr>${rows}</table>${note}`;
-  return paper('類似物件の募集状況','本物件と同賃料帯の募集実例との比較（賃料設定の妥当性）',body,
-    `SUUMO・アットホーム等（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
+  return paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',body,
+    `SUUMO・アットホーム・HOME'S 等の賃貸ポータルサイト（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
 }
 function googleGeocode(q){return new Promise(res=>{
   if(!gGeocoder){res(null);return;}
@@ -431,7 +455,12 @@ function setCmpSearch(addr){
   const m=(addr||'').match(/([^\s、〒0-9０-９-]{2,10}?[市区町村])/);const city=m?m[1]:'';
   if(!city)return;
   const md=val('pmadori')||'1LDK';
-  el.innerHTML='<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+encodeURIComponent(city+' '+md+' 賃貸 SUUMO')+'">🔍 '+city+'の'+md+'賃貸募集を検索 ↗</a> 見つけた物件の情報を下の欄に貼り付けてください。';
+  const q=encodeURIComponent(city+' '+md+' 賃貸');
+  el.innerHTML='<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Asuumo.jp">🔍 SUUMO ↗</a>'
+   +'<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Aathome.co.jp">🔍 アットホーム ↗</a>'
+   +'<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Ahomes.co.jp">🔍 HOME\'S ↗</a>'
+   +'<a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテ ↗</a>'
+   +'<div style="margin-top:4px">'+city+'の'+md+'を検索できます。見つけた物件の情報を下の欄に貼り付けてください。</div>';
 }
 /* ====== ステップ2：レポート生成 ====== */
 async function buildReport(g){
@@ -485,12 +514,13 @@ async function buildReport(g){
     h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
   }
 
-  /* --- 類似物件の募集状況（任意） --- */
+  /* --- 類似物件の賃貸情報（任意）※順番は「周辺施設」の後に挿入 --- */
+  let compHtml='';
   const cmp=collectCmp(),rmin=num('prentmin'),rmax=num('prentmax');
   const st0=F.station[0];
   const stationTxt=st0?'・'+st0.name+'駅 徒歩'+st0.min+'分':'';
   if(cmp.length>=1&&rmin>0){
-    h+=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:num('pmens')},val('pappeal'),stationTxt,num('page'),g.title);
+    compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:num('pmens')},val('pappeal'),stationTxt,num('page'),g.title);
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
     const city=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
@@ -498,21 +528,22 @@ async function buildReport(g){
     const miss=[];
     if(cmp.length<1)miss.push('比較物件（1件以上）');
     if(rmin<=0)miss.push('本物件の想定 月額総額');
-    h+=paper('類似物件の募集状況','本物件と同賃料帯の募集実例との比較（賃料設定の妥当性）',
+    compHtml=paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',
       `<div class="phase" style="font-size:12px;line-height:1.9">
         📋 このページは、周辺の<b>募集中の類似物件</b>を入力すると自動作成されます（比較表＋賃料設定の考え方の分析文）。<br>
         <b style="color:#b91c1c">未入力の項目：${miss.join('／')}</b><br><br>
         <b>【入力のしかた】</b><br>
-        ① 上のフォームの「<b>▶ 類似物件の募集状況を追加</b>」を開く<br>
-        ② <b>スマサテ</b>で査定 → 事例一覧をコピー → 「まとめて貼り付け」に貼って「行を作成」を押す<br>
-        （またはSUUMO等で調べて、物件名・住所・築年・面積・月額を直接入力）<br>
-        ③ 「本物件の想定」の<b>月額総額（下限・上限）</b>を入れる<br>
-        ④ もう一度「レポートを作成」
+        ① 上のフォームの「<b>▶ 類似物件の賃貸情報を追加</b>」を開く<br>
+        ② 下の検索ボタンから<b>SUUMO・アットホーム等のポータルサイト</b>で似た条件の募集を調べる<br>
+        ③ 物件名・築年・面積・月額を「まとめて貼り付け」に貼って「行を作成」（直接入力でもOK）<br>
+        ④ 「本物件の想定」の<b>月額総額（下限・上限）</b>を入れて、もう一度「レポートを作成」
       </div>
       <div style="margin-top:8px">
-        <a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテで賃料査定（類似事例を取得）↗</a>
-        ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸 SUUMO')}">🔍 ${city}の${md}賃貸募集を検索 ↗</a>`:''}
-      </div>`,'SUUMO・アットホーム・スマサテ等');
+        ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Asuumo.jp">🔍 SUUMOで${city}の${md}を探す ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Aathome.co.jp">🔍 アットホームで探す ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Ahomes.co.jp">🔍 HOME'Sで探す ↗</a>`:''}
+        <a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテで賃料査定 ↗</a>
+      </div>`,'SUUMO・アットホーム・HOME\'S・スマサテ等');
   }
 
   /* --- 最寄り駅 --- */
@@ -533,6 +564,8 @@ async function buildReport(g){
   /* --- 福祉 --- */
   h+=facilityPaper('福祉施設','調査対象範囲近辺の福祉施設（距離順）',
     [{label:'福祉施設（介護・支援等）',color:'#7c3aed',items:F.welfare,n:5}],g,radius,'OpenStreetMap');
+  /* --- ④ 類似物件の賃貸情報 --- */
+  h+=compHtml;
   /* --- 教育・公園（選択） --- */
   if(document.getElementById('opt_edu').checked){
     h+=facilityPaper('教育施設・公園','調査対象範囲近辺の教育施設と公園（距離順）※ファミリー向け物件の検討資料',
