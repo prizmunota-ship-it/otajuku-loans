@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.1</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -153,9 +153,9 @@ const STRUCT={wood:{name:"木造",rebuild:150000,useful:22},lgs:{name:"軽量鉄
 const yen=n=>"¥"+Math.round(n).toLocaleString('ja-JP');
 const num=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?0:v;};
 const val=id=>document.getElementById(id).value.trim();
-const WALK=80;
+const WALK=80,ROAD=1.3; /* 徒歩=道路距離換算(直線×1.3)÷80m/分。駅・バス停はGoogle経路実測で上書き */
 function dist(a,b,c,d){const R=6371000,t=Math.PI/180,x=Math.sin((c-a)*t/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin((d-b)*t/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
-const wmin=m=>Math.max(1,Math.round(m/WALK));
+const wmin=m=>Math.max(1,Math.round(m*ROAD/WALK));
 function setStatus(t,err){const s=document.getElementById('status');s.style.display='block';s.innerHTML=t;s.className='status'+(err?' err':'');}
 function hideStatus(){document.getElementById('status').style.display='none';}
 
@@ -303,12 +303,12 @@ function tbl(items,color,n,extraCol){
   if(!items.length)return `<div class="phase" style="margin:4px 0">この範囲では見つかりませんでした（地図データ未収録の場合あり）</div>`;
   let h=`<table class="lst"><tr><th style="width:34px">No</th><th>名称</th>${extraCol?'<th>'+extraCol.h+'</th>':''}<th style="width:88px;text-align:right">直線距離</th><th style="width:76px;text-align:right">徒歩</th></tr>`;
   items.slice(0,n).forEach((f,i)=>{
-    h+=`<tr><td class="no"><span style="background:${color}">${f.idx}</span></td><td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}<td class="r">${f.d.toLocaleString()}m</td><td class="r">約${f.min}分</td></tr>`;});
+    h+=`<tr><td class="no"><span style="background:${color}">${f.idx}</span></td><td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}<td class="r">${f.d.toLocaleString()}m${f.rd?'<div style="font-size:9px;color:#94a3b8;font-weight:400">経路'+f.rd.toLocaleString()+'m</div>':''}</td><td class="r">約${f.min}分${f.rd?'<div style="font-size:9px;color:#16a34a;font-weight:700">経路実測</div>':''}</td></tr>`;});
   return h+'</table>';
 }
 function paper(title,lead,body,src){
   return `<div class="paper"><h2>${title}</h2><div class="lead">${lead}</div>${body}
-  <div class="note">※地図上のアイコンは付近住所に所在することを表すもので、施設の正確な地点を保証するものではありません。距離は直線距離、徒歩は80m/分で算出。<br>※情報出典：${src}</div></div>`;
+  <div class="note">※地図上のアイコンは付近住所に所在することを表すもので、施設の正確な地点を保証するものではありません。距離は直線距離。徒歩分数は道路距離換算（直線距離×1.3・80m/分）、「経路実測」表示はGoogleの徒歩経路による実測値。<br>※情報出典：${src}</div></div>`;
 }
 function facilityPaper(title,lead,groups,g,radius,src){
   const m=mapDiv();const markers=[];let body=m.html;let idx=0;
@@ -445,7 +445,18 @@ async function buildReport(g){
   if(els===null){setStatus('⚠️ 周辺データの取得が混み合っています。30秒ほど待って、もう一度「✅この位置でレポートを作成」を押してください。<br><button class="addrow" onclick="confirmGo()" style="margin-top:6px">🔁 もう一度作成する</button>',true);return;}
   hideStatus();
   const query=g.query||val('paddr');
-  const F=classify(els,g.lat,g.lon);
+  const F0=classify(els,g.lat,g.lon);
+  /* 駅・バス停はGoogle経路APIで実測徒歩分に補正（失敗時は道路換算のまま） */
+  try{
+    const dmT=[...F0.station.slice(0,5),...F0.bus.slice(0,6)];
+    if(dmT.length&&google.maps.DistanceMatrixService){
+      const svc=new google.maps.DistanceMatrixService();
+      const res=await new Promise(r=>{try{svc.getDistanceMatrix({origins:[{lat:g.lat,lng:g.lon}],destinations:dmT.map(t=>({lat:t.lat,lng:t.lon})),travelMode:'WALKING'},(x,s)=>r(s==='OK'?x:null));}catch(e){r(null);}setTimeout(()=>r(null),8000);});
+      if(res&&res.rows&&res.rows[0])res.rows[0].elements.forEach((el,i)=>{
+        if(el.status==='OK'){dmT[i].min=Math.max(1,Math.round(el.duration.value/60));dmT[i].rd=el.distance.value;}});
+    }
+  }catch(e){}
+  const F=F0;
   const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
   const name=query, addr=g.title;
   let h='';
