@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周辺環境レポート 自動生成｜太田塾</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f8fafc;font-size:13px;line-height:1.55;}
+.wrap{max-width:900px;margin:0 auto;padding:18px 14px 60px;}
+.appbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.appbar .lg{font-size:18px;font-weight:800;color:#0f766e;letter-spacing:1px;}
+.appbar .tg{font-size:11px;color:#6b7280;}
+.form{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:18px;}
+.form .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.fld{flex:1;min-width:180px;}
+.fld label{display:block;font-size:11px;font-weight:700;color:#6b7280;margin-bottom:4px;}
+.fld input{width:100%;padding:9px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
+.fld input:focus{outline:none;border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.15);}
+.btn{background:#0f766e;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.btn:hover{background:#0d5f58;}
+.btn:disabled{background:#9ca3af;cursor:default;}
+.hint{font-size:10.5px;color:#9ca3af;margin-top:8px;}
+.status{margin:14px 0;font-size:12px;color:#0f766e;font-weight:700;display:none;}
+.status.err{color:#dc2626;}
+.pdfbtn{background:#334155;margin-left:8px;}
+.toolbar{display:none;margin-bottom:12px;}
+
+/* ---- report (same design language as the sample PDF) ---- */
+#report{display:none;}
+.report-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:9px;margin-bottom:13px;}
+.hd .ttl{font-size:20px;font-weight:800;color:#0f766e;letter-spacing:1px;}
+.hd .sub{font-size:11px;color:#6b7280;margin-top:3px;}
+.hd .brand{text-align:right;font-size:10px;color:#6b7280;}
+.hd .brand b{font-size:13px;color:#0f766e;display:block;letter-spacing:2px;}
+.propbar{background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:9px 13px;margin-bottom:14px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;}
+.propbar .nm{font-size:15px;font-weight:800;color:#0f766e;}
+.propbar .ad{font-size:12px;color:#374151;}
+.propbar .meta{font-size:10px;color:#6b7280;margin-left:auto;text-align:right;}
+.sec-h{font-size:13px;font-weight:800;color:#0f766e;margin:16px 0 8px;padding-left:9px;border-left:5px solid #14b8a6;}
+.sumgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;}
+.tile{border:1px solid #e5e7eb;border-radius:8px;padding:10px 11px;}
+.tile .lb{font-size:10px;color:#6b7280;font-weight:700;}
+.tile .vl{font-size:17px;font-weight:800;color:#111827;margin-top:2px;}
+.tile .vl small{font-size:10px;font-weight:600;color:#6b7280;}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.fcard{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:9px;}
+.fcard.miss{opacity:.45;}
+.fcard .ic{font-size:17px;width:24px;text-align:center;}
+.fcard .tx{flex:1;min-width:0;}
+.fcard .ct{font-size:9.5px;color:#6b7280;font-weight:700;}
+.fcard .nn{font-size:12px;font-weight:700;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fcard .ds{font-size:12px;font-weight:800;color:#0f766e;white-space:nowrap;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.rows{width:100%;border-collapse:collapse;}
+.rows td{padding:5px 6px;border-bottom:1px dashed #e5e7eb;font-size:11.5px;}
+.rows td.k{color:#6b7280;font-weight:700;width:40%;}
+.rows td.v{font-weight:700;text-align:right;}
+.rows td .d{color:#0f766e;}
+.note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:11px 14px;font-size:11.5px;line-height:1.7;color:#78350f;}
+.note b{color:#0f766e;}
+.foot{margin-top:13px;font-size:9px;color:#9ca3af;line-height:1.5;border-top:1px solid #e5e7eb;padding-top:7px;}
+.phase2{background:#f1f5f9;border:1px dashed #cbd5e1;border-radius:8px;padding:9px 12px;font-size:11px;color:#64748b;}
+.gmap{width:100%;height:300px;border:1px solid #e5e7eb;border-radius:10px;display:block;}
+.maplink{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:5px 12px;border-radius:7px;}
+.maplink:hover{background:#ccfbf1;}
+
+@media print{
+  body{background:#fff;}
+  .appbar,.form,.status,.toolbar{display:none!important;}
+  .wrap{padding:0;max-width:none;}
+  .report-card{border:none;box-shadow:none;padding:0;}
+}
+</style></head><body>
+<div class="wrap">
+  <div class="appbar">
+    <div class="lg">🌻 太田塾</div>
+    <div class="tg">周辺環境レポート 自動生成（MVP）</div>
+  </div>
+
+  <div class="form">
+    <div class="row">
+      <div class="fld" style="flex:0 0 200px;"><label>物件名</label><input id="pname" placeholder="例：スピカ ハイムⅤ" value="スピカ ハイムⅤ"></div>
+      <div class="fld"><label>住所</label><input id="paddr" placeholder="例：茨城県水戸市石川1丁目3995-4" value="茨城県水戸市石川1丁目3995-4"></div>
+      <button class="btn" id="go" onclick="generate()">レポート生成</button>
+    </div>
+    <div class="hint">住所を入れて「レポート生成」を押すと、国土地理院・OpenStreetMap等の公開データから自動作成します（キー不要・無料）。</div>
+  </div>
+
+  <div class="status" id="status"></div>
+  <div class="toolbar" id="toolbar">
+    <button class="btn pdfbtn" onclick="window.print()">🖨 PDFで保存 / 印刷</button>
+  </div>
+
+  <div id="report"></div>
+</div>
+
+<script>
+const WALK=80; // m/min
+function dist(a,b,c,d){const R=6371000,t=Math.PI/180,dLat=(c-a)*t,dLon=(d-b)*t,la1=a*t,la2=c*t;const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+function walkMin(m){return Math.max(1,Math.round(m/WALK));}
+function setStatus(t,err){const s=document.getElementById('status');s.style.display='block';s.textContent=t;s.className='status'+(err?' err':'');}
+
+async function geocode(addr){
+  const u="https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(addr);
+  const r=await fetch(u);const j=await r.json();
+  if(!j.length) throw new Error("住所が見つかりませんでした");
+  const f=j[0];return {lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],title:f.properties.title};
+}
+async function elevation(lat,lon){
+  try{const u="https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon="+lon+"&lat="+lat+"&outtype=JSON";
+  const r=await fetch(u);const j=await r.json();return j.elevation;}catch(e){return null;}
+}
+// OSM Overpass: fetch many categories around radius
+async function overpass(lat,lon,radius){
+  const q=`[out:json][timeout:60];(
+    nwr["shop"="convenience"](around:${radius},${lat},${lon});
+    nwr["shop"="supermarket"](around:${radius},${lat},${lon});
+    nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});
+    nwr["shop"="chemist"](around:${radius},${lat},${lon});
+    nwr["amenity"="post_office"](around:${radius},${lat},${lon});
+    nwr["amenity"="bank"](around:${radius},${lat},${lon});
+    nwr["amenity"="hospital"](around:${radius},${lat},${lon});
+    nwr["amenity"="clinic"](around:${radius},${lat},${lon});
+    nwr["amenity"="dentist"](around:${radius},${lat},${lon});
+    nwr["amenity"="police"](around:${radius},${lat},${lon});
+    nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});
+    nwr["amenity"="school"](around:${radius},${lat},${lon});
+    nwr["leisure"="park"](around:${radius},${lat},${lon});
+    node["railway"="station"](around:${radius},${lat},${lon});
+    node["highway"="bus_stop"](around:${radius},${lat},${lon});
+  );out center tags;`;
+  const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+  for(const ep of eps){
+    try{
+      const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),40000);
+      const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),signal:ctl.signal});
+      clearTimeout(to);
+      if(!r.ok) continue; const j=await r.json(); return j.elements||[];
+    }catch(e){}
+  }
+  return [];
+}
+// J-SHIS 地震ハザード (30年超過確率) — try, graceful
+async function jshis(lat,lon){
+  try{
+    const u=`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/meshinfo.geojson?position=${lon},${lat}`;
+    const r=await fetch(u);if(!r.ok)return null;const j=await r.json();
+    const p=j.features&&j.features[0]&&j.features[0].properties;if(!p)return null;
+    return {p6:p.T30_I55_PS||p.T30_I60_PS||null, raw:p};
+  }catch(e){return null;}
+}
+
+function cat(el){const t=el.tags||{};
+  if(t.shop==='convenience')return'conv';
+  if(t.shop==='supermarket')return'super';
+  if(t.amenity==='pharmacy'||t.shop==='chemist')return'drug';
+  if(t.amenity==='post_office')return'post';
+  if(t.amenity==='bank')return'bank';
+  if(t.amenity==='hospital'||t.amenity==='clinic')return'hosp';
+  if(t.amenity==='dentist')return'dent';
+  if(t.amenity==='police')return'police';
+  if(t.amenity==='kindergarten')return'kinder';
+  if(t.amenity==='school')return'school';
+  if(t.leisure==='park')return'park';
+  if(t.railway==='station')return'station';
+  if(t.highway==='bus_stop')return'bus';
+  return null;
+}
+function nearest(els,lat,lon,key){
+  let best=null,bd=1e9;
+  for(const e of els){if(cat(e)!==key)continue;
+    const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);
+    if(la==null)continue;const d=dist(lat,lon,la,lo);
+    if(d<bd){bd=d;best={name:(e.tags&&e.tags.name)||'(名称なし)',d:Math.round(d),min:walkMin(d)};}}
+  return best;
+}
+function fcard(ic,ct,obj){
+  if(!obj)return `<div class="fcard miss"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn">データなし</div></div><div class="ds">—</div></div>`;
+  return `<div class="fcard"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn" title="${obj.name}">${obj.name}</div></div><div class="ds">徒歩${obj.min}分</div></div>`;
+}
+function stars(n){return '★★★★★☆☆☆☆☆'.slice(5-n,10-n);}
+
+async function generate(){
+  const pname=document.getElementById('pname').value.trim();
+  const paddr=document.getElementById('paddr').value.trim();
+  if(!paddr){setStatus('住所を入力してください',true);return;}
+  document.getElementById('go').disabled=true;
+  document.getElementById('report').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  try{
+    setStatus('① 住所を緯度経度に変換中…（国土地理院）');
+    const g=await geocode(paddr);
+    setStatus('② 周辺施設・駅・バス停を取得中…（OpenStreetMap 半径1.2km）');
+    const [els,elev,js]=await Promise.all([overpass(g.lat,g.lon,1200),elevation(g.lat,g.lon),jshis(g.lat,g.lon)]);
+    setStatus('③ レポートを組み立て中…');
+    render(pname,paddr,g,els,elev,js);
+    document.getElementById('status').style.display='none';
+    document.getElementById('toolbar').style.display='block';
+    document.getElementById('report').style.display='block';
+  }catch(e){setStatus('エラー：'+e.message,true);}
+  document.getElementById('go').disabled=false;
+}
+
+function render(pname,paddr,g,els,elev,js){
+  const N=k=>nearest(els,g.lat,g.lon,k);
+  const conv=N('conv'),sup=N('super'),drug=N('drug'),post=N('post'),bank=N('bank'),
+        hosp=N('hosp'),dent=N('dent'),police=N('police'),kinder=N('kinder'),
+        school=N('school'),park=N('park'),station=N('station'),bus=N('bus');
+  const nStore=els.filter(e=>['conv','super','drug'].includes(cat(e))).length;
+  const conv_score=Math.min(5,(conv?1:0)+(sup?1:0)+(drug?1:0)+(post?1:0)+(hosp||dent?1:0));
+  const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+  let quakeHtml='';
+  if(js&&js.p6){quakeHtml=`<div class="sec-h">🛡️ 地震ハザード（防災科研 J-SHIS）</div>
+    <table class="rows"><tr><td class="k">30年間で震度6強以上</td><td class="v"><span class="d">${(js.p6*100).toFixed(1)}%</span></td></tr></table>`;}
+  else{quakeHtml=`<div class="sec-h">🛡️ 防災・ハザード</div>
+    <div class="phase2">🔧 地震・浸水・液状化・避難所などのハザード層は <b>Phase2</b>（防災科研J-SHIS／国交省ポリゴンデータの取り込み）で追加予定。この物件では自動取得できませんでした。</div>`;}
+
+  const html=`<div class="report-card">
+    <div class="hd">
+      <div><div class="ttl">周辺環境レポート</div><div class="sub">投資判断・入居募集のための立地サマリー（調査半径 1,200m）</div></div>
+      <div class="brand"><b>太田塾</b>物件立地分析<br>発行日 ${dstr}</div>
+    </div>
+    <div class="propbar">
+      <div><div class="nm">${pname||'（物件名未入力）'}</div><div class="ad">${paddr}</div></div>
+      <div class="meta">緯度経度 ${g.lat.toFixed(4)}, ${g.lon.toFixed(4)}<br>標高 ${elev!=null?elev+'m':'—'}／出典：GSI・OSM</div>
+    </div>
+
+    <div class="sec-h">🗺️ 地図（Googleマップ）</div>
+    <iframe class="gmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+      src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
+    <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>
+
+    <div class="sec-h">📊 エリア ひと目サマリー</div>
+    <div class="sumgrid">
+      <div class="tile"><div class="lb">最寄り駅</div><div class="vl">${station?'徒歩'+station.min+'分':'—'}<small>${station?'／'+station.name:''}</small></div></div>
+      <div class="tile"><div class="lb">最寄りバス停</div><div class="vl">${bus?'徒歩'+bus.min+'分':'—'}</div></div>
+      <div class="tile"><div class="lb">生活利便</div><div class="vl" style="color:#f59e0b">${stars(conv_score)}</div></div>
+      <div class="tile"><div class="lb">標高</div><div class="vl">${elev!=null?elev:'—'}<small>m</small></div></div>
+    </div>
+
+    <div class="sec-h">🛒 生活利便（最寄り施設・徒歩分）</div>
+    <div class="fgrid">
+      ${fcard('🏪','コンビニ',conv)}
+      ${fcard('🛒','スーパー',sup)}
+      ${fcard('💊','ドラッグ/薬局',drug)}
+      ${fcard('📮','郵便局',post)}
+      ${fcard('🏧','銀行',bank)}
+      ${fcard('🚓','交番',police)}
+      ${fcard('🏥','病院/クリニック',hosp)}
+      ${fcard('🦷','歯科',dent)}
+      ${fcard('🏞️','公園',park)}
+    </div>
+
+    <div class="sec-h">🚃 交通・🎓 教育</div>
+    <div class="two">
+      <table class="rows">
+        <tr><td class="k">最寄り駅</td><td class="v">${station?station.name+'　<span class="d">'+station.d+'m(徒歩'+station.min+'分)</span>':'—'}</td></tr>
+        <tr><td class="k">最寄りバス停</td><td class="v">${bus?bus.name+'　<span class="d">徒歩'+bus.min+'分</span>':'—'}</td></tr>
+      </table>
+      <table class="rows">
+        <tr><td class="k">保育/幼稚園</td><td class="v">${kinder?kinder.name+'　<span class="d">徒歩'+kinder.min+'分</span>':'—'}</td></tr>
+        <tr><td class="k">学校</td><td class="v">${school?school.name+'　<span class="d">徒歩'+school.min+'分</span>':'—'}</td></tr>
+      </table>
+    </div>
+
+    ${quakeHtml}
+
+    <div class="sec-h">📝 投資家目線メモ（自動生成の下書き）</div>
+    <div class="note">
+      生活利便：コンビニ${conv?'徒歩'+conv.min+'分':'—'}／スーパー${sup?'徒歩'+sup.min+'分':'—'}／薬局${drug?'徒歩'+drug.min+'分':'—'}。
+      最寄り駅は${station?station.name+'まで徒歩'+station.min+'分':'徒歩圏に駅が少なく車前提エリアの可能性'}、バス停は${bus?'徒歩'+bus.min+'分と近い':'要確認'}。
+      <b>※このメモは自動下書きです。客付け方針は物件タイプに合わせて調整してください。</b>
+    </div>
+
+    <div class="foot">
+      ※国土地理院（住所検索・標高）／OpenStreetMap（周辺施設・駅・バス停）等の公開データを太田塾が自動集計。距離は直線距離基準で実経路と異なる場合があります。OSMは地域により収録が疎な場合があり、実際の施設数はこれより多いことがあります。データの正確性・最新性を保証するものではありません。
+    </div>
+  </div>`;
+  document.getElementById('report').innerHTML=html;
+}
+</script>
+</body></html>
