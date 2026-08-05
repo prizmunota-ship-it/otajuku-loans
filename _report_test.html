@@ -1,330 +1,328 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>太田塾 物件分析レポート</title>
-<script>function gmapsReady(){if(window._initAutocomplete)window._initAutocomplete();}</script>
-<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&libraries=places&language=ja&region=JP&callback=gmapsReady"></script>
+<title>太田塾 物件周辺環境レポート</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&callback=_gload" async defer></script>
 <style>
-.pac-container{z-index:99999;border-radius:8px;margin-top:2px;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f8fafc;font-size:14px;line-height:1.55;}
-.wrap{max-width:960px;margin:0 auto;padding:16px 12px 70px;}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f1f5f9;font-size:14px;line-height:1.55;}
+.wrap{max-width:860px;margin:0 auto;padding:16px 10px 70px;}
 .appbar{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
-.appbar .lg{font-size:18px;font-weight:800;color:#0f766e;letter-spacing:1px;}
+.appbar .lg{font-size:18px;font-weight:800;color:#0f766e;}
 .appbar .tg{font-size:11px;color:#6b7280;}
-.form{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+.form{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;}
 .mainq label{display:block;font-size:12px;font-weight:800;color:#0f766e;margin-bottom:5px;}
 .mainq input{width:100%;padding:13px 14px;border:2px solid #14b8a6;border-radius:10px;font-size:17px;}
-.mainq input:focus{outline:none;box-shadow:0 0 0 3px rgba(20,184,166,.2);}
-.bigbtn{width:100%;margin-top:11px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
-.bigbtn:hover{background:#0d5f58;}.bigbtn:disabled{background:#9ca3af;}
-.qhint{font-size:11.5px;color:#6b7280;margin-top:8px;line-height:1.6;}
-details.opt{margin-top:14px;border-top:1px dashed #e5e7eb;padding-top:12px;}
-details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;list-style:none;}
-details.opt summary::-webkit-details-marker{display:none;}
-details.opt summary::before{content:"▶ ";font-size:10px;}
-details.opt[open] summary::before{content:"▼ ";}
-.optnote{font-size:11px;color:#9ca3af;margin:6px 0 12px;}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px;}
-.fld label{display:block;font-size:11px;font-weight:700;color:#6b7280;margin-bottom:3px;}
-.fld input,.fld select{width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;background:#fff;}
-.fld input:focus,.fld select:focus{outline:none;border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.15);}
-.fld .u{font-size:10px;color:#9ca3af;font-weight:400;}
-.subhd{font-size:11px;font-weight:800;color:#0f766e;margin:12px 0 8px;}
+.opts{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;align-items:center;}
+.opts label{font-size:13px;font-weight:700;color:#374151;display:flex;align-items:center;gap:5px;}
+.opts input[type=checkbox]{width:17px;height:17px;accent-color:#0f766e;}
+.opts select{padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;}
+.bigbtn{width:100%;margin-top:12px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
+.bigbtn:disabled{background:#9ca3af;}
+.qhint{font-size:11px;color:#6b7280;margin-top:8px;}
 .status{display:none;margin:12px 4px;font-size:13px;color:#0f766e;font-weight:700;}
-.status.err{color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;}
+.status.err{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;}
 .toolbar{display:none;margin-bottom:12px;}
 .btn.sec{background:#334155;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:800;cursor:pointer;}
 #report{display:none;}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
-.hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:9px;margin-bottom:14px;}
-.hd .ttl{font-size:20px;font-weight:800;color:#0f766e;letter-spacing:1px;}
-.hd .sub{font-size:11px;color:#6b7280;margin-top:3px;}
-.hd .brand{text-align:right;font-size:10px;color:#6b7280;}
-.hd .brand b{font-size:13px;color:#0f766e;display:block;letter-spacing:2px;}
-.propbar{background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
-.propbar .nm{font-size:15px;font-weight:800;color:#0f766e;}
-.propbar .ad{font-size:12px;color:#374151;}
-.propbar .spec{font-size:10.5px;color:#6b7280;margin-left:auto;text-align:right;}
-.sec-h{font-size:13.5px;font-weight:800;color:#0f766e;margin:18px 0 9px;padding-left:9px;border-left:5px solid #14b8a6;}
-.gmap{width:100%;height:280px;border:1px solid #e5e7eb;border-radius:10px;display:block;background:#eef2f2;}
-.maplink{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
-.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.kpi .t{border:1px solid #e5e7eb;border-radius:10px;padding:11px 13px;}
-.kpi .t.hl{background:#f0fdfa;border-color:#5eead4;}
-.kpi .t .l{font-size:10px;color:#6b7280;font-weight:700;}
-.kpi .t .v{font-size:20px;font-weight:800;color:#0f766e;margin-top:2px;}
-.kpi .t .v small{font-size:10px;color:#6b7280;font-weight:600;}
-.kpi .t .s{font-size:9.5px;color:#9ca3af;margin-top:2px;}
-table.calc{width:100%;border-collapse:collapse;margin-top:6px;}
-table.calc th{background:#eef4fb;font-size:11px;text-align:left;padding:7px 10px;font-weight:700;border:1px solid #e5e7eb;}
-table.calc td{font-size:12.5px;padding:7px 10px;border:1px solid #eef2f2;}
-table.calc td.r{text-align:right;font-weight:700;}table.calc td.k{color:#6b7280;}
-table.calc tr.sum td{background:#f0fdfa;font-weight:800;font-size:13px;}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.fcard{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:9px;}
-.fcard.miss{opacity:.45;}
-.fcard .ic{font-size:16px;width:24px;text-align:center;}
-.fcard .tx{flex:1;min-width:0;}
-.fcard .ct{font-size:9.5px;color:#6b7280;font-weight:700;}
-.fcard .nn{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fcard .ds{font-size:12.5px;font-weight:800;color:#0f766e;white-space:nowrap;}
-.rows{width:100%;border-collapse:collapse;}
-.rows td{padding:5px 6px;border-bottom:1px dashed #e5e7eb;font-size:12px;}
-.rows td.k{color:#6b7280;font-weight:700;width:40%;}
-.rows td.v{font-weight:700;text-align:right;}.rows td .d{color:#0f766e;}
-.haz{width:100%;border-collapse:collapse;}
-.haz th{background:#0f766e;color:#fff;font-size:10px;padding:6px 8px;text-align:left;}
-.haz td{padding:6px 8px;border-bottom:1px solid #eef2f2;font-size:10.5px;}
-.haz td.j{font-weight:800;white-space:nowrap;}
-.badge{display:inline-block;padding:2px 9px;border-radius:11px;font-size:10px;font-weight:800;color:#fff;}
-.b-y{background:#d97706;}.b-n{background:#94a3b8;}
-.loading{color:#0f766e;font-weight:700;font-size:12px;padding:10px 2px;}
-.phase{background:#f1f5f9;border:1px dashed #cbd5e1;border-radius:8px;padding:9px 12px;font-size:10.5px;color:#64748b;margin-top:6px;}
-.foot{margin-top:14px;font-size:9px;color:#9ca3af;line-height:1.5;border-top:1px solid #e5e7eb;padding-top:7px;}
-@media (max-width:640px){
-  .grid{grid-template-columns:1fr 1fr;}
-  .fgrid{grid-template-columns:1fr 1fr;}
-  .two{grid-template-columns:1fr;}
-  .kpi{grid-template-columns:1fr 1fr;}
-  .card{padding:16px 14px;}
+/* ===== REBC風 1項目=1ペーパー ===== */
+.paper{background:#fff;border:1px solid #d7dde3;border-radius:6px;padding:20px 22px 14px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);page-break-inside:avoid;}
+.paper h2{font-size:17px;font-weight:800;color:#1f2937;border-bottom:2px solid #4b7fb5;padding-bottom:6px;margin-bottom:10px;}
+.paper .lead{font-size:12px;color:#374151;margin-bottom:10px;}
+.paper .lead b{color:#0f766e;}
+.map{width:100%;height:300px;border:1px solid #cbd5e1;border-radius:4px;margin-bottom:12px;background:#eef2f2;position:relative;z-index:0;}
+.subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
+table.lst{width:100%;border-collapse:collapse;}
+table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:11px;padding:6px 8px;font-weight:700;color:#374151;text-align:left;}
+table.lst td{border:1px solid #e2e8f0;font-size:12.5px;padding:6px 8px;}
+table.lst td.no{width:34px;text-align:center;font-weight:800;color:#fff;}
+table.lst td.no span{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;font-size:11px;}
+table.lst td.r{text-align:right;white-space:nowrap;font-weight:700;}
+table.lst td.nm{font-weight:700;}
+.note{font-size:9.5px;color:#94a3b8;margin-top:9px;line-height:1.5;border-top:1px solid #eef2f2;padding-top:6px;}
+.gbtn{display:inline-block;margin:2px 0 10px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
+.cover{background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;border:none;}
+.cover h1{font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:4px;}
+.cover .cs{font-size:12px;opacity:.9;}
+.cover .box{background:rgba(255,255,255,.14);border-radius:8px;padding:12px 14px;margin-top:12px;}
+.cover .box .n{font-size:17px;font-weight:800;}
+.cover .box .a{font-size:12.5px;margin-top:2px;}
+.cover .meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;opacity:.95;}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10.5px;margin:6px 0;}
+.legend .c{display:flex;align-items:center;gap:4px;}
+.legend .sw{width:14px;height:14px;border-radius:3px;border:1px solid #cbd5e1;display:inline-block;}
+.kpi3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:10px;}
+.kpi3 .t{border:1px solid #e5e7eb;border-radius:8px;padding:9px 11px;}
+.kpi3 .t .l{font-size:10px;color:#6b7280;font-weight:700;}
+.kpi3 .t .v{font-size:17px;font-weight:800;color:#0f766e;}
+.phase{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;font-size:12px;color:#64748b;}
+table.calc{width:100%;border-collapse:collapse;margin-top:4px;}
+table.calc td{font-size:12.5px;padding:6px 9px;border:1px solid #e2e8f0;}
+table.calc td.r{text-align:right;font-weight:700;}
+table.calc td.k{color:#6b7280;}
+table.calc tr.sum td{background:#f0fdfa;font-weight:800;}
+details.opt{margin-top:12px;border-top:1px dashed #e5e7eb;padding-top:10px;}
+details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px 11px;margin-top:9px;}
+.fld label{display:block;font-size:10.5px;font-weight:700;color:#6b7280;margin-bottom:2px;}
+.fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
+@media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
+@media print{
+ body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
+ .wrap{padding:0;max-width:none;}
+ .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin-bottom:0;}
+ .paper:last-child{page-break-after:auto;}
 }
-@media print{body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}.wrap{padding:0;max-width:none;}.card{border:none;box-shadow:none;padding:0;}}
 </style></head><body>
 <div class="wrap">
-  <div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件分析レポート</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div></div>
 
-  <div class="form">
-    <div class="mainq">
-      <label>物件の住所 または 物件名を入力</label>
-      <input id="paddr" placeholder="例：羽犬塚駅／福岡県筑後市…（入力すると候補が出ます）">
-    </div>
-    <button class="bigbtn" id="go" onclick="gen()">📄 レポートを作成</button>
-    <div class="qhint">住所や物件名・駅名などを入力すると<b>候補が出る</b>ので、<b>候補をタップして選ぶ</b>と正確に特定できます。<br>選んだら「レポートを作成」を押すだけ。地図・周辺環境・生活利便・交通・ハザードが出ます。</div>
-
-    <details class="opt">
-      <summary>収益・積算評価を追加する（任意｜金融機関提出用）</summary>
-      <div class="optnote">物件の面積・想定家賃などが分かれば、収益価格・積算価格も自動計算します（分かる分だけでOK）。</div>
-      <div class="grid">
-        <div class="fld"><label>物件名（任意）</label><input id="pname" placeholder="例：太田塾ハイツ"></div>
-        <div class="fld"><label>物件種別</label><select id="ptype"><option>一棟マンション</option><option>一棟アパート</option><option>一棟ビル</option></select></div>
-        <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨造</option><option value="steel">鉄骨造</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
-        <div class="fld"><label>築年数 <span class="u">年</span></label><input id="page" type="number" value="0"></div>
-        <div class="fld"><label>満室想定年収入 <span class="u">円/年</span></label><input id="pincome" type="number" placeholder="例：7315200"></div>
-        <div class="fld"><label>土地面積 <span class="u">㎡</span></label><input id="pland" type="number" placeholder="例：400"></div>
-        <div class="fld"><label>建物延床 <span class="u">㎡</span></label><input id="pbldg" type="number" placeholder="例：310"></div>
-        <div class="fld"><label>土地単価 <span class="u">円/㎡</span></label><input id="plandprice" type="number" placeholder="例：35000"></div>
-        <div class="fld"><label>想定/売出価格 <span class="u">円</span></label><input id="paskprice" type="number" placeholder="例：94025700"></div>
-      </div>
-      <div class="subhd">▼ 評価前提（通常はそのままでOK）</div>
-      <div class="grid">
-        <div class="fld"><label>還元利回り <span class="u">%</span></label><input id="acap" type="number" step="0.1" value="8.0"></div>
-        <div class="fld"><label>運営経費率 <span class="u">%</span></label><input id="aexp" type="number" step="1" value="20"></div>
-        <div class="fld"><label>建物再調達単価 <span class="u">円/㎡</span></label><input id="arebuild" type="number" placeholder="自動"></div>
-        <div class="fld"><label>法定耐用年数 <span class="u">年</span></label><input id="ausef" type="number" placeholder="自動"></div>
-      </div>
-    </details>
+<div class="form">
+  <div class="mainq"><label>物件名 または 住所を入力</label>
+  <input id="paddr" placeholder="例：キャナルシティ博多／福岡県筑後市羽犬塚○-○"></div>
+  <div class="opts">
+    <label>調査範囲
+      <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
+    </label>
+    <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
+    <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
+    <label><input type="checkbox" id="opt_haz" checked>ハザードマップ</label>
   </div>
+  <button class="bigbtn" id="go" onclick="gen()">📄 レポートを作成</button>
+  <div class="qhint">物件名でも住所でもOK（Google検索で位置特定）。教育・人口・ハザードは✓で掲載を選べます。</div>
+  <details class="opt"><summary>▶ 収益・積算評価を追加（任意）</summary>
+    <div class="grid">
+      <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
+      <div class="fld"><label>築年数</label><input id="page" type="number" value="0"></div>
+      <div class="fld"><label>満室想定年収入 円</label><input id="pincome" type="number"></div>
+      <div class="fld"><label>土地面積 ㎡</label><input id="pland" type="number"></div>
+      <div class="fld"><label>建物延床 ㎡</label><input id="pbldg" type="number"></div>
+      <div class="fld"><label>土地単価 円/㎡</label><input id="plandprice" type="number"></div>
+      <div class="fld"><label>売出価格 円</label><input id="paskprice" type="number"></div>
+      <div class="fld"><label>還元利回り %</label><input id="acap" type="number" step="0.1" value="8.0"></div>
+    </div>
+  </details>
+</div>
 
-  <div class="status" id="status"></div>
-  <div class="toolbar" id="toolbar"><button class="btn sec" onclick="window.print()">🖨 PDFで保存 / 印刷</button></div>
-  <div id="report"></div>
+<div class="status" id="status"></div>
+<div class="toolbar" id="toolbar"><button class="btn sec" onclick="window.print()">🖨 PDFで保存 / 印刷</button></div>
+<div id="report"></div>
 </div>
 
 <script>
+/* ============ 共通 ============ */
 const STRUCT={wood:{name:"木造",rebuild:150000,useful:22},lgs:{name:"軽量鉄骨造",rebuild:150000,useful:27},steel:{name:"鉄骨造",rebuild:180000,useful:34},rc:{name:"RC",rebuild:200000,useful:47},src:{name:"SRC",rebuild:200000,useful:47}};
 const yen=n=>"¥"+Math.round(n).toLocaleString('ja-JP');
-const man=n=>(n/10000).toLocaleString('ja-JP',{maximumFractionDigits:0})+"万円";
-const num=id=>{var el=document.getElementById(id);if(!el)return 0;var v=parseFloat(el.value);return isNaN(v)?0:v;};
-const val=id=>{var el=document.getElementById(id);return el?el.value.trim():'';};
+const num=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?0:v;};
+const val=id=>document.getElementById(id).value.trim();
 const WALK=80;
-function dist(a,b,c,d){const R=6371000,t=Math.PI/180,dLat=(c-a)*t,dLon=(d-b)*t,la1=a*t,la2=c*t;const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
-function walkMin(m){return Math.max(1,Math.round(m/WALK));}
-function setStatus(t,err){var s=document.getElementById('status');s.style.display='block';s.innerHTML=t;s.className='status'+(err?' err':'');}
+function dist(a,b,c,d){const R=6371000,t=Math.PI/180,x=Math.sin((c-a)*t/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin((d-b)*t/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+const wmin=m=>Math.max(1,Math.round(m/WALK));
+function setStatus(t,err){const s=document.getElementById('status');s.style.display='block';s.innerHTML=t;s.className='status'+(err?' err':'');}
 function hideStatus(){document.getElementById('status').style.display='none';}
 
-// ---- Google（物件名・駅名・住所を正確に位置特定）----
-let gGeocoder=null;
-window._initAutocomplete=function(){
-  try{ gGeocoder=new google.maps.Geocoder(); }catch(e){}
-};
-function googleGeocode(q){
-  return new Promise(function(res){
-    if(!gGeocoder){res(null);return;}
-    gGeocoder.geocode({address:q,region:'JP',componentRestrictions:{country:'JP'}},function(r,s){
-      if(s==='OK'&&r&&r[0]){var loc=r[0].geometry.location;res({lat:loc.lat(),lon:loc.lng(),title:r[0].formatted_address,src:'Google'});}
-      else res(null);
+let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
+function googleGeocode(q){return new Promise(res=>{
+  if(!gGeocoder){res(null);return;}
+  gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
+    if(s==='OK'&&r&&r[0]){const L=r[0].geometry.location;res({lat:L.lat(),lon:L.lng(),title:r[0].formatted_address.replace(/^日本、?/,''),src:'Google'});}
+    else res(null);
+  });
+});}
+async function geocode(q){
+  const g=await googleGeocode(q); if(g)return g;
+  try{const r=await fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q));const j=await r.json();
+    if(j&&j.length){const f=j[0];return{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],title:f.properties.title,src:'GSI'};}}catch(e){}
+  return null;
+}
+async function overpass(lat,lon,radius){
+  const q=`[out:json][timeout:50];(
+nwr["shop"="convenience"](around:${radius},${lat},${lon});nwr["shop"="supermarket"](around:${radius},${lat},${lon});
+nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});nwr["shop"="chemist"](around:${radius},${lat},${lon});
+nwr["amenity"="post_office"](around:${radius},${lat},${lon});nwr["amenity"="bank"](around:${radius},${lat},${lon});
+nwr["amenity"="hospital"](around:${radius},${lat},${lon});nwr["amenity"="clinic"](around:${radius},${lat},${lon});
+nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"](around:${radius},${lat},${lon});
+nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="childcare"](around:${radius},${lat},${lon});
+nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});
+nwr["amenity"="social_facility"](around:${radius},${lat},${lon});nwr["amenity"="nursing_home"](around:${radius},${lat},${lon});
+node["railway"="station"](around:${Math.max(radius,2000)},${lat},${lon});node["highway"="bus_stop"](around:${radius},${lat},${lon});
+);out center tags;`;
+  const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+  for(let p=0;p<2;p++)for(const ep of eps){
+    try{const c=new AbortController();const t=setTimeout(()=>c.abort(),25000);
+      const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),signal:c.signal});clearTimeout(t);
+      if(!r.ok)continue;const j=await r.json();return j.elements||[];}catch(e){}}
+  return null;
+}
+async function jshis(lat,lon){try{const r=await fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/meshinfo.geojson?position=${lon},${lat}`);if(!r.ok)return null;const j=await r.json();return (j.features&&j.features[0]&&j.features[0].properties)||null;}catch(e){return null;}}
+
+/* ============ 分類 ============ */
+function classify(els,lat,lon){
+  const L={station:[],bus:[],super:[],conv:[],drug:[],hosp:[],dent:[],post:[],bank:[],police:[],welfare:[],kinder:[],elem:[],jhs:[],hs:[],school:[],park:[]};
+  for(const e of (els||[])){
+    const t=e.tags||{};const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);
+    if(la==null)continue;
+    const item={name:t.name||'（名称なし）',lat:la,lon:lo,d:Math.round(dist(lat,lon,la,lo)),op:t.operator||t.network||''};
+    item.min=wmin(item.d);
+    let k=null;
+    if(t.railway==='station')k='station';
+    else if(t.highway==='bus_stop')k='bus';
+    else if(t.shop==='supermarket')k='super';
+    else if(t.shop==='convenience')k='conv';
+    else if(t.amenity==='pharmacy'||t.shop==='chemist')k='drug';
+    else if(t.amenity==='hospital'||t.amenity==='clinic')k='hosp';
+    else if(t.amenity==='dentist')k='dent';
+    else if(t.amenity==='post_office')k='post';
+    else if(t.amenity==='bank')k='bank';
+    else if(t.amenity==='police')k='police';
+    else if(t.amenity==='social_facility'||t.amenity==='nursing_home')k='welfare';
+    else if(t.amenity==='kindergarten'||t.amenity==='childcare')k='kinder';
+    else if(t.amenity==='school'){
+      if(/小学校/.test(item.name))k='elem';else if(/中学校/.test(item.name))k='jhs';
+      else if(/高校|高等学校/.test(item.name))k='hs';else k='school';}
+    else if(t.leisure==='park')k='park';
+    if(k)L[k].push(item);
+  }
+  for(const k in L)L[k].sort((a,b)=>a.d-b.d);
+  return L;
+}
+
+/* ============ ペーパー描画 ============ */
+let MAPS=[];let mapSeq=0;
+function mapDiv(){mapSeq++;return {id:'m'+mapSeq,html:`<div class="map" id="m${mapSeq}"></div>`};}
+function tbl(items,color,n,extraCol){
+  if(!items.length)return `<div class="phase" style="margin:4px 0">この範囲では見つかりませんでした（地図データ未収録の場合あり）</div>`;
+  let h=`<table class="lst"><tr><th style="width:34px">No</th><th>名称</th>${extraCol?'<th>'+extraCol.h+'</th>':''}<th style="width:88px;text-align:right">直線距離</th><th style="width:76px;text-align:right">徒歩</th></tr>`;
+  items.slice(0,n).forEach((f,i)=>{
+    h+=`<tr><td class="no"><span style="background:${color}">${f.idx}</span></td><td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}<td class="r">${f.d.toLocaleString()}m</td><td class="r">約${f.min}分</td></tr>`;});
+  return h+'</table>';
+}
+function paper(title,lead,body,src){
+  return `<div class="paper"><h2>${title}</h2><div class="lead">${lead}</div>${body}
+  <div class="note">※地図上のアイコンは付近住所に所在することを表すもので、施設の正確な地点を保証するものではありません。距離は直線距離、徒歩は80m/分で算出。<br>※情報出典：${src}</div></div>`;
+}
+function facilityPaper(title,lead,groups,g,radius,src){
+  const m=mapDiv();const markers=[];let body=m.html;let idx=0;
+  for(const gr of groups){
+    const items=gr.items.slice(0,gr.n);
+    items.forEach(f=>{idx++;f.idx=idx;markers.push({lat:f.lat,lon:f.lon,label:idx,color:gr.color,name:f.name});});
+    body+=`<div class="subttl">${gr.label}</div>`+tbl(items,gr.color,gr.n,gr.extraCol);
+  }
+  MAPS.push({id:m.id,center:[g.lat,g.lon],radius,markers});
+  return paper(title,lead,body,src);
+}
+function initMaps(g){
+  MAPS.forEach(cfg=>{
+    const el=document.getElementById(cfg.id);if(!el)return;
+    const map=L.map(cfg.id,{scrollWheelZoom:false,attributionControl:true});
+    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',{attribution:'国土地理院',maxZoom:18}).addTo(map);
+    L.circle(cfg.center,{radius:cfg.radius,color:'#dc2626',weight:1.5,fill:false,dashArray:'4 4'}).addTo(map);
+    L.marker(cfg.center).addTo(map).bindTooltip('調査対象物件',{permanent:false});
+    (cfg.overlays||[]).forEach(u=>L.tileLayer(u,{opacity:.65,maxZoom:17}).addTo(map));
+    (cfg.markers||[]).forEach(mk=>{
+      L.marker([mk.lat,mk.lon],{icon:L.divIcon({className:'',html:`<div style="width:22px;height:22px;border-radius:50%;background:${mk.color};color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:22px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)">${mk.label}</div>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(map).bindTooltip(mk.name);
     });
+    const b=L.latLng(cfg.center).toBounds(cfg.radius*2.2);map.fitBounds(b);
   });
 }
 
-async function geocode(q){
-  const gg=await googleGeocode(q); if(gg) return gg;
-  try{const r=await fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q));const j=await r.json();
-    if(j&&j.length){const f=j[0];return {lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],title:f.properties.title,src:'国土地理院'};}}catch(e){}
-  try{const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ja&countrycodes=jp&q="+encodeURIComponent(q),{headers:{'Accept':'application/json'}});const j=await r.json();
-    if(j&&j.length){const f=j[0];return {lon:parseFloat(f.lon),lat:parseFloat(f.lat),title:f.display_name,src:'OSM'};}}catch(e){}
-  return null;
-}
-async function elevation(lat,lon){try{const r=await fetch("https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon="+lon+"&lat="+lat+"&outtype=JSON");const j=await r.json();return j.elevation;}catch(e){return null;}}
-async function overpass(lat,lon,radius){
-  const q=`[out:json][timeout:50];(nwr["shop"="convenience"](around:${radius},${lat},${lon});nwr["shop"="supermarket"](around:${radius},${lat},${lon});nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});nwr["shop"="chemist"](around:${radius},${lat},${lon});nwr["amenity"="post_office"](around:${radius},${lat},${lon});nwr["amenity"="bank"](around:${radius},${lat},${lon});nwr["amenity"="hospital"](around:${radius},${lat},${lon});nwr["amenity"="clinic"](around:${radius},${lat},${lon});nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"](around:${radius},${lat},${lon});nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});node["railway"="station"](around:${radius},${lat},${lon});node["highway"="bus_stop"](around:${radius},${lat},${lon}););out center tags;`;
-  const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.private.coffee/api/interpreter"];
-  // 2周まで試行（公開サーバーの混雑対策）
-  for(let pass=0;pass<2;pass++){
-    for(const ep of eps){try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),25000);const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),signal:ctl.signal});clearTimeout(to);if(!r.ok)continue;const j=await r.json();return j.elements||[];}catch(e){}}
-  }
-  return null; // null = 取得失敗（空配列と区別）
-}
-async function jshis(lat,lon){try{const r=await fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/meshinfo.geojson?position=${lon},${lat}`);if(!r.ok)return null;const j=await r.json();const p=j.features&&j.features[0]&&j.features[0].properties;return p||null;}catch(e){return null;}}
-function cat(el){const t=el.tags||{};if(t.shop==='convenience')return'conv';if(t.shop==='supermarket')return'super';if(t.amenity==='pharmacy'||t.shop==='chemist')return'drug';if(t.amenity==='post_office')return'post';if(t.amenity==='bank')return'bank';if(t.amenity==='hospital'||t.amenity==='clinic')return'hosp';if(t.amenity==='dentist')return'dent';if(t.amenity==='police')return'police';if(t.amenity==='kindergarten')return'kinder';if(t.amenity==='school')return'school';if(t.leisure==='park')return'park';if(t.railway==='station')return'station';if(t.highway==='bus_stop')return'bus';return null;}
-function nearest(els,lat,lon,key){let best=null,bd=1e9;for(const e of (els||[])){if(cat(e)!==key)continue;const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);if(la==null)continue;const d=dist(lat,lon,la,lo);if(d<bd){bd=d;best={name:(e.tags&&e.tags.name)||'(名称なし)',d:Math.round(d),min:walkMin(d)};}}return best;}
-function fcard(ic,ct,o){if(!o)return `<div class="fcard miss"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn">—</div></div><div class="ds">—</div></div>`;return `<div class="fcard"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn" title="${o.name}">${o.name}</div></div><div class="ds">徒歩${o.min}分</div></div>`;}
-function stars(n){return '★★★★★☆☆☆☆☆'.slice(5-n,10-n);}
-
+/* ============ メイン ============ */
 async function gen(){
-  const query=val('paddr')||val('pname');
-  if(!query){setStatus('🙏 物件の住所（または物件名）を入力してください。',true);return;}
+  const query=val('paddr');
+  if(!query){setStatus('🙏 物件名または住所を入力してください',true);return;}
   document.getElementById('go').disabled=true;
-  document.getElementById('report').style.display='none';
-  document.getElementById('toolbar').style.display='none';
-  setStatus('🔍 「'+query+'」の位置を調べています…');
-
+  document.getElementById('report').style.display='none';document.getElementById('toolbar').style.display='none';
+  MAPS=[];mapSeq=0;
+  setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
   const g=await geocode(query);
-  if(!g){
-    setStatus('「'+query+'」の位置が特定できませんでした🙏<br>お手数ですが <b>住所（市区町村＋丁目まで）</b> を入力してもう一度お試しください。<br>（物件名だけだと地図データに無く見つからないことがあります）',true);
-    document.getElementById('go').disabled=false;return;
-  }
+  if(!g){setStatus('「'+query+'」が見つかりませんでした🙏 住所（市区町村＋番地）でもう一度お試しください。',true);document.getElementById('go').disabled=false;return;}
+  const radius=parseInt(val('pradius'))||1500;
+  setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
+  const [els,js]=await Promise.all([overpass(g.lat,g.lon,radius),document.getElementById('opt_haz').checked?jshis(g.lat,g.lon):null]);
+  if(els===null){setStatus('⚠️ 周辺データの取得が混み合っています。30秒ほど待って、もう一度「レポートを作成」を押してください。',true);document.getElementById('go').disabled=false;return;}
   hideStatus();
-  // ①即時描画（地図＋骨組み＋収益/積算）
-  renderShell(g);
+  const F=classify(els,g.lat,g.lon);
+  const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+  const name=query, addr=g.title;
+  let h='';
+
+  /* --- 表紙 --- */
+  h+=`<div class="paper cover"><h1>物件周辺環境レポート</h1><div class="cs">交通・生活・教育・防災 立地調査資料</div>
+    <div class="box"><div class="n">${name}</div><div class="a">📍 ${addr}</div></div>
+    <div class="meta"><span>調査対象範囲：${radius.toLocaleString()}m</span><span>発行日：${dstr}</span><span>調査座標：${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}</span><span>太田塾 物件分析</span></div></div>`;
+
+  /* --- 収益・積算（任意） --- */
+  const income=num('pincome'),land=num('pland'),bldg=num('pbldg');
+  if(income>0||land>0||bldg>0){
+    const st=STRUCT[val('pstruct')||'rc'],age=num('page'),lp=num('plandprice'),ask=num('paskprice'),cap=num('acap')||8;
+    const noi=income*0.8,sp=cap>0?noi/(cap/100):0;
+    const remain=Math.max(st.useful-age,0),bv=st.rebuild*bldg*(st.useful>0?remain/st.useful:0),kp=lp*land+bv;
+    let body=`<div class="kpi3"><div class="t"><div class="l">収益価格（還元利回り${cap}%）</div><div class="v">${yen(sp)}</div></div>
+      <div class="t"><div class="l">積算価格</div><div class="v">${yen(kp)}</div></div>
+      <div class="t"><div class="l">${ask>0?'表面利回り（売出'+yen(ask)+'）':'想定表面利回り'}</div><div class="v">${ask>0?(income/ask*100).toFixed(2):(sp>0?(income/sp*100).toFixed(2):'—')}%</div></div></div>
+      <table class="calc">
+      <tr><td class="k">満室想定年収入</td><td class="r">${yen(income)}</td><td class="k">運営純収益（経費20%控除）</td><td class="r">${yen(noi)}</td></tr>
+      <tr><td class="k">土地評価（${yen(lp)}/㎡×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
+      <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>`;
+    h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
+  }
+
+  /* --- 最寄り駅 --- */
+  h+=facilityPaper('最寄り駅情報','調査対象範囲近辺の駅までの距離と徒歩分数（距離順）',
+    [{label:'鉄道駅',color:'#2563eb',items:F.station,n:5,extraCol:{h:'路線・事業者'}}],g,radius,'OpenStreetMap');
+  /* --- バス停 --- */
+  h+=facilityPaper('バス停情報','調査対象範囲近辺のバス停留所（距離順）',
+    [{label:'バス停留所',color:'#d97706',items:F.bus,n:6,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
+  /* --- ショッピング --- */
+  h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
+    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:3}],g,radius,'OpenStreetMap');
+  /* --- 医療 --- */
+  h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
+    [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:4},{label:'歯科',color:'#9333ea',items:F.dent,n:3}],g,radius,'OpenStreetMap');
+  /* --- 生活・公共 --- */
+  h+=facilityPaper('生活・公共施設','調査対象範囲近辺の公共施設・金融機関（距離順）',
+    [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:3},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'OpenStreetMap');
+  /* --- 福祉 --- */
+  h+=facilityPaper('福祉施設','調査対象範囲近辺の福祉施設（距離順）',
+    [{label:'福祉施設（介護・支援等）',color:'#7c3aed',items:F.welfare,n:5}],g,radius,'OpenStreetMap');
+  /* --- 教育・公園（選択） --- */
+  if(document.getElementById('opt_edu').checked){
+    h+=facilityPaper('教育施設・公園','調査対象範囲近辺の教育施設と公園（距離順）※ファミリー向け物件の検討資料',
+      [{label:'幼稚園・保育所',color:'#f59e0b',items:F.kinder,n:3},{label:'小学校',color:'#16a34a',items:F.elem,n:3},{label:'中学校',color:'#2563eb',items:F.jhs,n:3},{label:'高校',color:'#7c3aed',items:F.hs,n:2},{label:'公園',color:'#059669',items:F.park,n:3}],g,radius,'OpenStreetMap');
+  }
+  /* --- 人口（選択） --- */
+  if(document.getElementById('opt_pop').checked){
+    h+=paper('年齢別人口統計','調査対象エリアの人口構成',
+      `<div class="phase">📊 年齢別人口統計（国勢調査）は現在データ連携準備中です。<br>次回アップデートで、エリアの人口総数・年齢構成・世帯数を自動掲載予定です。</div>
+      <a class="gbtn" href="https://jstatmap.e-stat.go.jp/" target="_blank" rel="noopener">📈 地図で見る統計（jSTAT MAP）で確認 ↗</a>`,'総務省統計局 国勢調査（連携予定）');
+  }
+  /* --- ハザード（選択） --- */
+  if(document.getElementById('opt_haz').checked){
+    const m1=mapDiv();MAPS.push({id:m1.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png']});
+    const m2=mapDiv();MAPS.push({id:m2.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png']});
+    let jsRow='';
+    if(js){const p=js.T30_I55_PS||js.T30_I60_PS;if(p!=null)jsRow=`<table class="calc" style="margin:8px 0"><tr><td class="k">30年以内に震度6強以上の地震が発生する確率</td><td class="r">${(p*100).toFixed(1)}%（防災科研 J-SHIS）</td></tr></table>`;}
+    let body=`<div class="subttl">洪水浸水想定区域（想定最大規模）</div>${m1.html}
+      <div class="legend"><span class="c"><span class="sw" style="background:#F7F5A9"></span>0.5m未満</span><span class="c"><span class="sw" style="background:#FFB7B7"></span>0.5〜3m</span><span class="c"><span class="sw" style="background:#FF9191"></span>3〜5m</span><span class="c"><span class="sw" style="background:#F285C9"></span>5〜10m</span><span class="c"><span class="sw" style="background:#DC7ADC"></span>10〜20m</span><span class="c"><span class="sw" style="background:#B40068"></span>20m以上</span></div>
+      <div class="subttl">土砂災害警戒区域（土石流・急傾斜地・地すべり）</div>${m2.html}
+      <div class="legend"><span class="c"><span class="sw" style="background:#FBD7A3"></span>警戒区域（黄）</span><span class="c"><span class="sw" style="background:#F5B0A0"></span>特別警戒区域（赤）</span><span class="c">色が表示されなければ区域外</span></div>
+      ${jsRow}
+      <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`;
+    h+=paper('ハザード関連情報','洪水浸水想定・土砂災害警戒区域（国土交通省 ハザードマップポータル公式データ）',body,'国土交通省 ハザードマップポータルサイト／防災科学技術研究所 J-SHIS');
+  }
+
+  /* --- Googleマップ確認リンク --- */
+  h+=`<div class="paper"><h2>位置の確認（Googleマップ）</h2>
+    <iframe style="width:100%;height:300px;border:1px solid #cbd5e1;border-radius:4px" loading="lazy" src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
+    <a class="gbtn" style="margin-top:8px" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>
+    <div class="note">※本レポートは公開データ（Google・国土地理院・OpenStreetMap・国土交通省・防災科研）に基づき太田塾が自動作成したものです。データの正確性・最新性を保証するものではありません。</div></div>`;
+
+  document.getElementById('report').innerHTML=h;
   document.getElementById('report').style.display='block';
   document.getElementById('toolbar').style.display='block';
-  // ②周辺データを取得して差し込み
-  const nz=document.getElementById('neigh-zone');
-  nz.innerHTML='<div class="loading">🛰️ 周辺の施設・交通・ハザードを取得中…（10〜30秒）</div>';
-  const [els,elev,js]=await Promise.all([overpass(g.lat,g.lon,1200),elevation(g.lat,g.lon),jshis(g.lat,g.lon)]);
-  fillNeighborhood(g,els,elev,js);
-  document.getElementById('go').disabled=false;
-}
-
-function finData(){
-  const income=num('pincome'),land=num('pland'),bldg=num('pbldg');
-  const has=(income>0||land>0||bldg>0);
-  if(!has)return null;
-  const sk=val('pstruct')||'rc',st=STRUCT[sk],age=num('page');
-  const landPrice=num('plandprice'),ask=num('paskprice');
-  const cap=num('acap')||8,expRate=num('aexp')||0;
-  const rebuild=num('arebuild')||st.rebuild,useful=num('ausef')||st.useful;
-  const gpi=income,noi=gpi*(1-expRate/100);
-  const shuekiPrice=cap>0?noi/(cap/100):0;
-  const surfaceYield=shuekiPrice>0?gpi/shuekiPrice*100:0;
-  const landVal=landPrice*land,remain=Math.max(useful-age,0),bldgRebuild=rebuild*bldg;
-  const bldgVal=useful>0?bldgRebuild*(remain/useful):0,sekisanPrice=landVal+bldgVal;
-  return {st,age,land,bldg,gpi,noi,shuekiPrice,surfaceYield,expRate,cap,landPrice,rebuild,useful,remain,bldgRebuild,landVal,bldgVal,sekisanPrice,ask,ptype:val('ptype')};
-}
-
-function renderShell(g){
-  const pname=val('pname')||val('paddr')||g.title;
-  const paddr=g.title;
-  const fin=finData();
-  const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
-
-  let specLine = fin ? `${fin.ptype}／${fin.st.name}／築${fin.age}年<br>土地${fin.land||'—'}㎡・建物${fin.bldg||'—'}㎡` : '住所ベースの周辺環境レポート';
-
-  // サマリー
-  let sumTiles='';
-  if(fin){
-    const y=fin.ask>0?fin.gpi/fin.ask*100:fin.surfaceYield;
-    sumTiles=`<div class="t hl"><div class="l">収益価格</div><div class="v">${man(fin.shuekiPrice)}</div><div class="s">収益還元法</div></div>
-      <div class="t hl"><div class="l">積算価格</div><div class="v">${man(fin.sekisanPrice)}</div><div class="s">積算法</div></div>
-      <div class="t"><div class="l">${fin.ask>0?'表面利回り(取得)':'想定表面利回り'}</div><div class="v">${y.toFixed(2)}<small>%</small></div></div>`;
-  }
-  const sumHtml=`<div class="sec-h">📊 ひと目サマリー</div>
-    <div class="kpi">${sumTiles}
-      <div class="t"><div class="l">最寄り駅</div><div class="v" id="kpi-station" style="font-size:15px">…</div></div>
-      <div class="t"><div class="l">生活利便</div><div class="v" id="kpi-conv" style="color:#f59e0b">…</div></div>
-      <div class="t"><div class="l">標高</div><div class="v" id="kpi-elev" style="font-size:15px">…</div></div>
-    </div>`;
-
-  // 収益/積算
-  let finHtml='';
-  if(fin){
-    let askBlock='';
-    if(fin.ask>0){const vsS=fin.shuekiPrice>0?(fin.ask/fin.shuekiPrice*100):0,vsK=fin.sekisanPrice>0?(fin.ask/fin.sekisanPrice*100):0;
-      askBlock=`<div class="sec-h">③ 総合評価</div><table class="calc">
-        <tr><td class="k">想定/売出価格</td><td class="r">${yen(fin.ask)}</td></tr>
-        <tr><td class="k">表面利回り（取得価格ベース）</td><td class="r">${(fin.gpi/fin.ask*100).toFixed(2)}%</td></tr>
-        <tr><td class="k">対 収益価格 ／ 対 積算価格</td><td class="r">${vsS.toFixed(0)}% ／ ${vsK.toFixed(0)}%</td></tr></table>`;}
-    finHtml=`<div class="sec-h">① 収益評価（収益還元法）</div>
-      <table class="calc">
-        <tr><td class="k">満室想定年収入（GPI）</td><td class="r">${yen(fin.gpi)}</td></tr>
-        <tr><td class="k">△ 運営経費（${fin.expRate}%）</td><td class="r">− ${yen(fin.gpi*fin.expRate/100)}</td></tr>
-        <tr><td class="k">運営純収益（NOI）</td><td class="r">${yen(fin.noi)}</td></tr>
-        <tr><td class="k">還元利回り</td><td class="r">${fin.cap.toFixed(1)}%</td></tr>
-        <tr class="sum"><td>収益価格（NOI ÷ 還元利回り）</td><td class="r">${yen(fin.shuekiPrice)}</td></tr></table>
-      <div class="sec-h">② 積算評価（積算法）</div>
-      <table class="calc"><tr><th>区分</th><th>算式</th><th style="text-align:right">評価額</th></tr>
-        <tr><td class="k">土地</td><td class="k">${yen(fin.landPrice)}/㎡ × ${fin.land||0}㎡</td><td class="r">${yen(fin.landVal)}</td></tr>
-        <tr><td class="k">建物(再調達)</td><td class="k">${yen(fin.rebuild)}/㎡ × ${fin.bldg||0}㎡</td><td class="r">${yen(fin.bldgRebuild)}</td></tr>
-        <tr><td class="k">建物(残存)</td><td class="k">残存${fin.remain}年/耐用${fin.useful}年</td><td class="r">${yen(fin.bldgVal)}</td></tr>
-        <tr class="sum"><td colspan="2">積算価格</td><td class="r">${yen(fin.sekisanPrice)}</td></tr></table>
-      ${fin.landPrice<=0?'<div class="phase">⚠️ 土地単価を入れると土地評価が計算されます（Phase2でreinfolib自動取得予定）。</div>':''}
-      ${askBlock}`;
-  }
-
-  document.getElementById('report').innerHTML=`<div class="card">
-    <div class="hd"><div><div class="ttl">物件分析レポート</div><div class="sub">住所ベースの立地分析${fin?'＋収益/積算評価':''}</div></div>
-      <div class="brand"><b>太田塾</b>物件分析<br>発行日 ${dstr}</div></div>
-    <div class="propbar"><div><div class="nm">${pname}</div><div class="ad">${paddr}</div></div>
-      <div class="spec">${specLine}</div></div>
-    <div class="sec-h">🗺️ 地図（Googleマップ）</div>
-    <iframe class="gmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
-    <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>
-    ${sumHtml}
-    ${finHtml}
-    <div id="neigh-zone"></div>
-    <div class="sec-h">⑦ 参考データ（Phase2で自動取得）</div>
-    <div class="phase">🔧 類似取引事例・地価公示・路線価・用途地域・人口統計・ハザード10種＝reinfolib/国交省データ連携で順次追加予定。</div>
-    <div class="foot">※本レポートは公開データ（国土地理院・OpenStreetMap・防災科研 等）と入力値・一般的評価手法に基づく試算です。距離は直線距離基準。実際の金融機関評価・市場価格を保証するものではありません。／ 太田塾 物件分析レポート（β）</div>
-  </div>`;
-}
-
-function fillNeighborhood(g,els,elev,js){
-  const N=k=>nearest(els,g.lat,g.lon,k);
-  const conv=N('conv'),sup=N('super'),drug=N('drug'),post=N('post'),bank=N('bank'),hosp=N('hosp'),dent=N('dent'),police=N('police'),kinder=N('kinder'),school=N('school'),park=N('park'),station=N('station'),bus=N('bus');
-  const conv_score=Math.min(5,(conv?1:0)+(sup?1:0)+(drug?1:0)+(post?1:0)+((hosp||dent)?1:0));
-  // サマリー更新
-  document.getElementById('kpi-station').innerHTML=station?'徒歩'+station.min+'分':'—';
-  document.getElementById('kpi-conv').innerHTML=stars(conv_score);
-  document.getElementById('kpi-elev').innerHTML=elev!=null?elev+'m':'—';
-
-  let body='';
-  if(els===null){
-    body=`<div class="sec-h">④ 周辺環境</div><div class="phase">⚠️ 周辺施設データの取得に失敗しました（回線混雑）。もう一度「レポートを作成」を押すと取得できることがあります。地図・評価は上記の通り有効です。</div>`;
-  }else{
-    let quake='';
-    if(js){const p6=js.T30_I55_PS||js.T30_I60_PS;if(p6!=null)quake=`<tr><td class="j">地震(30年 震度6強+)</td><td><span class="badge b-y">${(p6*100).toFixed(1)}%</span></td><td>防災科研 J-SHIS</td></tr>`;}
-    body=`<div class="sec-h">④ 生活利便（最寄り施設・徒歩分）</div>
-      <div class="fgrid">
-        ${fcard('🏪','コンビニ',conv)}${fcard('🛒','スーパー',sup)}${fcard('💊','ドラッグ/薬局',drug)}
-        ${fcard('📮','郵便局',post)}${fcard('🏧','銀行',bank)}${fcard('🚓','交番',police)}
-        ${fcard('🏥','病院',hosp)}${fcard('🦷','歯科',dent)}${fcard('🏞️','公園',park)}</div>
-      <div class="sec-h">⑤ 交通・教育</div>
-      <div class="two">
-        <table class="rows">
-          <tr><td class="k">最寄り駅</td><td class="v">${station?station.name+'　<span class="d">'+station.d+'m(徒歩'+station.min+'分)</span>':'—'}</td></tr>
-          <tr><td class="k">最寄りバス停</td><td class="v">${bus?bus.name+'　<span class="d">徒歩'+bus.min+'分</span>':'—'}</td></tr></table>
-        <table class="rows">
-          <tr><td class="k">保育/幼稚園</td><td class="v">${kinder?kinder.name+'　<span class="d">徒歩'+kinder.min+'分</span>':'—'}</td></tr>
-          <tr><td class="k">学校</td><td class="v">${school?school.name+'　<span class="d">徒歩'+school.min+'分</span>':'—'}</td></tr></table></div>
-      <div class="sec-h">⑥ 防災・ハザード</div>
-      <table class="haz"><tr><th style="width:26%">項目</th><th style="width:16%">判定</th><th>備考</th></tr>
-      ${quake}
-      <tr><td class="j">浸水・液状化・活断層 ほか</td><td><span class="badge b-n">Phase2</span></td><td>国交省ポリゴンをGAS経由で追加予定</td></tr></table>`;
-  }
-  document.getElementById('neigh-zone').innerHTML=body;
+  setTimeout(()=>initMaps(g),50);
 }
 </script>
 </body></html>
