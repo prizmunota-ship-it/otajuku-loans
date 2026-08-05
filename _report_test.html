@@ -65,6 +65,15 @@ table.calc td.k{color:#6b7280;}
 table.calc tr.sum td{background:#f0fdfa;font-weight:800;}
 details.opt{margin-top:12px;border-top:1px dashed #e5e7eb;padding-top:10px;}
 details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;}
+.subhd2{font-size:11px;font-weight:800;color:#374151;margin:10px 0 6px;}
+.cmprow{display:grid;grid-template-columns:2fr .7fr .9fr 1.1fr 30px;gap:6px;margin-bottom:6px;}
+.cmprow input{padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:100%;}
+.cmprow .del{border:none;background:#fee2e2;color:#b91c1c;border-radius:7px;font-weight:800;cursor:pointer;}
+.addrow{border:1px dashed #14b8a6;background:#f0fdfa;color:#0f766e;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:8px;}
+table.lst tr.own td{background:#dcfce7;font-weight:800;}
+.pos-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.75;color:#78350f;margin-top:10px;}
+.pos-note b{color:#0f766e;}
+.appeal{color:#b91c1c;font-weight:800;font-size:12.5px;margin-top:8px;}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px 11px;margin-top:9px;}
 .fld label{display:block;font-size:10.5px;font-weight:700;color:#6b7280;margin-bottom:2px;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
@@ -104,6 +113,20 @@ details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;
       <div class="fld"><label>還元利回り %</label><input id="acap" type="number" step="0.1" value="8.0"></div>
     </div>
   </details>
+  <details class="opt"><summary>▶ 類似物件の募集状況を追加（任意｜賃料の妥当性資料）</summary>
+    <div class="qhint" style="margin:6px 0 8px">SUUMO・アットホーム等で調べた「現在募集中」の類似物件を入れると、比較表と<b>賃料設定の考え方（本物件が有利に見える分析文）</b>を自動作成します。</div>
+    <div class="subhd2">本物件の想定</div>
+    <div class="grid">
+      <div class="fld"><label>間取り</label><input id="pmadori" placeholder="例：1LDK"></div>
+      <div class="fld"><label>専有面積 ㎡</label><input id="pmens" type="number" step="0.01" placeholder="例：41.4"></div>
+      <div class="fld"><label>月額総額 下限 円</label><input id="prentmin" type="number" placeholder="例：63500"></div>
+      <div class="fld"><label>月額総額 上限 円</label><input id="prentmax" type="number" placeholder="例：66000"></div>
+    </div>
+    <div class="subhd2">比較物件（現在募集中）— 物件名／築年／面積㎡／月額総額（賃料＋共益費）円</div>
+    <div id="cmpRows"></div>
+    <button type="button" class="addrow" onclick="addCmpRow()">＋ 比較物件の行を追加</button>
+    <div class="fld"><label>アピールポイント（任意・赤字で強調）</label><input id="pappeal" placeholder="例：駅徒歩5分以内の築浅は募集なし＝競合不在"></div>
+  </details>
 </div>
 
 <div class="status" id="status"></div>
@@ -124,6 +147,43 @@ function setStatus(t,err){const s=document.getElementById('status');s.style.disp
 function hideStatus(){document.getElementById('status').style.display='none';}
 
 let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
+/* --- 類似物件 行UI --- */
+function addCmpRow(v){
+  const d=document.createElement('div');d.className='cmprow';
+  d.innerHTML=`<input placeholder="物件名（所在）" value="${v&&v[0]||''}"><input type="number" placeholder="築年" value="${v&&v[1]||''}"><input type="number" step="0.01" placeholder="面積㎡" value="${v&&v[2]||''}"><input type="number" placeholder="月額円" value="${v&&v[3]||''}"><button type="button" class="del" onclick="this.parentNode.remove()">✕</button>`;
+  document.getElementById('cmpRows').appendChild(d);
+}
+window.addEventListener('DOMContentLoaded',()=>{for(let i=0;i<3;i++)addCmpRow();});
+function collectCmp(){
+  const rows=[];document.querySelectorAll('#cmpRows .cmprow').forEach(r=>{
+    const c=r.querySelectorAll('input');
+    const name=c[0].value.trim(),age=parseFloat(c[1].value),men=parseFloat(c[2].value),total=parseFloat(c[3].value);
+    if(name&&total>0)rows.push({name,age:isNaN(age)?null:age,men:isNaN(men)?null:men,total});
+  });return rows;
+}
+function manEn(n){return (n/10000).toLocaleString('ja-JP',{maximumFractionDigits:1})+'万円';}
+function buildCompPaper(cmp,own,appeal,stationTxt,age,addr){
+  const today=new Date();
+  let rows='';cmp.forEach(c=>{rows+=`<tr><td class="nm">${c.name}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
+  const ownLabel=age<=0?'新築':'築'+age+'年';
+  const ownRent=own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円';
+  rows+=`<tr class="own"><td class="nm">本物件（${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}${stationTxt}）</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
+  /* 自動分析 */
+  const totals=cmp.map(c=>c.total),rMin=Math.min(...totals),rMax=Math.max(...totals);
+  const ownMid=(own.min+own.max)/2;
+  let pos; if(own.max<rMin)pos='周辺募集帯を下回る手堅い水準';
+  else if(ownMid<=rMin+(rMax-rMin)*0.45)pos='周辺募集帯の中でも控えめな位置';
+  else if(ownMid<=rMax)pos='周辺募集帯の範囲内';
+  else pos='周辺上位帯の水準';
+  const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
+  const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円を維持しており経年下落は限定的。`:'';
+  const strength=(age<=0?'新築':'築浅')+(stationTxt?'×駅近':'')+'の物件力';
+  const note=`<div class="pos-note">【賃料設定の考え方】周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
+  const body=`<div class="subttl">同賃料帯の募集実例（現在募集中）</div>
+    <table class="lst"><tr><th>物件名（所在）</th><th style="width:70px;text-align:right">築年</th><th style="width:80px;text-align:right">面積</th><th style="width:110px;text-align:right">月額総額</th></tr>${rows}</table>${note}`;
+  return paper('類似物件の募集状況','本物件と同賃料帯の募集実例との比較（賃料設定の妥当性）',body,
+    `SUUMO・アットホーム等（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
+}
 function googleGeocode(q){return new Promise(res=>{
   if(!gGeocoder){res(null);return;}
   gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
@@ -267,6 +327,14 @@ async function gen(){
       <tr><td class="k">土地評価（${yen(lp)}/㎡×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
       <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>`;
     h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
+  }
+
+  /* --- 類似物件の募集状況（任意） --- */
+  const cmp=collectCmp(),rmin=num('prentmin'),rmax=num('prentmax');
+  if(cmp.length>=1&&rmin>0){
+    const st0=F.station[0];
+    const stationTxt=st0?'・'+st0.name+'駅 徒歩'+st0.min+'分':'';
+    h+=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:num('pmens')},val('pappeal'),stationTxt,num('page'),g.title);
   }
 
   /* --- 最寄り駅 --- */
