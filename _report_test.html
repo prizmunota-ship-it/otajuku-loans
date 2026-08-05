@@ -4,43 +4,49 @@
 <title>太田塾 物件分析レポート</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f8fafc;font-size:13px;line-height:1.55;}
-.wrap{max-width:960px;margin:0 auto;padding:18px 14px 70px;}
-.appbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f8fafc;font-size:14px;line-height:1.55;}
+.wrap{max-width:960px;margin:0 auto;padding:16px 12px 70px;}
+.appbar{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
 .appbar .lg{font-size:18px;font-weight:800;color:#0f766e;letter-spacing:1px;}
 .appbar .tg{font-size:11px;color:#6b7280;}
 .form{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:16px;}
+.mainq label{display:block;font-size:12px;font-weight:800;color:#0f766e;margin-bottom:5px;}
+.mainq input{width:100%;padding:13px 14px;border:2px solid #14b8a6;border-radius:10px;font-size:17px;}
+.mainq input:focus{outline:none;box-shadow:0 0 0 3px rgba(20,184,166,.2);}
+.bigbtn{width:100%;margin-top:11px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
+.bigbtn:hover{background:#0d5f58;}.bigbtn:disabled{background:#9ca3af;}
+.qhint{font-size:11.5px;color:#6b7280;margin-top:8px;line-height:1.6;}
+details.opt{margin-top:14px;border-top:1px dashed #e5e7eb;padding-top:12px;}
+details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;list-style:none;}
+details.opt summary::-webkit-details-marker{display:none;}
+details.opt summary::before{content:"▶ ";font-size:10px;}
+details.opt[open] summary::before{content:"▼ ";}
+.optnote{font-size:11px;color:#9ca3af;margin:6px 0 12px;}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 12px;}
 .fld label{display:block;font-size:11px;font-weight:700;color:#6b7280;margin-bottom:3px;}
-.fld input,.fld select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;}
+.fld input,.fld select{width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;background:#fff;}
 .fld input:focus,.fld select:focus{outline:none;border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.15);}
 .fld .u{font-size:10px;color:#9ca3af;font-weight:400;}
-.span2{grid-column:span 2;}
-.assump{margin-top:12px;padding-top:12px;border-top:1px dashed #e5e7eb;}
-.assump .tt{font-size:11px;font-weight:800;color:#0f766e;margin-bottom:8px;}
-.actions{display:flex;align-items:center;gap:10px;margin-top:14px;}
-.btn{background:#0f766e;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:800;cursor:pointer;}
-.btn:hover{background:#0d5f58;}.btn:disabled{background:#9ca3af;}.btn.sec{background:#334155;}
-.hint{font-size:10.5px;color:#9ca3af;margin:0;}
-.status{display:none;margin:12px 0;font-size:12px;color:#0f766e;font-weight:700;}
-.status.err{color:#dc2626;}
+.subhd{font-size:11px;font-weight:800;color:#0f766e;margin:12px 0 8px;}
+.status{display:none;margin:12px 4px;font-size:13px;color:#0f766e;font-weight:700;}
+.status.err{color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;}
 .toolbar{display:none;margin-bottom:12px;}
+.btn.sec{background:#334155;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:800;cursor:pointer;}
 #report{display:none;}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0f766e;padding-bottom:9px;margin-bottom:14px;}
-.hd .ttl{font-size:21px;font-weight:800;color:#0f766e;letter-spacing:1px;}
+.hd .ttl{font-size:20px;font-weight:800;color:#0f766e;letter-spacing:1px;}
 .hd .sub{font-size:11px;color:#6b7280;margin-top:3px;}
 .hd .brand{text-align:right;font-size:10px;color:#6b7280;}
 .hd .brand b{font-size:13px;color:#0f766e;display:block;letter-spacing:2px;}
-.propbar{background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;}
+.propbar{background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
 .propbar .nm{font-size:15px;font-weight:800;color:#0f766e;}
 .propbar .ad{font-size:12px;color:#374151;}
 .propbar .spec{font-size:10.5px;color:#6b7280;margin-left:auto;text-align:right;}
 .sec-h{font-size:13.5px;font-weight:800;color:#0f766e;margin:18px 0 9px;padding-left:9px;border-left:5px solid #14b8a6;}
-.gmap{width:100%;height:280px;border:1px solid #e5e7eb;border-radius:10px;display:block;}
-.maplink{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:5px 12px;border-radius:7px;}
+.gmap{width:100%;height:280px;border:1px solid #e5e7eb;border-radius:10px;display:block;background:#eef2f2;}
+.maplink{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
 .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.kpi.k6{grid-template-columns:repeat(3,1fr);}
 .kpi .t{border:1px solid #e5e7eb;border-radius:10px;padding:11px 13px;}
 .kpi .t.hl{background:#f0fdfa;border-color:#5eead4;}
 .kpi .t .l{font-size:10px;color:#6b7280;font-weight:700;}
@@ -49,10 +55,9 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .kpi .t .s{font-size:9.5px;color:#9ca3af;margin-top:2px;}
 table.calc{width:100%;border-collapse:collapse;margin-top:6px;}
 table.calc th{background:#eef4fb;font-size:11px;text-align:left;padding:7px 10px;font-weight:700;border:1px solid #e5e7eb;}
-table.calc td{font-size:12px;padding:7px 10px;border:1px solid #eef2f2;}
+table.calc td{font-size:12.5px;padding:7px 10px;border:1px solid #eef2f2;}
 table.calc td.r{text-align:right;font-weight:700;}table.calc td.k{color:#6b7280;}
 table.calc tr.sum td{background:#f0fdfa;font-weight:800;font-size:13px;}
-.formula{font-size:10px;color:#9ca3af;margin-top:4px;}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .fcard{border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:9px;}
@@ -60,10 +65,10 @@ table.calc tr.sum td{background:#f0fdfa;font-weight:800;font-size:13px;}
 .fcard .ic{font-size:16px;width:24px;text-align:center;}
 .fcard .tx{flex:1;min-width:0;}
 .fcard .ct{font-size:9.5px;color:#6b7280;font-weight:700;}
-.fcard .nn{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fcard .ds{font-size:12px;font-weight:800;color:#0f766e;white-space:nowrap;}
+.fcard .nn{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fcard .ds{font-size:12.5px;font-weight:800;color:#0f766e;white-space:nowrap;}
 .rows{width:100%;border-collapse:collapse;}
-.rows td{padding:5px 6px;border-bottom:1px dashed #e5e7eb;font-size:11.5px;}
+.rows td{padding:5px 6px;border-bottom:1px dashed #e5e7eb;font-size:12px;}
 .rows td.k{color:#6b7280;font-weight:700;width:40%;}
 .rows td.v{font-weight:700;text-align:right;}.rows td .d{color:#0f766e;}
 .haz{width:100%;border-collapse:collapse;}
@@ -71,39 +76,54 @@ table.calc tr.sum td{background:#f0fdfa;font-weight:800;font-size:13px;}
 .haz td{padding:6px 8px;border-bottom:1px solid #eef2f2;font-size:10.5px;}
 .haz td.j{font-weight:800;white-space:nowrap;}
 .badge{display:inline-block;padding:2px 9px;border-radius:11px;font-size:10px;font-weight:800;color:#fff;}
-.b-g{background:#16a34a;}.b-y{background:#d97706;}.b-r{background:#dc2626;}.b-n{background:#94a3b8;}
-.verdict{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 15px;font-size:11.5px;line-height:1.7;color:#78350f;margin-top:6px;}
-.verdict b{color:#0f766e;}
+.b-y{background:#d97706;}.b-n{background:#94a3b8;}
+.loading{color:#0f766e;font-weight:700;font-size:12px;padding:10px 2px;}
 .phase{background:#f1f5f9;border:1px dashed #cbd5e1;border-radius:8px;padding:9px 12px;font-size:10.5px;color:#64748b;margin-top:6px;}
 .foot{margin-top:14px;font-size:9px;color:#9ca3af;line-height:1.5;border-top:1px solid #e5e7eb;padding-top:7px;}
+@media (max-width:640px){
+  .grid{grid-template-columns:1fr 1fr;}
+  .fgrid{grid-template-columns:1fr 1fr;}
+  .two{grid-template-columns:1fr;}
+  .kpi{grid-template-columns:1fr 1fr;}
+  .card{padding:16px 14px;}
+}
 @media print{body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}.wrap{padding:0;max-width:none;}.card{border:none;box-shadow:none;padding:0;}}
 </style></head><body>
 <div class="wrap">
-  <div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件分析レポート（金融機関提出フォーマット）</div></div>
+  <div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件分析レポート</div></div>
+
   <div class="form">
-    <div class="grid">
-      <div class="fld span2"><label>物件名</label><input id="pname" placeholder="例：太田塾ハイツ"></div>
-      <div class="fld span2"><label>住所（物件名だけでも可）</label><input id="paddr" placeholder="例：福岡県筑後市羽犬塚…"></div>
-      <div class="fld"><label>物件種別</label><select id="ptype"><option>一棟マンション</option><option>一棟アパート</option><option>一棟ビル</option></select></div>
-      <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨造</option><option value="steel">鉄骨造</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
-      <div class="fld"><label>築年数 <span class="u">年</span></label><input id="page" type="number" value="0"></div>
-      <div class="fld"><label>満室想定年収入 <span class="u">円/年</span></label><input id="pincome" type="number" placeholder="例：7315200"></div>
-      <div class="fld"><label>土地面積 <span class="u">㎡</span></label><input id="pland" type="number" placeholder="例：400"></div>
-      <div class="fld"><label>建物延床面積 <span class="u">㎡</span></label><input id="pbldg" type="number" placeholder="例：310"></div>
-      <div class="fld"><label>土地単価 <span class="u">円/㎡（路線価/公示）</span></label><input id="plandprice" type="number" placeholder="例：35000"></div>
-      <div class="fld"><label>想定/売出価格 <span class="u">円（任意）</span></label><input id="paskprice" type="number" placeholder="例：94025700"></div>
+    <div class="mainq">
+      <label>物件の住所 または 物件名を入力</label>
+      <input id="paddr" placeholder="例：福岡県筑後市羽犬塚（市区町村＋丁目）">
     </div>
-    <div class="assump"><div class="tt">▼ 評価前提（必要に応じて調整）</div>
+    <button class="bigbtn" id="go" onclick="gen()">📄 レポートを作成</button>
+    <div class="qhint">住所を入れるだけで、地図・周辺環境・生活利便・交通・ハザードのレポートが出ます。<br>💡 <b>住所（市区町村＋丁目）</b>が一番確実です。物件名だけだと見つからないことがあります。</div>
+
+    <details class="opt">
+      <summary>収益・積算評価を追加する（任意｜金融機関提出用）</summary>
+      <div class="optnote">物件の面積・想定家賃などが分かれば、収益価格・積算価格も自動計算します（分かる分だけでOK）。</div>
+      <div class="grid">
+        <div class="fld"><label>物件名（任意）</label><input id="pname" placeholder="例：太田塾ハイツ"></div>
+        <div class="fld"><label>物件種別</label><select id="ptype"><option>一棟マンション</option><option>一棟アパート</option><option>一棟ビル</option></select></div>
+        <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨造</option><option value="steel">鉄骨造</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
+        <div class="fld"><label>築年数 <span class="u">年</span></label><input id="page" type="number" value="0"></div>
+        <div class="fld"><label>満室想定年収入 <span class="u">円/年</span></label><input id="pincome" type="number" placeholder="例：7315200"></div>
+        <div class="fld"><label>土地面積 <span class="u">㎡</span></label><input id="pland" type="number" placeholder="例：400"></div>
+        <div class="fld"><label>建物延床 <span class="u">㎡</span></label><input id="pbldg" type="number" placeholder="例：310"></div>
+        <div class="fld"><label>土地単価 <span class="u">円/㎡</span></label><input id="plandprice" type="number" placeholder="例：35000"></div>
+        <div class="fld"><label>想定/売出価格 <span class="u">円</span></label><input id="paskprice" type="number" placeholder="例：94025700"></div>
+      </div>
+      <div class="subhd">▼ 評価前提（通常はそのままでOK）</div>
       <div class="grid">
         <div class="fld"><label>還元利回り <span class="u">%</span></label><input id="acap" type="number" step="0.1" value="8.0"></div>
         <div class="fld"><label>運営経費率 <span class="u">%</span></label><input id="aexp" type="number" step="1" value="20"></div>
-        <div class="fld"><label>建物再調達単価 <span class="u">円/㎡（空=標準）</span></label><input id="arebuild" type="number" placeholder="自動"></div>
-        <div class="fld"><label>法定耐用年数 <span class="u">年（空=標準）</span></label><input id="ausef" type="number" placeholder="自動"></div>
+        <div class="fld"><label>建物再調達単価 <span class="u">円/㎡</span></label><input id="arebuild" type="number" placeholder="自動"></div>
+        <div class="fld"><label>法定耐用年数 <span class="u">年</span></label><input id="ausef" type="number" placeholder="自動"></div>
       </div>
-    </div>
-    <div class="actions"><button class="btn" id="go" onclick="gen()">レポート作成</button>
-      <span class="hint">住所（or物件名）＋物件情報を入れて押すと、収益/積算評価・周辺環境・地図・ハザードを自動作成します。</span></div>
+    </details>
   </div>
+
   <div class="status" id="status"></div>
   <div class="toolbar" id="toolbar"><button class="btn sec" onclick="window.print()">🖨 PDFで保存 / 印刷</button></div>
   <div id="report"></div>
@@ -113,12 +133,13 @@ table.calc tr.sum td{background:#f0fdfa;font-weight:800;font-size:13px;}
 const STRUCT={wood:{name:"木造",rebuild:150000,useful:22},lgs:{name:"軽量鉄骨造",rebuild:150000,useful:27},steel:{name:"鉄骨造",rebuild:180000,useful:34},rc:{name:"RC",rebuild:200000,useful:47},src:{name:"SRC",rebuild:200000,useful:47}};
 const yen=n=>"¥"+Math.round(n).toLocaleString('ja-JP');
 const man=n=>(n/10000).toLocaleString('ja-JP',{maximumFractionDigits:0})+"万円";
-const num=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?0:v;};
-const val=id=>document.getElementById(id).value.trim();
+const num=id=>{var el=document.getElementById(id);if(!el)return 0;var v=parseFloat(el.value);return isNaN(v)?0:v;};
+const val=id=>{var el=document.getElementById(id);return el?el.value.trim():'';};
 const WALK=80;
 function dist(a,b,c,d){const R=6371000,t=Math.PI/180,dLat=(c-a)*t,dLon=(d-b)*t,la1=a*t,la2=c*t;const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 function walkMin(m){return Math.max(1,Math.round(m/WALK));}
-function setStatus(t,err){const s=document.getElementById('status');s.style.display='block';s.textContent=t;s.className='status'+(err?' err':'');}
+function setStatus(t,err){var s=document.getElementById('status');s.style.display='block';s.innerHTML=t;s.className='status'+(err?' err':'');}
+function hideStatus(){document.getElementById('status').style.display='none';}
 
 async function geocode(q){
   try{const r=await fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q));const j=await r.json();
@@ -129,157 +150,162 @@ async function geocode(q){
 }
 async function elevation(lat,lon){try{const r=await fetch("https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon="+lon+"&lat="+lat+"&outtype=JSON");const j=await r.json();return j.elevation;}catch(e){return null;}}
 async function overpass(lat,lon,radius){
-  const q=`[out:json][timeout:60];(nwr["shop"="convenience"](around:${radius},${lat},${lon});nwr["shop"="supermarket"](around:${radius},${lat},${lon});nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});nwr["shop"="chemist"](around:${radius},${lat},${lon});nwr["amenity"="post_office"](around:${radius},${lat},${lon});nwr["amenity"="bank"](around:${radius},${lat},${lon});nwr["amenity"="hospital"](around:${radius},${lat},${lon});nwr["amenity"="clinic"](around:${radius},${lat},${lon});nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"](around:${radius},${lat},${lon});nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});node["railway"="station"](around:${radius},${lat},${lon});node["highway"="bus_stop"](around:${radius},${lat},${lon}););out center tags;`;
-  const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
-  for(const ep of eps){try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),40000);const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),signal:ctl.signal});clearTimeout(to);if(!r.ok)continue;const j=await r.json();return j.elements||[];}catch(e){}}
-  return [];
+  const q=`[out:json][timeout:50];(nwr["shop"="convenience"](around:${radius},${lat},${lon});nwr["shop"="supermarket"](around:${radius},${lat},${lon});nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});nwr["shop"="chemist"](around:${radius},${lat},${lon});nwr["amenity"="post_office"](around:${radius},${lat},${lon});nwr["amenity"="bank"](around:${radius},${lat},${lon});nwr["amenity"="hospital"](around:${radius},${lat},${lon});nwr["amenity"="clinic"](around:${radius},${lat},${lon});nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"](around:${radius},${lat},${lon});nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});node["railway"="station"](around:${radius},${lat},${lon});node["highway"="bus_stop"](around:${radius},${lat},${lon}););out center tags;`;
+  const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+  // 2周まで試行（公開サーバーの混雑対策）
+  for(let pass=0;pass<2;pass++){
+    for(const ep of eps){try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),25000);const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),signal:ctl.signal});clearTimeout(to);if(!r.ok)continue;const j=await r.json();return j.elements||[];}catch(e){}}
+  }
+  return null; // null = 取得失敗（空配列と区別）
 }
 async function jshis(lat,lon){try{const r=await fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/meshinfo.geojson?position=${lon},${lat}`);if(!r.ok)return null;const j=await r.json();const p=j.features&&j.features[0]&&j.features[0].properties;return p||null;}catch(e){return null;}}
 function cat(el){const t=el.tags||{};if(t.shop==='convenience')return'conv';if(t.shop==='supermarket')return'super';if(t.amenity==='pharmacy'||t.shop==='chemist')return'drug';if(t.amenity==='post_office')return'post';if(t.amenity==='bank')return'bank';if(t.amenity==='hospital'||t.amenity==='clinic')return'hosp';if(t.amenity==='dentist')return'dent';if(t.amenity==='police')return'police';if(t.amenity==='kindergarten')return'kinder';if(t.amenity==='school')return'school';if(t.leisure==='park')return'park';if(t.railway==='station')return'station';if(t.highway==='bus_stop')return'bus';return null;}
-function nearest(els,lat,lon,key){let best=null,bd=1e9;for(const e of els){if(cat(e)!==key)continue;const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);if(la==null)continue;const d=dist(lat,lon,la,lo);if(d<bd){bd=d;best={name:(e.tags&&e.tags.name)||'(名称なし)',d:Math.round(d),min:walkMin(d)};}}return best;}
-function fcard(ic,ct,o){if(!o)return `<div class="fcard miss"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn">データなし</div></div><div class="ds">—</div></div>`;return `<div class="fcard"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn" title="${o.name}">${o.name}</div></div><div class="ds">徒歩${o.min}分</div></div>`;}
+function nearest(els,lat,lon,key){let best=null,bd=1e9;for(const e of (els||[])){if(cat(e)!==key)continue;const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);if(la==null)continue;const d=dist(lat,lon,la,lo);if(d<bd){bd=d;best={name:(e.tags&&e.tags.name)||'(名称なし)',d:Math.round(d),min:walkMin(d)};}}return best;}
+function fcard(ic,ct,o){if(!o)return `<div class="fcard miss"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn">—</div></div><div class="ds">—</div></div>`;return `<div class="fcard"><div class="ic">${ic}</div><div class="tx"><div class="ct">${ct}</div><div class="nn" title="${o.name}">${o.name}</div></div><div class="ds">徒歩${o.min}分</div></div>`;}
 function stars(n){return '★★★★★☆☆☆☆☆'.slice(5-n,10-n);}
 
 async function gen(){
-  const pname=val('pname'), paddr=val('paddr');
-  const query=paddr||pname;
+  const query=val('paddr')||val('pname');
+  if(!query){setStatus('🙏 物件の住所（または物件名）を入力してください。',true);return;}
   document.getElementById('go').disabled=true;
   document.getElementById('report').style.display='none';
   document.getElementById('toolbar').style.display='none';
-  try{
-    // --- ① マーケット（純計算・即時） ---
-    const ptype=val('ptype'), sk=val('pstruct'), st=STRUCT[sk];
-    const age=num('page'), income=num('pincome'), land=num('pland'), bldg=num('pbldg');
-    const landPrice=num('plandprice'), ask=num('paskprice');
-    const cap=num('acap')||8, expRate=num('aexp');
-    const rebuild=num('arebuild')||st.rebuild, useful=num('ausef')||st.useful;
-    const gpi=income, noi=gpi*(1-expRate/100);
-    const shuekiPrice=cap>0?noi/(cap/100):0;
-    const surfaceYield=shuekiPrice>0?gpi/shuekiPrice*100:0;
-    const landVal=landPrice*land, remain=Math.max(useful-age,0), bldgRebuild=rebuild*bldg;
-    const bldgVal=useful>0?bldgRebuild*(remain/useful):0, sekisanPrice=landVal+bldgVal;
+  setStatus('🔍 「'+query+'」の位置を調べています…');
 
-    // --- ②③④ 位置情報（住所/物件名があれば） ---
-    let g=null,els=[],elev=null,js=null;
-    if(query){
-      setStatus('① 位置を特定中…（'+(paddr?'住所':'物件名')+'）');
-      g=await geocode(query);
-      if(g){setStatus('② 周辺施設・地図・ハザードを取得中…（半径1.2km）');
-        [els,elev,js]=await Promise.all([overpass(g.lat,g.lon,1200),elevation(g.lat,g.lon),jshis(g.lat,g.lon)]);}
-    }
-    setStatus('③ レポートを組み立て中…');
-    render({pname:pname||(g?g.title:'（物件名未入力）'),paddr:paddr||(g?g.title:'—'),ptype,st,age,land,bldg,
-      gpi,noi,shuekiPrice,surfaceYield,expRate,cap,landPrice,rebuild,useful,remain,bldgRebuild,landVal,bldgVal,sekisanPrice,ask,g,els,elev,js});
-    document.getElementById('status').style.display='none';
-    document.getElementById('report').style.display='block';
-    document.getElementById('toolbar').style.display='block';
-  }catch(e){setStatus('エラー：'+e.message,true);}
+  const g=await geocode(query);
+  if(!g){
+    setStatus('「'+query+'」の位置が特定できませんでした🙏<br>お手数ですが <b>住所（市区町村＋丁目まで）</b> を入力してもう一度お試しください。<br>（物件名だけだと地図データに無く見つからないことがあります）',true);
+    document.getElementById('go').disabled=false;return;
+  }
+  hideStatus();
+  // ①即時描画（地図＋骨組み＋収益/積算）
+  renderShell(g);
+  document.getElementById('report').style.display='block';
+  document.getElementById('toolbar').style.display='block';
+  // ②周辺データを取得して差し込み
+  const nz=document.getElementById('neigh-zone');
+  nz.innerHTML='<div class="loading">🛰️ 周辺の施設・交通・ハザードを取得中…（10〜30秒）</div>';
+  const [els,elev,js]=await Promise.all([overpass(g.lat,g.lon,1200),elevation(g.lat,g.lon),jshis(g.lat,g.lon)]);
+  fillNeighborhood(g,els,elev,js);
   document.getElementById('go').disabled=false;
 }
 
-function render(d){
-  const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
-  const g=d.g;
-  const N=k=>g?nearest(d.els,g.lat,g.lon,k):null;
-  const conv=N('conv'),sup=N('super'),drug=N('drug'),post=N('post'),bank=N('bank'),hosp=N('hosp'),dent=N('dent'),police=N('police'),kinder=N('kinder'),school=N('school'),park=N('park'),station=N('station'),bus=N('bus');
-  const conv_score=Math.min(5,(conv?1:0)+(sup?1:0)+(drug?1:0)+(post?1:0)+((hosp||dent)?1:0));
-  const askYield=d.ask>0?d.gpi/d.ask*100:0;
+function finData(){
+  const income=num('pincome'),land=num('pland'),bldg=num('pbldg');
+  const has=(income>0||land>0||bldg>0);
+  if(!has)return null;
+  const sk=val('pstruct')||'rc',st=STRUCT[sk],age=num('page');
+  const landPrice=num('plandprice'),ask=num('paskprice');
+  const cap=num('acap')||8,expRate=num('aexp')||0;
+  const rebuild=num('arebuild')||st.rebuild,useful=num('ausef')||st.useful;
+  const gpi=income,noi=gpi*(1-expRate/100);
+  const shuekiPrice=cap>0?noi/(cap/100):0;
+  const surfaceYield=shuekiPrice>0?gpi/shuekiPrice*100:0;
+  const landVal=landPrice*land,remain=Math.max(useful-age,0),bldgRebuild=rebuild*bldg;
+  const bldgVal=useful>0?bldgRebuild*(remain/useful):0,sekisanPrice=landVal+bldgVal;
+  return {st,age,land,bldg,gpi,noi,shuekiPrice,surfaceYield,expRate,cap,landPrice,rebuild,useful,remain,bldgRebuild,landVal,bldgVal,sekisanPrice,ask,ptype:val('ptype')};
+}
 
-  // 地図
-  let mapHtml = g ? `<div class="sec-h">🗺️ 地図（Googleマップ）</div>
-    <iframe class="gmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
-    <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>` : '';
+function renderShell(g){
+  const pname=val('pname')||val('paddr')||g.title;
+  const paddr=g.title;
+  const fin=finData();
+  const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+
+  let specLine = fin ? `${fin.ptype}／${fin.st.name}／築${fin.age}年<br>土地${fin.land||'—'}㎡・建物${fin.bldg||'—'}㎡` : '住所ベースの周辺環境レポート';
 
   // サマリー
+  let sumTiles='';
+  if(fin){
+    const y=fin.ask>0?fin.gpi/fin.ask*100:fin.surfaceYield;
+    sumTiles=`<div class="t hl"><div class="l">収益価格</div><div class="v">${man(fin.shuekiPrice)}</div><div class="s">収益還元法</div></div>
+      <div class="t hl"><div class="l">積算価格</div><div class="v">${man(fin.sekisanPrice)}</div><div class="s">積算法</div></div>
+      <div class="t"><div class="l">${fin.ask>0?'表面利回り(取得)':'想定表面利回り'}</div><div class="v">${y.toFixed(2)}<small>%</small></div></div>`;
+  }
   const sumHtml=`<div class="sec-h">📊 ひと目サマリー</div>
-    <div class="kpi">
-      <div class="t hl"><div class="l">収益価格</div><div class="v">${man(d.shuekiPrice)}</div><div class="s">収益還元法</div></div>
-      <div class="t hl"><div class="l">積算価格</div><div class="v">${man(d.sekisanPrice)}</div><div class="s">積算法</div></div>
-      <div class="t"><div class="l">${d.ask>0?'表面利回り（取得ベース）':'想定表面利回り'}</div><div class="v">${(d.ask>0?askYield:d.surfaceYield).toFixed(2)}<small>%</small></div></div>
-    </div>
-    <div class="kpi" style="margin-top:9px">
-      <div class="t"><div class="l">最寄り駅</div><div class="v" style="font-size:15px">${station?'徒歩'+station.min+'分':'—'}</div><div class="s">${station?station.name:''}</div></div>
-      <div class="t"><div class="l">生活利便</div><div class="v" style="color:#f59e0b">${stars(conv_score)}</div></div>
-      <div class="t"><div class="l">標高</div><div class="v" style="font-size:15px">${d.elev!=null?d.elev+'m':'—'}</div></div>
+    <div class="kpi">${sumTiles}
+      <div class="t"><div class="l">最寄り駅</div><div class="v" id="kpi-station" style="font-size:15px">…</div></div>
+      <div class="t"><div class="l">生活利便</div><div class="v" id="kpi-conv" style="color:#f59e0b">…</div></div>
+      <div class="t"><div class="l">標高</div><div class="v" id="kpi-elev" style="font-size:15px">…</div></div>
     </div>`;
 
-  // ① 収益 ② 積算 ③ 総合
-  let askBlock='';
-  if(d.ask>0){const vsS=d.shuekiPrice>0?(d.ask/d.shuekiPrice*100):0,vsK=d.sekisanPrice>0?(d.ask/d.sekisanPrice*100):0;
-    askBlock=`<table class="calc" style="margin-top:8px"><tr><td class="k">想定/売出価格</td><td class="r">${yen(d.ask)}</td></tr>
-      <tr><td class="k">表面利回り（取得価格ベース）</td><td class="r">${askYield.toFixed(2)}%</td></tr>
-      <tr><td class="k">対 収益価格 ／ 対 積算価格</td><td class="r">${vsS.toFixed(0)}% ／ ${vsK.toFixed(0)}%</td></tr></table>`;}
+  // 収益/積算
+  let finHtml='';
+  if(fin){
+    let askBlock='';
+    if(fin.ask>0){const vsS=fin.shuekiPrice>0?(fin.ask/fin.shuekiPrice*100):0,vsK=fin.sekisanPrice>0?(fin.ask/fin.sekisanPrice*100):0;
+      askBlock=`<div class="sec-h">③ 総合評価</div><table class="calc">
+        <tr><td class="k">想定/売出価格</td><td class="r">${yen(fin.ask)}</td></tr>
+        <tr><td class="k">表面利回り（取得価格ベース）</td><td class="r">${(fin.gpi/fin.ask*100).toFixed(2)}%</td></tr>
+        <tr><td class="k">対 収益価格 ／ 対 積算価格</td><td class="r">${vsS.toFixed(0)}% ／ ${vsK.toFixed(0)}%</td></tr></table>`;}
+    finHtml=`<div class="sec-h">① 収益評価（収益還元法）</div>
+      <table class="calc">
+        <tr><td class="k">満室想定年収入（GPI）</td><td class="r">${yen(fin.gpi)}</td></tr>
+        <tr><td class="k">△ 運営経費（${fin.expRate}%）</td><td class="r">− ${yen(fin.gpi*fin.expRate/100)}</td></tr>
+        <tr><td class="k">運営純収益（NOI）</td><td class="r">${yen(fin.noi)}</td></tr>
+        <tr><td class="k">還元利回り</td><td class="r">${fin.cap.toFixed(1)}%</td></tr>
+        <tr class="sum"><td>収益価格（NOI ÷ 還元利回り）</td><td class="r">${yen(fin.shuekiPrice)}</td></tr></table>
+      <div class="sec-h">② 積算評価（積算法）</div>
+      <table class="calc"><tr><th>区分</th><th>算式</th><th style="text-align:right">評価額</th></tr>
+        <tr><td class="k">土地</td><td class="k">${yen(fin.landPrice)}/㎡ × ${fin.land||0}㎡</td><td class="r">${yen(fin.landVal)}</td></tr>
+        <tr><td class="k">建物(再調達)</td><td class="k">${yen(fin.rebuild)}/㎡ × ${fin.bldg||0}㎡</td><td class="r">${yen(fin.bldgRebuild)}</td></tr>
+        <tr><td class="k">建物(残存)</td><td class="k">残存${fin.remain}年/耐用${fin.useful}年</td><td class="r">${yen(fin.bldgVal)}</td></tr>
+        <tr class="sum"><td colspan="2">積算価格</td><td class="r">${yen(fin.sekisanPrice)}</td></tr></table>
+      ${fin.landPrice<=0?'<div class="phase">⚠️ 土地単価を入れると土地評価が計算されます（Phase2でreinfolib自動取得予定）。</div>':''}
+      ${askBlock}`;
+  }
 
-  const marketHtml=`<div class="sec-h">① 収益評価（収益還元法）</div>
-    <table class="calc">
-      <tr><td class="k">満室想定年収入（GPI）</td><td class="r">${yen(d.gpi)}</td></tr>
-      <tr><td class="k">△ 運営経費（${d.expRate}%）</td><td class="r">− ${yen(d.gpi*d.expRate/100)}</td></tr>
-      <tr><td class="k">運営純収益（NOI）</td><td class="r">${yen(d.noi)}</td></tr>
-      <tr><td class="k">還元利回り（キャップレート）</td><td class="r">${d.cap.toFixed(1)}%</td></tr>
-      <tr class="sum"><td>収益価格（NOI ÷ 還元利回り）</td><td class="r">${yen(d.shuekiPrice)}</td></tr>
-    </table>
-    <div class="sec-h">② 積算評価（積算法）</div>
-    <table class="calc">
-      <tr><th>区分</th><th>算式</th><th style="text-align:right">評価額</th></tr>
-      <tr><td class="k">土地</td><td class="k">${yen(d.landPrice)}/㎡ × ${d.land||0}㎡</td><td class="r">${yen(d.landVal)}</td></tr>
-      <tr><td class="k">建物（再調達）</td><td class="k">${yen(d.rebuild)}/㎡ × ${d.bldg||0}㎡</td><td class="r">${yen(d.bldgRebuild)}</td></tr>
-      <tr><td class="k">建物（残存評価）</td><td class="k">再調達 × 残存${d.remain}年 / 耐用${d.useful}年</td><td class="r">${yen(d.bldgVal)}</td></tr>
-      <tr class="sum"><td colspan="2">積算価格（土地＋建物残存）</td><td class="r">${yen(d.sekisanPrice)}</td></tr>
-    </table>
-    ${d.landPrice<=0?'<div class="formula">⚠️ 土地単価が未入力です（路線価/公示地価を入れると土地評価が算出。Phase2でreinfolib自動取得予定）。</div>':''}
-    <div class="sec-h">③ 総合評価</div>${askBlock||'<div class="formula">※想定/売出価格を入力すると取得利回り・割安判定が表示されます。</div>'}`;
+  document.getElementById('report').innerHTML=`<div class="card">
+    <div class="hd"><div><div class="ttl">物件分析レポート</div><div class="sub">住所ベースの立地分析${fin?'＋収益/積算評価':''}</div></div>
+      <div class="brand"><b>太田塾</b>物件分析<br>発行日 ${dstr}</div></div>
+    <div class="propbar"><div><div class="nm">${pname}</div><div class="ad">${paddr}</div></div>
+      <div class="spec">${specLine}</div></div>
+    <div class="sec-h">🗺️ 地図（Googleマップ）</div>
+    <iframe class="gmap" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
+    <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>
+    ${sumHtml}
+    ${finHtml}
+    <div id="neigh-zone"></div>
+    <div class="sec-h">⑦ 参考データ（Phase2で自動取得）</div>
+    <div class="phase">🔧 類似取引事例・地価公示・路線価・用途地域・人口統計・ハザード10種＝reinfolib/国交省データ連携で順次追加予定。</div>
+    <div class="foot">※本レポートは公開データ（国土地理院・OpenStreetMap・防災科研 等）と入力値・一般的評価手法に基づく試算です。距離は直線距離基準。実際の金融機関評価・市場価格を保証するものではありません。／ 太田塾 物件分析レポート（β）</div>
+  </div>`;
+}
 
-  // ④ 周辺環境
-  let neighHtml='';
-  if(g){
-    neighHtml=`<div class="sec-h">④ 生活利便（最寄り施設・徒歩分）</div>
+function fillNeighborhood(g,els,elev,js){
+  const N=k=>nearest(els,g.lat,g.lon,k);
+  const conv=N('conv'),sup=N('super'),drug=N('drug'),post=N('post'),bank=N('bank'),hosp=N('hosp'),dent=N('dent'),police=N('police'),kinder=N('kinder'),school=N('school'),park=N('park'),station=N('station'),bus=N('bus');
+  const conv_score=Math.min(5,(conv?1:0)+(sup?1:0)+(drug?1:0)+(post?1:0)+((hosp||dent)?1:0));
+  // サマリー更新
+  document.getElementById('kpi-station').innerHTML=station?'徒歩'+station.min+'分':'—';
+  document.getElementById('kpi-conv').innerHTML=stars(conv_score);
+  document.getElementById('kpi-elev').innerHTML=elev!=null?elev+'m':'—';
+
+  let body='';
+  if(els===null){
+    body=`<div class="sec-h">④ 周辺環境</div><div class="phase">⚠️ 周辺施設データの取得に失敗しました（回線混雑）。もう一度「レポートを作成」を押すと取得できることがあります。地図・評価は上記の通り有効です。</div>`;
+  }else{
+    let quake='';
+    if(js){const p6=js.T30_I55_PS||js.T30_I60_PS;if(p6!=null)quake=`<tr><td class="j">地震(30年 震度6強+)</td><td><span class="badge b-y">${(p6*100).toFixed(1)}%</span></td><td>防災科研 J-SHIS</td></tr>`;}
+    body=`<div class="sec-h">④ 生活利便（最寄り施設・徒歩分）</div>
       <div class="fgrid">
         ${fcard('🏪','コンビニ',conv)}${fcard('🛒','スーパー',sup)}${fcard('💊','ドラッグ/薬局',drug)}
         ${fcard('📮','郵便局',post)}${fcard('🏧','銀行',bank)}${fcard('🚓','交番',police)}
-        ${fcard('🏥','病院',hosp)}${fcard('🦷','歯科',dent)}${fcard('🏞️','公園',park)}
-      </div>
+        ${fcard('🏥','病院',hosp)}${fcard('🦷','歯科',dent)}${fcard('🏞️','公園',park)}</div>
       <div class="sec-h">⑤ 交通・教育</div>
       <div class="two">
         <table class="rows">
           <tr><td class="k">最寄り駅</td><td class="v">${station?station.name+'　<span class="d">'+station.d+'m(徒歩'+station.min+'分)</span>':'—'}</td></tr>
-          <tr><td class="k">最寄りバス停</td><td class="v">${bus?bus.name+'　<span class="d">徒歩'+bus.min+'分</span>':'—'}</td></tr>
-        </table>
+          <tr><td class="k">最寄りバス停</td><td class="v">${bus?bus.name+'　<span class="d">徒歩'+bus.min+'分</span>':'—'}</td></tr></table>
         <table class="rows">
           <tr><td class="k">保育/幼稚園</td><td class="v">${kinder?kinder.name+'　<span class="d">徒歩'+kinder.min+'分</span>':'—'}</td></tr>
-          <tr><td class="k">学校</td><td class="v">${school?school.name+'　<span class="d">徒歩'+school.min+'分</span>':'—'}</td></tr>
-        </table>
-      </div>`;
-  }else{
-    neighHtml=`<div class="sec-h">④ 周辺環境</div><div class="phase">住所または物件名を入力すると、周辺施設・交通・地図・ハザードが自動取得されます。</div>`;
-  }
-
-  // ⑥ ハザード
-  let hazHtml='';
-  if(g){
-    let quake='';
-    if(d.js){const p6=d.js.T30_I55_PS||d.js.T30_I60_PS;if(p6!=null)quake=`<tr><td class="j">地震(30年 震度6強+)</td><td><span class="badge b-y">${(p6*100).toFixed(1)}%</span></td><td>防災科研 J-SHIS</td></tr>`;}
-    hazHtml=`<div class="sec-h">⑥ 防災・ハザード</div>
+          <tr><td class="k">学校</td><td class="v">${school?school.name+'　<span class="d">徒歩'+school.min+'分</span>':'—'}</td></tr></table></div>
+      <div class="sec-h">⑥ 防災・ハザード</div>
       <table class="haz"><tr><th style="width:26%">項目</th><th style="width:16%">判定</th><th>備考</th></tr>
-      ${quake||''}
-      <tr><td class="j">浸水・液状化・活断層 ほか</td><td><span class="badge b-n">Phase2</span></td><td>浸水想定/土砂/避難所等は国交省ポリゴンをGAS経由で追加予定</td></tr>
-      </table>`;
+      ${quake}
+      <tr><td class="j">浸水・液状化・活断層 ほか</td><td><span class="badge b-n">Phase2</span></td><td>国交省ポリゴンをGAS経由で追加予定</td></tr></table>`;
   }
-
-  const html=`<div class="card">
-    <div class="hd"><div><div class="ttl">物件分析レポート</div><div class="sub">収益評価・積算評価・周辺環境（金融機関提出フォーマット）</div></div>
-      <div class="brand"><b>太田塾</b>物件分析<br>発行日 ${dstr}</div></div>
-    <div class="propbar"><div><div class="nm">${d.pname}</div><div class="ad">${d.paddr}</div></div>
-      <div class="spec">${d.ptype}／${d.st.name}／築${d.age}年<br>土地${d.land||'—'}㎡・建物${d.bldg||'—'}㎡${g?'　'+(d.elev!=null?'標高'+d.elev+'m':''):''}</div></div>
-    ${mapHtml}
-    ${sumHtml}
-    ${marketHtml}
-    ${neighHtml}
-    ${hazHtml}
-    <div class="sec-h">⑦ 参考データ（Phase2で自動取得）</div>
-    <div class="phase">🔧 類似取引事例・地価公示・地価調査・用途地域＝reinfolib（国交省 不動産情報ライブラリ）連携予定／🔧 人口統計・乗降客数・ハザード10種フル＝順次実装。</div>
-    <div class="foot">※本レポートは入力値・一般的評価手法（収益還元法/積算法）と公開データ（国土地理院・OpenStreetMap・防災科研 等）に基づく試算です。距離は直線距離基準。還元利回り・経費率・再調達単価・耐用年数は標準/入力値。実際の金融機関評価・市場価格を保証するものではありません。金融機関提出時は路線価・取引事例等の裏付資料を添付してください。／ 太田塾 物件分析レポート（β）</div>
-  </div>`;
-  document.getElementById('report').innerHTML=html;
+  document.getElementById('neigh-zone').innerHTML=body;
 }
 </script>
 </body></html>
