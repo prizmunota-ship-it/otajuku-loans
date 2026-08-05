@@ -4,7 +4,7 @@
 <title>太田塾 物件周辺環境レポート</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&callback=_gload" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f1f5f9;font-size:14px;line-height:1.55;}
@@ -99,8 +99,8 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
     <label><input type="checkbox" id="opt_haz" checked>ハザードマップ</label>
   </div>
-  <button class="bigbtn" id="go" onclick="gen()">📄 レポートを作成</button>
-  <div class="qhint">物件名でも住所でもOK（Google検索で位置特定）。教育・人口・ハザードは✓で掲載を選べます。</div>
+  <button class="bigbtn" id="go" onclick="locate()">🔍 位置を検索</button>
+  <div class="qhint">物件名でも住所でもOK。まず地図で位置を確認してから、レポートを作成します（<b>ずれていたらピンをドラッグで修正</b>できます）。</div>
   <details class="opt"><summary>▶ 収益・積算評価を追加（任意）</summary>
     <div class="grid">
       <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
@@ -122,6 +122,11 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
       <div class="fld"><label>月額総額 下限 円</label><input id="prentmin" type="number" placeholder="例：63500"></div>
       <div class="fld"><label>月額総額 上限 円</label><input id="prentmax" type="number" placeholder="例：66000"></div>
     </div>
+    <div class="subhd2">🔍 募集中の類似物件を探す</div>
+    <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンクがここに表示されます。</div>
+    <div class="subhd2">📋 まとめて貼り付け（物件情報をコピーして貼ると自動で行になります）</div>
+    <textarea id="cmppaste" style="width:100%;height:70px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例：アルカンシエルII 築4年 50.08㎡ 61,200円（1行に1物件）"></textarea>
+    <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
     <div class="subhd2">比較物件（現在募集中）— 物件名／築年／面積㎡／月額総額（賃料＋共益費）円</div>
     <div id="cmpRows"></div>
     <button type="button" class="addrow" onclick="addCmpRow()">＋ 比較物件の行を追加</button>
@@ -130,6 +135,14 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 </div>
 
 <div class="status" id="status"></div>
+<div id="confirm" style="display:none" class="form">
+  <div style="font-size:14px;font-weight:800;color:#0f766e;margin-bottom:7px">📍 位置の確認 — ここで合っていますか？</div>
+  <div id="gconfmap" style="width:100%;height:320px;border-radius:10px;border:1px solid #d1d5db"></div>
+  <div id="confaddr" style="font-size:12.5px;margin:9px 0;color:#374151"></div>
+  <div id="confwarn" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#b91c1c;margin-bottom:8px"></div>
+  <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
+  <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
+</div>
 <div class="toolbar" id="toolbar"><button class="btn sec" onclick="window.print()">🖨 PDFで保存 / 印刷</button></div>
 <div id="report"></div>
 </div>
@@ -154,6 +167,33 @@ function addCmpRow(v){
   document.getElementById('cmpRows').appendChild(d);
 }
 window.addEventListener('DOMContentLoaded',()=>{for(let i=0;i<3;i++)addCmpRow();});
+function parseCmp(){
+  const txt=document.getElementById('cmppaste').value;
+  let added=0;const seen=new Set();
+  for(const ln of txt.split(/\n+/)){
+    const t=ln.trim();if(!t)continue;
+    /* --- スマサテ形式：「カーサ フィオーレ ¥53,300 ¥1,217 ¥4,023 43.79m² 3年 1LDK 4分 2階 …」 --- */
+    const sm=t.match(/^(.+?)\s*[¥￥]([\d,]+)\s+[¥￥][\d,]+\s+[¥￥][\d,]+\s+([\d.]+)\s*(?:m²|m2|㎡)\s+(\d+)\s*年/);
+    if(sm){
+      const name=sm[1].trim(),total=parseInt(sm[2].replace(/,/g,'')),men=sm[3],age=sm[4];
+      const key=name+'_'+total;
+      if(!seen.has(key)){seen.add(key);addCmpRow([name,age,men,total]);added++;}
+      continue;
+    }
+    /* --- 汎用形式：「物件名 築4年 50.08㎡ 61,200円」 --- */
+    const age=(t.match(/築\s*(\d+)\s*年/)||[])[1];
+    const men=(t.match(/([\d.]+)\s*(?:㎡|m2|m²)/)||[])[1];
+    let total=null;
+    const man=t.match(/([\d.]+)\s*万円/);
+    if(man)total=Math.round(parseFloat(man[1])*10000);
+    else{const en=t.match(/([\d,]{4,9})\s*円/);if(en)total=parseInt(en[1].replace(/,/g,''));}
+    if(!total)continue;
+    let name=t.split(/[ 　\t]/)[0].replace(/築.*$/,'')||'物件';
+    addCmpRow([name,age||'',men||'',total]);added++;
+  }
+  if(added){document.getElementById('cmppaste').value='';}
+  else alert('物件情報を読み取れませんでした。スマサテの事例一覧をそのままコピーするか、「物件名 築◯年 ◯◯㎡ ◯◯円」の形で1行ずつ貼ってください。');
+}
 function collectCmp(){
   const rows=[];document.querySelectorAll('#cmpRows .cmprow').forEach(r=>{
     const c=r.querySelectorAll('input');
@@ -289,20 +329,109 @@ function initMaps(g){
 }
 
 /* ============ メイン ============ */
-async function gen(){
+/* ====== ステップ1：検索→位置確認 ====== */
+function googleGeocodeFull(q){return new Promise(res=>{
+  if(!gGeocoder){res(null);return;}
+  gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
+    if(s==='OK'&&r&&r[0]){const L=r[0].geometry.location;
+      res({lat:L.lat(),lon:L.lng(),title:r[0].formatted_address.replace(/^日本、?/,''),locType:r[0].geometry.location_type,src:'Google'});}
+    else res(null);});
+});}
+function placesText(q){return new Promise(res=>{
+  let done=false;const fin=v=>{if(!done){done=true;res(v);}};
+  try{
+    const svc=new google.maps.places.PlacesService(document.createElement('div'));
+    svc.textSearch({query:q,region:'jp'},(r,s)=>{
+      if(s==='OK'&&r&&r[0]&&r[0].geometry){const L=r[0].geometry.location;
+        fin({lat:L.lat(),lon:L.lng(),title:(r[0].name?r[0].name+'　':'')+(r[0].formatted_address||'').replace(/^日本、?/,''),locType:'ROOFTOP',src:'Places'});}
+      else fin(null);});
+    setTimeout(()=>fin(null),6000);
+  }catch(e){fin(null);}
+});}
+let PENDING=null,confMap=null,confMarker=null;
+async function locate(){
   const query=val('paddr');
   if(!query){setStatus('🙏 物件名または住所を入力してください',true);return;}
   document.getElementById('go').disabled=true;
   document.getElementById('report').style.display='none';document.getElementById('toolbar').style.display='none';
-  MAPS=[];mapSeq=0;
+  document.getElementById('confirm').style.display='none';
   setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
-  const g=await geocode(query);
-  if(!g){setStatus('「'+query+'」が見つかりませんでした🙏 住所（市区町村＋番地）でもう一度お試しください。',true);document.getElementById('go').disabled=false;return;}
+  let res=await googleGeocodeFull(query);
+  const vague=!res||['APPROXIMATE','GEOMETRIC_CENTER'].includes(res.locType);
+  if(vague){const p=await placesText(query);if(p)res=p;}
+  if(!res)res=await geocode(query);
+  document.getElementById('go').disabled=false;
+  if(!res){setStatus('「'+query+'」が見つかりませんでした🙏 住所（市区町村＋番地）で、もう一度お試しください。',true);return;}
+  hideStatus();
+  showConfirm(res,query);
+}
+function showConfirm(res,query){
+  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query};
+  const c=document.getElementById('confirm');c.style.display='block';
+  document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
+  const w=document.getElementById('confwarn');
+  if(res.src!=='Places'&&res.locType&&res.locType!=='ROOFTOP'){
+    w.style.display='block';
+    w.innerHTML='⚠️ <b>建物単位まで特定できていない可能性があります。</b>地図を確認し、ずれていたらピンを実際の物件位置にドラッグしてから作成してください。';
+  }else{w.style.display='none';}
+  const pos={lat:res.lat,lng:res.lon};
+  try{
+    if(!confMap){
+      confMap=new google.maps.Map(document.getElementById('gconfmap'),{center:pos,zoom:17,mapTypeControl:true,streetViewControl:false,fullscreenControl:false});
+      confMarker=new google.maps.Marker({map:confMap,position:pos,draggable:true,title:'ドラッグで位置修正'});
+      confMarker.addListener('dragend',()=>{const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();
+        document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ ピン位置を手動修正済み</span>';
+        document.getElementById('confwarn').style.display='none';});
+    }else{confMap.setCenter(pos);confMarker.setPosition(pos);}
+  }catch(e){}
+  c.scrollIntoView({behavior:'smooth'});
+  setCmpSearch(res.title);
+}
+async function confirmGo(){
+  document.getElementById('confirm').style.display='none';
+  await buildReport(PENDING);
+}
+/* ====== 地価公示（積算の概算用） ====== */
+let CHIKA=null;
+async function loadChika(){if(CHIKA)return CHIKA;try{const r=await fetch('chika2025.json');CHIKA=await r.json();}catch(e){CHIKA=[];}return CHIKA;}
+async function estimateLandPrice(lat,lon){
+  const C=await loadChika();if(!C.length)return null;
+  const pts=C.map(p=>({price:p[2],use:p[3],addr:p[4],d:Math.round(dist(lat,lon,p[0],p[1]))})).sort((a,b)=>a.d-b.d);
+  let sel=pts.filter(p=>p.use==='住宅').slice(0,5);
+  if(sel.length<3)sel=pts.slice(0,5);
+  if(!sel.length)return null;
+  const prices=sel.map(p=>p.price).sort((a,b)=>a-b);
+  return {price:prices[Math.floor(prices.length/2)],refs:sel.slice(0,3)};
+}
+/* ====== メッシュ人口（年齢別人口統計） ====== */
+let POP=null;
+async function loadPop(){if(POP)return POP;try{const r=await fetch('pop2024.json');POP=await r.json();}catch(e){POP=[];}return POP;}
+async function popStats(lat,lon,radius){
+  const P=await loadPop();if(!P.length)return null;
+  const sel=P.filter(m=>dist(lat,lon,m[0],m[1])<=Math.max(radius,800));
+  if(!sel.length)return null;
+  const s=i=>sel.reduce((a,m)=>a+m[i],0);
+  const g5=[];for(let i=7;i<26;i++)g5.push(s(i));
+  return {p25:s(2),a:s(3),b:s(4),c:s(5),p30:s(6),g5,n:sel.length};
+}
+function setCmpSearch(addr){
+  const el=document.getElementById('cmpsearch');if(!el)return;
+  const m=(addr||'').match(/([^\s、〒0-9０-９-]{2,10}?[市区町村])/);const city=m?m[1]:'';
+  if(!city)return;
+  const md=val('pmadori')||'1LDK';
+  el.innerHTML='<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+encodeURIComponent(city+' '+md+' 賃貸 SUUMO')+'">🔍 '+city+'の'+md+'賃貸募集を検索 ↗</a> 見つけた物件の情報を下の欄に貼り付けてください。';
+}
+/* ====== ステップ2：レポート生成 ====== */
+async function buildReport(g){
+  document.getElementById('go').disabled=true;
+  MAPS=[];mapSeq=0;
   const radius=parseInt(val('pradius'))||1500;
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
   const [els,js]=await Promise.all([overpass(g.lat,g.lon,radius),document.getElementById('opt_haz').checked?jshis(g.lat,g.lon):null]);
-  if(els===null){setStatus('⚠️ 周辺データの取得が混み合っています。30秒ほど待って、もう一度「レポートを作成」を押してください。',true);document.getElementById('go').disabled=false;return;}
+  document.getElementById('go').disabled=false;
+  if(els===null){setStatus('⚠️ 周辺データの取得が混み合っています。30秒ほど待って、もう一度「✅この位置でレポートを作成」を押してください。<br><button class="addrow" onclick="confirmGo()" style="margin-top:6px">🔁 もう一度作成する</button>',true);return;}
   hideStatus();
+  const query=g.query||val('paddr');
   const F=classify(els,g.lat,g.lon);
   const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
   const name=query, addr=g.title;
@@ -316,7 +445,9 @@ async function gen(){
   /* --- 収益・積算（任意） --- */
   const income=num('pincome'),land=num('pland'),bldg=num('pbldg');
   if(income>0||land>0||bldg>0){
-    const st=STRUCT[val('pstruct')||'rc'],age=num('page'),lp=num('plandprice'),ask=num('paskprice'),cap=num('acap')||8;
+    const st=STRUCT[val('pstruct')||'rc'],age=num('page'),ask=num('paskprice'),cap=num('acap')||8;
+    let lp=num('plandprice'),lpEst=null;
+    if(lp<=0&&land>0){lpEst=await estimateLandPrice(g.lat,g.lon);if(lpEst)lp=lpEst.price;}
     const noi=income*0.8,sp=cap>0?noi/(cap/100):0;
     const remain=Math.max(st.useful-age,0),bv=st.rebuild*bldg*(st.useful>0?remain/st.useful:0),kp=lp*land+bv;
     let body=`<div class="kpi3"><div class="t"><div class="l">収益価格（還元利回り${cap}%）</div><div class="v">${yen(sp)}</div></div>
@@ -324,8 +455,9 @@ async function gen(){
       <div class="t"><div class="l">${ask>0?'表面利回り（売出'+yen(ask)+'）':'想定表面利回り'}</div><div class="v">${ask>0?(income/ask*100).toFixed(2):(sp>0?(income/sp*100).toFixed(2):'—')}%</div></div></div>
       <table class="calc">
       <tr><td class="k">満室想定年収入</td><td class="r">${yen(income)}</td><td class="k">運営純収益（経費20%控除）</td><td class="r">${yen(noi)}</td></tr>
-      <tr><td class="k">土地評価（${yen(lp)}/㎡×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
-      <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>`;
+      <tr><td class="k">土地評価（${yen(lp)}/㎡${lpEst?'〈概算〉':''}×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
+      <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>
+      ${lpEst?'<div class="formula">※土地単価は周辺の公示地価から自動概算（出典：国土交通省 令和7年地価公示）— '+lpEst.refs.map(r=>r.addr+'（'+(r.d>=1000?(r.d/1000).toFixed(1)+'km':r.d+'m')+'・'+r.price.toLocaleString()+'円/㎡）').join('　／　')+'</div>':''}`;
     h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
   }
 
@@ -362,9 +494,27 @@ async function gen(){
   }
   /* --- 人口（選択） --- */
   if(document.getElementById('opt_pop').checked){
-    h+=paper('年齢別人口統計','調査対象エリアの人口構成',
-      `<div class="phase">📊 年齢別人口統計（国勢調査）は現在データ連携準備中です。<br>次回アップデートで、エリアの人口総数・年齢構成・世帯数を自動掲載予定です。</div>
-      <a class="gbtn" href="https://jstatmap.e-stat.go.jp/" target="_blank" rel="noopener">📈 地図で見る統計（jSTAT MAP）で確認 ↗</a>`,'総務省統計局 国勢調査（連携予定）');
+    const pop=await popStats(g.lat,g.lon,Math.max(radius,1000));
+    if(pop&&pop.p25>0){
+      const lbl=['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65-69','70-74','75-79','80-84','85-89','90+'];
+      const mx=Math.max(...pop.g5,1);
+      let bars='';
+      pop.g5.forEach((v,i)=>{bars+=`<div style="display:flex;align-items:center;gap:6px;margin:1px 0"><div style="width:52px;font-size:9.5px;color:#64748b;text-align:right">${lbl[i]}歳</div><div style="flex:1;background:#eef2f7;border-radius:3px"><div style="width:${Math.round(v/mx*100)}%;background:#4b7fb5;height:11px;border-radius:3px"></div></div><div style="width:60px;font-size:10px;font-weight:700;text-align:right">${v.toLocaleString()}人</div></div>`;});
+      const chg=pop.p25>0?((pop.p30-pop.p25)/pop.p25*100):0;
+      const popBody=`<div class="kpi3">
+        <div class="t"><div class="l">総人口（2025年推計）</div><div class="v">${pop.p25.toLocaleString()}人</div></div>
+        <div class="t"><div class="l">生産年齢人口（15〜64歳）</div><div class="v">${(pop.b/pop.p25*100).toFixed(1)}%</div></div>
+        <div class="t"><div class="l">2030年推計</div><div class="v" style="font-size:16px">${pop.p30.toLocaleString()}人<small>（${chg>=0?'+':''}${chg.toFixed(1)}%）</small></div></div></div>
+        <div class="subttl">年齢5歳階級別人口（対象地点周辺 1kmメッシュ×${pop.n}区画の合算）</div>${bars}
+        <div class="subttl" style="margin-top:10px">年齢3区分</div>
+        <table class="lst"><tr><th>区分</th><th style="text-align:right">人口</th><th style="text-align:right">構成比</th></tr>
+        <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
+        <tr><td>生産年齢人口（15〜64歳）</td><td class="r">${pop.b.toLocaleString()}人</td><td class="r">${(pop.b/pop.p25*100).toFixed(1)}%</td></tr>
+        <tr><td>老年人口（65歳〜）</td><td class="r">${pop.c.toLocaleString()}人</td><td class="r">${(pop.c/pop.p25*100).toFixed(1)}%</td></tr></table>`;
+      h+=paper('年齢別人口統計','調査対象地点周辺の人口構成と将来推計',popBody,'国土交通省 国土数値情報「1kmメッシュ別将来推計人口（令和6年推計）」（2020年国勢調査ベース）');
+    }else{
+      h+=paper('年齢別人口統計','調査対象エリアの人口構成','<div class="phase">この地点の人口データが見つかりませんでした（現在は福岡県・佐賀県に対応。他県は順次追加します）。</div>','国土数値情報');
+    }
   }
   /* --- ハザード（選択） --- */
   if(document.getElementById('opt_haz').checked){
