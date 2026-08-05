@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.3</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -487,10 +487,32 @@ async function buildReport(g){
 
   /* --- 類似物件の募集状況（任意） --- */
   const cmp=collectCmp(),rmin=num('prentmin'),rmax=num('prentmax');
+  const st0=F.station[0];
+  const stationTxt=st0?'・'+st0.name+'駅 徒歩'+st0.min+'分':'';
   if(cmp.length>=1&&rmin>0){
-    const st0=F.station[0];
-    const stationTxt=st0?'・'+st0.name+'駅 徒歩'+st0.min+'分':'';
     h+=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:num('pmens')},val('pappeal'),stationTxt,num('page'),g.title);
+  }else{
+    /* 未入力でもページは出す（何を入れれば良いか案内） */
+    const city=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+    const md=val('pmadori')||'1LDK';
+    const miss=[];
+    if(cmp.length<1)miss.push('比較物件（1件以上）');
+    if(rmin<=0)miss.push('本物件の想定 月額総額');
+    h+=paper('類似物件の募集状況','本物件と同賃料帯の募集実例との比較（賃料設定の妥当性）',
+      `<div class="phase" style="font-size:12px;line-height:1.9">
+        📋 このページは、周辺の<b>募集中の類似物件</b>を入力すると自動作成されます（比較表＋賃料設定の考え方の分析文）。<br>
+        <b style="color:#b91c1c">未入力の項目：${miss.join('／')}</b><br><br>
+        <b>【入力のしかた】</b><br>
+        ① 上のフォームの「<b>▶ 類似物件の募集状況を追加</b>」を開く<br>
+        ② <b>スマサテ</b>で査定 → 事例一覧をコピー → 「まとめて貼り付け」に貼って「行を作成」を押す<br>
+        （またはSUUMO等で調べて、物件名・住所・築年・面積・月額を直接入力）<br>
+        ③ 「本物件の想定」の<b>月額総額（下限・上限）</b>を入れる<br>
+        ④ もう一度「レポートを作成」
+      </div>
+      <div style="margin-top:8px">
+        <a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテで賃料査定（類似事例を取得）↗</a>
+        ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸 SUUMO')}">🔍 ${city}の${md}賃貸募集を検索 ↗</a>`:''}
+      </div>`,'SUUMO・アットホーム・スマサテ等');
   }
 
   /* --- 最寄り駅 --- */
