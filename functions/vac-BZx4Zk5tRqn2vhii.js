@@ -117,7 +117,7 @@ const FILT={
 function setFilter(k){FILTER=(FILTER===k?null:k);summary();render();window.scrollTo(0,0)}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 // Googleマップ検索用クエリ（物件名＋住所。全角数字/記号を半角化して精度を上げる）
-function mapq(a){var s=((a.prop?a.prop+' ':'')+(a.paddr||a.propaddr||''));s=s.replace(/[０-９]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0xFEE0);}).replace(/[−ー―‐]/g,'-');return encodeURIComponent(s);}
+function mapq(a){var s=((a.prop?a.prop+' ':'')+(a.paddr||a.propaddr||''));s=s.replace(/[０-９]/g,function(d){return String.fromCharCode(d.charCodeAt(0)-0xFEE0);}).replace(/(\\d)\\s*[−―‐－ー-]\\s*(\\d)/g,'$1-$2');return encodeURIComponent(s);}
 function openContact(ev){
  ev.stopPropagation();
  const comp=ev.currentTarget.dataset.c;
