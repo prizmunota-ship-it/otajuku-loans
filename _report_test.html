@@ -164,7 +164,7 @@ function hideStatus(){document.getElementById('status').style.display='none';}
 let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
 /* ====== 類似物件の自動検索（Google公式 Custom Search API） ====== */
 const GKEY='AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI';
-const CSE_CX='';  /* ←検索エンジンID（設定後に有効化） */
+const CSE_CX='8329f10248b714837';  /* 賃貸検索（SUUMO/アットホーム/HOME'S） */
 async function cseSearchCmp(city,md){
   if(!CSE_CX||!city)return 0;
   let added=0;const seen=new Set();
