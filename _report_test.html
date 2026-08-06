@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.0</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -125,7 +125,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     </div>
     <div class="subhd2">🔍 募集中の類似物件を探す（ポータルサイト）</div>
     <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンク（SUUMO／アットホーム／HOME'S／スマサテ）がここに表示されます。</div>
-    <button type="button" class="addrow" onclick="autoCmpClick()" style="background:#0f766e;color:#fff;border:none">🤖 類似物件の調べ方を見る（Claudeに依頼→貼り付け）</button>
+    <button type="button" class="addrow" onclick="autoCmpClick()" style="background:#0f766e;color:#fff;border:none">🤖 このエリアの募集を自動検索して取り込む（SUUMO）</button>
     <div class="subhd2">📋 まとめて貼り付け（ポータルの物件情報をコピーして貼ると自動で行になります）</div>
     <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※「6.1万円」表記や、物件名と賃料が別の行になっている貼り付けにも対応しています"></textarea>
     <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
@@ -164,7 +164,21 @@ function hideStatus(){document.getElementById('status').style.display='none';}
 let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
 /* ====== 類似物件の自動検索（Google公式 Custom Search API） ====== */
 const GKEY='AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI';
-const CSE_CX='';  /* Custom Search APIは新規提供終了(2027/1廃止)のため無効化。類似物件はClaudeに調べてもらう運用 */
+const CSE_CX='';  /* Custom Search APIは新規提供終了のため未使用 */
+/* ★類似物件の自動検索：太田さんのGAS(SUUMO一覧を自動発見→解析)を呼ぶ */
+const GAS_SEARCH='https://script.google.com/macros/s/AKfycbzXp4Ew-ilHYsXOVaUVwcz9Fy_LkehyVy18wf4iwwhStkWcmudNI0IsWMZuSrcSF3llDg/exec';
+async function gasSearchCmp(city,md){
+  try{
+    const r=await fetch(GAS_SEARCH+'?city='+encodeURIComponent(city)+'&md='+encodeURIComponent(md||''));
+    const j=await r.json();
+    let n=0;
+    (j.items||[]).forEach(it=>{
+      if(n>=8)return;
+      addCmpRow([it.name,it.addr||'',it.age||'',it.men||'',it.total]);n++;
+    });
+    return n;
+  }catch(e){return 0;}
+}
 async function cseSearchCmp(city,md){
   if(!CSE_CX||!city)return 0;
   let added=0;const seen=new Set();
@@ -194,9 +208,8 @@ async function autoCmpClick(){
   const t=(window._lastTitle||val('paddr'));
   const city=(t.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
   if(!city){alert('先に「位置を検索」で物件の場所を確定してください。');return;}
-  if(!CSE_CX){alert('Claude（チャット）に「'+city+'の類似物件を調べて」と頼むと、貼り付け用の一覧を作ってくれます。届いた一覧をこの下の「まとめて貼り付け」に貼って「行を作成」を押してください。');return;}
-  const n=await cseSearchCmp(city,val('pmadori')||'1LDK');
-  alert(n>0?n+'件の募集事例を取り込みました。内容を確認して「レポートを作成」してください。':'募集事例が見つかりませんでした。貼り付け方式もお試しください。');
+  const n=await gasSearchCmp(city,val('pmadori')||'');
+  alert(n>0?n+'件の募集事例を自動で取り込みました。内容を確認して「レポートを作成」してください。':'募集事例が見つかりませんでした。SUUMOで手動検索→貼り付けもお試しください。');
 }
 /* --- 類似物件 行UI --- */
 function addCmpRow(v){
@@ -531,9 +544,13 @@ async function buildReport(g){
   window._lastLoc={lat:g.lat,lon:g.lon};window._lastTitle=g.title;
   MAPS=[];mapSeq=0;
   /* ★比較物件が空なら、このエリアの募集事例を自動検索して反映（ゼロタップ） */
-  if(collectCmp().length===0&&CSE_CX){
+  if(collectCmp().length===0){
     const cityA=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
-    if(cityA){setStatus('🔎 '+cityA+'の募集事例を自動検索中…');await cseSearchCmp(cityA,val('pmadori')||'1LDK');}
+    if(cityA){
+      setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…（SUUMO）');
+      let got=await gasSearchCmp(cityA,val('pmadori')||'');
+      if(got===0){await gasSearchCmp(cityA,val('pmadori')||'');} /* 初回起動失敗時のリトライ */
+    }
   }
   const radius=parseInt(val('pradius'))||1500;
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
