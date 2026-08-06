@@ -2,8 +2,6 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>太田塾 物件周辺環境レポート</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -90,7 +88,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.3</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -171,9 +169,29 @@ const GKEY='AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI';
 const CSE_CX='';  /* Custom Search APIは新規提供終了のため未使用 */
 /* ★類似物件の自動検索：太田さんのGAS(SUUMO一覧を自動発見→解析)を呼ぶ */
 const GAS_SEARCH='https://script.google.com/macros/s/AKfycbzXp4Ew-ilHYsXOVaUVwcz9Fy_LkehyVy18wf4iwwhStkWcmudNI0IsWMZuSrcSF3llDg/exec';
-async function gasSearchCmp(city,md){
+/* 住所→都道府県／市区町村（政令市は「福岡市東区」、郡部は「大木町」を返す） */
+function prefOf(t){const m=(t||'').match(/(北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/);return m?m[1]:'';}
+function cityOf(t){
+  const s=(t||'').replace(/^.*?(?:北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/,'');
+  const m=s.match(/^\s*(.{2,6}?[市郡])(.{1,5}?[区町村])?/);
+  if(!m)return (s.match(/^\s*(.{2,8}?[区町村])/)||[])[1]||'';
+  if(/郡$/.test(m[1]))return m[2]||m[1];
+  return m[1]+((m[2]&&/区$/.test(m[2]))?m[2]:'');
+}
+/* 本物件の間取り・面積・賃料をGASへ渡し、SUUMO側で絞り込ませる（精度向上 v3.3） */
+function ownHints(){
+  const men=num('pmens');const units=num('punits');const inc=num('pincome');
+  let rent=num('prentmin')||0;
+  if(!rent&&inc&&units)rent=Math.round(inc/units/12/100)*100;
+  return {men:men||0,rent:rent||0};
+}
+async function gasSearchCmp(city,md,hint,pref){
+  hint=hint||ownHints();
+  pref=pref||prefOf(window._lastTitle||val('paddr'));
   try{
-    const r=await fetch(GAS_SEARCH+'?city='+encodeURIComponent(city)+'&md='+encodeURIComponent(md||''));
+    const q='?city='+encodeURIComponent(city)+'&pref='+encodeURIComponent(pref||'')+'&md='+encodeURIComponent(md||'')
+      +(hint.men?'&men='+hint.men:'')+(hint.rent?'&rent='+hint.rent:'');
+    const r=await fetch(GAS_SEARCH+q);
     const j=await r.json();
     let n=0;
     (j.items||[]).forEach(it=>{
@@ -210,7 +228,7 @@ async function cseSearchCmp(city,md){
 }
 async function autoCmpClick(){
   const t=(window._lastTitle||val('paddr'));
-  const city=(t.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+  const city=cityOf(t);
   if(!city){alert('先に「位置を検索」で物件の場所を確定してください。');return;}
   const n=await gasSearchCmp(city,val('pmadori')||'');
   alert(n>0?n+'件の募集事例を自動で取り込みました。内容を確認して「レポートを作成」してください。':'募集事例が見つかりませんでした。SUUMOで手動検索→貼り付けもお試しください。');
@@ -302,14 +320,20 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   own=own||{min:0,max:0,men:0};
   const today=new Date();
   const ownCity=(addr.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+  /* 本物件から近い順に並べ替え（位置が取れなかったものは末尾） */
+  if(opts.center){
+    cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
+    cmp.sort((a,b)=>(a.d==null?1e9:a.d)-(b.d==null?1e9:b.d));
+  }
   let mismatch=0;
   let rows='';cmp.forEach((c,i)=>{
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:11px;color:#475569">${c.addr||'—'}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
+    const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:11px;color:#475569">${c.addr||'—'}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
   const ownLabel=age<=0?'新築':'築'+age+'年';
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
   const ownUnit=hasOwn&&own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
@@ -355,7 +379,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       mapHtml=m.html+`<div class="legend"><span class="c">📍 青ピン＝本物件</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>`;
     }
     tbl=mapHtml+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
-      <table class="lst"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:64px;text-align:right">築年</th><th style="width:76px;text-align:right">面積</th><th style="width:104px;text-align:right">月額総額</th></tr>${rows}</table>`;
+      <table class="lst"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:100px;text-align:right">月額総額</th></tr>${rows}</table>`;
   }
   const body=kpi+tbl+note;
   return paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',body,
@@ -384,7 +408,8 @@ nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"]
 nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="childcare"](around:${radius},${lat},${lon});
 nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});
 nwr["amenity"="social_facility"](around:${radius},${lat},${lon});nwr["amenity"="nursing_home"](around:${radius},${lat},${lon});
-node["railway"="station"](around:${Math.max(radius,2000)},${lat},${lon});node["highway"="bus_stop"](around:${radius},${lat},${lon});
+node["railway"="station"](around:${Math.max(radius,2000)},${lat},${lon});
+node["highway"="bus_stop"](around:${radius},${lat},${lon});node["public_transport"="platform"]["bus"="yes"](around:${radius},${lat},${lon});
 );out center tags;`;
   const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.private.coffee/api/interpreter"];
   for(let p=0;p<2;p++)for(const ep of eps){
@@ -401,11 +426,13 @@ function classify(els,lat,lon){
   for(const e of (els||[])){
     const t=e.tags||{};const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);
     if(la==null)continue;
-    const item={name:t.name||'（名称なし）',lat:la,lon:lo,d:Math.round(dist(lat,lon,la,lo)),op:t.operator||t.network||''};
+    const nm=t.name||t['name:ja']||t['name:en']||'';
+    if(!nm)continue; /* 名称のないOSMノードは資料に載せない（「名称なし」行の排除） */
+    const item={name:nm,lat:la,lon:lo,d:Math.round(dist(lat,lon,la,lo)),op:t.operator||t.network||''};
     item.min=wmin(item.d);
     let k=null;
     if(t.railway==='station')k='station';
-    else if(t.highway==='bus_stop')k='bus';
+    else if(t.highway==='bus_stop'||(t.public_transport==='platform'&&t.bus==='yes'))k='bus';
     else if(t.shop==='supermarket')k='super';
     else if(t.shop==='convenience')k='conv';
     else if(t.amenity==='pharmacy'||t.shop==='chemist')k='drug';
@@ -422,9 +449,33 @@ function classify(els,lat,lon){
     else if(t.leisure==='park')k='park';
     if(k)L[k].push(item);
   }
-  for(const k in L)L[k].sort((a,b)=>a.d-b.d);
+  /* 全カテゴリ：物件から近い順。駅・バス停は同名（上下線・複数ホーム）を最寄り1件に名寄せ */
+  for(const k in L){
+    L[k].sort((a,b)=>a.d-b.d);
+    if(k==='station'||k==='bus'){
+      const seen=new Set();
+      L[k]=L[k].filter(it=>{const key=it.name.replace(/\s+/g,'');if(seen.has(key))return false;seen.add(key);return true;});
+    }
+  }
   return L;
 }
+/* OSMにバス停が無い／少ない地域の補完：Google Places（正式名称・日本語）
+   ※type:'bus_station'は日本では収録が薄くZERO_RESULTSになるため keyword:'バス停' を使う（羽犬塚で実証） */
+function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
+  try{
+    const svc=new google.maps.places.PlacesService(document.createElement('div'));
+    let done=false;const fin=v=>{if(!done){done=true;res(v||[]);}};
+    const req={location:new google.maps.LatLng(lat,lon),radius:Math.min(radius,3000)};
+    if(opt&&opt.type)req.type=opt.type;
+    if(opt&&opt.keyword)req.keyword=opt.keyword;
+    svc.nearbySearch(req,(r,s)=>{
+      if(s!=='OK'||!r){fin([]);return;}
+      fin(r.filter(p=>p.geometry&&p.name).map(p=>({name:p.name.replace(/\s*[（(]バス[)）]\s*$/,'').replace(/バス停(留所)?$/,'').trim(),
+        lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),op:'',src:'Google'})));
+    });
+    setTimeout(()=>fin([]),8000);
+  }catch(e){res([]);}
+});}
 
 /* ============ ペーパー描画 ============ */
 let MAPS=[];let mapSeq=0;
@@ -450,22 +501,66 @@ function facilityPaper(title,lead,groups,g,radius,src){
   MAPS.push({id:m.id,center:[g.lat,g.lon],radius,markers});
   return paper(title,lead,body,src);
 }
+/* Googleマップ上にHTMLの番号ピンを描くOverlayView（Marker のicon/label非描画への対策） */
+function htmlPins(map,pins){
+  const O=function(){this.setMap(map);};
+  O.prototype=new google.maps.OverlayView();
+  O.prototype.onAdd=function(){
+    this.div=document.createElement('div');
+    this.div.style.cssText='position:absolute;left:0;top:0;width:0;height:0;';
+    this.els=pins.map(p=>{
+      const e=document.createElement('div');
+      e.style.cssText='position:absolute;transform:translate(-50%,-50%);z-index:'+(p.top?9999:10)+';';
+      e.title=p.title||'';e.innerHTML=p.html;
+      this.div.appendChild(e);return e;
+    });
+    this.getPanes().overlayMouseTarget.appendChild(this.div);
+  };
+  O.prototype.draw=function(){
+    const pr=this.getProjection();if(!pr)return;
+    pins.forEach((p,i)=>{
+      const pt=pr.fromLatLngToDivPixel(new google.maps.LatLng(p.lat,p.lon));
+      if(pt&&this.els[i]){this.els[i].style.left=pt.x+'px';this.els[i].style.top=pt.y+'px';}
+    });
+  };
+  O.prototype.onRemove=function(){if(this.div&&this.div.parentNode)this.div.parentNode.removeChild(this.div);};
+  return new O();
+}
+/* 地図＝Googleマップに統一（2026-08-07 v3.3・太田要望）。ハザードの公式タイルはImageMapTypeで重畳 */
 function initMaps(g){
   MAPS.forEach(cfg=>{
     const el=document.getElementById(cfg.id);if(!el)return;
-    const map=L.map(cfg.id,{scrollWheelZoom:false,attributionControl:true});
-    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',{attribution:'国土地理院',maxZoom:18}).addTo(map);
-    L.circle(cfg.center,{radius:cfg.radius,color:'#dc2626',weight:1.5,fill:false,dashArray:'4 4'}).addTo(map);
-    L.marker(cfg.center).addTo(map).bindTooltip('調査対象物件',{permanent:false});
-    (cfg.overlays||[]).forEach(u=>L.tileLayer(u,{opacity:.65,maxZoom:17}).addTo(map));
-    (cfg.markers||[]).forEach(mk=>{
-      L.marker([mk.lat,mk.lon],{icon:L.divIcon({className:'',html:`<div style="width:22px;height:22px;border-radius:50%;background:${mk.color};color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:22px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)">${mk.label}</div>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(map).bindTooltip(mk.name);
+    const center={lat:cfg.center[0],lng:cfg.center[1]};
+    const map=new google.maps.Map(el,{center:center,zoom:15,mapTypeId:'roadmap',
+      gestureHandling:'cooperative',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,
+      zoomControl:true,clickableIcons:false});
+    /* 調査範囲の円 */
+    const circle=new google.maps.Circle({map:map,center:center,radius:cfg.radius,
+      strokeColor:'#dc2626',strokeOpacity:.9,strokeWeight:1.5,fillOpacity:0,clickable:false});
+    /* ハザード等のタイル重畳 */
+    (cfg.overlays||[]).forEach(u=>{
+      map.overlayMapTypes.push(new google.maps.ImageMapType({
+        getTileUrl:(c,z)=>(z>17?null:u.replace('{z}',z).replace('{x}',c.x).replace('{y}',c.y)),
+        tileSize:new google.maps.Size(256,256),opacity:.6}));
     });
-    if(cfg.fit==='markers'&&(cfg.markers||[]).length){
-      const b=L.latLngBounds([cfg.center,...cfg.markers.map(mk=>[mk.lat,mk.lon])]).pad(0.22);map.fitBounds(b);
-    }else{
-      const b=L.latLng(cfg.center).toBounds(cfg.radius*2.2);map.fitBounds(b);
-    }
+    /* 番号ピン（表のNoと連動）＋調査対象物件ピン。
+       ⚠️google.maps.Markerのicon/labelは当環境で描画されないため、OverlayViewでHTMLピンを描く */
+    const pins=(cfg.markers||[]).map(mk=>({lat:mk.lat,lon:mk.lon,title:mk.name,
+      html:`<div style="width:24px;height:24px;border-radius:50%;background:${mk.color};color:#fff;font-size:11.5px;font-weight:800;text-align:center;line-height:24px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)">${mk.label}</div>`}));
+    pins.push({lat:cfg.center[0],lon:cfg.center[1],title:'調査対象物件',top:true,
+      html:`<div style="width:30px;height:30px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:#1d4ed8;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`});
+    htmlPins(map,pins);
+    /* 表示範囲：⚠️構築直後にfitBoundsを呼ぶとタイルが描画されない（実機検証済）。
+       必ず最初の'idle'を待ってから合わせること。 */
+    google.maps.event.addListenerOnce(map,'idle',()=>{
+      if(cfg.fit==='markers'&&(cfg.markers||[]).length){
+        const b=new google.maps.LatLngBounds();b.extend(center);
+        cfg.markers.forEach(mk=>b.extend({lat:mk.lat,lng:mk.lon}));
+        map.fitBounds(b,26);
+      }else{
+        map.fitBounds(circle.getBounds(),10);
+      }
+    });
   });
 }
 
@@ -579,7 +674,7 @@ async function buildReport(g){
   MAPS=[];mapSeq=0;
   /* ★比較物件が空なら、このエリアの募集事例を自動検索して反映（ゼロタップ） */
   if(collectCmp().length===0){
-    const cityA=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+    const cityA=cityOf(g.title);
     if(cityA){
       setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…（SUUMO）');
       let got=await gasSearchCmp(cityA,val('pmadori')||'');
@@ -594,6 +689,22 @@ async function buildReport(g){
   hideStatus();
   const query=g.query||val('paddr');
   const F0=classify(els,g.lat,g.lon);
+  /* バス停がOSMに無い／少ない地域はGoogle Placesで補完（羽犬塚など収録ゼロの地域対策） */
+  if(F0.bus.length<3){
+    try{
+      let gp=await placesNearby(g.lat,g.lon,radius,{keyword:'バス停'});
+      if(gp.length<3)gp=gp.concat(await placesNearby(g.lat,g.lon,radius,{type:'transit_station'}));
+      const seen=new Set(F0.bus.map(b=>b.name.replace(/\s+/g,'')));
+      gp.forEach(p=>{
+        if(!p.name||/駅$/.test(p.name))return; /* 鉄道駅は駅ページに載るので除外 */
+        const key=p.name.replace(/\s+/g,'');if(seen.has(key))return;seen.add(key);
+        const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
+        if(d>radius)return;
+        F0.bus.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
+      });
+      F0.bus.sort((a,b)=>a.d-b.d);
+    }catch(e){}
+  }
   /* 駅・バス停はGoogle経路APIで実測徒歩分に補正（失敗時は道路換算のまま） */
   try{
     const dmT=[...F0.station.slice(0,5),...F0.bus.slice(0,6)];
@@ -649,14 +760,14 @@ async function buildReport(g){
   if(ownMen<=0&&bldg>0&&units>0)ownMen=Math.round(bldg/units*100)/100;
   if(rmin>0){
     compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,num('page'),g.title,
-      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'',md:val('pmadori')||''});
+      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||''});
   }else if(cmp.length>0){
     /* 賃料未入力でも自動検索した募集事例は表で見せる（v3.1） */
     compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,num('page'),g.title,
-      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'',md:val('pmadori')||''});
+      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||''});
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
-    const city=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+    const city=cityOf(g.title);
     const md=val('pmadori')||'1LDK';
     compHtml=paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',
       `<div class="phase" style="font-size:12px;line-height:1.9">
