@@ -1,10 +1,10 @@
 {
-  "asof": "2026/8/5",
+  "asof": "2026/8/6",
   "total": 256,
-  "vacant": 32,
-  "applied": 2,
+  "vacant": 31,
+  "applied": 3,
   "taikyo": 4,
-  "lossMan": 258,
+  "lossMan": 261,
   "target": 97,
-  "rate": 87.5
+  "rate": 87.9
 }
