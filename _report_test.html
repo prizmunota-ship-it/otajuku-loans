@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.1</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -281,6 +281,8 @@ function collectCmp(){
 function manEn(n){return (n/10000).toLocaleString('ja-JP',{maximumFractionDigits:1})+'万円';}
 function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   opts=opts||{};
+  const hasOwn=!!(own&&own.min>0); /* 本物件の賃料が未入力でも募集事例だけは表示する */
+  own=own||{min:0,max:0,men:0};
   const today=new Date();
   const ownCity=(addr.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
   let mismatch=0;
@@ -288,13 +290,13 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     rows+=`<tr><td class="nm">${c.name}</td><td style="font-size:11px;color:#475569">${c.addr||'—'}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
   const ownLabel=age<=0?'新築':'築'+age+'年';
-  const ownRent=own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円';
-  rows+=`<tr class="own"><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
+  const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
+  if(hasOwn)rows+=`<tr class="own"><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
-  const ownUnit=own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
+  const ownUnit=hasOwn&&own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
   const derivedTxt=opts.derived?`満室想定年収入${opts.units>0?'÷12ヶ月÷'+opts.units+'戸':'÷12ヶ月'}から自動算出`:'入力値';
-  const kpi=`<div class="kpi3" style="margin-bottom:10px">
+  const kpi=!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:`<div class="kpi3" style="margin-bottom:10px">
       <div class="t hl"><div class="l">本物件の想定賃料（月額総額）</div><div class="v">${ownRent}</div><div class="s">${derivedTxt}</div></div>
       <div class="t"><div class="l">専有面積</div><div class="v" style="font-size:16px">${own.men>0?own.men.toFixed(2)+'㎡':'—'}</div><div class="s">${opts.units>0?'延床÷'+opts.units+'戸':''}</div></div>
       <div class="t"><div class="l">㎡単価</div><div class="v" style="font-size:16px">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</div></div>
@@ -323,8 +325,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
     const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円を維持しており経年下落は限定的。`:'';
     const strength=(age<=0?'新築':'築浅')+(stationTxt?'×駅近':'')+'の物件力';
-    note=`<div class="pos-note">【賃料設定の考え方】周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
-    tbl=`<div class="subttl">同賃料帯の募集実例</div>${areaWarn}
+    note=hasOwn?`<div class="pos-note">【賃料設定の考え方】周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
+      :`<div class="pos-note">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
+    tbl=`<div class="subttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
       <table class="lst"><tr><th>物件名</th><th>所在地</th><th style="width:64px;text-align:right">築年</th><th style="width:76px;text-align:right">面積</th><th style="width:104px;text-align:right">月額総額</th></tr>${rows}</table>`;
   }
   const body=kpi+tbl+note;
@@ -615,6 +618,10 @@ async function buildReport(g){
   if(rmin>0){
     compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,num('page'),g.title,
       {derived:derivedRent,units:units,city:(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'',md:val('pmadori')||''});
+  }else if(cmp.length>0){
+    /* 賃料未入力でも自動検索した募集事例は表で見せる（v3.1） */
+    compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,num('page'),g.title,
+      {derived:false,units:0,city:(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'',md:val('pmadori')||''});
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
     const city=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
