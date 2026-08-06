@@ -88,7 +88,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.5</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -203,7 +203,7 @@ async function gasByName(name){
     const r=await fetch(GAS_SEARCH+'?name='+encodeURIComponent(name));
     const j=await r.json();
     window.GASRES={key:name,json:j};
-    window.SELF=(j.self&&j.self.found)?j.self:null;
+    window.SELF=(j.self&&j.self.addr)?j.self:null;
     return j;
   }catch(e){return null;}
 }
@@ -224,7 +224,7 @@ async function gasSearchCmp(city,md,hint,pref){
       const r=await fetch(GAS_SEARCH+q);
       j=await r.json();
     }
-    if(j.self&&j.self.found)window.SELF=j.self;
+    if(j.self&&j.self.addr)window.SELF=j.self;
     /* 本物件の募集実績が取れたら、未入力の間取り・面積・賃料をその実データで埋める */
     if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
       const r0=window.SELF.rooms[0];
@@ -648,7 +648,8 @@ async function locate(){
   if(looksLikeName(query)){
     setStatus('🔎 「'+query+'」をSUUMO物件ライブラリーで照会中…');
     const j=await gasByName(query);
-    if(j&&j.self&&j.self.found&&j.self.addr)libQuery=j.self.addr+' '+query;
+    /* SUUMO掲載でもWeb検索由来でも、住所が取れたらそれを位置特定に使う */
+    if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+query;
   }
   setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
   let res=libQuery?await googleGeocodeFull(libQuery):null;
@@ -662,8 +663,22 @@ async function locate(){
   hideStatus();
   showConfirm(res,query);
 }
+/* 緯度経度→住所（ピン移動後の市区町村の取り直しに使う） */
+function reverseGeocode(lat,lon){return new Promise(res=>{
+  if(!gGeocoder){res('');return;}
+  let done=false;const fin=v=>{if(!done){done=true;res(v||'');}};
+  try{
+    gGeocoder.geocode({location:{lat:lat,lng:lon}},(r,s)=>{
+      if(s==='OK'&&r&&r.length){
+        const best=r.find(x=>(x.types||[]).indexOf('premise')>=0)||r.find(x=>(x.types||[]).indexOf('street_address')>=0)||r[0];
+        fin(best.formatted_address.replace(/^日本、?/,''));
+      }else fin('');
+    });
+    setTimeout(()=>fin(''),6000);
+  }catch(e){fin('');}
+});}
 function showConfirm(res,query){
-  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query};
+  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:''};
   const c=document.getElementById('confirm');c.style.display='block';
   document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
   const w=document.getElementById('confwarn');
@@ -676,9 +691,14 @@ function showConfirm(res,query){
     if(!confMap){
       confMap=new google.maps.Map(document.getElementById('gconfmap'),{center:pos,zoom:17,mapTypeControl:true,streetViewControl:false,fullscreenControl:false});
       confMarker=new google.maps.Marker({map:confMap,position:pos,draggable:true,title:'ドラッグで位置修正'});
-      confMarker.addListener('dragend',()=>{const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();
+      /* ピンを動かしたら住所を取り直す（市区町村が変わると類似物件の検索先も変わるため必須） */
+      confMarker.addListener('dragend',async()=>{
+        const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();
+        document.getElementById('confwarn').style.display='none';
+        const rev=await reverseGeocode(PENDING.lat,PENDING.lon);
+        if(rev){PENDING.title=(PENDING.name?PENDING.name+'　':'')+rev;setCmpSearch(rev);}
         document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ ピン位置を手動修正済み</span>';
-        document.getElementById('confwarn').style.display='none';});
+      });
     }else{confMap.setCenter(pos);confMarker.setPosition(pos);}
   }catch(e){}
   /* 前回生成と別エリア（5km超）なら、残っている比較物件入力を自動クリア */
@@ -735,7 +755,12 @@ async function buildReport(g){
   MAPS=[];mapSeq=0;
   /* ★比較物件が空なら、このエリアの募集事例を自動検索して反映（ゼロタップ） */
   if(collectCmp().length===0){
-    const cityA=cityOf(g.title);
+    let cityA=cityOf(g.title);
+    /* タイトルに市区町村が無い（物件名だけ／ピン移動後など）は座標から住所を取り直す */
+    if(!cityA){
+      const rev=await reverseGeocode(g.lat,g.lon);
+      if(rev){g.title=g.title&&g.title.indexOf(rev)<0?g.title+'　'+rev:rev;cityA=cityOf(rev);}
+    }
     if(cityA){
       setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…（SUUMO）');
       let got=await gasSearchCmp(cityA,val('pmadori')||'');
