@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.6</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -125,6 +125,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     </div>
     <div class="subhd2">🔍 募集中の類似物件を探す（ポータルサイト）</div>
     <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンク（SUUMO／アットホーム／HOME'S／スマサテ）がここに表示されます。</div>
+    <button type="button" class="addrow" onclick="autoCmpClick()" style="background:#0f766e;color:#fff;border:none">🤖 このエリアの募集を自動検索して取り込む</button>
     <div class="subhd2">📋 まとめて貼り付け（ポータルの物件情報をコピーして貼ると自動で行になります）</div>
     <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※「6.1万円」表記や、物件名と賃料が別の行になっている貼り付けにも対応しています"></textarea>
     <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
@@ -161,6 +162,42 @@ function setStatus(t,err){const s=document.getElementById('status');s.style.disp
 function hideStatus(){document.getElementById('status').style.display='none';}
 
 let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
+/* ====== 類似物件の自動検索（Google公式 Custom Search API） ====== */
+const GKEY='AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI';
+const CSE_CX='';  /* ←検索エンジンID（設定後に有効化） */
+async function cseSearchCmp(city,md){
+  if(!CSE_CX||!city)return 0;
+  let added=0;const seen=new Set();
+  for(const q of [city+' '+md+' 賃貸',city+' 賃貸 アパート '+md]){
+    try{
+      const r=await fetch('https://www.googleapis.com/customsearch/v1?key='+GKEY+'&cx='+CSE_CX+'&num=10&q='+encodeURIComponent(q));
+      if(!r.ok)continue;const j=await r.json();
+      for(const it of (j.items||[])){
+        const txt=(it.title||'')+' '+(it.snippet||'');
+        const man=txt.match(/([\d.]+)\s*万円/);if(!man)continue;
+        const total=Math.round(parseFloat(man[1])*10000);
+        if(total<20000||total>400000)continue;
+        const men=(txt.match(/([\d.]+)\s*(?:㎡|m2|m²)/)||[])[1]||'';
+        const age=(txt.match(/築\s*(\d+)\s*年?/)||[])[1]||'';
+        let name=(it.title||'').split(/[\|｜\-–【\(（]/)[0].trim().slice(0,25)||'物件';
+        const addr=(txt.match(/([一-龯]{2,3}[都道府県][^\s、。]{3,20})/)||[])[1]||'';
+        const key=name+'_'+total;if(seen.has(key))continue;seen.add(key);
+        addCmpRow([name,addr,age,men,total]);added++;
+        if(added>=8)break;
+      }
+      if(added>=8)break;
+    }catch(e){}
+  }
+  return added;
+}
+async function autoCmpClick(){
+  const t=(window._lastTitle||val('paddr'));
+  const city=(t.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+  if(!city){alert('先に「位置を検索」で物件の場所を確定してください。');return;}
+  if(!CSE_CX){alert('自動検索は設定準備中です（Custom Search APIの設定後に有効になります）。');return;}
+  const n=await cseSearchCmp(city,val('pmadori')||'1LDK');
+  alert(n>0?n+'件の募集事例を取り込みました。内容を確認して「レポートを作成」してください。':'募集事例が見つかりませんでした。貼り付け方式もお試しください。');
+}
 /* --- 類似物件 行UI --- */
 function addCmpRow(v){
   const d=document.createElement('div');d.className='cmprow';
@@ -491,8 +528,13 @@ function setCmpSearch(addr){
 /* ====== ステップ2：レポート生成 ====== */
 async function buildReport(g){
   document.getElementById('go').disabled=true;
-  window._lastLoc={lat:g.lat,lon:g.lon};
+  window._lastLoc={lat:g.lat,lon:g.lon};window._lastTitle=g.title;
   MAPS=[];mapSeq=0;
+  /* ★比較物件が空なら、このエリアの募集事例を自動検索して反映（ゼロタップ） */
+  if(collectCmp().length===0&&CSE_CX){
+    const cityA=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+    if(cityA){setStatus('🔎 '+cityA+'の募集事例を自動検索中…');await cseSearchCmp(cityA,val('pmadori')||'1LDK');}
+  }
   const radius=parseInt(val('pradius'))||1500;
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
   const [els,js]=await Promise.all([overpass(g.lat,g.lon,radius),document.getElementById('opt_haz').checked?jshis(g.lat,g.lon):null]);
