@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.7</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -613,8 +613,7 @@ async function buildReport(g){
         ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Asuumo.jp">🔍 SUUMOで${city}の${md}を探す ↗</a>
         <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Aathome.co.jp">🔍 アットホームで探す ↗</a>
         <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Ahomes.co.jp">🔍 HOME'Sで探す ↗</a>`:''}
-        <a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテで賃料査定 ↗</a>
-      </div>`,'SUUMO・アットホーム・HOME\'S・スマサテ等');
+      </div>`,'SUUMO・アットホーム・HOME\'S 等の賃貸ポータルサイト');
   }
 
   /* --- 最寄り駅 --- */
