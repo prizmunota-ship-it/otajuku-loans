@@ -86,7 +86,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v2.5</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -106,6 +106,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
       <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
       <div class="fld"><label>築年数</label><input id="page" type="number" value="0"></div>
       <div class="fld"><label>満室想定年収入 円</label><input id="pincome" type="number"></div>
+      <div class="fld"><label>総戸数 戸</label><input id="punits" type="number" placeholder="例：9"></div>
       <div class="fld"><label>土地面積 ㎡</label><input id="pland" type="number"></div>
       <div class="fld"><label>建物延床 ㎡</label><input id="pbldg" type="number"></div>
       <div class="fld"><label>土地単価 円/㎡</label><input id="plandprice" type="number"></div>
@@ -228,7 +229,8 @@ function collectCmp(){
   });return rows;
 }
 function manEn(n){return (n/10000).toLocaleString('ja-JP',{maximumFractionDigits:1})+'万円';}
-function buildCompPaper(cmp,own,appeal,stationTxt,age,addr){
+function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
+  opts=opts||{};
   const today=new Date();
   const ownCity=(addr.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
   let mismatch=0;
@@ -239,19 +241,43 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr){
   const ownRent=own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円';
   rows+=`<tr class="own"><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
-  /* 自動分析 */
-  const totals=cmp.map(c=>c.total),rMin=Math.min(...totals),rMax=Math.max(...totals);
-  const ownMid=(own.min+own.max)/2;
-  let pos; if(own.max<rMin)pos='周辺募集帯を下回る手堅い水準';
-  else if(ownMid<=rMin+(rMax-rMin)*0.45)pos='周辺募集帯の中でも控えめな位置';
-  else if(ownMid<=rMax)pos='周辺募集帯の範囲内';
-  else pos='周辺上位帯の水準';
-  const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
-  const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円を維持しており経年下落は限定的。`:'';
-  const strength=(age<=0?'新築':'築浅')+(stationTxt?'×駅近':'')+'の物件力';
-  const note=`<div class="pos-note">【賃料設定の考え方】周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
-  const body=`<div class="subttl">同賃料帯の募集実例</div>${areaWarn}
-    <table class="lst"><tr><th>物件名</th><th>所在地</th><th style="width:64px;text-align:right">築年</th><th style="width:76px;text-align:right">面積</th><th style="width:104px;text-align:right">月額総額</th></tr>${rows}</table>${note}`;
+  /* 本物件の自動サマリー（入力済み情報から算出） */
+  const ownUnit=own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
+  const derivedTxt=opts.derived?`満室想定年収入${opts.units>0?'÷12ヶ月÷'+opts.units+'戸':'÷12ヶ月'}から自動算出`:'入力値';
+  const kpi=`<div class="kpi3" style="margin-bottom:10px">
+      <div class="t hl"><div class="l">本物件の想定賃料（月額総額）</div><div class="v">${ownRent}</div><div class="s">${derivedTxt}</div></div>
+      <div class="t"><div class="l">専有面積</div><div class="v" style="font-size:16px">${own.men>0?own.men.toFixed(2)+'㎡':'—'}</div><div class="s">${opts.units>0?'延床÷'+opts.units+'戸':''}</div></div>
+      <div class="t"><div class="l">㎡単価</div><div class="v" style="font-size:16px">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</div></div>
+    </div>`;
+  let note='',tbl='';
+  if(cmp.length===0){
+    /* 比較物件が無くても本物件情報は自動表示 */
+    const q=opts.city?encodeURIComponent(opts.city+' '+(opts.md||'')+' 賃貸'):'';
+    tbl=`<div class="subttl">周辺の募集事例（追加すると比較表になります）</div>
+      <div class="phase" style="font-size:12px;line-height:1.85">
+        現在、比較用の募集事例が未登録です。下のリンクで<b>SUUMO・アットホーム等</b>の募集を開き、気になる物件の情報を<b>コピーして「まとめて貼り付け」に貼るだけ</b>で、この欄が比較表＋分析文に変わります。
+      </div>
+      ${opts.city?`<div style="margin-top:6px">
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Asuumo.jp">🔍 SUUMOで${opts.city}の募集を見る ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Aathome.co.jp">🔍 アットホーム ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Ahomes.co.jp">🔍 HOME'S ↗</a>
+      </div>`:''}`;
+    note=appeal?`<div class="pos-note"><div class="appeal" style="margin:0">◎ ${appeal}</div></div>`:'';
+  }else{
+    const totals=cmp.map(c=>c.total),rMin=Math.min(...totals),rMax=Math.max(...totals);
+    const ownMid=(own.min+own.max)/2;
+    let pos; if(own.max<rMin)pos='周辺募集帯を下回る手堅い水準';
+    else if(ownMid<=rMin+(rMax-rMin)*0.45)pos='周辺募集帯の中でも控えめな位置';
+    else if(ownMid<=rMax)pos='周辺募集帯の範囲内';
+    else pos='周辺上位帯の水準';
+    const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
+    const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円を維持しており経年下落は限定的。`:'';
+    const strength=(age<=0?'新築':'築浅')+(stationTxt?'×駅近':'')+'の物件力';
+    note=`<div class="pos-note">【賃料設定の考え方】周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
+    tbl=`<div class="subttl">同賃料帯の募集実例</div>${areaWarn}
+      <table class="lst"><tr><th>物件名</th><th>所在地</th><th style="width:64px;text-align:right">築年</th><th style="width:76px;text-align:right">面積</th><th style="width:104px;text-align:right">月額総額</th></tr>${rows}</table>`;
+  }
+  const body=kpi+tbl+note;
   return paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',body,
     `SUUMO・アットホーム・HOME'S 等の賃貸ポータルサイト（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
 }
@@ -516,27 +542,30 @@ async function buildReport(g){
 
   /* --- 類似物件の賃貸情報（任意）※順番は「周辺施設」の後に挿入 --- */
   let compHtml='';
-  const cmp=collectCmp(),rmin=num('prentmin'),rmax=num('prentmax');
+  const cmp=collectCmp();
   const st0=F.station[0];
   const stationTxt=st0?'・'+st0.name+'駅 徒歩'+st0.min+'分':'';
-  if(cmp.length>=1&&rmin>0){
-    compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:num('pmens')},val('pappeal'),stationTxt,num('page'),g.title);
+  /* ★入力済みの物件情報から自動算出（満室想定年収入÷12÷戸数／延床÷戸数） */
+  const units=num('punits');
+  let rmin=num('prentmin'),rmax=num('prentmax'),ownMen=num('pmens'),derivedRent=false;
+  if(rmin<=0&&income>0){
+    const per=units>0?income/12/units:income/12;
+    rmin=Math.round(per/100)*100;rmax=rmin;derivedRent=true;
+  }
+  if(ownMen<=0&&bldg>0&&units>0)ownMen=Math.round(bldg/units*100)/100;
+  if(rmin>0){
+    compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,num('page'),g.title,
+      {derived:derivedRent,units:units,city:(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'',md:val('pmadori')||''});
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
     const city=(g.title.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
     const md=val('pmadori')||'1LDK';
-    const miss=[];
-    if(cmp.length<1)miss.push('比較物件（1件以上）');
-    if(rmin<=0)miss.push('本物件の想定 月額総額');
     compHtml=paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',
       `<div class="phase" style="font-size:12px;line-height:1.9">
-        📋 このページは、周辺の<b>募集中の類似物件</b>を入力すると自動作成されます（比較表＋賃料設定の考え方の分析文）。<br>
-        <b style="color:#b91c1c">未入力の項目：${miss.join('／')}</b><br><br>
-        <b>【入力のしかた】</b><br>
-        ① 上のフォームの「<b>▶ 類似物件の賃貸情報を追加</b>」を開く<br>
-        ② 下の検索ボタンから<b>SUUMO・アットホーム等のポータルサイト</b>で似た条件の募集を調べる<br>
-        ③ 物件名・築年・面積・月額を「まとめて貼り付け」に貼って「行を作成」（直接入力でもOK）<br>
-        ④ 「本物件の想定」の<b>月額総額（下限・上限）</b>を入れて、もう一度「レポートを作成」
+        📋 このページは、<b>本物件の賃料</b>が分かると自動作成されます。<br>
+        <b style="color:#b91c1c">「収益・積算評価を追加」の「満室想定年収入」と「総戸数」を入力してください</b>（1戸あたりの想定賃料を自動計算します）。<br>
+        ※直接「本物件の想定 月額総額」を入れてもOKです。<br><br>
+        さらに、下の検索ボタンから<b>SUUMO・アットホーム等</b>の募集をコピー＆貼り付けすると、比較表と分析文が自動で入ります。
       </div>
       <div style="margin-top:8px">
         ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Asuumo.jp">🔍 SUUMOで${city}の${md}を探す ↗</a>
