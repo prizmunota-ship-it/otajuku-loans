@@ -88,7 +88,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.4</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -185,17 +185,56 @@ function ownHints(){
   if(!rent&&inc&&units)rent=Math.round(inc/units/12/100)*100;
   return {men:men||0,rent:rent||0};
 }
+/* 入力が「物件名」らしいか（住所らしければfalse）。物件名ならSUUMO物件ライブラリーで実募集を引く */
+function looksLikeName(s){
+  s=(s||'').trim();
+  if(!s)return false;
+  if(/^(北海道|東京都|京都府|大阪府|.{2,4}?県)/.test(s))return false;
+  if(/[0-9０-９]+\s*[-−ー－の丁目番地号]/.test(s))return false;
+  /* 「久留米市」のような自治体名だけは住所扱い。ただし「プライマリー日吉町」等の物件名は除く */
+  if(/^[^\s]{1,6}[市区町村]$/.test(s)&&!/[ァ-ヶーA-Za-zＡ-Ｚａ-ｚ]/.test(s))return false;
+  return true;
+}
+window.SELF=null; /* SUUMOで取得した本物件の実募集 */
+window.GASRES=null; /* 直近のGAS応答（物件名検索の結果を位置特定と比較表で共用し、二重問い合わせを避ける） */
+/* 物件名だけでSUUMO物件ライブラリーを引く（位置特定の前に正式住所を得るため） */
+async function gasByName(name){
+  try{
+    const r=await fetch(GAS_SEARCH+'?name='+encodeURIComponent(name));
+    const j=await r.json();
+    window.GASRES={key:name,json:j};
+    window.SELF=(j.self&&j.self.found)?j.self:null;
+    return j;
+  }catch(e){return null;}
+}
 async function gasSearchCmp(city,md,hint,pref){
   hint=hint||ownHints();
   pref=pref||prefOf(window._lastTitle||val('paddr'));
+  const raw=(val('paddr')||'').trim();
+  const nameQ=looksLikeName(raw)?raw:'';
   try{
-    const q='?city='+encodeURIComponent(city)+'&pref='+encodeURIComponent(pref||'')+'&md='+encodeURIComponent(md||'')
-      +(hint.men?'&men='+hint.men:'')+(hint.rent?'&rent='+hint.rent:'');
-    const r=await fetch(GAS_SEARCH+q);
-    const j=await r.json();
+    let j=null;
+    /* 位置確認時に物件名で取得済みなら、その結果をそのまま使う */
+    if(nameQ&&window.GASRES&&window.GASRES.key===nameQ&&!hint.men&&!hint.rent&&!md){
+      j=window.GASRES.json;
+    }else{
+      const q='?city='+encodeURIComponent(city)+'&pref='+encodeURIComponent(pref||'')+'&md='+encodeURIComponent(md||'')
+        +(hint.men?'&men='+hint.men:'')+(hint.rent?'&rent='+hint.rent:'')
+        +(nameQ?'&name='+encodeURIComponent(nameQ):'');
+      const r=await fetch(GAS_SEARCH+q);
+      j=await r.json();
+    }
+    if(j.self&&j.self.found)window.SELF=j.self;
+    /* 本物件の募集実績が取れたら、未入力の間取り・面積・賃料をその実データで埋める */
+    if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
+      const r0=window.SELF.rooms[0];
+      if(!val('pmadori'))document.getElementById('pmadori').value=r0.md;
+      if(!num('pmens'))document.getElementById('pmens').value=r0.men;
+      if(!num('prentmin')){document.getElementById('prentmin').value=r0.rent;document.getElementById('prentmax').value=r0.rent;}
+    }
     let n=0;
     (j.items||[]).forEach(it=>{
-      if(n>=8)return;
+      if(n>=10)return;
       addCmpRow([it.name,it.addr||'',it.age||'',it.men||'',it.total]);n++;
     });
     return n;
@@ -378,7 +417,19 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
       mapHtml=m.html+`<div class="legend"><span class="c">📍 青ピン＝本物件</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>`;
     }
-    tbl=mapHtml+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
+    /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
+    let selfBox='';
+    if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
+      const S=window.SELF;
+      selfBox=`<div class="evalbox" style="border-left-color:#16a34a;margin:0 0 10px">
+        <span class="tt">【基準となる本物件の募集内容】</span>SUUMO物件ライブラリー掲載の実データ<br>
+        <b>${S.name}</b>（${S.kind||''} ${S.struct||''} ${S.floors||''}／築年月 ${S.built||'—'}）　${S.addr||''}<br>
+        最寄駅：${S.station||'—'}<br>
+        募集中の部屋：${S.rooms.map(r=>`<b>${r.md} ${r.men}㎡ ${r.rent.toLocaleString()}円</b>`).join('　／　')}
+        <div style="font-size:10.5px;color:#64748b;margin-top:4px">この部屋の間取り・面積・賃料を基準に、同市区町村で募集中の類似物件を自動抽出しています。</div>
+      </div>`;
+    }
+    tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
       <table class="lst"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:100px;text-align:right">月額総額</th></tr>${rows}</table>`;
   }
   const body=kpi+tbl+note;
@@ -591,10 +642,20 @@ async function locate(){
   document.getElementById('go').disabled=true;
   document.getElementById('report').style.display='none';document.getElementById('toolbar').style.display='none';
   document.getElementById('confirm').style.display='none';
+  /* ★物件名入力ならSUUMO物件ライブラリーで正式住所を先に取得し、それを位置特定に使う。
+     （Placesのあいまい一致で「プライマリー日吉町」→「プライマリー野中町」を掴む事故を防ぐ） */
+  let libQuery='';
+  if(looksLikeName(query)){
+    setStatus('🔎 「'+query+'」をSUUMO物件ライブラリーで照会中…');
+    const j=await gasByName(query);
+    if(j&&j.self&&j.self.found&&j.self.addr)libQuery=j.self.addr+' '+query;
+  }
   setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
-  let res=await googleGeocodeFull(query);
+  let res=libQuery?await googleGeocodeFull(libQuery):null;
+  if(res&&window.SELF)res.title=window.SELF.name+'　'+res.title;
+  if(!res)res=await googleGeocodeFull(query);
   const vague=!res||['APPROXIMATE','GEOMETRIC_CENTER'].includes(res.locType);
-  if(vague){const p=await placesText(query);if(p)res=p;}
+  if(vague&&!libQuery){const p=await placesText(query);if(p)res=p;}
   if(!res)res=await geocode(query);
   document.getElementById('go').disabled=false;
   if(!res){setStatus('「'+query+'」が見つかりませんでした🙏 住所（市区町村＋番地）で、もう一度お試しください。',true);return;}
