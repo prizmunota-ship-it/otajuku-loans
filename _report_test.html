@@ -121,7 +121,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.8</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -216,6 +216,13 @@ function addrOnly(t){
   t=(t||'').trim();
   const m=t.match(/(〒\s*[0-9０-９]{3}[-−ー－]?[0-9０-９]{4}\s*)?((?:北海道|東京都|京都府|大阪府|.{2,4}?県)[\s\S]*)$/);
   return m?((m[1]||'')+m[2]).trim():t;
+}
+/* レポート表記用の住所。①実データで確認できた住所を最優先 ②番地の後ろに付く建物名は落とす
+   （Googleは「…14-64 セレストガーデン」のように建物名を足して返すため） */
+function addrPlain(t){
+  let a=(window.SELF&&window.SELF.addr)||addrOnly(t)||'';
+  const m=a.match(/^([\s\S]*?[0-9０-９][0-9０-９\-−ー－の丁目番地号]*)\s+\S+$/);
+  return (m?m[1]:a).trim();
 }
 function cityOf(t){
   const s=(t||'').replace(/^.*?(?:北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/,'');
@@ -586,7 +593,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const ucAvg=uc.length?uc.reduce((a,b)=>a+b,0)/uc.length:0;
     const ownUc=own.men>0?((own.min+own.max)/2)/own.men:0;
     const ucTxt=(ucAvg>0&&ownUc>0)?`㎡単価でみると周辺平均${Math.round(ucAvg).toLocaleString()}円/㎡に対し本物件は<b>${Math.round(ownUc).toLocaleString()}円/㎡</b>で、${ownUc<=ucAvg?'<b>割安な水準</b>':'同水準'}。`:'';
-    const sBits=[];if(ownAgeVal!=null)sBits.push(ownAgeVal<=0?'新築':(ownAgeVal<=5?'築浅':'築'+ownAgeVal+'年'));if(stationTxt)sBits.push('駅近');
+    const stMin=parseInt((stationTxt.match(/徒歩(\d+)分/)||[])[1]||'99',10);
+    const sBits=[];if(ownAgeVal!=null)sBits.push(ownAgeVal<=0?'新築':(ownAgeVal<=5?'築浅':'築'+ownAgeVal+'年'));if(stationTxt&&stMin<=10)sBits.push('駅近');
     const strength=sBits.length?sBits.join('×')+'の物件力':'本物件の立地条件';
     note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>${rentKey==='homes-hist'?'（'+(rentPeriod||'直近')+'の募集実績）':''}は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
       :`<div class="evalbox">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
@@ -1205,7 +1213,7 @@ async function buildReport(g){
     <div class="kicker">SUPPLEMENTARY REPORT FOR FINANCING</div>
     <h1>物件補足レポート</h1>
     <div class="cs">交通・生活・教育・防災の立地調査資料</div>
-    <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addrOnly(addr)}</div></div>
+    <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addrPlain(addr)}</div></div>
     <div class="meta" style="grid-template-columns:1fr 1fr">
       <div><div class="k">発行日</div><div class="v">${dstr}</div></div>
       <div><div class="k">調査対象範囲</div><div class="v">半径 ${radius.toLocaleString()}m</div></div>
@@ -1344,10 +1352,10 @@ async function buildReport(g){
         <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>生産年齢人口（15〜64歳）</td><td class="r">${pop.b.toLocaleString()}人</td><td class="r">${(pop.b/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>老年人口（65歳〜）</td><td class="r">${pop.c.toLocaleString()}人</td><td class="r">${(pop.c/pop.p25*100).toFixed(1)}%</td></tr></table>`;
-      const popArea=(addrOnly(g.title)||g.title||'').replace(/\s+/g,' ').trim();
+      const popArea=(addrPlain(g.title)||g.title||'').replace(/\s+/g,' ').trim();
       h+=paper('年齢別人口統計','<b>'+popArea+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏の人口構成と将来推計',popBody,pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ');
     }else{
-      h+=paper('年齢別人口統計','<b>'+(addrOnly(g.title)||g.title||'')+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
+      h+=paper('年齢別人口統計','<b>'+(addrPlain(g.title)||g.title||'')+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
     }
   }
   /* --- ハザード（選択） --- */
