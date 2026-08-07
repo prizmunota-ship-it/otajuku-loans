@@ -118,7 +118,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.3</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -764,11 +764,26 @@ function htmlPins(map,pins){
   return new O();
 }
 /* 地図＝Googleマップに統一（2026-08-07 v3.3・太田要望）。ハザードの公式タイルはImageMapTypeで重畳 */
+/* 地図本体はモノクロ（v6.3・太田要望）＝色が付くのは自分で載せた印だけにして見やすくする。
+   ・番号ピン／本物件ピン／赤丸／ハザードタイル（overlayMapTypes）はstylesの影響を受けないのでカラーのまま
+   ・GoogleのPOIアイコンは消さずに灰色で残す（店名・駅名は周辺環境の情報として要るため） */
+const MAP_MONO=[
+  {elementType:'geometry',stylers:[{saturation:-100},{lightness:8}]},
+  {elementType:'labels.icon',stylers:[{saturation:-100},{lightness:30}]},
+  {elementType:'labels.text.fill',stylers:[{saturation:-100},{lightness:-35}]},
+  {elementType:'labels.text.stroke',stylers:[{saturation:-100},{lightness:70}]},
+  {featureType:'water',elementType:'geometry',stylers:[{saturation:-100},{lightness:30}]},
+  {featureType:'poi',elementType:'geometry',stylers:[{saturation:-100},{lightness:25}]},
+  {featureType:'road',elementType:'geometry.fill',stylers:[{saturation:-100},{lightness:35}]},
+  {featureType:'road.highway',elementType:'geometry.fill',stylers:[{saturation:-100},{lightness:0}]},
+  {featureType:'transit',elementType:'geometry',stylers:[{saturation:-100},{lightness:5}]},
+  {featureType:'administrative',elementType:'geometry.stroke',stylers:[{saturation:-100},{lightness:-10}]}
+];
 function initMaps(g){
   MAPS.forEach(cfg=>{
     const el=document.getElementById(cfg.id);if(!el)return;
     const center={lat:cfg.center[0],lng:cfg.center[1]};
-    const map=new google.maps.Map(el,{center:center,zoom:15,mapTypeId:'roadmap',
+    const map=new google.maps.Map(el,{center:center,zoom:15,mapTypeId:'roadmap',styles:MAP_MONO,
       gestureHandling:'cooperative',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,
       zoomControl:true,clickableIcons:false});
     /* 調査範囲の円 */
