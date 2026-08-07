@@ -105,7 +105,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
 @media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
 @media print{
- #excluded{display:none!important;}
+ #excluded,.scronly{display:none!important;}
  /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
  /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
@@ -532,7 +532,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':'想定月額総額（1戸）'}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':derivedTxt}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
     </table>
-    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${srcUsed.join('／')||'—'}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
+    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${srcUsed.join('／')||'—'}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
   if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');

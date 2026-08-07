@@ -61,10 +61,17 @@ function norm(s) {
     .replace(/[\s　]/g, '')
     .toUpperCase();
 }
+/* 建物名の一致判定。単なる部分一致だと「キャナルシティ博多」で
+   「キャナルシティ博多ビジネスセンタービル」を拾ってしまう＝別の建物の構造・築年を載せる事故になる。
+   一致とみなすのは「完全一致」か「棟・号・A/B・Ⅰ/Ⅱ 等の短い枝番違いだけ」に限定する。 */
 function sameName(a, b) {
   const x = norm(a), y = norm(b);
   if (!x || !y) return false;
-  return x.includes(y) || y.includes(x);
+  if (x === y) return true;
+  const okTail = (s) => s.length <= 4 && /^[A-Z0-9ⅠⅡⅢⅣⅤⅥ棟館号番第・\-－ー]+$/.test(s);
+  if (x.startsWith(y)) return okTail(x.slice(y.length));
+  if (y.startsWith(x)) return okTail(y.slice(x.length));
+  return false;
 }
 
 /* 検索エンジン3系統から homes.co.jp/archive/b-XXXX/ を集める（1つ落ちても止まらないように） */
