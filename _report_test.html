@@ -118,7 +118,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.4</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -238,6 +238,22 @@ function looksLikeName(s){
   if(/^[^\s]{1,6}[市区町村]$/.test(s)&&!/[ァ-ヶーA-Za-zＡ-Ｚａ-ｚ]/.test(s))return false;
   return true;
 }
+/* ===== 入力値の「出所」管理（v6.4）=====
+   ⚠️最重要：実データが取れていない項目に、フォームの初期値（構造=RC・築年数=0＝新築 など）を
+   そのまま載せてしまう事故を防ぐ。表に出してよいのは
+   ①利用者が自分で入力した値（src=input）②SUUMO等の実データで自動入力した値（src=suumo）だけ。
+   どちらでもない項目は「—（未取得）」と表示し、絶対に推測値を書かない。 */
+document.addEventListener('input',e=>{if(e.target&&e.target.id)e.target.dataset.t='1';},true);
+document.addEventListener('change',e=>{if(e.target&&e.target.id)e.target.dataset.t='1';},true);
+function setByData(id,v,src){const el=document.getElementById(id);if(!el)return;el.value=v;el.dataset.src=src;delete el.dataset.t;}
+function srcOf(id){const el=document.getElementById(id);if(!el)return '';
+  if(el.value==null||String(el.value).trim()==='')return '';
+  if(el.dataset.t)return 'input';
+  return el.dataset.src||'';}
+function userVal(id){return srcOf(id)?val(id):'';}
+function userNum(id){return srcOf(id)?num(id):null;}
+/* 構造は「利用者が自分で選んだとき」だけ採用する（初期値のRCを実データのように載せない） */
+function structIn(){return srcOf('pstruct')==='input'?((STRUCT[val('pstruct')]||{}).name||''):'';}
 window.SELF=null; /* SUUMOで取得した本物件の実募集 */
 window.GASRES=null; /* 直近のGAS応答（物件名検索の結果を位置特定と比較表で共用し、二重問い合わせを避ける） */
 /* 物件名だけでSUUMO物件ライブラリーを引く（位置特定の前に正式住所を得るため） */
@@ -248,6 +264,17 @@ async function gasByName(name){
     window.GASRES={key:name,json:j};
     window.SELF=(j.self&&j.self.addr)?j.self:null;
     return j;
+  }catch(e){return null;}
+}
+/* 物件名→建物の実データ（種別・構造・築年月・階建）。Cloudflare Functions経由でHOME'S建物情報を照会。
+   ⚠️物件名と市区町村が一致した建物ページしか返さないサーバー実装（functions/api/spec.js）＝誤情報防止 */
+async function fetchSpec(name,city,pref){
+  if(!name)return null;
+  try{
+    const r=await fetch('/api/spec?name='+encodeURIComponent(name)+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
+    if(!r.ok)return null;
+    const j=await r.json();
+    return (j&&j.found)?j:null;
   }catch(e){return null;}
 }
 async function gasSearchCmp(city,md,hint,pref){
@@ -271,9 +298,9 @@ async function gasSearchCmp(city,md,hint,pref){
     /* 本物件の募集実績が取れたら、未入力の間取り・面積・賃料をその実データで埋める */
     if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
       const r0=window.SELF.rooms[0];
-      if(!val('pmadori'))document.getElementById('pmadori').value=r0.md;
-      if(!num('pmens'))document.getElementById('pmens').value=r0.men;
-      if(!num('prentmin')){document.getElementById('prentmin').value=r0.rent;document.getElementById('prentmax').value=r0.rent;}
+      if(!val('pmadori'))setByData('pmadori',r0.md,'suumo');
+      if(!num('pmens'))setByData('pmens',r0.men,'suumo');
+      if(!num('prentmin')){setByData('prentmin',r0.rent,'suumo');setByData('prentmax',r0.rent,'suumo');}
     }
     let n=0;
     (j.items||[]).forEach(it=>{
@@ -438,43 +465,76 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
     rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:11px;color:#475569">${c.addr||'—'}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
-  const ownLabel=age<=0?'新築':'築'+age+'年';
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownLabel}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
   const ownUnit=hasOwn&&own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
   const derivedTxt=opts.derived?`満室想定年収入${opts.units>0?'÷12ヶ月÷'+opts.units+'戸':'÷12ヶ月'}から自動算出`:'入力値';
   /* 検索した物件そのものの概要を同じページに置き、比較の基準を明示する（下原提出資料の型）。
-     ⚠️SUUMO物件ライブラリーで実データが取れている場合は、フォームの初期値ではなく必ず実データを優先する */
+     ★v6.4 最重要ルール（太田指摘「相違情報を載せるな」）：
+       この表に出してよいのは「出所のある値」だけ。フォームの初期値（構造=RC・築年数=0）は
+       利用者が自分で選んでいない限り絶対に載せない。取れていない項目は「—（未取得）」と明示する。 */
   const S=window.SELF&&window.SELF.addr?window.SELF:null;
-  let ageTxt=(age===0||age==='0')?'新築':(age>0?'築'+age+'年':'—');
-  if(S&&S.built){
-    const bm=S.built.match(/(\d{4})年\s*(\d{1,2})?月?/);
+  const isSuumo=!!(S&&(S.found||(S.rooms&&S.rooms.length)||S.built||S.struct)); /* SUUMO物件ライブラリーの実データ */
+  const isWebAddr=!!(S&&!isSuumo&&S.web);                     /* Web検索で拾っただけの住所＝推定 */
+  const SP=(S&&S.spec&&(S.spec.struct||S.spec.built))?S.spec:null; /* 建物情報（HOME'S建物ページ等） */
+  const SRC_SUUMO='SUUMO物件ライブラリー（実データ）';
+  const NA='<span style="color:#94a3b8;font-weight:400">—（未取得）</span>';
+  const srcUsed=[];
+  const cell=(v,src)=>{if(v==null||v===''||v==='—')return NA;if(src&&srcUsed.indexOf(src)<0)srcUsed.push(src);return v;};
+  /* ── 築年：①建築年月の実データ ②利用者が入力した築年数 ③無ければ未取得（推測しない） */
+  let ageTxt=null,ownAgeVal=null,ageSrc='';
+  const builtRaw=(S&&S.built)||(SP&&SP.built)||'';
+  if(builtRaw){
+    ageSrc=(S&&S.built)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    const bm=builtRaw.match(/(\d{4})年\s*(\d{1,2})?月?/);
     if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();
       let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;
-      ageTxt=yrs<=0?'新築':'築'+yrs+'年（'+S.built+'築）';}
-    else ageTxt=S.built;
+      ownAgeVal=Math.max(0,yrs);
+      ageTxt=(yrs<=0?'新築':'築'+yrs+'年')+'（'+builtRaw+'築）';}
+    else ageTxt=builtRaw;
+  }else if(age!=null){
+    ownAgeVal=age;ageTxt=age<=0?'新築':'築'+age+'年';ageSrc='作成者の入力値';
   }
-  /* 種別は構造で判定して表記を統一（鉄骨・RC・SRC＝マンション／木造・軽量鉄骨＝アパート） */
+  /* ── 種別・構造：実データの物件種別があればそれを優先。無ければ構造から判定
+        （鉄骨・RC・SRC＝マンション／木造・軽量鉄骨＝アパート） */
   const kindByStruct=st=>/軽量鉄骨|木造/.test(st)?'アパート':(/鉄骨|ＲＣ|RC|鉄筋|SRC|ＳＲＣ/.test(st)?'マンション':'');
-  const structTxt=S&&S.struct?[kindByStruct(S.struct)||S.kind,S.struct,S.floors].filter(Boolean).join(' ')
-    :[kindByStruct(opts.struct||''),opts.struct].filter(Boolean).join(' ')||'—';
-  const stationCell=S&&S.station?S.station:(stationTxt?stationTxt.replace(/^・/,''):'—');
-  const addrCell=S&&S.addr?S.addr:(addrOnly(addr)||'—');
-  const nameCell=S&&S.name?S.name:(opts.name||'—');
-  const srcNote=S?'<span style="font-size:10px;font-weight:400;color:#e0e7ff;margin-left:8px">出典：SUUMO物件ライブラリー（実データ）</span>':'';
-  const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）${srcNote}</div>
-    <table class="calc cmpspec" style="margin-bottom:8px">
-      <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${nameCell}</td>
-          <td class="k" style="width:88px">所在地</td><td>${addrCell}</td></tr>
-      <tr><td class="k">最寄駅</td><td>${stationCell}</td>
-          <td class="k">築年</td><td>${ageTxt}</td></tr>
-      <tr><td class="k">${S&&S.struct?'種別・構造':'構造・戸数'}</td><td>${structTxt}${(!S||!S.struct)&&opts.units>0?'／'+opts.units+'戸':''}</td>
-          <td class="k">間取り・面積</td><td>${(opts.md||'—')}${own.men>0?'／'+own.men.toFixed(2)+'㎡':''}</td></tr>
-      ${hasOwn?`<tr class="sum"><td>${S?'募集中の賃料（月額総額）':'想定月額総額（1戸）'}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${S?'SUUMO掲載':derivedTxt}）</span></td>
+  let structTxt=null,structSrc='';
+  const stRaw=(S&&S.struct)||(SP&&SP.struct)||'';
+  if(stRaw){
+    structSrc=(S&&S.struct)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    structTxt=[(S&&S.kind)||(SP&&SP.kind)||kindByStruct(stRaw),stRaw,(S&&S.floors)||(SP&&SP.floors)].filter(Boolean).join(' ');
+  }else if(opts.struct){
+    structSrc='作成者の入力値';
+    structTxt=[kindByStruct(opts.struct),opts.struct].filter(Boolean).join(' ')+(opts.units>0?'／'+opts.units+'戸':'');
+  }
+  /* ── 所在地：SUUMO実データ ＞ 建物情報 ＞ Web検索（推定と明記） ＞ Googleマップの住所検索 */
+  let addrCell='',addrSrc='';
+  if(isSuumo&&S.addr){addrCell=S.addr;addrSrc=SRC_SUUMO;}
+  else if(SP&&SP.addr){addrCell=SP.addr;addrSrc=SP.src;}
+  else if(S&&S.addr){addrCell=S.addr;addrSrc=isWebAddr?'Web検索で取得した住所（推定）':'';}
+  else {addrCell=addrOnly(addr)||'';addrSrc='Googleマップの住所検索';}
+  /* 最寄駅は本レポートの実測値。範囲内に駅が無い場合は「未取得」ではなく事実を書く */
+  const stationCell=stationTxt?stationTxt.replace(/^・/,''):((S&&S.station)||'調査対象範囲内に駅なし');
+  const stationSrc=stationTxt?'本レポートの経路実測':(S&&S.station?SRC_SUUMO:'');
+  const nameCell=(S&&S.name)||opts.name||'';
+  /* ── 間取り・面積：利用者入力かSUUMO実データのときだけ表示 */
+  const mdTxt=[srcOf('pmadori')?opts.md:'',(srcOf('pmens')&&own.men>0)?own.men.toFixed(2)+'㎡':''].filter(Boolean).join('／');
+  const mdSrc=mdTxt?((srcOf('pmadori')==='suumo'||srcOf('pmens')==='suumo')?SRC_SUUMO:'作成者の入力値'):'';
+  const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）</div>
+    <table class="calc cmpspec" style="margin-bottom:6px">
+      <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${cell(nameCell,'')}</td>
+          <td class="k" style="width:88px">所在地</td><td>${cell(addrCell,addrSrc)}</td></tr>
+      <tr><td class="k">最寄駅</td><td>${cell(stationCell,stationSrc)}</td>
+          <td class="k">築年</td><td>${cell(ageTxt,ageSrc)}</td></tr>
+      <tr><td class="k">種別・構造</td><td>${cell(structTxt,structSrc)}</td>
+          <td class="k">間取り・面積</td><td>${cell(mdTxt,mdSrc)}</td></tr>
+      ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':'想定月額総額（1戸）'}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':derivedTxt}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
-    </table>`;
+    </table>
+    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${srcUsed.join('／')||'—'}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
+  /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
   let note='',tbl='';
   if(cmp.length===0){
@@ -499,15 +559,16 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     else pos='周辺上位帯の水準';
     const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
     const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円で募集されており、当エリアは<b>経年による賃料下落が小さい</b>。`:'';
-    const ownAge=(S&&S.built)?null:age;
-    const newer=cmp.filter(c=>c.age!=null&&(ownAge==null||c.age>ownAge)).length;
-    const newTxt=(ownAge!=null&&ownAge<=3&&newer>0)?`比較5件中${newer}件が本物件より築年数の古い物件であり、<b>築年数の優位は明らか</b>。`:'';
+    /* 築年数の優位は「出所のある築年」が分かっているときだけ書く（推測で新築と書かない） */
+    const newer=ownAgeVal==null?0:cmp.filter(c=>c.age!=null&&c.age>ownAgeVal).length;
+    const newTxt=(ownAgeVal!=null&&ownAgeVal<=3&&newer>0)?`比較5件中${newer}件が本物件より築年数の古い物件であり、<b>築年数の優位は明らか</b>。`:'';
     /* ㎡単価での比較（本物件が割安であることを示す） */
     const uc=cmp.filter(c=>c.men>0).map(c=>c.total/c.men);
     const ucAvg=uc.length?uc.reduce((a,b)=>a+b,0)/uc.length:0;
     const ownUc=own.men>0?((own.min+own.max)/2)/own.men:0;
     const ucTxt=(ucAvg>0&&ownUc>0)?`㎡単価でみると周辺平均${Math.round(ucAvg).toLocaleString()}円/㎡に対し本物件は<b>${Math.round(ownUc).toLocaleString()}円/㎡</b>で、${ownUc<=ucAvg?'<b>割安な水準</b>':'同水準'}。`:'';
-    const strength=(age<=0?'新築':'築浅')+(stationTxt?'×駅近':'')+'の物件力';
+    const sBits=[];if(ownAgeVal!=null)sBits.push(ownAgeVal<=0?'新築':(ownAgeVal<=5?'築浅':'築'+ownAgeVal+'年'));if(stationTxt)sBits.push('駅近');
+    const strength=sBits.length?sBits.join('×')+'の物件力':'本物件の立地条件';
     note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
       :`<div class="evalbox">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
     /* 比較物件の位置図（ジオコーディング成功分に番号ピン） */
@@ -980,6 +1041,21 @@ async function buildReport(g){
       if(got===0){await gasSearchCmp(cityA,val('pmadori')||'');} /* 初回起動失敗時のリトライ */
     }
   }
+  /* ★構造・築年がSUUMOで取れていない物件は、建物情報（LIFULL HOME'S）から実データを補う。
+     物件名と市区町村が一致したものだけが返るので、別物件の情報が混ざることはない（/api/spec） */
+  {
+    const qn=(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
+    if(qn&&!(window.SELF&&(window.SELF.struct||window.SELF.built))){
+      setStatus('🏢 '+qn+' の建物情報（構造・築年）を照会中…');
+      const sp=await fetchSpec(qn,cityOf(g.title),prefOf(g.title));
+      if(sp){
+        window.SELF=window.SELF||{name:sp.name,addr:sp.addr};
+        window.SELF.name=window.SELF.name||sp.name;
+        window.SELF.addr=sp.addr||window.SELF.addr;
+        window.SELF.spec=sp;
+      }
+    }
+  }
   const radius=parseInt(val('pradius'))||1500;
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
   const els=await overpass(g.lat,g.lon,radius);
@@ -1066,7 +1142,8 @@ async function buildReport(g){
       <tr><td class="k">満室想定年収入</td><td class="r">${yen(income)}</td><td class="k">運営純収益（経費20%控除）</td><td class="r">${yen(noi)}</td></tr>
       <tr><td class="k">土地評価（${yen(lp)}/㎡${lpEst?'〈概算〉':''}×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
       <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>
-      ${lpEst?'<div class="formula">※土地単価は周辺の公示地価から自動概算（出典：国土交通省 令和7年地価公示）— '+lpEst.refs.map(r=>r.addr+'（'+(r.d>=1000?(r.d/1000).toFixed(1)+'km':r.d+'m')+'・'+r.price.toLocaleString()+'円/㎡）').join('　／　')+'</div>':''}`;
+      ${lpEst?'<div class="formula">※土地単価は周辺の公示地価から自動概算（出典：国土交通省 令和7年地価公示）— '+lpEst.refs.map(r=>r.addr+'（'+(r.d>=1000?(r.d/1000).toFixed(1)+'km':r.d+'m')+'・'+r.price.toLocaleString()+'円/㎡）').join('　／　')+'</div>':''}
+      ${(srcOf('pstruct')!=='input'||srcOf('page')!=='input')?'<div class="formula" style="color:#b45309">※'+[srcOf('pstruct')!=='input'?'構造':'',srcOf('page')!=='input'?'築年数':''].filter(Boolean).join('・')+'が未入力のため、初期値（'+st.name+'・築'+age+'年）で試算しています。建物評価を正確にするにはフォームでご指定ください。</div>':''}`;
     h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
   }
 
@@ -1085,12 +1162,12 @@ async function buildReport(g){
   }
   if(ownMen<=0&&bldg>0&&units>0)ownMen=Math.round(bldg/units*100)/100;
   if(rmin>0){
-    compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,num('page'),g.title,
-      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||'',name:query,struct:(STRUCT[val('pstruct')||'rc']||{}).name||''});
+    compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,userNum('page'),g.title,
+      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal('pmadori'),name:query,struct:structIn()});
   }else if(cmp.length>0){
     /* 賃料未入力でも自動検索した募集事例は表で見せる（v3.1） */
-    compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,num('page'),g.title,
-      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||'',name:query,struct:(STRUCT[val('pstruct')||'rc']||{}).name||''});
+    compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,userNum('page'),g.title,
+      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal('pmadori'),name:query,struct:structIn()});
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
     const city=cityOf(g.title);
