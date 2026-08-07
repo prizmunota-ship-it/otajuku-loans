@@ -6,7 +6,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f1f5f9;font-size:14px;line-height:1.55;}
-.wrap{max-width:860px;margin:0 auto;padding:16px 10px 70px;}
+/* 紙面の内容幅＝690px（地図とすべての表の幅をA4印刷時と一致させる） */
+.wrap{max-width:756px;margin:0 auto;padding:16px 10px 70px;}
 .appbar{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
 .appbar .lg{font-size:18px;font-weight:800;color:#0f766e;}
 .appbar .tg{font-size:11px;color:#6b7280;}
@@ -111,12 +112,13 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
  .gm-style-moc,.gm-style-mot,.gmnoprint,.gm-fullscreen-control,.gm-svpc{display:none!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
  .wrap{padding:0;max-width:none;}
- .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin-bottom:0;}
+ /* 画面と同じ内容幅690pxに固定（左右パディングを外して690pxを確保・狭い用紙では100%に縮む） */
+ .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin:0 auto;width:690px;max-width:100%;padding-left:0;padding-right:0;}
  .paper:last-child{page-break-after:auto;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.2</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
