@@ -76,12 +76,18 @@ function sameName(a, b) {
 
 /* 検索エンジン3系統から homes.co.jp/archive/b-XXXX/ を集める（1つ落ちても止まらないように） */
 async function findBuildingUrls(name, city, pref) {
-  const q = [name, city || pref || '', 'homes.co.jp 建物情報'].filter(Boolean).join(' ');
-  const engines = [
-    'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q),
-    'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(q),
-    'https://www.bing.com/search?q=' + encodeURIComponent(q) + '&setlang=ja',
+  const where = city || pref || '';
+  // 検索エンジンはデータセンターIPからだと空で返ることがあるため、言い回しを変えて数パターン試す
+  const queries = [
+    [name, where, 'homes.co.jp 建物情報'].filter(Boolean).join(' '),
+    [name, where, '不動産アーカイブ 建物'].filter(Boolean).join(' '),
   ];
+  const engines = [];
+  for (const q of queries) {
+    engines.push('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q));
+    engines.push('https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(q));
+    engines.push('https://www.bing.com/search?q=' + encodeURIComponent(q) + '&setlang=ja');
+  }
   const out = [];
   for (const e of engines) {
     let html = '';
