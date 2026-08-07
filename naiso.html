@@ -113,6 +113,11 @@ textarea.fval{resize:vertical;min-height:80px;}
 .k-mi .kbadge{background:#E04040;color:#fff;}
 .k-part .kbadge{background:#D08A18;color:#fff;}
 .k-done .kbadge{background:#1A7040;color:#fff;}
+.kaishu-uchiwake{font-size:11px;color:#7A5000;margin-bottom:5px;line-height:1.5;}
+.seisan-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.seisan-row label{flex:1;font-size:13px;color:#555;}
+.seisan-row input{width:140px;padding:9px 11px;border:1.5px solid #DDD;border-radius:9px;font-size:15px;text-align:right;font-family:'Noto Sans JP',sans-serif;background:#fff;color:#1a1a1a;outline:none;}
+.seisan-row input:focus{border-color:#1a1a1a;}
 .kaishu-nums{display:flex;gap:10px;font-size:12px;color:#444;flex-wrap:wrap;}
 .kaishu-nums b{font-weight:700;}
 .knum-zan{color:#C0392B;}
@@ -215,8 +220,17 @@ const SET_KEY = 'naiso_setflags_v1';
 let setFlags = {};
 try { const c = localStorage.getItem(SET_KEY); if (c) setFlags = JSON.parse(c) || {}; } catch(e){}
 function setFlag(id, key){ const f = setFlags[String(id)]; return !!(f && f[key]); }
-// ===== 過失回収（請求はシートのitsukin、回収額・確認月はKVに保存） =====
-function seikyuOf(p){ return parseInt(p.itsukin) || 0; }
+// ===== 退去精算（回収管理）: 請求内訳＝短期解約違約金/退去時清掃代/原状回復(過失)。回収額・確認月と共にKVに保存。合算のitsukinは内訳未入力時のフォールバック =====
+function breakdownOf(id){
+  const f = setFlags[String(id)] || {};
+  return { iyaku: parseInt(f.seiIyaku)||0, seiso: parseInt(f.seiSeiso)||0, genjo: parseInt(f.seiGenjo)||0 };
+}
+// 請求合計：内訳が1つでも入っていれば内訳の合算、未入力ならシートのitsukin(合算)をそのまま使う
+function seikyuOf(p){
+  const b = breakdownOf(p.id); const sum = b.iyaku + b.seiso + b.genjo;
+  return sum > 0 ? sum : (parseInt(p.itsukin) || 0);
+}
+function hasBreakdown(id){ const b = breakdownOf(id); return (b.iyaku + b.seiso + b.genjo) > 0; }
 function kaishuOf(id){ const f = setFlags[String(id)] || {}; return { gaku: parseInt(f.kaishuGaku) || 0, month: f.kaishuMonth || '' }; }
 function kaishuStatus(p){
   const s = seikyuOf(p); if (s <= 0) return null;
@@ -226,20 +240,29 @@ function kaishuStatus(p){
   return         { key:'kanryo',   label:'回収済',   cls:'k-done', zan: s - k };
 }
 const yen = n => '¥' + (parseInt(n)||0).toLocaleString();
+function uchiwakeLine(id){
+  const b = breakdownOf(id); if ((b.iyaku+b.seiso+b.genjo)<=0) return '';
+  const parts = [];
+  if (b.iyaku) parts.push(`違約金 ${yen(b.iyaku)}`);
+  if (b.seiso) parts.push(`清掃 ${yen(b.seiso)}`);
+  if (b.genjo) parts.push(`原状回復 ${yen(b.genjo)}`);
+  return `<div class="kaishu-uchiwake">内訳: ${parts.join('　/　')}</div>`;
+}
 function kaishuPanel(p){
-  if (!isOwner()) return '';           // 過失回収は太田(オーナー)のみ表示。本村さん(moto)には非表示
+  if (!isOwner()) return '';           // 退去精算は太田(オーナー)のみ表示。本村さん(moto)には非表示
   const st = kaishuStatus(p); if (!st) return '';
   const s = seikyuOf(p); const { gaku, month } = kaishuOf(p.id);
   return `
     <div class="kaishu-box ${st.cls}">
-      <div class="kaishu-head"><span class="ktag">💰 過失回収</span><span class="kbadge">${st.label}</span></div>
+      <div class="kaishu-head"><span class="ktag">💰 退去精算</span><span class="kbadge">${st.label}</span></div>
+      ${uchiwakeLine(p.id)}
       <div class="kaishu-nums">
         <span>請求 <b>${yen(s)}</b></span>
         <span>回収 <b>${yen(gaku)}</b></span>
         <span class="knum-zan">残 <b>${yen(st.zan)}</b></span>
       </div>
       ${month?`<div class="kaishu-meta">回収確認月: ${month}${p.kanri?`　／　${p.kanri}送金明細`:''}</div>`:''}
-      <button class="kbtn" onclick="openKaishu(${p.id})">回収を記録</button>
+      <button class="kbtn" onclick="openKaishu(${p.id})">内訳・回収を記録</button>
     </div>`;
 }
 async function loadSetFlags(){
@@ -288,10 +311,10 @@ function renderFilters(){
   let html = fs.map(f=>
     `<div class="chip ${currentFilter===f.id?'active':''}" onclick="setFilter('${f.id}')">${f.label}</div>`
   ).join('');
-  // 過失回収：状況を問わず過失請求のある部屋を横断表示（未回収件数を表示）。太田(オーナー)のみ表示・本村さんには出さない
+  // 退去精算：状況を問わず退去者請求のある部屋を横断表示（未回収件数を表示）。太田(オーナー)のみ表示・本村さんには出さない
   if(isOwner()){
     const mikaishu = data.filter(p=>{ const st=kaishuStatus(p); return st && st.key!=='kanryo'; }).length;
-    html += `<div class="chip chip-kaishu ${currentFilter==='kaishu'?'active':''}" onclick="setFilter('kaishu')">💰 過失回収${mikaishu?`（未${mikaishu}）`:''}</div>`;
+    html += `<div class="chip chip-kaishu ${currentFilter==='kaishu'?'active':''}" onclick="setFilter('kaishu')">💰 退去精算${mikaishu?`（未${mikaishu}）`:''}</div>`;
   }
   // 完了フォルダー（右端に分離配置・緑）：完了した部屋はここで確認
   html += `<div class="chip chip-done ${currentFilter==='完了'?'active':''}" onclick="setFilter('完了')">📁 完了${kanryo?`（${kanryo}）`:''}</div>`;
@@ -351,12 +374,12 @@ function renderKaishuView(){
   const list = data.filter(p=>seikyuOf(p)>0)
     .map(p=>({ p, st:kaishuStatus(p) }))
     .sort((a,b)=> (order[a.st.key]-order[b.st.key]) || (b.st.zan - a.st.zan));
-  if(!list.length){ document.getElementById('cards').innerHTML='<div class="empty">過失請求のある部屋はありません</div>'; return; }
+  if(!list.length){ document.getElementById('cards').innerHTML='<div class="empty">退去精算(請求)のある部屋はありません</div>'; return; }
   const zanTotal = list.reduce((s,x)=> s + (x.st.key==='kanryo'?0:x.st.zan), 0);
   const seikyuTotal = list.reduce((s,x)=> s + seikyuOf(x.p), 0);
   const kaishuTotal = list.reduce((s,x)=> s + kaishuOf(x.p.id).gaku, 0);
   const banner = `<div class="kaishu-banner">
-    過失請求 <b style="color:#333">${yen(seikyuTotal)}</b>　のうち回収 ${yen(kaishuTotal)}<br>
+    退去精算(請求) <b style="color:#333">${yen(seikyuTotal)}</b>　のうち回収 ${yen(kaishuTotal)}<br>
     <span style="font-size:11px;color:#888">未回収残高（${list.filter(x=>x.st.key!=='kanryo').length}件）</span>　<b>${yen(zanTotal)}</b>
   </div>`;
   document.getElementById('cards').innerHTML = banner + list.map(({p,st})=>`
@@ -375,18 +398,23 @@ function renderKaishuView(){
 function openKaishu(id){
   editingId=id;
   const p=data.find(x=>x.id==id);
-  const s=seikyuOf(p); const { gaku, month }=kaishuOf(id);
+  const b=breakdownOf(id); const itsukinRaw=parseInt(p.itsukin)||0;
+  const { gaku, month }=kaishuOf(id);
   const thisMonth = (p.takyobi||'').slice(0,7) || '';
   document.getElementById('m-title').textContent=`${p.name} ${p.room}号室`;
-  document.getElementById('m-sub').textContent='過失回収を記録（送金明細書で確認した金額）';
+  document.getElementById('m-sub').textContent='退去精算の内訳・回収を記録（送金明細書で確認）';
   document.getElementById('m-body').innerHTML=`
     <div class="fgroup">
-      <div class="flabel">過失請求額（内装アプリの登録値）</div>
-      <input class="fval" type="text" value="${yen(s)}" readonly style="background:#F4F2EC;color:#666;">
+      <div class="flabel">退去者への請求内訳（円・該当なしは空欄でOK）</div>
+      <div class="seisan-row"><label>短期解約違約金</label><input type="number" id="f-sei-iyaku" value="${b.iyaku||''}" placeholder="0" oninput="recalcSeisan()"></div>
+      <div class="seisan-row"><label>退去時清掃代</label><input type="number" id="f-sei-seiso" value="${b.seiso||''}" placeholder="0" oninput="recalcSeisan()"></div>
+      <div class="seisan-row"><label>原状回復（過失）</label><input type="number" id="f-sei-genjo" value="${b.genjo||''}" placeholder="0" oninput="recalcSeisan()"></div>
+      <div id="seikyu-total" class="kaishu-meta" style="margin-top:4px;"></div>
+      <input type="hidden" id="f-itsukin-fallback" value="${itsukinRaw}">
     </div>
     <div class="fgroup">
-      <div class="flabel">回収済み額（円）<span class="req">*</span></div>
-      <input class="fval" type="number" id="f-kaishu-gaku" value="${gaku||''}" placeholder="0" oninput="updateZan(${s})">
+      <div class="flabel">回収済み額（円・送金明細で確認した合計）<span class="req">*</span></div>
+      <input class="fval" type="number" id="f-kaishu-gaku" value="${gaku||''}" placeholder="0" oninput="recalcSeisan()">
       <div id="zan-hint" class="kaishu-meta" style="margin-top:6px;"></div>
     </div>
     <div class="fgroup">
@@ -398,33 +426,43 @@ function openKaishu(id){
       <button class="mbtn save" onclick="saveKaishu()">保存する</button>
     </div>
   `;
-  updateZan(s);
+  recalcSeisan();
   document.getElementById('overlay').classList.add('open');
 }
 
-function updateZan(s){
+function recalcSeisan(){
+  const iyaku=parseInt(document.getElementById('f-sei-iyaku').value)||0;
+  const seiso=parseInt(document.getElementById('f-sei-seiso').value)||0;
+  const genjo=parseInt(document.getElementById('f-sei-genjo').value)||0;
+  const fallback=parseInt(document.getElementById('f-itsukin-fallback').value)||0;
+  const sum=iyaku+seiso+genjo;
+  const total = sum>0 ? sum : fallback;
+  const totEl=document.getElementById('seikyu-total');
+  if(totEl) totEl.innerHTML = `請求合計 <b>${yen(total)}</b>` + (sum>0?'':(fallback>0?'　<span style="color:#999">（内訳未入力＝現在の合算請求額）</span>':''));
   const v=parseInt(document.getElementById('f-kaishu-gaku').value)||0;
-  const zan=s-v;
-  const el=document.getElementById('zan-hint');
-  if(!el) return;
-  if(v<=0) el.innerHTML=`<span style="color:#C0392B;">未回収　残 ${yen(s)}</span>`;
-  else if(v<s) el.innerHTML=`<span style="color:#D08A18;">一部回収　残 ${yen(zan)}</span>`;
+  const zan=total-v;
+  const el=document.getElementById('zan-hint'); if(!el) return;
+  if(v<=0) el.innerHTML=`<span style="color:#C0392B;">未回収　残 ${yen(total)}</span>`;
+  else if(v<total) el.innerHTML=`<span style="color:#D08A18;">一部回収　残 ${yen(zan)}</span>`;
   else el.innerHTML=`<span style="color:#1A7040;">全額回収済 ✓${zan<0?`（請求超過 ${yen(-zan)}）`:''}</span>`;
 }
 
 async function saveKaishu(){
   const id=String(editingId);
+  const iyaku=document.getElementById('f-sei-iyaku').value||0;
+  const seiso=document.getElementById('f-sei-seiso').value||0;
+  const genjo=document.getElementById('f-sei-genjo').value||0;
   const gaku=document.getElementById('f-kaishu-gaku').value;
   const month=document.getElementById('f-kaishu-month').value;
   if(!setFlags[id]) setFlags[id]={};
-  setFlags[id].kaishuGaku=gaku; setFlags[id].kaishuMonth=month;
+  Object.assign(setFlags[id], { seiIyaku:iyaku, seiSeiso:seiso, seiGenjo:genjo, kaishuGaku:gaku, kaishuMonth:month });
   closeModal(); render();
   try{ localStorage.setItem(SET_KEY, JSON.stringify(setFlags)); }catch(e){}
   showToast('保存中...');
   try{
     await fetch('/api/naiso-set', { method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ action:'setRoom', id, fields:{ kaishuGaku:gaku, kaishuMonth:month } }) });
-    showToast('回収額を保存しました ✓');
+      body: JSON.stringify({ action:'setRoom', id, fields:{ seiIyaku:iyaku, seiSeiso:seiso, seiGenjo:genjo, kaishuGaku:gaku, kaishuMonth:month } }) });
+    showToast('退去精算を保存しました ✓');
   }catch(e){ showToast('保存に失敗しました'); }
 }
 
