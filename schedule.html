@@ -15,6 +15,8 @@
   <div id="root"></div>
 
   <script type="text/babel">
+    const { useState } = React;
+
     // 太田塾オンライン用 固定ZOOM（定期・固定期間なし・パスコード埋込・待機室なし＝押すだけ入室）
     const ZOOM_ONLINE = "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1";
 
@@ -58,6 +60,23 @@
       }
     ];
 
+    /* ===== カレンダー表示用のデータ変換 =====
+       scheduleDataは編集しやすさ優先で date:"15(火)" / "10(木)〜11(金)" という文字列。
+       ここで日付を数値に起こしてカレンダーに置く（複数日イベントは期間中の全日に出す）。 */
+    const YEAR = 2026;
+    const WD = ['日', '月', '火', '水', '木', '金', '土'];
+    const ALL_EVENTS = [];
+    scheduleData.forEach(mo => {
+      const mm = parseInt(mo.month, 10);
+      mo.events.forEach(ev => {
+        const s = (ev.date.match(/^(\d+)/) || [])[1];
+        if (!s) return;
+        const e = (ev.date.match(/〜\s*(\d+)/) || [])[1];
+        ALL_EVENTS.push({ ...ev, m: mm, d: parseInt(s, 10), dEnd: e ? parseInt(e, 10) : parseInt(s, 10) });
+      });
+    });
+    const MONTHS = scheduleData.map(mo => parseInt(mo.month, 10));
+
     // 3ヶ月ごとに分割（行にするため）
     const rows = [];
     for (let i = 0; i < scheduleData.length; i += 3) {
@@ -74,23 +93,141 @@
       return 'bg-emerald-500';
     };
 
+    /* 1件分の表示（一覧・カレンダー共通）。タイトルは調整さん→ZOOMの順にリンク化する。 */
+    function EventLine({ event, showDate }) {
+      return (
+        <div className="flex items-start gap-1.5">
+          <div className="flex-shrink-0 pt-[3px]">
+            <div className={`w-2 h-2 rounded-full ${getDotColor(event.type)}`}></div>
+          </div>
+          <div className="leading-tight flex-1 min-w-0">
+            {showDate && (
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-500">{event.date}</div>
+            )}
+            {event.chousei ? (
+              <a href={event.chousei} target="_blank" rel="noopener"
+                className="block text-[11px] font-bold text-orange-600 underline decoration-orange-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
+                {event.title} 📋
+              </a>
+            ) : event.zoom ? (
+              <a href={event.zoom} target="_blank" rel="noopener"
+                className="block text-[11px] font-bold text-blue-600 underline decoration-blue-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
+                {event.title} 🎥
+              </a>
+            ) : (
+              <div className="text-[11px] font-bold text-slate-800 break-words mt-0.5 tracking-tight">{event.title}</div>
+            )}
+            {event.location && (
+              <div className={`mt-0.5 ${event.highlight ? 'text-red-600 font-extrabold text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px] text-slate-400 font-semibold'}`}>
+                @{event.location}
+              </div>
+            )}
+            {event.note && (
+              <div className="mt-0.5 text-[9px] sm:text-[10px] text-amber-700 font-bold">{event.note}</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* カレンダー表示。スマホ1画面に収めるため「月の格子＋その月の予定リスト」の縦2段。
+       日付をタップするとその日だけに絞り込み、もう一度タップで解除。 */
+    function CalendarView() {
+      const now = new Date();
+      /* 初期表示は「これから予定がある一番近い月」。今月の予定が全て終わっていれば翌月以降を開く。 */
+      const initM = (() => {
+        if (now.getFullYear() !== YEAR) return MONTHS[0];
+        const cm = now.getMonth() + 1;
+        const next = MONTHS.find(mm => mm > cm || (mm === cm && ALL_EVENTS.some(e => e.m === mm && e.dEnd >= now.getDate())));
+        return next || MONTHS[MONTHS.length - 1];
+      })();
+      const [m, setM] = useState(initM);
+      const [sel, setSel] = useState(null);
+      const idx = MONTHS.indexOf(m);
+      const lead = new Date(YEAR, m - 1, 1).getDay();
+      const last = new Date(YEAR, m, 0).getDate();
+      const cells = [];
+      for (let i = 0; i < lead; i++) cells.push(null);
+      for (let d = 1; d <= last; d++) cells.push(d);
+      while (cells.length % 7) cells.push(null);
+      const evOf = (d) => ALL_EVENTS.filter(e => e.m === m && d >= e.d && d <= e.dEnd);
+      const monthEvents = ALL_EVENTS.filter(e => e.m === m).sort((a, b) => a.d - b.d);
+      const shown = sel ? evOf(sel) : monthEvents;
+      const go = (step) => { const n = MONTHS[idx + step]; if (n) { setM(n); setSel(null); } };
+      const isToday = (d) => now.getFullYear() === YEAR && now.getMonth() + 1 === m && now.getDate() === d;
+
+      return (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => go(-1)} disabled={idx === 0}
+              className={`w-8 h-8 rounded-full font-black text-lg ${idx === 0 ? 'text-amber-200' : 'text-amber-700 hover:bg-amber-100'}`}>‹</button>
+            <div className="font-black text-amber-900 text-base">{YEAR}年 {m}月</div>
+            <button onClick={() => go(1)} disabled={idx === MONTHS.length - 1}
+              className={`w-8 h-8 rounded-full font-black text-lg ${idx === MONTHS.length - 1 ? 'text-amber-200' : 'text-amber-700 hover:bg-amber-100'}`}>›</button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-px bg-amber-100 rounded-xl overflow-hidden border border-amber-100">
+            {WD.map((w, i) => (
+              <div key={w} className={`bg-amber-50 text-center text-[10px] font-black py-1 ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-amber-800'}`}>{w}</div>
+            ))}
+            {cells.map((d, i) => {
+              if (!d) return <div key={i} className="bg-white/40 h-10"></div>;
+              const evs = evOf(d);
+              const on = sel === d;
+              return (
+                <button key={i} onClick={() => setSel(on ? null : (evs.length ? d : null))}
+                  className={`h-10 bg-white flex flex-col items-center justify-start pt-1 gap-0.5 ${on ? 'ring-2 ring-amber-500 ring-inset' : ''} ${evs.length ? 'cursor-pointer' : 'cursor-default'}`}>
+                  <span className={`text-[11px] font-bold leading-none ${isToday(d) ? 'bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center' : i % 7 === 0 ? 'text-red-500' : i % 7 === 6 ? 'text-blue-500' : 'text-slate-700'}`}>{d}</span>
+                  <div className="flex gap-0.5 flex-wrap justify-center px-0.5">
+                    {evs.slice(0, 3).map((e, k) => (
+                      <div key={k} className={`w-1.5 h-1.5 rounded-full ${getDotColor(e.type)}`}></div>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[11px] font-black text-amber-900">
+                {sel ? `${m}月${sel}日の予定` : `${m}月の予定（${monthEvents.length}件）`}
+              </div>
+              {sel && (
+                <button onClick={() => setSel(null)} className="text-[10px] font-bold text-amber-700 underline">月全体に戻す</button>
+              )}
+            </div>
+            <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-3 space-y-2.5 min-h-[64px]">
+              {shown.length ? shown.map((e, i) => <EventLine key={i} event={e} showDate={true} />)
+                : <div className="text-[11px] text-slate-400 font-bold">予定はありません</div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     function ScheduleRoadmap() {
       const hasChousei = scheduleData.some(m => m.events.some(e => e.chousei));
       const hasZoom = scheduleData.some(m => m.events.some(e => e.zoom));
+      /* 表示モード（カレンダー／一覧）。選んだ方を次回も開くよう端末に覚えさせる。 */
+      const [view, setView] = useState(localStorage.getItem('otajuku_sched_view') || 'calendar');
+      const pick = (v) => { setView(v); try { localStorage.setItem('otajuku_sched_view', v); } catch (e) {} };
+      const tab = (v) => `flex-1 py-1.5 rounded-full text-[12px] font-black transition-colors ${view === v ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-800'}`;
       return (
         <div className="min-h-screen bg-amber-50/50 p-2 sm:p-4 font-sans text-slate-800 flex flex-col items-center">
           <div className="w-full max-w-lg mb-3">
             <a href="/" className="text-amber-800 text-xs font-bold no-underline">‹ メニューに戻る</a>
           </div>
 
-          <div id="roadmap-container" className="w-full max-w-lg bg-yellow-50 p-5 rounded-3xl shadow-xl border border-white relative">
-            <div className="mb-6 text-center">
-              <h1 className="text-[1.15rem] sm:text-2xl font-black text-amber-900 flex items-center justify-center gap-2 mb-3 tracking-tight">
-                <span className="text-2xl sm:text-3xl drop-shadow-sm">🌻</span>
+          <div id="roadmap-container" className="w-full max-w-lg bg-yellow-50 p-3 sm:p-5 rounded-3xl shadow-xl border border-white relative">
+            {/* スマホ1画面に収めたいので、ヘッダーは小さめ・余白は詰めている */}
+            <div className="mb-3 sm:mb-5 text-center">
+              <h1 className="text-[0.95rem] sm:text-2xl font-black text-amber-900 flex items-center justify-center gap-1.5 mb-2 tracking-tight whitespace-nowrap">
+                <span className="text-lg sm:text-3xl drop-shadow-sm">🌻</span>
                 <span>令和８年太田塾年間イベント一覧</span>
-                <span className="text-2xl sm:text-3xl drop-shadow-sm">🌻</span>
+                <span className="text-lg sm:text-3xl drop-shadow-sm">🌻</span>
               </h1>
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-bold bg-white px-4 py-2 rounded-full shadow-sm border border-amber-200 mx-auto w-fit">
+              <div className="flex flex-wrap justify-center gap-2.5 sm:gap-4 text-[10px] sm:text-xs font-bold bg-white px-3 py-1 rounded-full shadow-sm border border-amber-200 mx-auto w-fit">
                 <div className="flex items-center gap-1 text-blue-600">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
                   <span>オンライン</span>
@@ -104,8 +241,12 @@
                   <span>リアル＆オンライン</span>
                 </div>
               </div>
+              <div className="mt-2 mx-auto w-fit max-w-full text-left text-[10px] sm:text-[11px] font-bold text-amber-900 leading-snug">
+                <div>○第二木曜日　リアルエンパワータイム（３ヶ月に一度東京目安）</div>
+                <div>○第四火曜日　オンラインエンパワータイム</div>
+              </div>
               {(hasChousei || hasZoom) && (
-                <div className="mt-3 mx-auto w-fit max-w-full bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1.5 rounded-full leading-snug">
+                <div className="mt-2 mx-auto w-fit max-w-full bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full leading-snug">
                   {hasChousei && <span>📋 は<span className="underline decoration-orange-400">タイトルをタップ</span>で参加表明（調整さん）</span>}
                   {hasChousei && hasZoom && <span> / </span>}
                   {hasZoom && <span>🎥 は<span className="underline decoration-blue-400">タップ</span>でZOOM入室</span>}
@@ -113,7 +254,15 @@
               )}
             </div>
 
-            <div className="space-y-8 sm:space-y-10">
+            {/* 表示切替（LINEオープンチャットのように カレンダー⇄一覧） */}
+            <div className="flex gap-1 bg-amber-100/70 p-1 rounded-full mb-3">
+              <button onClick={() => pick('calendar')} className={tab('calendar')}>📅 カレンダー</button>
+              <button onClick={() => pick('list')} className={tab('list')}>📋 一覧</button>
+            </div>
+
+            {view === 'calendar' && <CalendarView />}
+
+            <div className={`space-y-8 sm:space-y-10 ${view === 'calendar' ? 'hidden' : ''}`}>
               {rows.map((row, rowIdx) => {
                 const validItemCount = row.filter(Boolean).length;
                 const rightPos = validItemCount === 3 ? 'right-[15%]' : 'right-[48%]';
@@ -132,41 +281,7 @@
                           <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-2 sm:p-3 pt-6 sm:pt-7 -mt-5 flex-1 z-10 relative">
                             <div className="space-y-2.5">
                               {data.events.map((event, eIdx) => (
-                                <div key={eIdx} className="flex items-start gap-1">
-                                  <div className="flex-shrink-0 pt-[3px]">
-                                    <div className={`w-2 h-2 rounded-full ${getDotColor(event.type)}`}></div>
-                                  </div>
-                                  <div className="leading-tight flex-1 min-w-0">
-                                    <div className="text-[10px] sm:text-[11px] font-bold text-slate-500">
-                                      {event.date}
-                                    </div>
-                                    {event.chousei ? (
-                                      <a href={event.chousei} target="_blank" rel="noopener"
-                                        className="block text-[10px] sm:text-[11px] font-bold text-orange-600 underline decoration-orange-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
-                                        {event.title} 📋
-                                      </a>
-                                    ) : event.zoom ? (
-                                      <a href={event.zoom} target="_blank" rel="noopener"
-                                        className="block text-[10px] sm:text-[11px] font-bold text-blue-600 underline decoration-blue-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
-                                        {event.title} 🎥
-                                      </a>
-                                    ) : (
-                                      <div className="text-[10px] sm:text-[11px] font-bold text-slate-800 break-words mt-0.5 tracking-tight">
-                                        {event.title}
-                                      </div>
-                                    )}
-                                    {event.location && (
-                                      <div className={`mt-0.5 ${event.highlight ? 'text-red-600 font-extrabold text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px] text-slate-400 font-semibold'}`}>
-                                        @{event.location}
-                                      </div>
-                                    )}
-                                    {event.note && (
-                                      <div className="mt-0.5 text-[9px] sm:text-[10px] text-amber-700 font-bold">
-                                        {event.note}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                                <EventLine key={eIdx} event={event} showDate={true} />
                               ))}
                             </div>
                           </div>
