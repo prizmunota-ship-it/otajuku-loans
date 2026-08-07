@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>太田塾 物件周辺環境レポート</title>
+<title>太田塾 融資相談補足レポート作成</title>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -27,22 +27,24 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .btn.sec{background:#334155;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:800;cursor:pointer;}
 #report{display:none;}
 /* ===== REBC風 1項目=1ペーパー ===== */
-.paper{background:#fff;border:1px solid #d7dde3;border-radius:6px;padding:20px 22px 14px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);page-break-inside:avoid;}
-.paper h2{font-size:17px;font-weight:800;color:#1f2937;border-bottom:2px solid #4b7fb5;padding-bottom:6px;margin-bottom:10px;}
-.paper .lead{font-size:12px;color:#374151;margin-bottom:10px;}
+.paper{background:#fff;border:1px solid #d7dde3;border-radius:6px;padding:18px 22px 10px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);page-break-inside:avoid;}
+.paper h2{font-size:17px;font-weight:800;color:#1f2937;border-bottom:2px solid #4b7fb5;padding-bottom:5px;margin-bottom:8px;}
+.paper .lead{font-size:12px;color:#374151;margin-bottom:8px;}
 .paper .lead b{color:#0f766e;}
 /* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
 .map{width:100%;max-width:690px;height:520px;}
-.map.sm{height:420px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
+.map.sm{height:270px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
-table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:11px;padding:6px 8px;font-weight:700;color:#374151;text-align:left;}
-table.lst td{border:1px solid #e2e8f0;font-size:12.5px;padding:6px 8px;}
+table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:10.5px;padding:3px 7px;font-weight:700;color:#374151;text-align:left;}
+table.lst td{border:1px solid #e2e8f0;font-size:12px;padding:3px 7px;}
 table.lst td.no{width:34px;text-align:center;font-weight:800;color:#fff;}
 table.lst td.no span{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;font-size:11px;}
 table.lst td.r{text-align:right;white-space:nowrap;font-weight:700;}
 table.lst td.nm{font-weight:700;}
-.note{font-size:9.5px;color:#94a3b8;margin-top:6px;line-height:1.5;border-top:1px solid #eef2f2;padding-top:6px;}
+table.lst.cmp td{font-size:11px;padding:3px 6px;}
+table.lst.cmp td.nm{font-size:11.5px;}
+.note{font-size:9.5px;color:#94a3b8;margin-top:5px;line-height:1.45;border-top:1px solid #eef2f2;padding-top:5px;}
 .gbtn{display:inline-block;margin:2px 0 10px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
 /* ===== 表紙（金融機関提出用・1ページ完結） ===== */
 .cover{background:#fff;border:1px solid #d7dde3;padding:0;overflow:hidden;}
@@ -71,7 +73,7 @@ table.lst td.nm{font-weight:700;}
 .cover .foot .brand .bn{font-size:11.5px;font-weight:800;color:#0f766e;}
 .cover .disc{margin-top:12px;font-size:9.5px;color:#94a3b8;line-height:1.6;}
 @media(max-width:640px){.cover .inner{padding:24px 20px 20px;}.cover h1{font-size:22px;}.cover .meta{grid-template-columns:1fr;}.cover .toc ol{grid-template-columns:1fr;}.cover .foot{flex-direction:column;align-items:flex-start;}.cover .foot .brand{text-align:left;}}
-.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10.5px;margin:6px 0;}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;margin:4px 0;}
 .legend .c{display:flex;align-items:center;gap:4px;}
 .legend .sw{width:14px;height:14px;border-radius:3px;border:1px solid #cbd5e1;display:inline-block;}
 .kpi3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:10px;}
@@ -81,7 +83,7 @@ table.lst td.nm{font-weight:700;}
 .phase{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;font-size:12px;color:#64748b;}
 table.calc{width:100%;border-collapse:collapse;margin-top:4px;}
 table.calc td{font-size:12.5px;padding:6px 9px;}
-table.calc.cmpspec td{font-size:11.5px;padding:4px 8px;border:1px solid #e2e8f0;}
+table.calc.cmpspec td{font-size:11px;padding:3px 8px;border:1px solid #e2e8f0;}
 table.calc td.r{text-align:right;font-weight:700;}
 table.calc td.k{color:#6b7280;}
 table.calc tr.sum td{background:#f0fdfa;font-weight:800;}
@@ -95,8 +97,8 @@ details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;
 table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .pos-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.75;color:#78350f;margin-top:10px;}
 .pos-note b{color:#0f766e;}
-.bandttl{background:#3b5578;color:#fff;font-weight:800;font-size:12.5px;padding:6px 12px;border-radius:3px;margin:12px 0 8px;}
-.evalbox{background:#eef4fb;border-left:5px solid #d97706;border-radius:4px;padding:10px 13px;font-size:11.5px;line-height:1.75;color:#1f2937;margin-top:10px;}
+.bandttl{background:#3b5578;color:#fff;font-weight:800;font-size:12.5px;padding:4px 12px;border-radius:3px;margin:8px 0 6px;}
+.evalbox{background:#eef4fb;border-left:5px solid #d97706;border-radius:4px;padding:8px 12px;font-size:11px;line-height:1.6;color:#1f2937;margin-top:8px;}
 .evalbox .tt{color:#1e3a8a;font-weight:800;}
 .evalbox b{color:#1d4ed8;}
 .appeal{color:#b91c1c;font-weight:800;font-size:12.5px;margin-top:8px;}
@@ -110,6 +112,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
  /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
  .gm-style-moc,.gm-style-mot,.gmnoprint,.gm-fullscreen-control,.gm-svpc{display:none!important;}
+ .map,.map *{will-change:auto!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
  .wrap{padding:0;max-width:none;}
  /* 画面と同じ内容幅690pxに固定（左右パディングを外して690pxを確保・狭い用紙では100%に縮む） */
@@ -118,7 +121,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">融資相談補足レポート作成（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.5</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -183,7 +186,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
   <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
 </div>
-<div class="toolbar" id="toolbar"><button class="btn sec" onclick="window.print()">🖨 PDFで保存 / 印刷</button></div>
+<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span></div>
 <div id="excluded" style="display:none"></div>
 <div id="report"></div>
 </div>
@@ -464,7 +467,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:11px;color:#475569">${c.addr||'—'}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
@@ -578,8 +581,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const m=mapDiv('sm');
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
-      mapHtml=m.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>
-      <div class="note" style="border:0;margin:0 0 8px;padding:0">※<b>調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内</b>で募集中の類似物件のみを掲載しています。${outCnt>0?'（範囲外の'+outCnt+'件は除外）':''}件数が少ない場合は、調査対象範囲を広げて再作成してください。</div>`;
+      mapHtml=m.html+`<div class="note" style="border:0;margin:2px 0 6px;padding:0">📍赤ピン＝本物件／①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）。<b>調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内</b>で募集中の類似物件のみ掲載${outCnt>0?'（範囲外の'+outCnt+'件は除外）':''}。</div>`;
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
     /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
@@ -592,10 +594,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
-      <table class="lst"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:100px;text-align:right">月額総額</th></tr>${rows}</table>`;
+      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:100px;text-align:right">月額総額</th></tr>${rows}</table>`;
   }
   const body=kpi+tbl+note;
-  return paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',body,
+  return paper('類似物件の賃貸情報','',body,
     `SUUMO・アットホーム・HOME'S 等の賃貸ポータルサイト（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
 }
 function googleGeocode(q){return new Promise(res=>{
@@ -734,8 +736,8 @@ function tbl(items,color,n,extraCol){
   return h+'</table>';
 }
 function paper(title,lead,body,src){
-  return `<div class="paper"><h2>${title}</h2><div class="lead">${lead}</div>${body}
-  <div class="note">※地図上のアイコンは付近住所に所在することを表すもので、施設の正確な地点を保証するものではありません。距離は直線距離。徒歩分数は道路距離換算（直線距離×1.3・80m/分）、「経路実測」表示はGoogleの徒歩経路による実測値。<br>※情報出典：${src}</div></div>`;
+  return `<div class="paper"><h2>${title}</h2>${lead?`<div class="lead">${lead}</div>`:''}${body}
+  <div class="note">※地図のアイコンは付近住所の概算位置です。距離は直線距離、徒歩は道路距離換算（直線×1.3・80m/分）。「経路実測」はGoogleの徒歩経路。<br>※情報出典：${src}</div></div>`;
 }
 /* 1項目＝1ページに収めるため、区分が複数ある場合も「区分」列を持つ1つの表にまとめる（太田指示：地図を大きく・文字より絵で） */
 function facilityPaper(title,lead,groups,g,radius,src){
@@ -824,6 +826,22 @@ function htmlPins(map,pins){
   O.prototype.onRemove=function(){if(this.div&&this.div.parentNode)this.div.parentNode.removeChild(this.div);};
   return new O();
 }
+/* ===== 印刷ゲート：地図のタイルが全部揃うまで印刷させない ===== */
+let MAPRDY=0,MAPTOT=0,MAPTMR=null;
+function printBtnState(){
+  const b=document.getElementById('prbtn'),s=document.getElementById('mapstat');
+  if(!b)return;
+  const ok=MAPTOT>0&&MAPRDY>=MAPTOT;
+  b.disabled=!ok&&!window.__forcePrint;
+  b.style.opacity=b.disabled?.5:1;
+  s.textContent=ok?'':'🗺 地図を読み込み中… '+MAPRDY+'/'+MAPTOT+'（完了すると印刷できます）';
+  s.style.color=ok?'#0f766e':'#b45309';
+  if(ok&&MAPTMR){clearTimeout(MAPTMR);MAPTMR=null;}
+}
+function doPrint(){
+  if(MAPTOT>0&&MAPRDY<MAPTOT&&!confirm('地図がまだ読み込み中です（'+MAPRDY+'/'+MAPTOT+'）。このまま印刷すると地図が白いページが出ます。印刷しますか？'))return;
+  window.print();
+}
 /* 地図＝Googleマップに統一（2026-08-07 v3.3・太田要望）。ハザードの公式タイルはImageMapTypeで重畳 */
 /* 地図本体はモノクロ（v6.3・太田要望）＝色が付くのは自分で載せた印だけにして見やすくする。
    ・番号ピン／本物件ピン／赤丸／ハザードタイル（overlayMapTypes）はstylesの影響を受けないのでカラーのまま
@@ -841,6 +859,12 @@ const MAP_MONO=[
   {featureType:'administrative',elementType:'geometry.stroke',stylers:[{saturation:-100},{lightness:-10}]}
 ];
 function initMaps(g){
+  MAPRDY=0;MAPTOT=MAPS.length;window.__forcePrint=false;printBtnState();
+  /* 何らかの理由でtilesloadedが来ない地図があっても、30秒で印刷は可能にする（警告は残す） */
+  if(MAPTMR)clearTimeout(MAPTMR);
+  MAPTMR=setTimeout(()=>{window.__forcePrint=true;printBtnState();
+    const s=document.getElementById('mapstat');
+    if(s&&MAPRDY<MAPTOT)s.textContent='⚠ 地図 '+MAPRDY+'/'+MAPTOT+' 読込済。白い地図があれば数秒待って再度印刷してください';},30000);
   MAPS.forEach(cfg=>{
     const el=document.getElementById(cfg.id);if(!el)return;
     const center={lat:cfg.center[0],lng:cfg.center[1]};
@@ -872,6 +896,9 @@ function initMaps(g){
         <text x="22" y="59" text-anchor="middle" font-family="Hiragino Kaku Gothic ProN,sans-serif" font-size="8.6" font-weight="bold" fill="#7f1d1d">本物件</text></g>
       </svg>`});
     htmlPins(map,pins);
+    /* ★印刷時に地図が出ない対策：全ての地図がタイル読込を終えるまで印刷ボタンを押させない。
+       12枚の地図を同時に初期化するため、読み込み完了前に印刷すると白いままのページが混ざる。 */
+    google.maps.event.addListenerOnce(map,'tilesloaded',()=>{MAPRDY++;printBtnState();});
     /* 表示範囲：⚠️構築直後にfitBoundsを呼ぶとタイルが描画されない（実機検証済）。
        必ず最初の'idle'を待ってから合わせること。 */
     google.maps.event.addListenerOnce(map,'idle',()=>{
@@ -1110,8 +1137,8 @@ async function buildReport(g){
   toc.push('位置の確認（Googleマップ）');
   const author=(val('pauthor')||'').trim();
   h+=`<div class="paper cover"><div class="band"></div><div class="inner">
-    <div class="kicker">PROPERTY LOCATION REPORT</div>
-    <h1>物件周辺環境レポート</h1>
+    <div class="kicker">SUPPLEMENTARY REPORT FOR FINANCING</div>
+    <h1>融資相談補足レポート</h1>
     <div class="cs">交通・生活・教育・防災の立地調査資料</div>
     <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addrOnly(addr)}</div></div>
     <div class="meta" style="grid-template-columns:1fr 1fr">
@@ -1122,7 +1149,7 @@ async function buildReport(g){
       <ol>${toc.map((t,i)=>`<li><b>${String(i+1).padStart(2,'0')}</b>${t}</li>`).join('')}</ol></div>
     <div class="foot">
       <div class="who">${author?'作成者　<b>'+author+'</b>':'<span style="color:#94a3b8">※作成者名は入力欄で設定できます</span>'}</div>
-      <div class="brand"><div class="bn">🌻 太田塾 presents</div>物件周辺環境レポート</div>
+      <div class="brand"><div class="bn">🌻 太田塾 presents</div>融資相談補足レポート</div>
     </div>
     <div class="disc">本レポートは、国土地理院・国土交通省・防災科学技術研究所・OpenStreetMap・Google・SUUMO等の公開情報をもとに自動作成したものです。データの正確性・最新性を保証するものではなく、契約・投資判断の最終確認は各公式情報および現地調査によってください。</div>
   </div></div>`;
