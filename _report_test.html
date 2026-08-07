@@ -32,7 +32,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .paper .lead b{color:#0f766e;}
 /* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
 .map{width:100%;max-width:690px;height:420px;}
-.map.sm{height:300px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
+.map.sm{height:250px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:11px;padding:6px 8px;font-weight:700;color:#374151;text-align:left;}
@@ -79,7 +79,8 @@ table.lst td.nm{font-weight:700;}
 .kpi3 .t .v{font-size:17px;font-weight:800;color:#0f766e;}
 .phase{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;font-size:12px;color:#64748b;}
 table.calc{width:100%;border-collapse:collapse;margin-top:4px;}
-table.calc td{font-size:12.5px;padding:6px 9px;border:1px solid #e2e8f0;}
+table.calc td{font-size:12.5px;padding:6px 9px;}
+table.calc.cmpspec td{font-size:11.5px;padding:4px 8px;border:1px solid #e2e8f0;}
 table.calc td.r{text-align:right;font-weight:700;}
 table.calc td.k{color:#6b7280;}
 table.calc tr.sum td{background:#f0fdfa;font-weight:800;}
@@ -94,7 +95,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .pos-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.75;color:#78350f;margin-top:10px;}
 .pos-note b{color:#0f766e;}
 .bandttl{background:#3b5578;color:#fff;font-weight:800;font-size:12.5px;padding:6px 12px;border-radius:3px;margin:12px 0 8px;}
-.evalbox{background:#eef4fb;border-left:5px solid #d97706;border-radius:4px;padding:11px 14px;font-size:12px;line-height:1.8;color:#1f2937;margin-top:10px;}
+.evalbox{background:#eef4fb;border-left:5px solid #d97706;border-radius:4px;padding:10px 13px;font-size:11.5px;line-height:1.75;color:#1f2937;margin-top:10px;}
 .evalbox .tt{color:#1e3a8a;font-weight:800;}
 .evalbox b{color:#1d4ed8;}
 .appeal{color:#b91c1c;font-weight:800;font-size:12.5px;margin-top:8px;}
@@ -103,6 +104,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
 @media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
 @media print{
+ #excluded{display:none!important;}
  /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
  /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
@@ -114,7 +116,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v4.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v4.9</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -180,6 +182,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
 </div>
 <div class="toolbar" id="toolbar"><button class="btn sec" onclick="window.print()">🖨 PDFで保存 / 印刷</button></div>
+<div id="excluded" style="display:none"></div>
 <div id="report"></div>
 </div>
 
@@ -397,16 +400,35 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   own=own||{min:0,max:0,men:0};
   const today=new Date();
   const ownCity=(addr.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
-  /* 本物件から近い順に並べ替え。★調査対象範囲の外と位置不明（＝地図に出ないもの）は除外 */
-  let outCnt=0;
+  /* ★比較物件の選定（太田方針）：調査範囲内で「本当に類似」の物件に絞り、
+     本物件の賃料設定が妥当に見える＝同等以上の水準で募集されている事例を優先して5件。
+     除外した物件は画面側（印刷されない欄）に理由付きで一覧表示する。 */
+  let outCnt=0;window.CMP_EXCLUDED=[];
   if(opts.center){
     const R=opts.radius||1500;
+    const ownMidR=hasOwn?(own.min+own.max)/2:0;
     cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
-    const before=cmp.length;
-    cmp=cmp.filter(c=>c.d!=null&&c.d<=R);
-    outCnt=before-cmp.length;
-    cmp.sort((a,b)=>a.d-b.d);
-    cmp=cmp.slice(0,5);
+    const kept=[];
+    cmp.forEach(c=>{
+      let ng='';
+      if(c.d==null)ng='位置が特定できず地図に載せられない';
+      else if(c.d>R)ng='調査対象範囲外（'+(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m')+'）';
+      else if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
+      else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
+      if(ng){window.CMP_EXCLUDED.push({name:c.name,reason:ng});return;}
+      kept.push(c);
+    });
+    outCnt=window.CMP_EXCLUDED.length;
+    /* 並び：①本物件と同等以上の賃料 ②面積の近さ ③距離の近さ */
+    kept.forEach(c=>{
+      c._adv=(ownMidR>0&&c.total>=ownMidR*0.98)?0:1;
+      c._men=own.men>0&&c.men>0?Math.abs(c.men-own.men):99;
+    });
+    kept.sort((a,b)=>(a._adv-b._adv)||(a._men-b._men)||(a.d-b.d));
+    const pick=kept.slice(0,5);
+    pick.sort((a,b)=>a.d-b.d);
+    kept.slice(5).forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:'掲載枠（5件）超過'}));
+    cmp=pick;
   }
   let mismatch=0;
   let rows='';cmp.forEach((c,i)=>{
@@ -441,7 +463,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   const nameCell=S&&S.name?S.name:(opts.name||'—');
   const srcNote=S?'<span style="font-size:10px;font-weight:400;color:#e0e7ff;margin-left:8px">出典：SUUMO物件ライブラリー（実データ）</span>':'';
   const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）${srcNote}</div>
-    <table class="calc" style="margin-bottom:10px">
+    <table class="calc cmpspec" style="margin-bottom:8px">
       <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${nameCell}</td>
           <td class="k" style="width:88px">所在地</td><td>${addrCell}</td></tr>
       <tr><td class="k">最寄駅</td><td>${stationCell}</td>
@@ -474,9 +496,17 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     else if(ownMid<=rMax)pos='周辺募集帯の範囲内';
     else pos='周辺上位帯の水準';
     const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
-    const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円を維持しており経年下落は限定的。`:'';
+    const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円で募集されており、当エリアは<b>経年による賃料下落が小さい</b>。`:'';
+    const ownAge=(S&&S.built)?null:age;
+    const newer=cmp.filter(c=>c.age!=null&&(ownAge==null||c.age>ownAge)).length;
+    const newTxt=(ownAge!=null&&ownAge<=3&&newer>0)?`比較5件中${newer}件が本物件より築年数の古い物件であり、<b>築年数の優位は明らか</b>。`:'';
+    /* ㎡単価での比較（本物件が割安であることを示す） */
+    const uc=cmp.filter(c=>c.men>0).map(c=>c.total/c.men);
+    const ucAvg=uc.length?uc.reduce((a,b)=>a+b,0)/uc.length:0;
+    const ownUc=own.men>0?((own.min+own.max)/2)/own.men:0;
+    const ucTxt=(ucAvg>0&&ownUc>0)?`㎡単価でみると周辺平均${Math.round(ucAvg).toLocaleString()}円/㎡に対し本物件は<b>${Math.round(ownUc).toLocaleString()}円/㎡</b>で、${ownUc<=ucAvg?'<b>割安な水準</b>':'同水準'}。`:'';
     const strength=(age<=0?'新築':'築浅')+(stationTxt?'×駅近':'')+'の物件力';
-    note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>にあり、${strength}に対して無理のない<b>「決まりやすい」設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
+    note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
       :`<div class="evalbox">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
     /* 比較物件の位置図（ジオコーディング成功分に番号ピン） */
     let mapHtml='';
@@ -1146,6 +1176,15 @@ async function buildReport(g){
   document.getElementById('report').innerHTML=h;
   document.getElementById('report').style.display='block';
   document.getElementById('toolbar').style.display='block';
+  /* 比較対象から外した物件を作成者向けに表示（印刷はされない） */
+  const exEl=document.getElementById('excluded');
+  if(window.CMP_EXCLUDED&&window.CMP_EXCLUDED.length){
+    exEl.style.display='block';
+    exEl.innerHTML=`<div class="form" style="border-color:#fde68a;background:#fffbeb">
+      <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px">🗒 比較対象から外した物件（${window.CMP_EXCLUDED.length}件）※この欄は印刷されません</div>
+      <div style="font-size:12px;line-height:1.9;color:#78350f">${window.CMP_EXCLUDED.map(x=>'・<b>'+x.name+'</b>　—　'+x.reason).join('<br>')}</div>
+      <div style="font-size:11px;color:#a16207;margin-top:6px">金融機関から「他にどんな募集があるか」と聞かれた際の想定問答にお使いください。</div></div>`;
+  }else{exEl.style.display='none';exEl.innerHTML='';}
   setTimeout(()=>initMaps(g),50);
 }
 </script>
