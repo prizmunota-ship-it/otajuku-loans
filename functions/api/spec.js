@@ -36,8 +36,9 @@ export async function onRequest(context) {
   if (!name) return json({ found: false, reason: 'no_name' }, 400);
 
   try {
-    const cands = await findBuildingUrls(name, city, pref);
-    if (!cands.length) return json({ found: false, reason: 'not_listed', tried: 'search' });
+    const dbg = url.searchParams.get('debug') ? [] : null;
+    const cands = await findBuildingUrls(name, city, pref, dbg);
+    if (!cands.length) return json({ found: false, reason: 'not_listed', tried: 'search', debug: dbg || undefined });
 
     const tried = [];
     for (const u of cands.slice(0, 3)) {
@@ -75,7 +76,7 @@ function sameName(a, b) {
 }
 
 /* 検索エンジン3系統から homes.co.jp/archive/b-XXXX/ を集める（1つ落ちても止まらないように） */
-async function findBuildingUrls(name, city, pref) {
+async function findBuildingUrls(name, city, pref, dbg) {
   const where = city || pref || '';
   // 検索エンジンはデータセンターIPからだと空で返ることがあるため、言い回しを変えて数パターン試す
   const queries = [
@@ -93,9 +94,10 @@ async function findBuildingUrls(name, city, pref) {
     let html = '';
     try {
       const r = await fetch(e, { headers: { 'user-agent': UA, 'accept-language': 'ja,en;q=0.8' } });
+      html = r.ok ? await r.text() : '';
+      if (dbg) dbg.push({ e: e.slice(8, 40), st: r.status, len: html.length, arch: (html.match(/archive/g) || []).length });
       if (!r.ok) continue;
-      html = await r.text();
-    } catch (err) { continue; }
+    } catch (err) { if (dbg) dbg.push({ e: e.slice(8, 40), err: String(err && err.message).slice(0, 60) }); continue; }
     // 生URL（…/archive/b-123/）と、検索エンジンのリダイレクト用にエンコードされた形（…%2Fb%2D123%2F）の両方を拾う。
     // ⚠️ページ全体を decodeURIComponent すると "50%" 等の裸の%で URI malformed 例外になるので、必ず部分一致で拾うこと
     const pats = [/homes\.co\.jp\/archive\/b-(\d+)\//g, /homes\.co\.jp%2Farchive%2Fb(?:%2D|-)(\d+)%2F/gi];
