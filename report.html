@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>太田塾 物件補足レポート</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f1f5f9;font-size:14px;line-height:1.55;}
+/* 紙面の内容幅＝690px（地図とすべての表の幅をA4印刷時と一致させる） */
+.wrap{max-width:756px;margin:0 auto;padding:16px 10px 70px;}
+.appbar{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+.appbar .lg{font-size:18px;font-weight:800;color:#0f766e;}
+.appbar .tg{font-size:11px;color:#6b7280;}
+.form{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;}
+.mainq label{display:block;font-size:12px;font-weight:800;color:#0f766e;margin-bottom:5px;}
+.mainq input{width:100%;padding:13px 14px;border:2px solid #14b8a6;border-radius:10px;font-size:17px;}
+.opts{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;align-items:center;}
+.opts label{font-size:13px;font-weight:700;color:#374151;display:flex;align-items:center;gap:5px;}
+.opts input[type=checkbox]{width:17px;height:17px;accent-color:#0f766e;}
+.opts select{padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;}
+.bigbtn{width:100%;margin-top:12px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
+.bigbtn:disabled{background:#9ca3af;}
+.qhint{font-size:11px;color:#6b7280;margin-top:8px;}
+.status{display:none;margin:12px 4px;font-size:13px;color:#0f766e;font-weight:700;}
+.status.err{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;}
+.toolbar{display:none;margin-bottom:12px;}
+.btn.sec{background:#334155;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:800;cursor:pointer;}
+#report{display:none;}
+/* ===== REBC風 1項目=1ペーパー ===== */
+.paper{background:#fff;border:1px solid #d7dde3;border-radius:6px;padding:18px 22px 10px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);page-break-inside:avoid;}
+.paper h2{font-size:17px;font-weight:800;color:#1f2937;border-bottom:2px solid #4b7fb5;padding-bottom:5px;margin-bottom:8px;}
+.paper .lead{font-size:12px;color:#374151;margin-bottom:8px;}
+.paper .lead b{color:#0f766e;}
+/* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
+.map{width:100%;max-width:690px;height:520px;}
+.map.sm{height:270px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
+.subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
+table.lst{width:100%;border-collapse:collapse;}
+table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:10.5px;padding:3px 7px;font-weight:700;color:#374151;text-align:left;}
+table.lst td{border:1px solid #e2e8f0;font-size:12px;padding:3px 7px;}
+table.lst td.no{width:34px;text-align:center;font-weight:800;color:#fff;}
+table.lst td.no span{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;font-size:11px;}
+table.lst td.r{text-align:right;white-space:nowrap;font-weight:700;}
+table.lst td.nm{font-weight:700;}
+table.lst.cmp td{font-size:11px;padding:3px 6px;}
+table.lst.cmp td.nm{font-size:11.5px;}
+.note{font-size:9.5px;color:#94a3b8;margin-top:5px;line-height:1.45;border-top:1px solid #eef2f2;padding-top:5px;}
+.gbtn{display:inline-block;margin:2px 0 10px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
+/* ===== 表紙（金融機関提出用・1ページ完結） ===== */
+.cover{background:#fff;border:1px solid #d7dde3;padding:0;overflow:hidden;}
+.cover .band{height:9px;background:linear-gradient(90deg,#1e3a5f 0%,#2f5c8f 55%,#0f766e 100%);}
+.cover .inner{padding:34px 40px 26px;}
+.cover .kicker{font-size:10.5px;letter-spacing:3px;color:#64748b;font-weight:700;}
+.cover h1{font-size:29px;font-weight:800;color:#1e3a5f;letter-spacing:2px;margin:8px 0 6px;line-height:1.3;}
+.cover .cs{font-size:12.5px;color:#475569;padding-bottom:16px;border-bottom:2px solid #1e3a5f;}
+.cover .box{border:1px solid #cfd8e3;border-left:6px solid #1e3a5f;border-radius:4px;padding:16px 18px;margin-top:22px;background:#f8fafc;}
+.cover .box .lb{font-size:10px;font-weight:800;color:#64748b;letter-spacing:1px;}
+.cover .box .n{font-size:21px;font-weight:800;color:#1f2937;line-height:1.35;margin-top:3px;}
+.cover .box .a{font-size:12.5px;color:#374151;margin-top:6px;}
+.cover .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:18px;background:#e2e8f0;border:1px solid #e2e8f0;}
+.cover .meta div{background:#fff;padding:9px 12px;}
+.cover .meta .k{font-size:9.5px;color:#64748b;font-weight:700;}
+.cover .meta .v{font-size:12.5px;font-weight:800;color:#1f2937;margin-top:1px;}
+.cover .toc{margin-top:22px;}
+.cover .toc .h{font-size:11px;font-weight:800;color:#1e3a5f;border-left:4px solid #1e3a5f;padding-left:8px;margin-bottom:8px;}
+.cover .toc ol{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:5px 22px;}
+.cover .toc li{font-size:12px;color:#374151;border-bottom:1px dotted #cbd5e1;padding:4px 2px;display:flex;gap:8px;}
+.cover .toc li b{color:#1e3a5f;font-weight:800;min-width:16px;}
+.cover .foot{margin-top:26px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;}
+.cover .foot .who{font-size:12px;color:#374151;}
+.cover .foot .who b{font-size:14px;color:#1f2937;}
+.cover .foot .brand{text-align:right;font-size:10px;color:#94a3b8;line-height:1.7;white-space:nowrap;}
+.cover .foot .brand .bn{font-size:11.5px;font-weight:800;color:#0f766e;}
+.cover .disc{margin-top:12px;font-size:9.5px;color:#94a3b8;line-height:1.6;}
+@media(max-width:640px){.cover .inner{padding:24px 20px 20px;}.cover h1{font-size:22px;}.cover .meta{grid-template-columns:1fr;}.cover .toc ol{grid-template-columns:1fr;}.cover .foot{flex-direction:column;align-items:flex-start;}.cover .foot .brand{text-align:left;}}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;margin:4px 0;}
+.legend .c{display:flex;align-items:center;gap:4px;}
+.legend .sw{width:14px;height:14px;border-radius:3px;border:1px solid #cbd5e1;display:inline-block;}
+.kpi3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:10px;}
+.kpi3 .t{border:1px solid #e5e7eb;border-radius:8px;padding:9px 11px;}
+.kpi3 .t .l{font-size:10px;color:#6b7280;font-weight:700;}
+.kpi3 .t .v{font-size:17px;font-weight:800;color:#0f766e;}
+.phase{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;font-size:12px;color:#64748b;}
+table.calc{width:100%;border-collapse:collapse;margin-top:4px;}
+table.calc td{font-size:12.5px;padding:6px 9px;}
+table.calc.cmpspec td{font-size:11px;padding:3px 8px;border:1px solid #e2e8f0;}
+table.calc td.r{text-align:right;font-weight:700;}
+table.calc td.k{color:#6b7280;}
+table.calc tr.sum td{background:#f0fdfa;font-weight:800;}
+details.opt{margin-top:12px;border-top:1px dashed #e5e7eb;padding-top:10px;}
+details.opt summary{font-size:13px;font-weight:800;color:#0f766e;cursor:pointer;}
+.subhd2{font-size:11px;font-weight:800;color:#374151;margin:10px 0 6px;}
+.cmprow{display:grid;grid-template-columns:1.5fr 1.5fr .55fr .75fr .95fr 30px;gap:5px;margin-bottom:6px;}
+.cmprow input{padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:100%;}
+.cmprow .del{border:none;background:#fee2e2;color:#b91c1c;border-radius:7px;font-weight:800;cursor:pointer;}
+.addrow{border:1px dashed #14b8a6;background:#f0fdfa;color:#0f766e;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:8px;}
+table.lst tr.own td{background:#dcfce7;font-weight:800;}
+.pos-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.75;color:#78350f;margin-top:10px;}
+.pos-note b{color:#0f766e;}
+.bandttl{background:#3b5578;color:#fff;font-weight:800;font-size:12.5px;padding:4px 12px;border-radius:3px;margin:8px 0 6px;}
+.evalbox{background:#eef4fb;border-left:5px solid #d97706;border-radius:4px;padding:8px 12px;font-size:11px;line-height:1.6;color:#1f2937;margin-top:8px;}
+.evalbox .tt{color:#1e3a8a;font-weight:800;}
+.evalbox b{color:#1d4ed8;}
+.appeal{color:#b91c1c;font-weight:800;font-size:12.5px;margin-top:8px;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px 11px;margin-top:9px;}
+.fld label{display:block;font-size:10.5px;font-weight:700;color:#6b7280;margin-bottom:2px;}
+.fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
+@media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
+@media print{
+ #excluded,.scronly{display:none!important;}
+ /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
+ *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+ /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
+ .gm-style-moc,.gm-style-mot,.gmnoprint,.gm-fullscreen-control,.gm-svpc{display:none!important;}
+ .map,.map *{will-change:auto!important;}
+ body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
+ .wrap{padding:0;max-width:none;}
+ /* 画面と同じ内容幅690pxに固定（左右パディングを外して690pxを確保・狭い用紙では100%に縮む） */
+ .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin:0 auto;width:690px;max-width:100%;padding-left:0;padding-right:0;}
+ .paper:last-child{page-break-after:auto;}
+}
+</style></head><body>
+<div class="wrap">
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.8</div></div>
+
+<div class="form">
+  <div class="mainq"><label>物件名 または 住所を入力</label>
+  <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3"></div>
+  <div class="opts">
+    <label>調査範囲
+      <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
+    </label>
+    <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
+    <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
+    <label><input type="checkbox" id="opt_flood" checked>浸水想定区域</label>
+    <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
+    <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
+    <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
+    <label style="font-weight:700">作成者名
+      <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
+    </label>
+  </div>
+  <button class="bigbtn" id="go" onclick="locate()">🔍 位置を検索</button>
+  <div class="qhint">物件名でも住所でもOK。まず地図で位置を確認してから、レポートを作成します（<b>ずれていたらピンをドラッグで修正</b>できます）。</div>
+  <details class="opt"><summary>▶ 収益・積算評価を追加（任意）</summary>
+    <div class="grid">
+      <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
+      <div class="fld"><label>築年数</label><input id="page" type="number" value="0"></div>
+      <div class="fld"><label>満室想定年収入 円</label><input id="pincome" type="number"></div>
+      <div class="fld"><label>総戸数 戸</label><input id="punits" type="number" placeholder="例：9"></div>
+      <div class="fld"><label>土地面積 ㎡</label><input id="pland" type="number"></div>
+      <div class="fld"><label>建物延床 ㎡</label><input id="pbldg" type="number"></div>
+      <div class="fld"><label>土地単価 円/㎡</label><input id="plandprice" type="number"></div>
+      <div class="fld"><label>売出価格 円</label><input id="paskprice" type="number"></div>
+      <div class="fld"><label>還元利回り %</label><input id="acap" type="number" step="0.1" value="8.0"></div>
+    </div>
+  </details>
+  <details class="opt"><summary>▶ 類似物件の賃貸情報を追加（任意｜賃料の妥当性資料）</summary>
+    <div class="qhint" style="margin:6px 0 8px">SUUMO・アットホーム・HOME'S など<b>お好きなポータルサイト</b>で調べた「募集中」の類似物件を入れると、比較表と<b>賃料設定の考え方（本物件が有利に見える分析文）</b>を自動作成します。</div>
+    <div class="subhd2">本物件の想定</div>
+    <div class="grid">
+      <div class="fld"><label>間取り</label><input id="pmadori" placeholder="例：1LDK"></div>
+      <div class="fld"><label>専有面積 ㎡</label><input id="pmens" type="number" step="0.01" placeholder="例：41.4"></div>
+      <div class="fld"><label>月額総額 下限 円</label><input id="prentmin" type="number" placeholder="例：63500"></div>
+      <div class="fld"><label>月額総額 上限 円</label><input id="prentmax" type="number" placeholder="例：66000"></div>
+    </div>
+    <div class="subhd2">🔍 募集中の類似物件を探す（ポータルサイト）</div>
+    <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンク（SUUMO／アットホーム／HOME'S／スマサテ）がここに表示されます。</div>
+    <button type="button" class="addrow" onclick="autoCmpClick()" style="background:#0f766e;color:#fff;border:none">🤖 このエリアの募集を自動検索して取り込む（SUUMO）</button>
+    <div class="subhd2">📋 まとめて貼り付け（ポータルの物件情報をコピーして貼ると自動で行になります）</div>
+    <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※「6.1万円」表記や、物件名と賃料が別の行になっている貼り付けにも対応しています"></textarea>
+    <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
+    <div class="subhd2">比較物件（現在募集中）— 物件名／築年／面積㎡／月額総額（賃料＋共益費）円</div>
+    <div id="cmpRows"></div>
+    <button type="button" class="addrow" onclick="addCmpRow()">＋ 比較物件の行を追加</button>
+    <div class="fld"><label>アピールポイント（任意・赤字で強調）</label><input id="pappeal" placeholder="例：駅徒歩5分以内の築浅は募集なし＝競合不在"></div>
+  </details>
+</div>
+
+<div class="status" id="status"></div>
+<div id="confirm" style="display:none" class="form">
+  <div style="font-size:14px;font-weight:800;color:#0f766e;margin-bottom:7px">📍 位置の確認 — ここで合っていますか？</div>
+  <div id="gconfmap" style="width:100%;height:320px;border-radius:10px;border:1px solid #d1d5db"></div>
+  <div id="confaddr" style="font-size:12.5px;margin:9px 0;color:#374151"></div>
+  <div id="confwarn" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#b91c1c;margin-bottom:8px"></div>
+  <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
+  <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
+</div>
+<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span></div>
+<div id="excluded" style="display:none"></div>
+<div id="report"></div>
+</div>
+
+<script>
+/* ============ 共通 ============ */
+const STRUCT={wood:{name:"木造",rebuild:150000,useful:22},lgs:{name:"軽量鉄骨造",rebuild:150000,useful:27},steel:{name:"鉄骨造",rebuild:180000,useful:34},rc:{name:"RC",rebuild:200000,useful:47},src:{name:"SRC",rebuild:200000,useful:47}};
+const yen=n=>"¥"+Math.round(n).toLocaleString('ja-JP');
+const num=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?0:v;};
+const val=id=>document.getElementById(id).value.trim();
+const WALK=80,ROAD=1.3; /* 徒歩=道路距離換算(直線×1.3)÷80m/分。駅・バス停はGoogle経路実測で上書き */
+function dist(a,b,c,d){const R=6371000,t=Math.PI/180,x=Math.sin((c-a)*t/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin((d-b)*t/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+const wmin=m=>Math.max(1,Math.round(m*ROAD/WALK));
+function setStatus(t,err){const s=document.getElementById('status');s.style.display='block';s.innerHTML=t;s.className='status'+(err?' err':'');}
+function hideStatus(){document.getElementById('status').style.display='none';}
+
+let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
+/* ====== 類似物件の自動検索（Google公式 Custom Search API） ====== */
+const GKEY='AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI';
+const CSE_CX='';  /* Custom Search APIは新規提供終了のため未使用 */
+/* ★類似物件の自動検索：太田さんのGAS(SUUMO一覧を自動発見→解析)を呼ぶ */
+const GAS_SEARCH='https://script.google.com/macros/s/AKfycbzXp4Ew-ilHYsXOVaUVwcz9Fy_LkehyVy18wf4iwwhStkWcmudNI0IsWMZuSrcSF3llDg/exec';
+/* 住所→都道府県／市区町村（政令市は「福岡市東区」、郡部は「大木町」を返す） */
+function prefOf(t){const m=(t||'').match(/(北海道|東京都|京都府|大阪府|[一-龥]{2,3}県)/);return m?m[1]:'';}
+/* 住所だけを取り出す（Google/SUUMOが返す物件名は実際の調査対象と異なる場合があるので表紙には載せない） */
+function addrOnly(t){
+  t=(t||'').trim();
+  const m=t.match(/(〒\s*[0-9０-９]{3}[-−ー－]?[0-9０-９]{4}\s*)?((?:北海道|東京都|京都府|大阪府|.{2,4}?県)[\s\S]*)$/);
+  return m?((m[1]||'')+m[2]).trim():t;
+}
+/* レポート表記用の住所。①実データで確認できた住所を最優先 ②番地の後ろに付く建物名は落とす
+   （Googleは「…14-64 セレストガーデン」のように建物名を足して返すため） */
+function addrPlain(t){
+  let a=(window.SELF&&window.SELF.addr)||addrOnly(t)||'';
+  const m=a.match(/^([\s\S]*?[0-9０-９][0-9０-９\-−ー－の丁目番地号]*)\s+\S+$/);
+  return (m?m[1]:a).trim();
+}
+function cityOf(t){
+  const s=(t||'').replace(/^.*?(?:北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/,'');
+  const m=s.match(/^\s*(.{2,6}?[市郡])(.{1,5}?[区町村])?/);
+  if(!m)return (s.match(/^\s*(.{2,8}?[区町村])/)||[])[1]||'';
+  if(/郡$/.test(m[1]))return m[2]||m[1];
+  return m[1]+((m[2]&&/区$/.test(m[2]))?m[2]:'');
+}
+/* 本物件の間取り・面積・賃料をGASへ渡し、SUUMO側で絞り込ませる（精度向上 v3.3） */
+function ownHints(){
+  const men=num('pmens');const units=num('punits');const inc=num('pincome');
+  let rent=num('prentmin')||0;
+  if(!rent&&inc&&units)rent=Math.round(inc/units/12/100)*100;
+  return {men:men||0,rent:rent||0};
+}
+/* 入力が「物件名」らしいか（住所らしければfalse）。物件名ならSUUMO物件ライブラリーで実募集を引く */
+function looksLikeName(s){
+  s=(s||'').trim();
+  if(!s)return false;
+  if(/^(北海道|東京都|京都府|大阪府|.{2,4}?県)/.test(s))return false;
+  if(/[0-9０-９]+\s*[-−ー－の丁目番地号]/.test(s))return false;
+  /* 「久留米市」のような自治体名だけは住所扱い。ただし「プライマリー日吉町」等の物件名は除く */
+  if(/^[^\s]{1,6}[市区町村]$/.test(s)&&!/[ァ-ヶーA-Za-zＡ-Ｚａ-ｚ]/.test(s))return false;
+  return true;
+}
+/* ===== 入力値の「出所」管理（v6.4）=====
+   ⚠️最重要：実データが取れていない項目に、フォームの初期値（構造=RC・築年数=0＝新築 など）を
+   そのまま載せてしまう事故を防ぐ。表に出してよいのは
+   ①利用者が自分で入力した値（src=input）②SUUMO等の実データで自動入力した値（src=suumo）だけ。
+   どちらでもない項目は「—（未取得）」と表示し、絶対に推測値を書かない。 */
+document.addEventListener('input',e=>{if(e.target&&e.target.id)e.target.dataset.t='1';},true);
+document.addEventListener('change',e=>{if(e.target&&e.target.id)e.target.dataset.t='1';},true);
+function setByData(id,v,src){const el=document.getElementById(id);if(!el)return;el.value=v;el.dataset.src=src;delete el.dataset.t;}
+function srcOf(id){const el=document.getElementById(id);if(!el)return '';
+  if(el.value==null||String(el.value).trim()==='')return '';
+  if(el.dataset.t)return 'input';
+  return el.dataset.src||'';}
+function userVal(id){return srcOf(id)?val(id):'';}
+function userNum(id){return srcOf(id)?num(id):null;}
+/* 構造は「利用者が自分で選んだとき」だけ採用する（初期値のRCを実データのように載せない） */
+function structIn(){return srcOf('pstruct')==='input'?((STRUCT[val('pstruct')]||{}).name||''):'';}
+window.SELF=null; /* SUUMOで取得した本物件の実募集 */
+window.GASRES=null; /* 直近のGAS応答（物件名検索の結果を位置特定と比較表で共用し、二重問い合わせを避ける） */
+/* 物件名だけでSUUMO物件ライブラリーを引く（位置特定の前に正式住所を得るため） */
+async function gasByName(name){
+  try{
+    const r=await fetch(GAS_SEARCH+'?name='+encodeURIComponent(name));
+    const j=await r.json();
+    window.GASRES={key:name,json:j};
+    window.SELF=(j.self&&j.self.addr)?j.self:null;
+    return j;
+  }catch(e){return null;}
+}
+/* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
+   ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
+const APIV='7';
+async function apiJson(url){
+  url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
+  for(let i=0;i<2;i++){
+    try{
+      const r=await fetch(url);
+      if(r.ok){const t=await r.text();
+        if(t&&t[0]==='{')return JSON.parse(t);}
+    }catch(e){}
+    if(i===0)await new Promise(r=>setTimeout(r,600));
+  }
+  return null;
+}
+/* 物件名→建物の実データ（種別・構造・築年月・階建）。Cloudflare Functions経由でHOME'S建物情報を照会。
+   ⚠️物件名と市区町村が一致した建物ページしか返さないサーバー実装（functions/api/spec.js）＝誤情報防止 */
+async function fetchSpec(name,city,pref,addr){
+  if(!name)return null;
+  try{
+    const j=await apiJson('/api/spec?name='+encodeURIComponent(name)+'&addr='+encodeURIComponent(addr||'')+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
+    return (j&&j.found)?j:null;
+  }catch(e){return null;}
+}
+async function gasSearchCmp(city,md,hint,pref){
+  hint=hint||ownHints();
+  pref=pref||prefOf(window._lastTitle||val('paddr'));
+  const raw=(val('paddr')||'').trim();
+  const nameQ=looksLikeName(raw)?raw:'';
+  try{
+    let j=null;
+    /* 位置確認時に物件名で取得済みなら、その結果をそのまま使う */
+    if(nameQ&&window.GASRES&&window.GASRES.key===nameQ&&!hint.men&&!hint.rent&&!md){
+      j=window.GASRES.json;
+    }else{
+      const q='?city='+encodeURIComponent(city)+'&pref='+encodeURIComponent(pref||'')+'&md='+encodeURIComponent(md||'')
+        +(hint.men?'&men='+hint.men:'')+(hint.rent?'&rent='+hint.rent:'')
+        +(nameQ?'&name='+encodeURIComponent(nameQ):'');
+      const r=await fetch(GAS_SEARCH+q);
+      j=await r.json();
+    }
+    if(j.self&&j.self.addr)window.SELF=j.self;
+    /* 本物件の募集実績が取れたら、未入力の間取り・面積・賃料をその実データで埋める */
+    if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
+      const r0=window.SELF.rooms[0];
+      if(!val('pmadori'))setByData('pmadori',r0.md,'suumo');
+      if(!num('pmens'))setByData('pmens',r0.men,'suumo');
+      if(!num('prentmin')){setByData('prentmin',r0.rent,'suumo');setByData('prentmax',r0.rent,'suumo');}
+    }
+    let n=0;
+    (j.items||[]).forEach(it=>{
+      if(n>=10)return;
+      addCmpRow([it.name,it.addr||'',it.age||'',it.men||'',it.total]);n++;
+    });
+    return n;
+  }catch(e){return 0;}
+}
+async function cseSearchCmp(city,md){
+  if(!CSE_CX||!city)return 0;
+  let added=0;const seen=new Set();
+  for(const q of [city+' '+md+' 賃貸',city+' 賃貸 アパート '+md]){
+    try{
+      const r=await fetch('https://www.googleapis.com/customsearch/v1?key='+GKEY+'&cx='+CSE_CX+'&num=10&q='+encodeURIComponent(q));
+      if(!r.ok)continue;const j=await r.json();
+      for(const it of (j.items||[])){
+        const txt=(it.title||'')+' '+(it.snippet||'');
+        const man=txt.match(/([\d.]+)\s*万円/);if(!man)continue;
+        const total=Math.round(parseFloat(man[1])*10000);
+        if(total<20000||total>400000)continue;
+        const men=(txt.match(/([\d.]+)\s*(?:㎡|m2|m²)/)||[])[1]||'';
+        const age=(txt.match(/築\s*(\d+)\s*年?/)||[])[1]||'';
+        let name=(it.title||'').split(/[\|｜\-–【\(（]/)[0].trim().slice(0,25)||'物件';
+        const addr=(txt.match(/([一-龯]{2,3}[都道府県][^\s、。]{3,20})/)||[])[1]||'';
+        const key=name+'_'+total;if(seen.has(key))continue;seen.add(key);
+        addCmpRow([name,addr,age,men,total]);added++;
+        if(added>=8)break;
+      }
+      if(added>=8)break;
+    }catch(e){}
+  }
+  return added;
+}
+async function autoCmpClick(){
+  const t=(window._lastTitle||val('paddr'));
+  const city=cityOf(t);
+  if(!city){alert('先に「位置を検索」で物件の場所を確定してください。');return;}
+  const n=await gasSearchCmp(city,val('pmadori')||'');
+  alert(n>0?n+'件の募集事例を自動で取り込みました。内容を確認して「レポートを作成」してください。':'募集事例が見つかりませんでした。SUUMOで手動検索→貼り付けもお試しください。');
+}
+/* --- 類似物件 行UI --- */
+function addCmpRow(v){
+  const d=document.createElement('div');d.className='cmprow';
+  d.innerHTML=`<input placeholder="物件名" value="${v&&v[0]||''}"><input placeholder="住所（所在地）" value="${v&&v[1]||''}"><input type="number" placeholder="築年" value="${v&&v[2]||''}"><input type="number" step="0.01" placeholder="面積㎡" value="${v&&v[3]||''}"><input type="number" placeholder="月額円" value="${v&&v[4]||''}"><button type="button" class="del" onclick="this.parentNode.remove()">✕</button>`;
+  document.getElementById('cmpRows').appendChild(d);
+}
+function clearCmpRows(){document.getElementById('cmpRows').innerHTML='';for(let i=0;i<3;i++)addCmpRow();}
+window.addEventListener('DOMContentLoaded',()=>{for(let i=0;i<3;i++)addCmpRow();});
+function parseCmp(){
+  const txt=document.getElementById('cmppaste').value;
+  let added=0;const seen=new Set();
+  /* 物件ブロック方式：賃料が2回目に出たら前の物件を確定（複数行の貼り付けに対応） */
+  let pend=null;
+  const flush=()=>{
+    if(pend&&pend.total){
+      const key=(pend.name||'')+'_'+pend.total;
+      if(!seen.has(key)){seen.add(key);addCmpRow([pend.name||'物件',pend.addr||'',pend.age||'',pend.men||'',pend.total]);added++;}
+    }
+    pend=null;
+  };
+  for(const ln of txt.split(/\n+/)){
+    const t=ln.trim();if(!t)continue;
+    const addrM=(t.match(/([一-龯]{2,3}[都道府県][^\s¥￥]{3,25})/)||[])[1]||'';
+    /* --- スマサテ形式：「カーサ フィオーレ ¥53,300 ¥1,217 ¥4,023 43.79m² 3年 1LDK 4分 2階 … 福岡県筑後市…」 --- */
+    const sm=t.match(/^(.+?)\s*[¥￥]([\d,]+)\s+[¥￥][\d,]+\s+[¥￥][\d,]+\s+([\d.]+)\s*(?:m²|m2|㎡)\s+(\d+)\s*年/);
+    if(sm){
+      flush();
+      pend={name:sm[1].trim(),total:parseInt(sm[2].replace(/,/g,'')),men:sm[3],age:sm[4],addr:addrM.replace(/詳細未定$/,'')};
+      continue;
+    }
+    /* --- 汎用形式：「物件名 築4年 50.08㎡ 61,200円」／ポータルの複数行貼り付けにも対応 --- */
+    const age=(t.match(/築\s*(\d+)\s*年/)||[])[1];
+    const men=(t.match(/([\d.]+)\s*(?:㎡|m2|m²)/)||[])[1];
+    let total=null;
+    const man=t.match(/([\d.]+)\s*万円/);
+    if(man)total=Math.round(parseFloat(man[1])*10000);
+    else{const en=t.match(/([\d,]{4,9})\s*円/);if(en)total=parseInt(en[1].replace(/,/g,''));}
+    if(!total){
+      /* 賃料が無い行＝同じ物件の付随情報（面積・築年・住所・物件名）として蓄積 */
+      if(!pend)pend={};
+      if(addrM)pend.addr=pend.addr||addrM.replace(/詳細未定$/,'');
+      if(age)pend.age=pend.age||age;
+      if(men)pend.men=pend.men||men;
+      if(!pend.name&&!addrM&&!/^[\d.,¥￥]/.test(t)&&t.length<=40&&!/^[0-9]/.test(t))pend.name=t.replace(/\s*[／/].*$/,'').trim();
+      continue;
+    }
+    /* 賃料行：すでに賃料を持つ物件があれば確定して次の物件へ */
+    if(pend&&pend.total)flush();
+    if(!pend)pend={};
+    let nm=t.split(/[ 　\t]/)[0].replace(/築.*$/,'');
+    if(nm&&!/^[\d.,¥￥]/.test(nm))pend.name=pend.name||nm;
+    pend.total=total;
+    if(age)pend.age=pend.age||age;
+    if(men)pend.men=pend.men||men;
+    if(addrM)pend.addr=pend.addr||addrM.replace(/詳細未定$/,'');
+  }
+  flush();
+  if(added){document.getElementById('cmppaste').value='';}
+  else alert('物件情報を読み取れませんでした。SUUMO・アットホーム等の物件情報やスマサテの事例一覧をそのままコピーするか、「物件名 築◯年 ◯◯㎡ ◯◯円」の形で貼ってください。');
+}
+function collectCmp(){
+  const rows=[];document.querySelectorAll('#cmpRows .cmprow').forEach(r=>{
+    const c=r.querySelectorAll('input');
+    const name=c[0].value.trim(),addr=c[1].value.trim(),age=parseFloat(c[2].value),men=parseFloat(c[3].value),total=parseFloat(c[4].value);
+    if(name&&total>0)rows.push({name,addr,age:isNaN(age)?null:age,men:isNaN(men)?null:men,total});
+  });return rows;
+}
+function manEn(n){return (n/10000).toLocaleString('ja-JP',{maximumFractionDigits:1})+'万円';}
+/* 比較物件の所在地をジオコーディング（町丁目レベルの概算位置・結果はキャッシュ） */
+const _cmpGeo={};
+async function geocodeCmp(cmp){
+  for(const c of cmp){
+    if(c.lat!=null)continue;
+    const key=(c.addr||'').trim();if(!key)continue;
+    if(_cmpGeo[key]){c.lat=_cmpGeo[key].lat;c.lon=_cmpGeo[key].lon;continue;}
+    try{const g=await googleGeocode(key);if(g){_cmpGeo[key]={lat:g.lat,lon:g.lon};c.lat=g.lat;c.lon=g.lon;}}catch(e){}
+  }
+  /* 同一住所（大字・丁目単位）で重なったピンを少しずらして全て見えるように */
+  const seen={};
+  cmp.forEach(c=>{if(c.lat==null)return;const k=c.lat.toFixed(5)+','+c.lon.toFixed(5);const n=seen[k]||0;seen[k]=n+1;if(n>0){c.lat+=0.0007*n;c.lon+=0.0005*n;}});
+}
+function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
+  opts=opts||{};
+  const hasOwn=!!(own&&own.min>0); /* 本物件の賃料が未入力でも募集事例だけは表示する */
+  own=own||{min:0,max:0,men:0};
+  const today=new Date();
+  const ownCity=(addr.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
+  /* ★比較物件の選定（太田方針）：調査範囲内で「本当に類似」の物件に絞り、
+     本物件の賃料設定が妥当に見える＝同等以上の水準で募集されている事例を優先して5件。
+     除外した物件は画面側（印刷されない欄）に理由付きで一覧表示する。 */
+  let outCnt=0;window.CMP_EXCLUDED=[];
+  if(opts.center){
+    const R=opts.radius||1500;
+    const ownMidR=hasOwn?(own.min+own.max)/2:0;
+    cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
+    const kept=[];
+    cmp.forEach(c=>{
+      let ng='';
+      if(c.d==null)ng='位置が特定できず地図に載せられない';
+      else if(c.d>R)ng='調査対象範囲外（'+(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m')+'）';
+      else if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
+      else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
+      if(ng){window.CMP_EXCLUDED.push({name:c.name,reason:ng});return;}
+      kept.push(c);
+    });
+    outCnt=window.CMP_EXCLUDED.length;
+    /* 並び：①本物件と同等以上の賃料 ②面積の近さ ③距離の近さ */
+    kept.forEach(c=>{
+      c._adv=(ownMidR>0&&c.total>=ownMidR*0.98)?0:1;
+      c._men=own.men>0&&c.men>0?Math.abs(c.men-own.men):99;
+    });
+    kept.sort((a,b)=>(a._adv-b._adv)||(a._men-b._men)||(a.d-b.d));
+    const pick=kept.slice(0,5);
+    pick.sort((a,b)=>a.d-b.d);
+    kept.slice(5).forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:'掲載枠（5件）超過'}));
+    cmp=pick;
+  }
+  let mismatch=0;
+  let rows='';cmp.forEach((c,i)=>{
+    c.no=i+1;
+    const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
+    const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td></tr>`;});
+  const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
+  const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
+  /* 本物件の自動サマリー（入力済み情報から算出） */
+  const ownUnit=hasOwn&&own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
+  const derivedTxt=opts.derived?`満室想定年収入${opts.units>0?'÷12ヶ月÷'+opts.units+'戸':'÷12ヶ月'}から自動算出`:'入力値';
+  /* 検索した物件そのものの概要を同じページに置き、比較の基準を明示する（下原提出資料の型）。
+     ★v6.4 最重要ルール（太田指摘「相違情報を載せるな」）：
+       この表に出してよいのは「出所のある値」だけ。フォームの初期値（構造=RC・築年数=0）は
+       利用者が自分で選んでいない限り絶対に載せない。取れていない項目は「—（未取得）」と明示する。 */
+  const S=window.SELF&&window.SELF.addr?window.SELF:null;
+  const isSuumo=!!(S&&(S.found||(S.rooms&&S.rooms.length)||S.built||S.struct)); /* SUUMO物件ライブラリーの実データ */
+  const isWebAddr=!!(S&&!isSuumo&&S.web);                     /* Web検索で拾っただけの住所＝推定 */
+  const SP=(S&&S.spec&&(S.spec.struct||S.spec.built))?S.spec:null; /* 建物情報（HOME'S建物ページ等） */
+  const SRC_SUUMO='SUUMO物件ライブラリー（実データ）';
+  const NA='<span style="color:#94a3b8;font-weight:400">—（未取得）</span>';
+  const srcUsed=[];
+  const cell=(v,src)=>{if(v==null||v===''||v==='—')return NA;if(src&&srcUsed.indexOf(src)<0)srcUsed.push(src);return v;};
+  /* ── 築年：①建築年月の実データ ②利用者が入力した築年数 ③無ければ未取得（推測しない） */
+  let ageTxt=null,ownAgeVal=null,ageSrc='';
+  const builtRaw=(S&&S.built)||(SP&&SP.built)||'';
+  if(builtRaw){
+    ageSrc=(S&&S.built)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    const bm=builtRaw.match(/(\d{4})年\s*(\d{1,2})?月?/);
+    if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();
+      let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;
+      ownAgeVal=Math.max(0,yrs);
+      ageTxt=(yrs<=0?'新築':'築'+yrs+'年')+'（'+builtRaw+'築）';}
+    else ageTxt=builtRaw;
+  }else if(age!=null){
+    ownAgeVal=age;ageTxt=age<=0?'新築':'築'+age+'年';ageSrc='作成者の入力値';
+  }
+  /* ── 種別・構造：実データの物件種別があればそれを優先。無ければ構造から判定
+        （鉄骨・RC・SRC＝マンション／木造・軽量鉄骨＝アパート） */
+  const kindByStruct=st=>/軽量鉄骨|木造/.test(st)?'アパート':(/鉄骨|ＲＣ|RC|鉄筋|SRC|ＳＲＣ/.test(st)?'マンション':'');
+  let structTxt=null,structSrc='';
+  const stRaw=(S&&S.struct)||(SP&&SP.struct)||'';
+  if(stRaw){
+    structSrc=(S&&S.struct)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    structTxt=[(S&&S.kind)||(SP&&SP.kind)||kindByStruct(stRaw),stRaw,(S&&S.floors)||(SP&&SP.floors)].filter(Boolean).join(' ');
+  }else if(opts.struct){
+    structSrc='作成者の入力値';
+    structTxt=[kindByStruct(opts.struct),opts.struct].filter(Boolean).join(' ')+(opts.units>0?'／'+opts.units+'戸':'');
+  }
+  /* ── 所在地：SUUMO実データ ＞ 建物情報 ＞ Web検索（推定と明記） ＞ Googleマップの住所検索 */
+  let addrCell='',addrSrc='';
+  if(isSuumo&&S.addr){addrCell=S.addr;addrSrc=SRC_SUUMO;}
+  else if(SP&&SP.addr){addrCell=SP.addr;addrSrc=SP.src;}
+  else if(S&&S.addr){addrCell=S.addr;addrSrc=isWebAddr?'Web検索で取得した住所（推定）':'';}
+  else {addrCell=addrOnly(addr)||'';addrSrc='Googleマップの住所検索';}
+  /* 最寄駅は本レポートの実測値。範囲内に駅が無い場合は「未取得」ではなく事実を書く */
+  const stationCell=stationTxt?stationTxt.replace(/^・/,''):((S&&S.station)||'調査対象範囲内に駅なし');
+  const stationSrc=stationTxt?'本レポートの経路実測':(S&&S.station?SRC_SUUMO:'');
+  const nameCell=(S&&S.name)||opts.name||'';
+  /* ── 間取り・面積：利用者入力かSUUMO実データのときだけ表示 */
+  const mdTxt=[srcOf('pmadori')?opts.md:'',(srcOf('pmens')&&own.men>0)?own.men.toFixed(2)+'㎡':''].filter(Boolean).join('／');
+  const srcName=k=>k==='suumo'?SRC_SUUMO:(k==='homes'?((SP&&SP.src)||"LIFULL HOME'S 建物情報"):(k==='homes-hist'?"LIFULL HOME'S 賃貸掲載履歴":'作成者の入力値'));
+  const mdSrc=mdTxt?srcName(srcOf('pmadori')==='input'?(srcOf('pmens')||'input'):srcOf('pmadori')):'';
+  const rentKey=srcOf('prentmin');
+  const rentPeriod=(S&&S.rentPeriod)||'';
+  const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）</div>
+    <table class="calc cmpspec" style="margin-bottom:6px">
+      <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${cell(nameCell,'')}</td>
+          <td class="k" style="width:88px">所在地</td><td>${cell(addrCell,addrSrc)}</td></tr>
+      <tr><td class="k">最寄駅</td><td>${cell(stationCell,stationSrc)}</td>
+          <td class="k">築年</td><td>${cell(ageTxt,ageSrc)}</td></tr>
+      <tr><td class="k">種別・構造</td><td>${cell(structTxt,structSrc)}</td>
+          <td class="k">間取り・面積</td><td>${cell(mdTxt,mdSrc)}</td></tr>
+      ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':(rentKey==='homes-hist'?'直近の募集賃料（実績）':'想定月額総額（1戸）')}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':(rentKey==='homes-hist'?"LIFULL HOME'S 掲載履歴"+(rentPeriod?'・'+rentPeriod+'時点':''):derivedTxt)}）</span></td>
+          <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
+    </table>
+    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${(hasOwn&&rentKey&&srcUsed.indexOf(srcName(rentKey))<0?srcUsed.concat([srcName(rentKey)]):srcUsed).join('／')||'—'}${rentKey==='homes-hist'?'（掲載履歴は過去の募集時点の賃料であり、成約賃料・現在の募集賃料ではありません）':''}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
+  /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
+  const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
+  let note='',tbl='';
+  if(cmp.length===0){
+    /* 比較物件が無くても本物件情報は自動表示 */
+    const q=opts.city?encodeURIComponent(opts.city+' '+(opts.md||'')+' 賃貸'):'';
+    tbl=`<div class="subttl">周辺の募集事例（追加すると比較表になります）</div>
+      <div class="phase" style="font-size:12px;line-height:1.85">
+        現在、比較用の募集事例が未登録です。下のリンクで<b>SUUMO・アットホーム等</b>の募集を開き、気になる物件の情報を<b>コピーして「まとめて貼り付け」に貼るだけ</b>で、この欄が比較表＋分析文に変わります。
+      </div>
+      ${opts.city?`<div style="margin-top:6px">
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Asuumo.jp">🔍 SUUMOで${opts.city}の募集を見る ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Aathome.co.jp">🔍 アットホーム ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Ahomes.co.jp">🔍 HOME'S ↗</a>
+      </div>`:''}`;
+    note=appeal?`<div class="pos-note"><div class="appeal" style="margin:0">◎ ${appeal}</div></div>`:'';
+  }else{
+    const totals=cmp.map(c=>c.total),rMin=Math.min(...totals),rMax=Math.max(...totals);
+    const ownMid=(own.min+own.max)/2;
+    let pos; if(own.max<rMin)pos='周辺募集帯を下回る手堅い水準';
+    else if(ownMid<=rMin+(rMax-rMin)*0.45)pos='周辺募集帯の中でも控えめな位置';
+    else if(ownMid<=rMax)pos='周辺募集帯の範囲内';
+    else pos='周辺上位帯の水準';
+    const olds=cmp.filter(c=>c.age!=null&&c.age>=8).sort((a,b)=>b.total-a.total);
+    const oldTxt=olds.length?`築${olds[0].age}年の物件でも${olds[0].total.toLocaleString()}円で募集されており、当エリアは<b>経年による賃料下落が小さい</b>。`:'';
+    /* 築年数の優位は「出所のある築年」が分かっているときだけ書く（推測で新築と書かない） */
+    const newer=ownAgeVal==null?0:cmp.filter(c=>c.age!=null&&c.age>ownAgeVal).length;
+    const newTxt=(ownAgeVal!=null&&ownAgeVal<=3&&newer>0)?`比較5件中${newer}件が本物件より築年数の古い物件であり、<b>築年数の優位は明らか</b>。`:'';
+    /* ㎡単価での比較（本物件が割安であることを示す） */
+    const uc=cmp.filter(c=>c.men>0).map(c=>c.total/c.men);
+    const ucAvg=uc.length?uc.reduce((a,b)=>a+b,0)/uc.length:0;
+    const ownUc=own.men>0?((own.min+own.max)/2)/own.men:0;
+    const ucTxt=(ucAvg>0&&ownUc>0)?`㎡単価でみると周辺平均${Math.round(ucAvg).toLocaleString()}円/㎡に対し本物件は<b>${Math.round(ownUc).toLocaleString()}円/㎡</b>で、${ownUc<=ucAvg?'<b>割安な水準</b>':'同水準'}。`:'';
+    const stMin=parseInt((stationTxt.match(/徒歩(\d+)分/)||[])[1]||'99',10);
+    const sBits=[];if(ownAgeVal!=null)sBits.push(ownAgeVal<=0?'新築':(ownAgeVal<=5?'築浅':'築'+ownAgeVal+'年'));if(stationTxt&&stMin<=10)sBits.push('駅近');
+    const strength=sBits.length?sBits.join('×')+'の物件力':'本物件の立地条件';
+    note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>${rentKey==='homes-hist'?'（'+(rentPeriod||'直近')+'の募集実績）':''}は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
+      :`<div class="evalbox">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
+    /* 比較物件の位置図（ジオコーディング成功分に番号ピン） */
+    let mapHtml='';
+    const withGeo=cmp.filter(c=>c.lat!=null&&c.lon!=null);
+    if(withGeo.length&&opts.center){
+      const m=mapDiv('sm');
+      MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
+        markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
+      mapHtml=m.html+`<div class="note" style="border:0;margin:2px 0 6px;padding:0">📍赤ピン＝本物件／①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）。<b>調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内</b>で募集中の類似物件のみ掲載${outCnt>0?'（範囲外の'+outCnt+'件は除外）':''}。</div>`;
+    }
+    /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
+    /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
+    let selfBox='';
+    if(S&&S.rooms&&S.rooms.length>1){
+      selfBox=`<div class="evalbox" style="border-left-color:#16a34a;margin:0 0 10px">
+        <span class="tt">【本物件の募集中の部屋】</span>SUUMO物件ライブラリー掲載の実データ（${S.rooms.length}戸）<br>
+        ${S.rooms.map(r=>`<b>${r.md} ${r.men}㎡ ${r.rent.toLocaleString()}円</b>`).join('　／　')}
+        <div style="font-size:10.5px;color:#64748b;margin-top:4px">最も戸数の多い条件を基準に、同市区町村で募集中の類似物件を自動抽出しています。</div>
+      </div>`;
+    }
+    tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
+      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:100px;text-align:right">月額総額</th></tr>${rows}</table>`;
+  }
+  const body=kpi+tbl+note;
+  return paper('類似物件の賃貸情報','',body,
+    `SUUMO・アットホーム・HOME'S 等の賃貸ポータルサイト（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
+}
+function googleGeocode(q){return new Promise(res=>{
+  if(!gGeocoder){res(null);return;}
+  gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
+    if(s==='OK'&&r&&r[0]){const L=r[0].geometry.location;res({lat:L.lat(),lon:L.lng(),title:r[0].formatted_address.replace(/^日本、?/,''),src:'Google'});}
+    else res(null);
+  });
+});}
+async function geocode(q){
+  const g=await googleGeocode(q); if(g)return g;
+  try{const r=await fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q));const j=await r.json();
+    if(j&&j.length){const f=j[0];return{lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],title:f.properties.title,src:'GSI'};}}catch(e){}
+  return null;
+}
+async function overpass(lat,lon,radius){
+  const q=`[out:json][timeout:50];(
+nwr["shop"="convenience"](around:${radius},${lat},${lon});nwr["shop"="supermarket"](around:${radius},${lat},${lon});
+nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});nwr["shop"="chemist"](around:${radius},${lat},${lon});
+nwr["amenity"="post_office"](around:${radius},${lat},${lon});nwr["amenity"="bank"](around:${radius},${lat},${lon});
+nwr["amenity"="hospital"](around:${radius},${lat},${lon});nwr["amenity"="clinic"](around:${radius},${lat},${lon});
+nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"](around:${radius},${lat},${lon});
+nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="childcare"](around:${radius},${lat},${lon});
+nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});
+nwr["amenity"="social_facility"](around:${radius},${lat},${lon});nwr["amenity"="nursing_home"](around:${radius},${lat},${lon});
+node["railway"="station"](around:${radius},${lat},${lon});
+node["highway"="bus_stop"](around:${radius},${lat},${lon});node["public_transport"="platform"]["bus"="yes"](around:${radius},${lat},${lon});
+);out center tags;`;
+  const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+  for(let p=0;p<2;p++)for(const ep of eps){
+    try{const c=new AbortController();const t=setTimeout(()=>c.abort(),25000);
+      const r=await fetch(ep,{method:"POST",body:"data="+encodeURIComponent(q),signal:c.signal});clearTimeout(t);
+      if(!r.ok)continue;const j=await r.json();return j.elements||[];}catch(e){}}
+  return null;
+}
+/* J-SHIS 地震動予測（ブラウザから直接取得可・データセット名まで含めたパスが必須） */
+async function jshis(lat,lon){try{
+  const r=await fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/TTL_MTTL/meshinfo.geojson?position=${lon},${lat}&epsg=4612`);
+  if(!r.ok)return null;const j=await r.json();
+  return (j.features&&j.features[0]&&j.features[0].properties)||null;
+}catch(e){return null;}}
+
+/* ============ 分類 ============ */
+/* 市区町村別 人口増減率(%)＝令和7年(2025)国勢調査 人口速報集計（2020→2025）。事業計画書アプリと共通データ */
+const POP_DB = [
+  // ―― 佐賀県（2020→2025）――
+  {m:'上峰町',r:0.8},{m:'鳥栖市',r:0.4},{m:'基山町',r:0.2},
+  {m:'佐賀市',r:-2.4},{m:'武雄市',r:-4.5},{m:'神埼市',r:-5.2},{m:'伊万里市',r:-5.4},
+  {m:'鹿島市',r:-6.0},{m:'嬉野市',r:-6.0},{m:'唐津市',r:-6.1},
+  {m:'白石町',r:-8.3},{m:'大町町',r:-8.8},{m:'太良町',r:-11.9},{m:'玄海町',r:-17.7},
+  // ―― 福岡市（区別）――
+  {m:'福岡市東区',r:5.3},{m:'福岡市中央区',r:5.3},{m:'福岡市博多区',r:4.8},
+  {m:'福岡市南区',r:1.9},{m:'福岡市早良区',r:1.7},{m:'福岡市城南区',r:0.9},{m:'福岡市西区',r:0.5},
+  // ―― 福岡県 市町 ――
+  {m:'筑前町',r:4.2},{m:'福津市',r:3.0},{m:'筑紫野市',r:2.5},{m:'久山町',r:2.2},
+  {m:'糸島市',r:1.8},{m:'須恵町',r:1.5},{m:'須惠町',r:1.5},{m:'大野城市',r:1.4},{m:'粕屋町',r:0.7},{m:'宗像市',r:-0.1},
+  {m:'太宰府市',r:-0.5},{m:'古賀市',r:-0.7},{m:'小郡市',r:-1.2},{m:'春日市',r:-1.8},
+  {m:'行橋市',r:-1.9},{m:'久留米市',r:-2.1},{m:'新宮町',r:-2.2},{m:'筑後市',r:-2.3},
+  {m:'飯塚市',r:-3.2},{m:'田川市',r:-4.3},{m:'中間市',r:-4.6},{m:'那珂川市',r:-4.7},
+  {m:'直方市',r:-4.7},{m:'大木町',r:-4.7},{m:'八女市',r:-5.4},{m:'朝倉市',r:-5.6},
+  {m:'柳川市',r:-6.1},{m:'うきは市',r:-7.2},{m:'みやま市',r:-7.9},{m:'宮若市',r:-8.3},
+  {m:'大牟田市',r:-8.4},{m:'大川市',r:-9.9},{m:'嘉麻市',r:-10.1},
+  // ―― 北九州市（区別・全区減）――
+  {m:'北九州市小倉北区',r:-1.8},{m:'北九州市八幡西区',r:-3.0},{m:'北九州市小倉南区',r:-3.0},
+  {m:'北九州市若松区',r:-4.9},{m:'北九州市八幡東区',r:-6.0},{m:'北九州市戸畑区',r:-6.0},
+  {m:'北九州市門司区',r:-6.9}
+];
+let RADIUS=1500;
+function classify(els,lat,lon,radius){
+  RADIUS=radius||RADIUS;
+  const L={station:[],bus:[],super:[],conv:[],drug:[],hosp:[],dent:[],post:[],bank:[],police:[],welfare:[],kinder:[],elem:[],jhs:[],hs:[],school:[],park:[]};
+  for(const e of (els||[])){
+    const t=e.tags||{};const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);
+    if(la==null)continue;
+    const nm=t.name||t['name:ja']||t['name:en']||'';
+    if(!nm)continue; /* 名称のないOSMノードは資料に載せない（「名称なし」行の排除） */
+    const item={name:nm,lat:la,lon:lo,d:Math.round(dist(lat,lon,la,lo)),op:t.operator||t.network||''};
+    item.min=wmin(item.d);
+    let k=null;
+    if(t.railway==='station')k='station';
+    else if(t.highway==='bus_stop'||(t.public_transport==='platform'&&t.bus==='yes'))k='bus';
+    else if(t.shop==='supermarket')k='super';
+    else if(t.shop==='convenience')k='conv';
+    else if(t.amenity==='pharmacy'||t.shop==='chemist')k='drug';
+    else if(t.amenity==='hospital'||t.amenity==='clinic')k='hosp';
+    else if(t.amenity==='dentist')k='dent';
+    else if(t.amenity==='post_office')k='post';
+    else if(t.amenity==='bank')k='bank';
+    else if(t.amenity==='police')k='police';
+    else if(t.amenity==='social_facility'||t.amenity==='nursing_home')k='welfare';
+    else if(t.amenity==='kindergarten'||t.amenity==='childcare')k='kinder';
+    else if(t.amenity==='school'){
+      if(/小学校/.test(item.name))k='elem';else if(/中学校/.test(item.name))k='jhs';
+      else if(/高校|高等学校/.test(item.name))k='hs';else k='school';}
+    else if(t.leisure==='park')k='park';
+    if(k)L[k].push(item);
+  }
+  /* 全カテゴリ：物件から近い順。駅・バス停は同名（上下線・複数ホーム）を最寄り1件に名寄せ。
+     ★調査対象範囲の外は載せない（地図に出ないものを表に出さないため・太田指示 2026-08-07） */
+  for(const k in L){
+    L[k]=L[k].filter(it=>it.d<=RADIUS);
+    L[k].sort((a,b)=>a.d-b.d);
+    if(k==='station'||k==='bus'){
+      const seen=new Set();
+      L[k]=L[k].filter(it=>{const key=it.name.replace(/\s+/g,'');if(seen.has(key))return false;seen.add(key);return true;});
+    }
+  }
+  return L;
+}
+/* OSMにバス停が無い／少ない地域の補完：Google Places（正式名称・日本語）
+   ※type:'bus_station'は日本では収録が薄くZERO_RESULTSになるため keyword:'バス停' を使う（羽犬塚で実証） */
+function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
+  try{
+    const svc=new google.maps.places.PlacesService(document.createElement('div'));
+    let done=false;const fin=v=>{if(!done){done=true;res(v||[]);}};
+    const req={location:new google.maps.LatLng(lat,lon),radius:Math.min(radius,3000)};
+    if(opt&&opt.type)req.type=opt.type;
+    if(opt&&opt.keyword)req.keyword=opt.keyword;
+    svc.nearbySearch(req,(r,s)=>{
+      if(s!=='OK'||!r){fin([]);return;}
+      fin(r.filter(p=>p.geometry&&p.name).map(p=>({name:p.name.replace(/\s*[（(]バス[)）]\s*$/,'').replace(/バス停(留所)?$/,'').trim(),
+        lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),op:'',src:'Google'})));
+    });
+    setTimeout(()=>fin([]),8000);
+  }catch(e){res([]);}
+});}
+
+/* ============ ペーパー描画 ============ */
+let MAPS=[];let mapSeq=0;
+function mapDiv(cls){mapSeq++;return {id:'m'+mapSeq,html:`<div class="map ${cls||''}" id="m${mapSeq}"></div>`};}
+function tbl(items,color,n,extraCol){
+  if(!items.length)return `<div class="phase" style="margin:4px 0">この範囲では見つかりませんでした（地図データ未収録の場合あり）</div>`;
+  let h=`<table class="lst"><tr><th style="width:34px">No</th><th>名称</th>${extraCol?'<th>'+extraCol.h+'</th>':''}<th style="width:88px;text-align:right">直線距離</th><th style="width:76px;text-align:right">徒歩</th></tr>`;
+  items.slice(0,n).forEach((f,i)=>{
+    h+=`<tr><td class="no"><span style="background:${color}">${f.idx}</span></td><td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}<td class="r">${f.d.toLocaleString()}m${f.rd?'<div style="font-size:9px;color:#94a3b8;font-weight:400">経路'+f.rd.toLocaleString()+'m</div>':''}</td><td class="r">約${f.min}分${f.rd?'<div style="font-size:9px;color:#16a34a;font-weight:700">経路実測</div>':''}</td></tr>`;});
+  return h+'</table>';
+}
+function paper(title,lead,body,src){
+  return `<div class="paper"><h2>${title}</h2>${lead?`<div class="lead">${lead}</div>`:''}${body}
+  <div class="note">※地図のアイコンは付近住所の概算位置です。距離は直線距離、徒歩は道路距離換算（直線×1.3・80m/分）。「経路実測」はGoogleの徒歩経路。<br>※情報出典：${src}</div></div>`;
+}
+/* 1項目＝1ページに収めるため、区分が複数ある場合も「区分」列を持つ1つの表にまとめる（太田指示：地図を大きく・文字より絵で） */
+function facilityPaper(title,lead,groups,g,radius,src){
+  const m=mapDiv();const markers=[];let idx=0;
+  const rows=[];let extraCol=null;
+  for(const gr of groups){
+    if(gr.extraCol)extraCol=gr.extraCol;
+    gr.items.slice(0,gr.n).forEach(f=>{idx++;f.idx=idx;f._g=gr;
+      markers.push({lat:f.lat,lon:f.lon,label:idx,color:gr.color,name:f.name});rows.push(f);});
+  }
+  /* 1ページに確実に収めるため、掲載は近い順に最大6件まで（地図を大きく取るため） */
+  const MAXROWS=6;
+  if(rows.length>MAXROWS){
+    rows.sort((a,b)=>a.d-b.d);
+    const keep=rows.slice(0,MAXROWS);
+    const drop=new Set(rows.slice(MAXROWS).map(f=>f.idx));
+    markers.length=0;let n=0;
+    keep.forEach(f=>{n++;f.idx=n;markers.push({lat:f.lat,lon:f.lon,label:n,color:f._g.color,name:f.name});});
+    rows.length=0;keep.forEach(f=>rows.push(f));
+  }
+  let body;
+  if(!rows.length){
+    body=`<div class="phase" style="margin-top:4px">この調査対象範囲（半径${radius.toLocaleString()}m）内では見つかりませんでした。調査対象範囲を広げて再作成すると見つかる場合があります。</div>`;
+  }else{
+    body=`<table class="lst"><tr><th style="width:34px">No</th><th style="width:96px">区分</th><th>名称</th>${extraCol?'<th style="width:118px">'+extraCol.h+'</th>':''}<th style="width:84px;text-align:right">直線距離</th><th style="width:74px;text-align:right">徒歩</th></tr>`
+      +rows.map(f=>`<tr><td class="no"><span style="background:${f._g.color}">${f.idx}</span></td>
+        <td style="font-size:11.5px;color:#475569;font-weight:700">${f._g.label}</td>
+        <td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}
+        <td class="r">${f.d.toLocaleString()}m${f.rd?'<div style="font-size:9px;color:#94a3b8;font-weight:400">経路'+f.rd.toLocaleString()+'m</div>':''}</td>
+        <td class="r">約${f.min}分${f.rd?'<div style="font-size:9px;color:#16a34a;font-weight:700">経路実測</div>':''}</td></tr>`).join('')
+      +'</table>';
+  }
+  MAPS.push({id:m.id,center:[g.lat,g.lon],radius,markers});
+  const lg=`<div class="legend" style="margin:2px 0 8px"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span><span class="c">番号は下表のNoと対応（重なる場合は引き出し線で実位置を表示）</span></div>`;
+  return paper(title,lead,m.html+lg+body,src);
+}
+/* Googleマップ上にHTMLの番号ピンを描くOverlayView（Marker のicon/label非描画への対策） */
+function htmlPins(map,pins){
+  const O=function(){this.setMap(map);};
+  O.prototype=new google.maps.OverlayView();
+  O.prototype.onAdd=function(){
+    this.div=document.createElement('div');
+    this.div.style.cssText='position:absolute;left:0;top:0;width:0;height:0;';
+    this.leads=[];this.dots=[];
+    this.els=pins.map(p=>{
+      /* 引き出し線と実位置ドット（重なったピンをずらしたときに実際の場所が分かるように） */
+      const ld=document.createElement('div');
+      ld.style.cssText='position:absolute;height:0;border-top:1.5px solid #64748b;opacity:.85;transform-origin:0 0;display:none;z-index:5;';
+      this.div.appendChild(ld);this.leads.push(ld);
+      const dt=document.createElement('div');
+      dt.style.cssText='position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:#fff;border:2px solid #64748b;display:none;z-index:6;';
+      this.div.appendChild(dt);this.dots.push(dt);
+      const e=document.createElement('div');
+      e.style.cssText='position:absolute;line-height:0;transform:translate(-50%,'+(p.anchorPct||(p.anchor==='bottom'?'-100%':'-50%'))+');z-index:'+(p.top?9999:10)+';';
+      e.title=p.title||'';e.innerHTML=p.html;
+      this.div.appendChild(e);return e;
+    });
+    this.getPanes().overlayMouseTarget.appendChild(this.div);
+  };
+  O.prototype.draw=function(){
+    const pr=this.getProjection();if(!pr)return;
+    const pts=pins.map(p=>{const q=pr.fromLatLngToDivPixel(new google.maps.LatLng(p.lat,p.lon));return q?{x:q.x,y:q.y}:null;});
+    const MIN=27; /* ピン同士の最小間隔(px) */
+    const placed=[],order=[];
+    pins.forEach((p,i)=>{p.top?order.unshift(i):order.push(i);}); /* 本物件は動かさず最優先で確保 */
+    order.forEach(i=>{
+      const pt=pts[i],e=this.els[i];if(!pt||!e)return;
+      let x=pt.x,y=pt.y;
+      if(!pins[i].top){
+        for(let k=1;k<=32&&placed.some(q=>Math.hypot(q.x-x,q.y-y)<MIN);k++){
+          const ring=Math.ceil(k/8),ang=(k%8)*(Math.PI/4)+(ring-1)*0.39;
+          x=pt.x+Math.cos(ang)*MIN*ring;y=pt.y+Math.sin(ang)*MIN*ring;
+        }
+      }
+      placed.push({x,y});
+      e.style.left=x+'px';e.style.top=y+'px';
+      const dx=x-pt.x,dy=y-pt.y,d=Math.hypot(dx,dy);
+      if(d>3){
+        const ld=this.leads[i],dt=this.dots[i];
+        ld.style.display='block';ld.style.left=pt.x+'px';ld.style.top=pt.y+'px';
+        ld.style.width=d+'px';ld.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
+        dt.style.display='block';dt.style.left=pt.x+'px';dt.style.top=pt.y+'px';
+      }else{this.leads[i].style.display='none';this.dots[i].style.display='none';}
+    });
+  };
+  O.prototype.onRemove=function(){if(this.div&&this.div.parentNode)this.div.parentNode.removeChild(this.div);};
+  return new O();
+}
+/* ===== 印刷ゲート：地図のタイルが全部揃うまで印刷させない ===== */
+let MAPRDY=0,MAPTOT=0,MAPTMR=null;
+function printBtnState(){
+  const b=document.getElementById('prbtn'),s=document.getElementById('mapstat');
+  if(!b)return;
+  const ok=MAPTOT>0&&MAPRDY>=MAPTOT;
+  s.textContent=ok?'':'🗺 地図 '+MAPRDY+'/'+MAPTOT+' 読込済（印刷ボタンを押すと残りを読み込んでから印刷します）';
+  s.style.color=ok?'#0f766e':'#b45309';
+  if(ok&&MAPTMR){clearTimeout(MAPTMR);MAPTMR=null;}
+}
+/* ★印刷前に全部の地図を画面に通してタイルを読み込ませる。
+   Googleマップは「画面外の地図はタイルを読まない」ため、スクロールせずに印刷すると
+   下の方のページが白い地図になる（ヘッドレスChromeで再現確認：10枚中2枚が白紙）。 */
+async function ensureMapsLoaded(){
+  const els=[...document.querySelectorAll('.map')];
+  const y0=window.scrollY;
+  for(const el of els){
+    if(MAPRDY>=MAPTOT)break;
+    window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-80);
+    await new Promise(r=>setTimeout(r,450));
+    printBtnState();
+  }
+  const t0=Date.now();
+  while(MAPRDY<MAPTOT&&Date.now()-t0<12000){await new Promise(r=>setTimeout(r,300));printBtnState();}
+  window.scrollTo(0,y0);
+  await new Promise(r=>setTimeout(r,500));
+}
+async function doPrint(){
+  const b=document.getElementById('prbtn');
+  b.disabled=true;b.textContent='🗺 地図を読み込み中…';
+  try{await ensureMapsLoaded();}catch(e){}
+  b.disabled=false;b.textContent='🖨 PDFで保存 / 印刷';
+  if(MAPRDY<MAPTOT&&!confirm('地図 '+MAPRDY+'/'+MAPTOT+' 枚しか読み込めませんでした。白い地図のページが出る可能性があります。このまま印刷しますか？'))return;
+  window.print();
+}
+/* 地図＝Googleマップに統一（2026-08-07 v3.3・太田要望）。ハザードの公式タイルはImageMapTypeで重畳 */
+/* 地図本体はモノクロ（v6.3・太田要望）＝色が付くのは自分で載せた印だけにして見やすくする。
+   ・番号ピン／本物件ピン／赤丸／ハザードタイル（overlayMapTypes）はstylesの影響を受けないのでカラーのまま
+   ・GoogleのPOIアイコンは消さずに灰色で残す（店名・駅名は周辺環境の情報として要るため） */
+const MAP_MONO=[
+  {elementType:'geometry',stylers:[{saturation:-100},{lightness:8}]},
+  {elementType:'labels.icon',stylers:[{saturation:-100},{lightness:30}]},
+  {elementType:'labels.text.fill',stylers:[{saturation:-100},{lightness:-35}]},
+  {elementType:'labels.text.stroke',stylers:[{saturation:-100},{lightness:70}]},
+  {featureType:'water',elementType:'geometry',stylers:[{saturation:-100},{lightness:30}]},
+  {featureType:'poi',elementType:'geometry',stylers:[{saturation:-100},{lightness:25}]},
+  {featureType:'road',elementType:'geometry.fill',stylers:[{saturation:-100},{lightness:35}]},
+  {featureType:'road.highway',elementType:'geometry.fill',stylers:[{saturation:-100},{lightness:0}]},
+  {featureType:'transit',elementType:'geometry',stylers:[{saturation:-100},{lightness:5}]},
+  {featureType:'administrative',elementType:'geometry.stroke',stylers:[{saturation:-100},{lightness:-10}]}
+];
+function initMaps(g){
+  MAPRDY=0;MAPTOT=MAPS.length;window.__forcePrint=false;printBtnState();
+  MAPS.forEach(cfg=>{
+    const el=document.getElementById(cfg.id);if(!el)return;
+    const center={lat:cfg.center[0],lng:cfg.center[1]};
+    const map=new google.maps.Map(el,{center:center,zoom:15,mapTypeId:'roadmap',styles:MAP_MONO,
+      gestureHandling:'cooperative',streetViewControl:false,mapTypeControl:false,fullscreenControl:false,
+      zoomControl:true,clickableIcons:false});
+    /* 調査範囲の円 */
+    const circle=new google.maps.Circle({map:map,center:center,radius:cfg.radius,
+      strokeColor:'#dc2626',strokeOpacity:.9,strokeWeight:1.5,fillOpacity:0,clickable:false});
+    /* ハザード等のタイル重畳 */
+    (cfg.overlays||[]).forEach(u=>{
+      map.overlayMapTypes.push(new google.maps.ImageMapType({
+        getTileUrl:(c,z)=>(z>17?null:u.replace('{z}',z).replace('{x}',c.x).replace('{y}',c.y)),
+        tileSize:new google.maps.Size(256,256),opacity:.6}));
+    });
+    /* 番号ピン（表のNoと連動）＋調査対象物件ピン。
+       ⚠️google.maps.Markerのicon/labelは当環境で描画されないため、OverlayViewでHTMLピンを描く */
+    /* ピンはSVGで描く（CSSの円・回転は印刷時に形や色が崩れるため） */
+    const pins=(cfg.markers||[]).map(mk=>({lat:mk.lat,lon:mk.lon,title:mk.name,
+      html:`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10.5" fill="${mk.color}" stroke="#ffffff" stroke-width="2.5"/><text x="13" y="17.4" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold" fill="#ffffff">${mk.label}</text></svg>`}));
+    /* 本物件ピンは地図に埋もれないよう、大きめ＋白フチ＋濃紺の縁取り＋「本物件」ラベル */
+    pins.push({lat:cfg.center[0],lon:cfg.center[1],title:'調査対象物件',top:true,anchorPct:'-77.4%',
+      html:`<svg width="44" height="62" viewBox="0 0 44 62">
+        <ellipse cx="22" cy="48.5" rx="9" ry="3.2" fill="#000" opacity=".22"/>
+        <path d="M22 48C22 48 37 26.5 37 17A15 15 0 1 0 7 17C7 26.5 22 48 22 48Z" fill="#ffffff"/>
+        <path d="M22 44C22 44 34 25.5 34 17A12 12 0 1 0 10 17C10 25.5 22 44 22 44Z" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="22" cy="17" r="4.6" fill="#ffffff"/>
+        <g><rect x="0.5" y="50.5" width="43" height="11" rx="3" fill="#ffffff" stroke="#7f1d1d" stroke-width="1.2"/>
+        <text x="22" y="59" text-anchor="middle" font-family="Hiragino Kaku Gothic ProN,sans-serif" font-size="8.6" font-weight="bold" fill="#7f1d1d">本物件</text></g>
+      </svg>`});
+    htmlPins(map,pins);
+    /* ★印刷時に地図が出ない対策：全ての地図がタイル読込を終えるまで印刷ボタンを押させない。
+       12枚の地図を同時に初期化するため、読み込み完了前に印刷すると白いままのページが混ざる。 */
+    google.maps.event.addListenerOnce(map,'tilesloaded',()=>{MAPRDY++;printBtnState();});
+    /* 表示範囲：⚠️構築直後にfitBoundsを呼ぶとタイルが描画されない（実機検証済）。
+       必ず最初の'idle'を待ってから合わせること。 */
+    google.maps.event.addListenerOnce(map,'idle',()=>{
+      if(cfg.fit==='markers'&&(cfg.markers||[]).length){
+        const b=circle.getBounds();
+        cfg.markers.forEach(mk=>b.extend({lat:mk.lat,lng:mk.lon}));
+        map.fitBounds(b,8);
+      }else{
+        /* 赤丸（調査対象範囲）が必ず収まるよう合わせる。地図は横長なので縦で決まり、
+           横は範囲外も写るが、その分だけ範囲内が大きく見える。
+           ⚠️構築直後に呼ぶとタイルが描画されないため、必ずidleを待ってから実行する */
+        map.fitBounds(circle.getBounds(),8);
+      }
+    });
+  });
+}
+
+/* ============ メイン ============ */
+/* ====== ステップ1：検索→位置確認 ====== */
+function googleGeocodeFull(q){return new Promise(res=>{
+  if(!gGeocoder){res(null);return;}
+  gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
+    if(s==='OK'&&r&&r[0]){const L=r[0].geometry.location;
+      res({lat:L.lat(),lon:L.lng(),title:r[0].formatted_address.replace(/^日本、?/,''),locType:r[0].geometry.location_type,src:'Google'});}
+    else res(null);});
+});}
+function placesText(q){return new Promise(res=>{
+  let done=false;const fin=v=>{if(!done){done=true;res(v);}};
+  try{
+    const svc=new google.maps.places.PlacesService(document.createElement('div'));
+    svc.textSearch({query:q,region:'jp'},(r,s)=>{
+      if(s==='OK'&&r&&r[0]&&r[0].geometry){const L=r[0].geometry.location;
+        fin({lat:L.lat(),lon:L.lng(),title:(r[0].name?r[0].name+'　':'')+(r[0].formatted_address||'').replace(/^日本、?/,''),locType:'ROOFTOP',src:'Places'});}
+      else fin(null);});
+    setTimeout(()=>fin(null),6000);
+  }catch(e){fin(null);}
+});}
+let PENDING=null,confMap=null,confMarker=null;
+async function locate(){
+  const query=val('paddr');
+  if(!query){setStatus('🙏 物件名または住所を入力してください',true);return;}
+  document.getElementById('go').disabled=true;
+  document.getElementById('report').style.display='none';document.getElementById('toolbar').style.display='none';
+  document.getElementById('confirm').style.display='none';
+  /* ★物件名入力ならSUUMO物件ライブラリーで正式住所を先に取得し、それを位置特定に使う。
+     （Placesのあいまい一致で「プライマリー日吉町」→「プライマリー野中町」を掴む事故を防ぐ） */
+  let libQuery='';
+  if(looksLikeName(query)){
+    setStatus('🔎 「'+query+'」をSUUMO物件ライブラリーで照会中…');
+    const j=await gasByName(query);
+    /* SUUMO掲載でもWeb検索由来でも、住所が取れたらそれを位置特定に使う */
+    if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+query;
+  }
+  setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
+  let res=libQuery?await googleGeocodeFull(libQuery):null;
+  if(res&&window.SELF)res.title=window.SELF.name+'　'+res.title;
+  if(!res)res=await googleGeocodeFull(query);
+  const vague=!res||['APPROXIMATE','GEOMETRIC_CENTER'].includes(res.locType);
+  if(vague&&!libQuery){const p=await placesText(query);if(p)res=p;}
+  if(!res)res=await geocode(query);
+  document.getElementById('go').disabled=false;
+  if(!res){setStatus('「'+query+'」が見つかりませんでした🙏 住所（市区町村＋番地）で、もう一度お試しください。',true);return;}
+  hideStatus();
+  showConfirm(res,query);
+}
+/* 緯度経度→住所（ピン移動後の市区町村の取り直しに使う） */
+function reverseGeocode(lat,lon){return new Promise(res=>{
+  if(!gGeocoder){res('');return;}
+  let done=false;const fin=v=>{if(!done){done=true;res(v||'');}};
+  try{
+    gGeocoder.geocode({location:{lat:lat,lng:lon}},(r,s)=>{
+      if(s==='OK'&&r&&r.length){
+        const best=r.find(x=>(x.types||[]).indexOf('premise')>=0)||r.find(x=>(x.types||[]).indexOf('street_address')>=0)||r[0];
+        fin(best.formatted_address.replace(/^日本、?/,''));
+      }else fin('');
+    });
+    setTimeout(()=>fin(''),6000);
+  }catch(e){fin('');}
+});}
+function showConfirm(res,query){
+  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:''};
+  const c=document.getElementById('confirm');c.style.display='block';
+  document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
+  const w=document.getElementById('confwarn');
+  if(res.src!=='Places'&&res.locType&&res.locType!=='ROOFTOP'){
+    w.style.display='block';
+    w.innerHTML='⚠️ <b>建物単位まで特定できていない可能性があります。</b>地図を確認し、ずれていたらピンを実際の物件位置にドラッグしてから作成してください。';
+  }else{w.style.display='none';}
+  const pos={lat:res.lat,lng:res.lon};
+  try{
+    if(!confMap){
+      confMap=new google.maps.Map(document.getElementById('gconfmap'),{center:pos,zoom:17,mapTypeControl:true,streetViewControl:false,fullscreenControl:false});
+      confMarker=new google.maps.Marker({map:confMap,position:pos,draggable:true,title:'ドラッグで位置修正'});
+      /* ピンを動かしたら住所を取り直す（市区町村が変わると類似物件の検索先も変わるため必須） */
+      confMarker.addListener('dragend',async()=>{
+        const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();
+        document.getElementById('confwarn').style.display='none';
+        const rev=await reverseGeocode(PENDING.lat,PENDING.lon);
+        if(rev){PENDING.title=(PENDING.name?PENDING.name+'　':'')+rev;setCmpSearch(rev);}
+        document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ ピン位置を手動修正済み</span>';
+      });
+    }else{confMap.setCenter(pos);confMarker.setPosition(pos);}
+  }catch(e){}
+  /* 前回生成と別エリア（5km超）なら、残っている比較物件入力を自動クリア */
+  if(window._lastLoc&&dist(window._lastLoc.lat,window._lastLoc.lon,res.lat,res.lon)>5000&&collectCmp().length>0){
+    clearCmpRows();document.getElementById('cmppaste').value='';
+    document.getElementById('confaddr').innerHTML+='<div style="color:#d97706;font-weight:800;font-size:12px;margin-top:4px">🧹 前回と別のエリアのため、比較物件の入力を自動クリアしました（このエリアの事例を入れ直してください）。</div>';
+  }
+  c.scrollIntoView({behavior:'smooth'});
+  setCmpSearch(res.title);
+}
+async function confirmGo(){
+  document.getElementById('confirm').style.display='none';
+  await buildReport(PENDING);
+}
+/* ====== 地価公示（積算の概算用）★全国対応：国交省 不動産情報ライブラリAPIをFunctions経由で ====== */
+let CHIKA=null;
+async function loadChika(){if(CHIKA)return CHIKA;try{const r=await fetch('chika2025.json');CHIKA=await r.json();}catch(e){CHIKA=[];}return CHIKA;}
+async function estimateLandPrice(lat,lon){
+  /* ①全国API（不動産情報ライブラリ 地価公示・地価調査） */
+  try{
+    const j=await apiJson('/api/chika?lat='+lat+'&lon='+lon);
+    if(j&&j.found)return {price:j.price,refs:j.refs,year:j.year,src:j.src};
+  }catch(e){}
+  /* ②APIが使えないときだけ同梱データ（福岡・佐賀のみ）にフォールバック */
+  const C=await loadChika();if(!C.length)return null;
+  const pts=C.map(p=>({price:p[2],use:p[3],addr:p[4],d:Math.round(dist(lat,lon,p[0],p[1]))})).sort((a,b)=>a.d-b.d);
+  let sel=pts.filter(p=>p.use==='住宅').slice(0,5);
+  if(sel.length<3)sel=pts.slice(0,5);
+  if(!sel.length)return null;
+  const prices=sel.map(p=>p.price).sort((a,b)=>a-b);
+  return {price:prices[Math.floor(prices.length/2)],refs:sel.slice(0,3),year:2025,src:'国土交通省 令和7年地価公示'};
+}
+/* ====== メッシュ人口（年齢別人口統計）★全国対応：250mメッシュをAPIで取得 ====== */
+let POP=null;
+async function loadPop(){if(POP)return POP;try{const r=await fetch('pop2024.json');POP=await r.json();}catch(e){POP=[];}return POP;}
+async function popStats(lat,lon,radius){
+  /* ①全国API（不動産情報ライブラリ 将来推計人口250mメッシュ） */
+  try{
+    const j=await apiJson('/api/pop?lat='+lat+'&lon='+lon+'&r='+Math.round(radius));
+    if(j&&j.found&&j.p25>0)return {p25:j.p25,a:j.a,b:j.b,c:j.c,p30:j.p30,g5:j.g5,n:j.n,
+      pn20:j.pn20,pn25:j.pn25,mesh:'250m',src:j.src};
+  }catch(e){}
+  /* ②APIが使えないときだけ同梱データ（福岡・佐賀の1kmメッシュ）にフォールバック */
+  const P=await loadPop();if(!P.length)return null;
+  const sel=P.filter(m=>dist(lat,lon,m[0],m[1])<=Math.max(radius,800));
+  if(!sel.length)return null;
+  const s=i=>sel.reduce((a,m)=>a+m[i],0);
+  const g5=[];for(let i=7;i<26;i++)g5.push(s(i));
+  return {p25:s(2),a:s(3),b:s(4),c:s(5),p30:s(6),g5,n:sel.length,mesh:'1km',
+    src:'国土交通省 国土数値情報「1kmメッシュ別将来推計人口（令和6年推計）」'};
+}
+function setCmpSearch(addr){
+  const el=document.getElementById('cmpsearch');if(!el)return;
+  const m=(addr||'').match(/([^\s、〒0-9０-９-]{2,10}?[市区町村])/);const city=m?m[1]:'';
+  if(!city)return;
+  const md=val('pmadori')||'1LDK';
+  const q=encodeURIComponent(city+' '+md+' 賃貸');
+  el.innerHTML='<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Asuumo.jp">🔍 SUUMO ↗</a>'
+   +'<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Aathome.co.jp">🔍 アットホーム ↗</a>'
+   +'<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Ahomes.co.jp">🔍 HOME\'S ↗</a>'
+   +'<a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテ ↗</a>'
+   +'<div style="margin-top:4px">'+city+'の'+md+'を検索できます。見つけた物件の情報を下の欄に貼り付けてください。</div>';
+}
+/* ====== ステップ2：レポート生成 ====== */
+async function buildReport(g){
+  document.getElementById('go').disabled=true;
+  window._lastLoc={lat:g.lat,lon:g.lon};window._lastTitle=g.title;
+  MAPS=[];mapSeq=0;
+  /* ★比較物件が空なら、このエリアの募集事例を自動検索して反映（ゼロタップ） */
+  if(collectCmp().length===0){
+    let cityA=cityOf(g.title);
+    /* タイトルに市区町村が無い（物件名だけ／ピン移動後など）は座標から住所を取り直す */
+    if(!cityA){
+      const rev=await reverseGeocode(g.lat,g.lon);
+      if(rev){g.title=g.title&&g.title.indexOf(rev)<0?g.title+'　'+rev:rev;cityA=cityOf(rev);}
+    }
+    if(cityA){
+      setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…（SUUMO）');
+      let got=await gasSearchCmp(cityA,val('pmadori')||'');
+      if(got===0){await gasSearchCmp(cityA,val('pmadori')||'');} /* 初回起動失敗時のリトライ */
+    }
+  }
+  /* ★構造・築年がSUUMOで取れていない物件は、建物情報（LIFULL HOME'S）から実データを補う。
+     物件名と市区町村が一致したものだけが返るので、別物件の情報が混ざることはない（/api/spec） */
+  {
+    const qn=(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
+    if(qn&&!(window.SELF&&(window.SELF.struct||window.SELF.built))){
+      setStatus('🏢 '+qn+' の建物情報（構造・築年）を照会中…');
+      const sp=await fetchSpec(qn,cityOf(g.title),prefOf(g.title),addrOnly(g.title));
+      if(sp){
+        window.SELF=window.SELF||{name:sp.name,addr:sp.addr};
+        window.SELF.name=window.SELF.name||sp.name;
+        window.SELF.addr=sp.addr||window.SELF.addr;
+        window.SELF.spec=sp;
+        /* ★本物件の募集情報を実データで埋める（太田指摘：ここが空だと使えない）
+           ①建物ページの部屋情報＝間取り・専有面積 ②賃貸掲載履歴＝直近の募集賃料
+           いずれも「過去の募集時点の実績」なので、表示側で必ず出典と時点を明記する。 */
+        const cnt={},rooms=(sp.rooms||[]);
+        rooms.forEach(r=>{const k=r.md+'/'+r.men;cnt[k]=(cnt[k]||0)+1;});
+        let best=null,bn=0;Object.keys(cnt).forEach(k=>{if(cnt[k]>bn){bn=cnt[k];best=k;}});
+        const hist=(sp.history||[]);
+        const h0=hist.find(h=>h.rent>0);
+        if(best){const[md,men]=best.split('/');
+          if(!val('pmadori'))setByData('pmadori',md,'homes');
+          if(!num('pmens'))setByData('pmens',parseFloat(men),'homes');}
+        else if(h0){
+          if(!val('pmadori')&&h0.md)setByData('pmadori',h0.md,'homes');
+          const hm=hist.find(h=>h.men>0);
+          if(!num('pmens')&&hm)setByData('pmens',hm.men,'homes');}
+        if(h0&&!num('prentmin')){
+          const lo=Math.min(...hist.filter(h=>h.rent>0).slice(0,6).map(h=>h.rent));
+          setByData('prentmin',Math.min(lo,h0.rent),'homes-hist');
+          setByData('prentmax',h0.rent,'homes-hist');
+          window.SELF.rentPeriod=h0.period;window.SELF.rentN=hist.filter(h=>h.rent>0).length;
+        }
+      }
+    }
+  }
+  const radius=parseInt(val('pradius'))||1500;
+  setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
+  const els=await overpass(g.lat,g.lon,radius);
+  document.getElementById('go').disabled=false;
+  if(els===null){setStatus('⚠️ 周辺データの取得が混み合っています。30秒ほど待って、もう一度「✅この位置でレポートを作成」を押してください。<br><button class="addrow" onclick="confirmGo()" style="margin-top:6px">🔁 もう一度作成する</button>',true);return;}
+  hideStatus();
+  const query=g.query||val('paddr');
+  const F0=classify(els,g.lat,g.lon,radius);
+  /* バス停がOSMに無い／少ない地域はGoogle Placesで補完（羽犬塚など収録ゼロの地域対策） */
+  if(F0.bus.length<3){
+    try{
+      let gp=await placesNearby(g.lat,g.lon,radius,{keyword:'バス停'});
+      if(gp.length<3)gp=gp.concat(await placesNearby(g.lat,g.lon,radius,{type:'transit_station'}));
+      const seen=new Set(F0.bus.map(b=>b.name.replace(/\s+/g,'')));
+      gp.forEach(p=>{
+        if(!p.name||/駅$/.test(p.name))return; /* 鉄道駅は駅ページに載るので除外 */
+        const key=p.name.replace(/\s+/g,'');if(seen.has(key))return;seen.add(key);
+        const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
+        if(d>radius)return;
+        F0.bus.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
+      });
+      F0.bus.sort((a,b)=>a.d-b.d);
+    }catch(e){}
+  }
+  /* 駅・バス停はGoogle経路APIで実測徒歩分に補正（失敗時は道路換算のまま） */
+  try{
+    const dmT=[...F0.station.slice(0,5),...F0.bus.slice(0,6)];
+    if(dmT.length&&google.maps.DistanceMatrixService){
+      const svc=new google.maps.DistanceMatrixService();
+      const res=await new Promise(r=>{try{svc.getDistanceMatrix({origins:[{lat:g.lat,lng:g.lon}],destinations:dmT.map(t=>({lat:t.lat,lng:t.lon})),travelMode:'WALKING'},(x,s)=>r(s==='OK'?x:null));}catch(e){r(null);}setTimeout(()=>r(null),8000);});
+      if(res&&res.rows&&res.rows[0])res.rows[0].elements.forEach((el,i)=>{
+        if(el.status==='OK'){dmT[i].min=Math.max(1,Math.round(el.duration.value/60));dmT[i].rd=el.distance.value;}});
+    }
+  }catch(e){}
+  const F=F0;
+  const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
+  const name=query, addr=g.title;
+  let h='';
+
+  /* --- 表紙 --- */
+  /* ===== 表紙 ===== */
+  const hasVal=num('pincome')>0||num('pland')>0||num('pbldg')>0;
+  const toc=[];
+  if(hasVal)toc.push('収益評価・積算評価');
+  toc.push('最寄り駅情報','バス停情報','ショッピング環境','医療環境','生活・公共施設','福祉施設','類似物件の賃貸情報');
+  if(document.getElementById('opt_edu').checked)toc.push('教育施設・公園');
+  if(document.getElementById('opt_pop').checked)toc.push('年齢別人口統計');
+  if(document.getElementById('opt_flood').checked)toc.push('浸水想定区域（洪水）');
+  if(document.getElementById('opt_dosha').checked)toc.push('土砂災害警戒区域');
+  if(document.getElementById('opt_quake').checked)toc.push('地震ハザード（揺れやすさ・発生確率）');
+  if(document.getElementById('opt_snow').checked)toc.push('豪雪地帯の指定');
+  toc.push('位置の確認（Googleマップ）');
+  const author=(val('pauthor')||'').trim();
+  h+=`<div class="paper cover"><div class="band"></div><div class="inner">
+    <div class="kicker">SUPPLEMENTARY REPORT FOR FINANCING</div>
+    <h1>物件補足レポート</h1>
+    <div class="cs">交通・生活・教育・防災の立地調査資料</div>
+    <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addrPlain(addr)}</div></div>
+    <div class="meta" style="grid-template-columns:1fr 1fr">
+      <div><div class="k">発行日</div><div class="v">${dstr}</div></div>
+      <div><div class="k">調査対象範囲</div><div class="v">半径 ${radius.toLocaleString()}m</div></div>
+    </div>
+    <div class="toc"><div class="h">収録内容（全${toc.length}項目）</div>
+      <ol>${toc.map((t,i)=>`<li><b>${String(i+1).padStart(2,'0')}</b>${t}</li>`).join('')}</ol></div>
+    <div class="foot">
+      <div class="who">${author?'作成者　<b>'+author+'</b>':'<span style="color:#94a3b8">※作成者名は入力欄で設定できます</span>'}</div>
+      <div class="brand"><div class="bn">🌻 太田塾 presents</div>物件補足レポート</div>
+    </div>
+    <div class="disc">本レポートは、国土地理院・国土交通省・防災科学技術研究所・OpenStreetMap・Google・SUUMO等の公開情報をもとに自動作成したものです。データの正確性・最新性を保証するものではなく、契約・投資判断の最終確認は各公式情報および現地調査によってください。</div>
+  </div></div>`;
+
+  /* --- 収益・積算（任意） --- */
+  const income=num('pincome'),land=num('pland'),bldg=num('pbldg');
+  if(income>0||land>0||bldg>0){
+    const st=STRUCT[val('pstruct')||'rc'],age=num('page'),ask=num('paskprice'),cap=num('acap')||8;
+    let lp=num('plandprice'),lpEst=null;
+    if(lp<=0&&land>0){lpEst=await estimateLandPrice(g.lat,g.lon);if(lpEst)lp=lpEst.price;}
+    const noi=income*0.8,sp=cap>0?noi/(cap/100):0;
+    const remain=Math.max(st.useful-age,0),bv=st.rebuild*bldg*(st.useful>0?remain/st.useful:0),kp=lp*land+bv;
+    let body=`<div class="kpi3"><div class="t"><div class="l">収益価格（還元利回り${cap}%）</div><div class="v">${yen(sp)}</div></div>
+      <div class="t"><div class="l">積算価格</div><div class="v">${yen(kp)}</div></div>
+      <div class="t"><div class="l">${ask>0?'表面利回り（売出'+yen(ask)+'）':'想定表面利回り'}</div><div class="v">${ask>0?(income/ask*100).toFixed(2):(sp>0?(income/sp*100).toFixed(2):'—')}%</div></div></div>
+      <table class="calc">
+      <tr><td class="k">満室想定年収入</td><td class="r">${yen(income)}</td><td class="k">運営純収益（経費20%控除）</td><td class="r">${yen(noi)}</td></tr>
+      <tr><td class="k">土地評価（${yen(lp)}/㎡${lpEst?'〈概算〉':''}×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
+      <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>
+      ${lpEst?'<div class="formula">※土地単価は周辺の公示地価から自動概算（出典：'+(lpEst.src||'国土交通省 地価公示')+(lpEst.year?'・'+lpEst.year+'年':'')+'）— '+lpEst.refs.map(r=>r.addr+'（'+(r.d>=1000?(r.d/1000).toFixed(1)+'km':r.d+'m')+'・'+r.price.toLocaleString()+'円/㎡）').join('　／　')+'</div>':''}
+      ${(srcOf('pstruct')!=='input'||srcOf('page')!=='input')?'<div class="formula" style="color:#b45309">※'+[srcOf('pstruct')!=='input'?'構造':'',srcOf('page')!=='input'?'築年数':''].filter(Boolean).join('・')+'が未入力のため、初期値（'+st.name+'・築'+age+'年）で試算しています。建物評価を正確にするにはフォームでご指定ください。</div>':''}`;
+    h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
+  }
+
+  /* --- 類似物件の賃貸情報（任意）※順番は「周辺施設」の後に挿入 --- */
+  let compHtml='';
+  const cmp=collectCmp();
+  await geocodeCmp(cmp); /* 比較物件を地図に載せるための位置取得 */
+  const st0=F.station[0];
+  const stationTxt=st0?'・'+st0.name+'駅 徒歩'+st0.min+'分':'';
+  /* ★入力済みの物件情報から自動算出（満室想定年収入÷12÷戸数／延床÷戸数） */
+  const units=num('punits');
+  let rmin=num('prentmin'),rmax=num('prentmax'),ownMen=num('pmens'),derivedRent=false;
+  if(rmin<=0&&income>0){
+    const per=units>0?income/12/units:income/12;
+    rmin=Math.round(per/100)*100;rmax=rmin;derivedRent=true;
+  }
+  if(ownMen<=0&&bldg>0&&units>0)ownMen=Math.round(bldg/units*100)/100;
+  if(rmin>0){
+    compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,userNum('page'),g.title,
+      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal('pmadori'),name:query,struct:structIn()});
+  }else if(cmp.length>0){
+    /* 賃料未入力でも自動検索した募集事例は表で見せる（v3.1） */
+    compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,userNum('page'),g.title,
+      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal('pmadori'),name:query,struct:structIn()});
+  }else{
+    /* 未入力でもページは出す（何を入れれば良いか案内） */
+    const city=cityOf(g.title);
+    const md=val('pmadori')||'1LDK';
+    compHtml=paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',
+      `<div class="phase" style="font-size:12px;line-height:1.9">
+        📋 このページは、<b>本物件の賃料</b>が分かると自動作成されます。<br>
+        <b style="color:#b91c1c">「収益・積算評価を追加」の「満室想定年収入」と「総戸数」を入力してください</b>（1戸あたりの想定賃料を自動計算します）。<br>
+        ※直接「本物件の想定 月額総額」を入れてもOKです。<br><br>
+        さらに、下の検索ボタンから<b>SUUMO・アットホーム等</b>の募集をコピー＆貼り付けすると、比較表と分析文が自動で入ります。
+      </div>
+      <div style="margin-top:8px">
+        ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Asuumo.jp">🔍 SUUMOで${city}の${md}を探す ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Aathome.co.jp">🔍 アットホームで探す ↗</a>
+        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Ahomes.co.jp">🔍 HOME'Sで探す ↗</a>`:''}
+      </div>`,'SUUMO・アットホーム・HOME\'S 等の賃貸ポータルサイト');
+  }
+
+  /* --- 最寄り駅 --- */
+  h+=facilityPaper('最寄り駅情報','調査対象範囲近辺の駅までの距離と徒歩分数（距離順）',
+    [{label:'鉄道駅',color:'#2563eb',items:F.station,n:4,extraCol:{h:'路線・事業者'}}],g,radius,'OpenStreetMap');
+  /* --- バス停 --- */
+  h+=facilityPaper('バス停情報','調査対象範囲近辺のバス停留所（距離順）',
+    [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
+  /* --- ショッピング --- */
+  h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
+    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'OpenStreetMap');
+  /* --- 医療 --- */
+  h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
+    [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'OpenStreetMap');
+  /* --- 生活・公共 --- */
+  h+=facilityPaper('生活・公共施設','調査対象範囲近辺の公共施設・金融機関（距離順）',
+    [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:2},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'OpenStreetMap');
+  /* --- 福祉 --- */
+  h+=facilityPaper('福祉施設','調査対象範囲近辺の福祉施設（距離順）',
+    [{label:'福祉施設（介護・支援等）',color:'#7c3aed',items:F.welfare,n:4}],g,radius,'OpenStreetMap');
+  /* --- ④ 類似物件の賃貸情報 --- */
+  h+=compHtml;
+  /* --- 教育・公園（選択） --- */
+  if(document.getElementById('opt_edu').checked){
+    h+=facilityPaper('教育施設・公園','調査対象範囲近辺の教育施設と公園（距離順）※ファミリー向け物件の検討資料',
+      [{label:'幼稚園・保育所',color:'#f59e0b',items:F.kinder,n:2},{label:'小学校',color:'#16a34a',items:F.elem,n:2},{label:'中学校',color:'#2563eb',items:F.jhs,n:1},{label:'高校',color:'#7c3aed',items:F.hs,n:1},{label:'公園',color:'#059669',items:F.park,n:2}],g,radius,'OpenStreetMap');
+  }
+  /* --- 人口（選択） --- */
+  if(document.getElementById('opt_pop').checked){
+    const pop=await popStats(g.lat,g.lon,Math.max(radius,1000));
+    if(pop&&pop.p25>0){
+      const lbl=['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65-69','70-74','75-79','80-84','85-89','90+'];
+      const mx=Math.max(...pop.g5,1);
+      let bars='';
+      pop.g5.forEach((v,i)=>{bars+=`<div style="display:flex;align-items:center;gap:6px;margin:1px 0"><div style="width:52px;font-size:9.5px;color:#64748b;text-align:right">${lbl[i]}歳</div><div style="flex:1;background:#eef2f7;border-radius:3px"><div style="width:${Math.round(v/mx*100)}%;background:#4b7fb5;height:11px;border-radius:3px"></div></div><div style="width:60px;font-size:10px;font-weight:700;text-align:right">${v.toLocaleString()}人</div></div>`;});
+      const chg=pop.p25>0?((pop.p30-pop.p25)/pop.p25*100):0;
+      const popBody=`<div class="kpi3">
+        <div class="t"><div class="l">総人口（2025年推計）</div><div class="v">${pop.p25.toLocaleString()}人</div></div>
+        <div class="t"><div class="l">生産年齢人口（15〜64歳）</div><div class="v">${(pop.b/pop.p25*100).toFixed(1)}%</div></div>
+        <div class="t"><div class="l">2030年推計</div><div class="v" style="font-size:16px">${pop.p30.toLocaleString()}人<small>（${chg>=0?'+':''}${chg.toFixed(1)}%）</small></div></div></div>
+        <div class="subttl">年齢5歳階級別人口（半径${radius.toLocaleString()}m圏内の${pop.mesh||'250m'}メッシュ×${pop.n}区画を合算）</div>${bars}
+        ${(()=>{ /* 市区町村の人口増減（事業計画書アプリと同じ国勢調査ベース） */
+          const cityN=cityOf(g.title);
+          const hit=POP_DB.find(x=>x.m===cityN)||POP_DB.find(x=>cityN&&x.m.indexOf(cityN)>=0)||POP_DB.find(x=>cityN&&cityN.indexOf(x.m)>=0);
+          /* 国勢調査速報（福岡・佐賀のみ収録）が無い地域は、調査対象範囲のメッシュ推計で増減を示す */
+          if(!hit){
+            if(!(pop.pn20>0&&pop.pn25>0))return '';
+            const rr=(pop.pn25-pop.pn20)/pop.pn20*100, up=rr>=0;
+            return `<div class="bandttl">調査対象範囲の人口増減（2020年→2025年）</div>
+              <table class="calc"><tr><td class="k" style="width:190px">直近5年の人口増減率</td>
+              <td class="r" style="text-align:left;font-size:16px;color:${up?'#0f766e':'#b91c1c'}"><b>${up?'+':''}${rr.toFixed(1)}%</b>
+              <span style="font-weight:400;color:#64748b;font-size:11px">（${pop.pn20.toLocaleString()}人→${pop.pn25.toLocaleString()}人）</span></td></tr>
+              <tr><td class="k">賃貸需要の評価区分</td><td class="r" style="text-align:left">${rr>=0?'人口上昇エリア':(rr>-4?'人口減少4%未満':'人口減少4%以上')}</td></tr></table>
+              <div class="note" style="border:0;padding:0;margin:4px 0 8px">※市区町村単位ではなく、この調査対象範囲（半径${radius.toLocaleString()}m）内のメッシュ合計。2020年は国勢調査実績、2025年は推計値です。</div>`;
+          }
+          const up=hit.r>=0;
+          return `<div class="bandttl">${hit.m}の人口増減（2020年→2025年）</div>
+            <table class="calc"><tr><td class="k" style="width:190px">直近5年の人口増減率</td>
+            <td class="r" style="text-align:left;font-size:16px;color:${up?'#0f766e':'#b91c1c'}"><b>${up?'+':''}${hit.r}%</b>
+            <span style="font-weight:400;color:#64748b;font-size:11px">（${up?'人口増加':'人口減少'}）</span></td></tr>
+            <tr><td class="k">賃貸需要の評価区分</td><td class="r" style="text-align:left">${hit.r>=0?'人口上昇エリア':(hit.r>-4?'人口減少4%未満':'人口減少4%以上')}</td></tr></table>
+            <div class="note" style="border:0;padding:0;margin:4px 0 8px">※出典：令和7年（2025年）国勢調査 人口速報集計（2020年比）。確報は令和8年9月公表予定。</div>`;
+        })()}
+        <div class="subttl" style="margin-top:10px">年齢3区分</div>
+        <table class="lst"><tr><th>区分</th><th style="text-align:right">人口</th><th style="text-align:right">構成比</th></tr>
+        <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
+        <tr><td>生産年齢人口（15〜64歳）</td><td class="r">${pop.b.toLocaleString()}人</td><td class="r">${(pop.b/pop.p25*100).toFixed(1)}%</td></tr>
+        <tr><td>老年人口（65歳〜）</td><td class="r">${pop.c.toLocaleString()}人</td><td class="r">${(pop.c/pop.p25*100).toFixed(1)}%</td></tr></table>`;
+      const popArea=(addrPlain(g.title)||g.title||'').replace(/\s+/g,' ').trim();
+      h+=paper('年齢別人口統計','<b>'+popArea+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏の人口構成と将来推計',popBody,pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ');
+    }else{
+      h+=paper('年齢別人口統計','<b>'+(addrPlain(g.title)||g.title||'')+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
+    }
+  }
+  /* --- ハザード（選択） --- */
+  /* --- 浸水想定区域（選択） --- */
+  if(document.getElementById('opt_flood').checked){
+    const m1=mapDiv();MAPS.push({id:m1.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png']});
+    h+=paper('浸水想定区域（洪水）','想定最大規模の降雨による浸水深（国土交通省 ハザードマップポータル公式データ）',
+      m1.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
+      <div class="legend"><span class="c"><span class="sw" style="background:#F7F5A9"></span>0.5m未満</span><span class="c"><span class="sw" style="background:#FFB7B7"></span>0.5〜3m</span><span class="c"><span class="sw" style="background:#FF9191"></span>3〜5m</span><span class="c"><span class="sw" style="background:#F285C9"></span>5〜10m</span><span class="c"><span class="sw" style="background:#DC7ADC"></span>10〜20m</span><span class="c"><span class="sw" style="background:#B40068"></span>20m以上</span><span class="c">色が付いていなければ浸水想定区域外</span></div>
+      <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`,
+      '国土交通省 ハザードマップポータルサイト（洪水浸水想定区域・想定最大規模）');
+  }
+  /* --- 土砂災害警戒区域（選択） --- */
+  if(document.getElementById('opt_dosha').checked){
+    const m2=mapDiv();MAPS.push({id:m2.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png']});
+    h+=paper('土砂災害警戒区域','土石流・急傾斜地の崩壊・地すべり（国土交通省 ハザードマップポータル公式データ）',
+      m2.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
+      <div class="legend"><span class="c"><span class="sw" style="background:#FBD7A3"></span>警戒区域（黄）</span><span class="c"><span class="sw" style="background:#F5B0A0"></span>特別警戒区域（赤）</span><span class="c">色が付いていなければ区域外</span></div>
+      <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`,
+      '国土交通省 ハザードマップポータルサイト（土砂災害警戒区域）');
+  }
+  /* --- 地震（揺れやすさ・発生確率）（選択） --- */
+  if(document.getElementById('opt_quake').checked){
+    const q=await jshis(g.lat,g.lon);
+    let body;
+    if(q&&q.T30_I60_PS!=null){
+      const pc=v=>(parseFloat(v)*100);
+      const amp=(parseFloat(q.T30_P03_SV)||0)/(parseFloat(q.T30_P03_BV)||1);
+      const ampTxt=amp>=1.6?'揺れやすい':amp>=1.3?'やや揺れやすい':amp>=1.1?'ふつう':'揺れにくい';
+      const p60=pc(q.T30_I60_PS),p55=pc(q.T30_I55_PS),p50=pc(q.T30_I50_PS),p45=pc(q.T30_I45_PS);
+      const lv=p60>=6?'高い':p60>=3?'やや高い':p60>=0.5?'ふつう':'低い';
+      body=`<div class="kpi3">
+        <div class="t hl"><div class="l">30年以内に震度6強以上</div><div class="v">${p60.toFixed(1)}%</div><div class="s">全国的な水準：${lv}</div></div>
+        <div class="t"><div class="l">30年以内に震度6弱以上</div><div class="v" style="font-size:17px">${p55.toFixed(1)}%</div></div>
+        <div class="t"><div class="l">30年以内に震度5強以上</div><div class="v" style="font-size:17px">${p50.toFixed(1)}%</div></div></div>
+        <div class="bandttl">地震発生確率（今後30年間の超過確率）</div>
+        <table class="lst"><tr><th>想定される震度</th><th style="width:120px;text-align:right">30年以内の確率</th><th style="width:150px;text-align:right">目安</th></tr>
+        <tr><td>震度5弱以上</td><td class="r">${p45.toFixed(1)}%</td><td class="r">${p45>=50?'高い':'—'}</td></tr>
+        <tr><td>震度5強以上</td><td class="r">${p50.toFixed(1)}%</td><td class="r">${p50>=26?'100年に1度以上':p50>=6?'500年に1度':'—'}</td></tr>
+        <tr><td>震度6弱以上</td><td class="r">${p55.toFixed(1)}%</td><td class="r">${p55>=6?'500年に1度':'—'}</td></tr>
+        <tr class="own"><td>震度6強以上</td><td class="r">${p60.toFixed(1)}%</td><td class="r">${p60>=6?'500年に1度':p60>=3?'1000年に1度':'それ以下'}</td></tr></table>
+        <div class="bandttl">地震時の揺れやすさ</div>
+        <table class="calc"><tr><td class="k" style="width:200px">地表／工学的基盤の速度応答比</td><td class="r" style="text-align:left"><b>${amp.toFixed(2)} 倍</b>　（${ampTxt}）</td></tr>
+        <tr><td class="k">地表の速度応答（30年3%）</td><td class="r" style="text-align:left">${q.T30_P03_SV} cm/s</td></tr>
+        <tr><td class="k">工学的基盤の速度応答（30年3%）</td><td class="r" style="text-align:left">${q.T30_P03_BV} cm/s</td></tr></table>
+        <div class="evalbox"><span class="tt">【読み方】</span>数値は地震調査研究推進本部「全国地震動予測地図」の確率論的地震動予測（平均ケース）による、この地点（約1km四方）の値です。速度応答比は地表の揺れが工学的基盤の何倍になるかの目安で、大きいほど表層地盤が軟らかく揺れやすいことを示します。
+        <div style="margin-top:6px"><a class="gbtn" href="https://www.j-shis.bosai.go.jp/map/?lat=${g.lat}&lon=${g.lon}&z=13" target="_blank" rel="noopener">🔎 J-SHIS 地震ハザードステーションで確認 ↗</a></div></div>`;
+    }else{
+      body='<div class="phase">地震ハザードのデータを取得できませんでした（防災科研 J-SHIS の応答なし）。時間をおいて再作成してください。</div>';
+    }
+    h+=paper('地震ハザード（揺れやすさ・発生確率）','この地点の地震動予測（防災科学技術研究所 J-SHIS）',body,
+      '防災科学技術研究所 J-SHIS 地震ハザードステーション／地震調査研究推進本部「全国地震動予測地図」（2023年版・平均ケース）');
+  }
+  /* --- 豪雪地帯（選択） --- */
+  if(document.getElementById('opt_snow').checked){
+    const SNOW={'北海道':'全域','青森県':'全域','岩手県':'全域','宮城県':'一部','秋田県':'全域','山形県':'全域','福島県':'一部','茨城県':'一部','栃木県':'一部','群馬県':'一部','埼玉県':'一部','新潟県':'全域','富山県':'全域','石川県':'全域','福井県':'全域','山梨県':'一部','長野県':'全域','岐阜県':'一部','静岡県':'一部','滋賀県':'一部','京都府':'一部','兵庫県':'一部','鳥取県':'全域','島根県':'一部','岡山県':'一部','広島県':'一部','山口県':'一部','愛媛県':'一部','高知県':'一部'};
+    const pf=prefOf(addrOnly(addr))||prefOf(addr);
+    const hit=SNOW[pf];
+    const body=hit
+      ? `<div class="evalbox" style="border-left-color:#2563eb"><span class="tt">【判定】</span><b>${pf}</b>は豪雪地帯対策特別措置法にもとづく<b>豪雪地帯の指定市町村を含む都道府県</b>です（指定：${hit}）。<br>本物件所在地が指定区域に該当するかは<b>市町村単位</b>で決まるため、下記の国土交通省の指定状況でご確認ください。</div>
+        <div class="bandttl">確認先</div><a class="gbtn" href="https://www.mlit.go.jp/kokudoseisaku/chisei/kokudoseisaku_chisei_tk_000021.html" target="_blank" rel="noopener">🗾 国土交通省 豪雪地帯・特別豪雪地帯の指定状況 ↗</a>`
+      : `<div class="evalbox" style="border-left-color:#16a34a"><span class="tt">【判定】</span><b>${pf||'本物件の所在都道府県'}</b>には、豪雪地帯対策特別措置法にもとづく<b>豪雪地帯の指定はありません</b>。積雪による建物荷重・除雪費用の追加負担は想定不要です。</div>`;
+    h+=paper('豪雪地帯の指定','豪雪地帯対策特別措置法にもとづく地域指定の有無',body,'国土交通省「豪雪地帯・特別豪雪地帯の指定状況」');
+  }
+
+  /* --- Googleマップ確認リンク --- */
+  h+=`<div class="paper"><h2>位置の確認（Googleマップ）</h2>
+    <iframe style="width:100%;height:300px;border:1px solid #cbd5e1;border-radius:4px" loading="lazy" src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
+    <a class="gbtn" style="margin-top:8px" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>
+    <div class="note">※本レポートは公開データ（Google・国土地理院・OpenStreetMap・国土交通省・防災科研）に基づき太田塾が自動作成したものです。データの正確性・最新性を保証するものではありません。</div></div>`;
+
+  document.getElementById('report').innerHTML=h;
+  document.getElementById('report').style.display='block';
+  document.getElementById('toolbar').style.display='block';
+  /* 比較対象から外した物件を作成者向けに表示（印刷はされない） */
+  const exEl=document.getElementById('excluded');
+  if(window.CMP_EXCLUDED&&window.CMP_EXCLUDED.length){
+    exEl.style.display='block';
+    exEl.innerHTML=`<div class="form" style="border-color:#fde68a;background:#fffbeb">
+      <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px">🗒 比較対象から外した物件（${window.CMP_EXCLUDED.length}件）※この欄は印刷されません</div>
+      <div style="font-size:12px;line-height:1.9;color:#78350f">${window.CMP_EXCLUDED.map(x=>'・<b>'+x.name+'</b>　—　'+x.reason).join('<br>')}</div>
+      <div style="font-size:11px;color:#a16207;margin-top:6px">金融機関から「他にどんな募集があるか」と聞かれた際の想定問答にお使いください。</div></div>`;
+  }else{exEl.style.display='none';exEl.innerHTML='';}
+  setTimeout(()=>initMaps(g),50);
+}
+</script>
+</body></html>
