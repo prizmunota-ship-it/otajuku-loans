@@ -268,10 +268,10 @@ async function gasByName(name){
 }
 /* 物件名→建物の実データ（種別・構造・築年月・階建）。Cloudflare Functions経由でHOME'S建物情報を照会。
    ⚠️物件名と市区町村が一致した建物ページしか返さないサーバー実装（functions/api/spec.js）＝誤情報防止 */
-async function fetchSpec(name,city,pref){
+async function fetchSpec(name,city,pref,addr){
   if(!name)return null;
   try{
-    const r=await fetch('/api/spec?name='+encodeURIComponent(name)+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
+    const r=await fetch('/api/spec?name='+encodeURIComponent(name)+'&addr='+encodeURIComponent(addr||'')+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
     if(!r.ok)return null;
     const j=await r.json();
     return (j&&j.found)?j:null;
@@ -1047,7 +1047,7 @@ async function buildReport(g){
     const qn=(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
     if(qn&&!(window.SELF&&(window.SELF.struct||window.SELF.built))){
       setStatus('🏢 '+qn+' の建物情報（構造・築年）を照会中…');
-      const sp=await fetchSpec(qn,cityOf(g.title),prefOf(g.title));
+      const sp=await fetchSpec(qn,cityOf(g.title),prefOf(g.title),addrOnly(g.title));
       if(sp){
         window.SELF=window.SELF||{name:sp.name,addr:sp.addr};
         window.SELF.name=window.SELF.name||sp.name;
