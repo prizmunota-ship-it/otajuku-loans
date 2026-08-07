@@ -111,7 +111,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.9</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v4.0</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -420,7 +420,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       ageTxt=yrs<=0?'新築':'築'+yrs+'年（'+S.built+'築）';}
     else ageTxt=S.built;
   }
-  const structTxt=S&&S.struct?[S.kind,S.struct,S.floors].filter(Boolean).join(' '):(opts.struct||'—');
+  /* 種別は構造で判定して表記を統一（鉄骨・RC・SRC＝マンション／木造・軽量鉄骨＝アパート） */
+  const kindByStruct=st=>/軽量鉄骨|木造/.test(st)?'アパート':(/鉄骨|ＲＣ|RC|鉄筋|SRC|ＳＲＣ/.test(st)?'マンション':'');
+  const structTxt=S&&S.struct?[kindByStruct(S.struct)||S.kind,S.struct,S.floors].filter(Boolean).join(' ')
+    :[kindByStruct(opts.struct||''),opts.struct].filter(Boolean).join(' ')||'—';
   const stationCell=S&&S.station?S.station:(stationTxt?stationTxt.replace(/^・/,''):'—');
   const addrCell=S&&S.addr?S.addr:(addrOnly(addr)||'—');
   const nameCell=S&&S.name?S.name:(opts.name||'—');
@@ -470,7 +473,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const m=mapDiv();
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
-      mapHtml=m.html+`<div class="legend"><span class="c">📍 青ピン＝本物件</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>`;
+      mapHtml=m.html+`<div class="legend"><span class="c">📍 青ピン＝本物件</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>
+      <div class="note" style="border:0;margin:0 0 8px;padding:0">※類似物件は<b>同一市区町村</b>から間取り・面積の近い順に抽出しているため、調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）の外の物件を含みます。距離は「本物件から」列をご確認ください。</div>`;
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
     /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
@@ -612,7 +616,15 @@ function htmlPins(map,pins){
   O.prototype.onAdd=function(){
     this.div=document.createElement('div');
     this.div.style.cssText='position:absolute;left:0;top:0;width:0;height:0;';
+    this.leads=[];this.dots=[];
     this.els=pins.map(p=>{
+      /* 引き出し線と実位置ドット（重なったピンをずらしたときに実際の場所が分かるように） */
+      const ld=document.createElement('div');
+      ld.style.cssText='position:absolute;height:0;border-top:1.5px solid #64748b;opacity:.85;transform-origin:0 0;display:none;z-index:5;';
+      this.div.appendChild(ld);this.leads.push(ld);
+      const dt=document.createElement('div');
+      dt.style.cssText='position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:#fff;border:2px solid #64748b;display:none;z-index:6;';
+      this.div.appendChild(dt);this.dots.push(dt);
       const e=document.createElement('div');
       e.style.cssText='position:absolute;line-height:0;transform:translate(-50%,'+(p.anchor==='bottom'?'-100%':'-50%')+');z-index:'+(p.top?9999:10)+';';
       e.title=p.title||'';e.innerHTML=p.html;
@@ -622,9 +634,28 @@ function htmlPins(map,pins){
   };
   O.prototype.draw=function(){
     const pr=this.getProjection();if(!pr)return;
-    pins.forEach((p,i)=>{
-      const pt=pr.fromLatLngToDivPixel(new google.maps.LatLng(p.lat,p.lon));
-      if(pt&&this.els[i]){this.els[i].style.left=pt.x+'px';this.els[i].style.top=pt.y+'px';}
+    const pts=pins.map(p=>{const q=pr.fromLatLngToDivPixel(new google.maps.LatLng(p.lat,p.lon));return q?{x:q.x,y:q.y}:null;});
+    const MIN=27; /* ピン同士の最小間隔(px) */
+    const placed=[],order=[];
+    pins.forEach((p,i)=>{p.top?order.unshift(i):order.push(i);}); /* 本物件は動かさず最優先で確保 */
+    order.forEach(i=>{
+      const pt=pts[i],e=this.els[i];if(!pt||!e)return;
+      let x=pt.x,y=pt.y;
+      if(!pins[i].top){
+        for(let k=1;k<=32&&placed.some(q=>Math.hypot(q.x-x,q.y-y)<MIN);k++){
+          const ring=Math.ceil(k/8),ang=(k%8)*(Math.PI/4)+(ring-1)*0.39;
+          x=pt.x+Math.cos(ang)*MIN*ring;y=pt.y+Math.sin(ang)*MIN*ring;
+        }
+      }
+      placed.push({x,y});
+      e.style.left=x+'px';e.style.top=y+'px';
+      const dx=x-pt.x,dy=y-pt.y,d=Math.hypot(dx,dy);
+      if(d>3){
+        const ld=this.leads[i],dt=this.dots[i];
+        ld.style.display='block';ld.style.left=pt.x+'px';ld.style.top=pt.y+'px';
+        ld.style.width=d+'px';ld.style.transform='rotate('+Math.atan2(dy,dx)+'rad)';
+        dt.style.display='block';dt.style.left=pt.x+'px';dt.style.top=pt.y+'px';
+      }else{this.leads[i].style.display='none';this.dots[i].style.display='none';}
     });
   };
   O.prototype.onRemove=function(){if(this.div&&this.div.parentNode)this.div.parentNode.removeChild(this.div);};
