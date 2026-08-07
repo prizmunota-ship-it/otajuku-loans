@@ -1207,7 +1207,6 @@ async function buildReport(g){
   if(document.getElementById('opt_dosha').checked)toc.push('土砂災害警戒区域');
   if(document.getElementById('opt_quake').checked)toc.push('地震ハザード（揺れやすさ・発生確率）');
   if(document.getElementById('opt_snow').checked)toc.push('豪雪地帯の指定');
-  toc.push('位置の確認（Googleマップ）');
   const author=(val('pauthor')||'').trim();
   h+=`<div class="paper cover"><div class="band"></div><div class="inner">
     <div class="kicker">SUPPLEMENTARY REPORT FOR FINANCING</div>
@@ -1420,12 +1419,6 @@ async function buildReport(g){
       : `<div class="evalbox" style="border-left-color:#16a34a"><span class="tt">【判定】</span><b>${pf||'本物件の所在都道府県'}</b>には、豪雪地帯対策特別措置法にもとづく<b>豪雪地帯の指定はありません</b>。積雪による建物荷重・除雪費用の追加負担は想定不要です。</div>`;
     h+=paper('豪雪地帯の指定','豪雪地帯対策特別措置法にもとづく地域指定の有無',body,'国土交通省「豪雪地帯・特別豪雪地帯の指定状況」');
   }
-
-  /* --- Googleマップ確認リンク --- */
-  h+=`<div class="paper"><h2>位置の確認（Googleマップ）</h2>
-    <iframe style="width:100%;height:300px;border:1px solid #cbd5e1;border-radius:4px" loading="lazy" src="https://maps.google.com/maps?q=${g.lat},${g.lon}&z=16&hl=ja&output=embed"></iframe>
-    <a class="gbtn" style="margin-top:8px" href="https://www.google.com/maps/search/?api=1&query=${g.lat},${g.lon}" target="_blank" rel="noopener">📍 Googleマップで開く ↗</a>
-    <div class="note">※本レポートは公開データ（Google・国土地理院・OpenStreetMap・国土交通省・防災科研）に基づき太田塾が自動作成したものです。データの正確性・最新性を保証するものではありません。</div></div>`;
 
   document.getElementById('report').innerHTML=h;
   document.getElementById('report').style.display='block';
