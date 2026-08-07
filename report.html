@@ -721,13 +721,22 @@ function classify(els,lat,lon,radius){
   }
   /* 全カテゴリ：物件から近い順。駅・バス停は同名（上下線・複数ホーム）を最寄り1件に名寄せ。
      ★調査対象範囲の外は載せない（地図に出ないものを表に出さないため・太田指示 2026-08-07） */
+  const norm=s=>s.replace(/[\s　]/g,'');
   for(const k in L){
     L[k]=L[k].filter(it=>it.d<=RADIUS);
     L[k].sort((a,b)=>a.d-b.d);
-    if(k==='station'||k==='bus'){
-      const seen=new Set();
-      L[k]=L[k].filter(it=>{const key=it.name.replace(/\s+/g,'');if(seen.has(key))return false;seen.add(key);return true;});
+    /* ★全カテゴリで重複排除（太田指示 2026-08-08）
+       OSMは「ノード＋建物ポリゴン」「あとから別位置に再登録」で同一施設が二重に載ることがある。
+       （実例：久留米郵便局が正しい位置と福岡銀行の建物上の2箇所に登録され、表に2行出ていた）
+       ①同名は最寄り1件に名寄せ　②名称が包含関係で80m以内なら同一施設とみなす */
+    const seen=new Set();const kept=[];
+    for(const it of L[k]){
+      const key=norm(it.name);
+      if(seen.has(key))continue;
+      if(kept.some(p=>{const a=norm(p.name);return (a.includes(key)||key.includes(a))&&dist(p.lat,p.lon,it.lat,it.lon)<80;}))continue;
+      seen.add(key);kept.push(it);
     }
+    L[k]=kept;
   }
   return L;
 }
@@ -748,6 +757,49 @@ function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
     setTimeout(()=>fin([]),8000);
   }catch(e){res([]);}
 });}
+/* Google Placesを距離順で取得（rankBy:DISTANCE＝半径指定不可・近い順に最大20件）。
+   閉店（CLOSED_PERMANENTLY）は除外し、公式名称＋実測座標を返す。 */
+function placesRanked(lat,lon,type){return new Promise(res=>{
+  try{
+    const svc=new google.maps.places.PlacesService(document.createElement('div'));
+    let done=false;const fin=v=>{if(!done){done=true;res(v||[]);}};
+    svc.nearbySearch({location:new google.maps.LatLng(lat,lon),rankBy:google.maps.places.RankBy.DISTANCE,type:type},(r,s)=>{
+      if(s!=='OK'||!r){fin([]);return;}
+      fin(r.filter(p=>p.geometry&&p.name&&p.business_status!=='CLOSED_PERMANENTLY')
+          .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng()})));
+    });
+    setTimeout(()=>fin([]),8000);
+  }catch(e){res([]);}
+});}
+/* ★郵便局・銀行・警察はGoogle Placesを正とする（太田指示 2026-08-08）
+   OSMは誤登録・重複が多く、久留米で「久留米郵便局」が福岡銀行の建物上にも登録され、
+   同名2件（262m/330m）が並ぶ誤表示が出た。Googleは日本の郵便局・銀行・交番の収録が確実なため、
+   Placesが応答したらそれを採用し、応答が無い（APIエラー等）ときだけOSMの結果にフォールバックする。 */
+/* 名称による最終チェック。Google Placesはビル単位でtypeが付くことがあり、
+   type:'police'に「資格スクール大栄 久留米校」が混じる等の取り違えが実際に起きたため、
+   カテゴリにふさわしい名称のものだけを掲載する（OSM側の結果にも同じ関門を通す）。 */
+const NAME_OK={
+  post_office:/郵便局/,
+  bank:/銀行|信用金庫|信金|信用組合|信組|労働金庫|ろうきん|農業協同組合|ＪＡ|JA|ゆうちょ/i,
+  police:/交番|警察|駐在所|派出所/
+};
+async function officialList(g,radius,type,fallback){
+  const ok=NAME_OK[type]||/./;
+  let ps=[];
+  try{ps=await placesRanked(g.lat,g.lon,type);}catch(e){ps=[];}
+  if(!ps.length)return (fallback||[]).filter(f=>ok.test(f.name)); /* Places自体が使えなかった場合のみOSMを使う */
+  const seen=new Set();const out=[];
+  for(const p of ps){
+    if(!ok.test(p.name))continue; /* 名称が合わないものは載せない */
+    const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
+    if(d>radius)continue;
+    const key=p.name.replace(/[\s　]/g,'');
+    if(seen.has(key))continue;seen.add(key);
+    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
+  }
+  out.sort((a,b)=>a.d-b.d);
+  return out; /* 範囲内に無ければ空＝「見つかりませんでした」と正直に出す */
+}
 
 /* ============ ペーパー描画 ============ */
 let MAPS=[];let mapSeq=0;
@@ -1190,6 +1242,12 @@ async function buildReport(g){
         if(el.status==='OK'){dmT[i].min=Math.max(1,Math.round(el.duration.value/60));dmT[i].rd=el.distance.value;}});
     }
   }catch(e){}
+  /* 郵便局・銀行・警察はGoogle Placesで取り直す（OSMの誤登録・重複対策／officialList参照） */
+  try{
+    F0.post=await officialList(g,radius,'post_office',F0.post);
+    F0.bank=await officialList(g,radius,'bank',F0.bank);
+    F0.police=await officialList(g,radius,'police',F0.police);
+  }catch(e){}
   const F=F0;
   const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
   const name=query, addr=g.title;
@@ -1299,7 +1357,7 @@ async function buildReport(g){
     [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'OpenStreetMap');
   /* --- 生活・公共 --- */
   h+=facilityPaper('生活・公共施設','調査対象範囲近辺の公共施設・金融機関（距離順）',
-    [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:2},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'OpenStreetMap');
+    [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:2},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'Google Places（公式名称・営業中の施設のみ）');
   /* --- 福祉 --- */
   h+=facilityPaper('福祉施設','調査対象範囲近辺の福祉施設（距離順）',
     [{label:'福祉施設（介護・支援等）',color:'#7c3aed',items:F.welfare,n:4}],g,radius,'OpenStreetMap');
