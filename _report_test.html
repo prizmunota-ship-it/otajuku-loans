@@ -30,7 +30,8 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .paper h2{font-size:17px;font-weight:800;color:#1f2937;border-bottom:2px solid #4b7fb5;padding-bottom:6px;margin-bottom:10px;}
 .paper .lead{font-size:12px;color:#374151;margin-bottom:10px;}
 .paper .lead b{color:#0f766e;}
-.map{width:100%;height:300px;border:1px solid #cbd5e1;border-radius:4px;margin-bottom:12px;background:#eef2f2;position:relative;z-index:0;}
+/* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
+.map{width:100%;max-width:690px;height:300px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:11px;padding:6px 8px;font-weight:700;color:#374151;text-align:left;}
@@ -101,6 +102,8 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
 @media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
 @media print{
+ /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
+ *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
  .wrap{padding:0;max-width:none;}
  .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin-bottom:0;}
@@ -108,7 +111,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.8</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -194,6 +197,12 @@ const CSE_CX='';  /* Custom Search APIは新規提供終了のため未使用 */
 const GAS_SEARCH='https://script.google.com/macros/s/AKfycbzXp4Ew-ilHYsXOVaUVwcz9Fy_LkehyVy18wf4iwwhStkWcmudNI0IsWMZuSrcSF3llDg/exec';
 /* 住所→都道府県／市区町村（政令市は「福岡市東区」、郡部は「大木町」を返す） */
 function prefOf(t){const m=(t||'').match(/(北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/);return m?m[1]:'';}
+/* 住所だけを取り出す（Google/SUUMOが返す物件名は実際の調査対象と異なる場合があるので表紙には載せない） */
+function addrOnly(t){
+  t=(t||'').trim();
+  const m=t.match(/(〒\s*[0-9０-９]{3}[-−ー－]?[0-9０-９]{4}\s*)?((?:北海道|東京都|京都府|大阪府|.{2,4}?県)[\s\S]*)$/);
+  return m?((m[1]||'')+m[2]).trim():t;
+}
 function cityOf(t){
   const s=(t||'').replace(/^.*?(?:北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/,'');
   const m=s.match(/^\s*(.{2,6}?[市郡])(.{1,5}?[区町村])?/);
@@ -400,11 +409,20 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   /* 本物件の自動サマリー（入力済み情報から算出） */
   const ownUnit=hasOwn&&own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
   const derivedTxt=opts.derived?`満室想定年収入${opts.units>0?'÷12ヶ月÷'+opts.units+'戸':'÷12ヶ月'}から自動算出`:'入力値';
-  const kpi=!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:`<div class="kpi3" style="margin-bottom:10px">
-      <div class="t hl"><div class="l">本物件の想定賃料（月額総額）</div><div class="v">${ownRent}</div><div class="s">${derivedTxt}</div></div>
-      <div class="t"><div class="l">専有面積</div><div class="v" style="font-size:16px">${own.men>0?own.men.toFixed(2)+'㎡':'—'}</div><div class="s">${opts.units>0?'延床÷'+opts.units+'戸':''}</div></div>
-      <div class="t"><div class="l">㎡単価</div><div class="v" style="font-size:16px">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</div></div>
-    </div>`;
+  /* 検索した物件そのものの概要を同じページに置き、比較の基準を明示する（下原提出資料の型） */
+  const ageTxt=(age===0||age==='0')?'新築':(age>0?'築'+age+'年':'—');
+  const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）</div>
+    <table class="calc" style="margin-bottom:10px">
+      <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${opts.name||'—'}</td>
+          <td class="k" style="width:88px">所在地</td><td>${addrOnly(addr)||'—'}</td></tr>
+      <tr><td class="k">最寄駅</td><td>${stationTxt?stationTxt.replace(/^・/,''):'—'}</td>
+          <td class="k">築年</td><td>${ageTxt}</td></tr>
+      <tr><td class="k">構造・戸数</td><td>${(opts.struct||'—')}${opts.units>0?'／'+opts.units+'戸':''}</td>
+          <td class="k">間取り・面積</td><td>${(opts.md||'—')}${own.men>0?'／'+own.men.toFixed(2)+'㎡':''}</td></tr>
+      ${hasOwn?`<tr class="sum"><td>想定月額総額（1戸）</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${derivedTxt}）</span></td>
+          <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
+    </table>`;
+  const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
   let note='',tbl='';
   if(cmp.length===0){
     /* 比較物件が無くても本物件情報は自動表示 */
@@ -584,7 +602,7 @@ function htmlPins(map,pins){
     this.div.style.cssText='position:absolute;left:0;top:0;width:0;height:0;';
     this.els=pins.map(p=>{
       const e=document.createElement('div');
-      e.style.cssText='position:absolute;transform:translate(-50%,-50%);z-index:'+(p.top?9999:10)+';';
+      e.style.cssText='position:absolute;line-height:0;transform:translate(-50%,'+(p.anchor==='bottom'?'-100%':'-50%')+');z-index:'+(p.top?9999:10)+';';
       e.title=p.title||'';e.innerHTML=p.html;
       this.div.appendChild(e);return e;
     });
@@ -619,10 +637,11 @@ function initMaps(g){
     });
     /* 番号ピン（表のNoと連動）＋調査対象物件ピン。
        ⚠️google.maps.Markerのicon/labelは当環境で描画されないため、OverlayViewでHTMLピンを描く */
+    /* ピンはSVGで描く（CSSの円・回転は印刷時に形や色が崩れるため） */
     const pins=(cfg.markers||[]).map(mk=>({lat:mk.lat,lon:mk.lon,title:mk.name,
-      html:`<div style="width:24px;height:24px;border-radius:50%;background:${mk.color};color:#fff;font-size:11.5px;font-weight:800;text-align:center;line-height:24px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)">${mk.label}</div>`}));
-    pins.push({lat:cfg.center[0],lon:cfg.center[1],title:'調査対象物件',top:true,
-      html:`<div style="width:30px;height:30px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:#1d4ed8;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`});
+      html:`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10.5" fill="${mk.color}" stroke="#ffffff" stroke-width="2.5"/><text x="13" y="17.4" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold" fill="#ffffff">${mk.label}</text></svg>`}));
+    pins.push({lat:cfg.center[0],lon:cfg.center[1],title:'調査対象物件',top:true,anchor:'bottom',
+      html:`<svg width="30" height="39" viewBox="0 0 30 39"><path d="M15 37.5C15 37.5 27.5 21.5 27.5 14A12.5 12.5 0 1 0 2.5 14C2.5 21.5 15 37.5 15 37.5Z" fill="#1d4ed8" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/><circle cx="15" cy="14" r="4.6" fill="#ffffff"/></svg>`});
     htmlPins(map,pins);
     /* 表示範囲：⚠️構築直後にfitBoundsを呼ぶとタイルが描画されない（実機検証済）。
        必ず最初の'idle'を待ってから合わせること。 */
@@ -843,12 +862,11 @@ async function buildReport(g){
   h+=`<div class="paper cover"><div class="band"></div><div class="inner">
     <div class="kicker">PROPERTY LOCATION REPORT</div>
     <h1>物件周辺環境レポート</h1>
-    <div class="cs">交通・生活・教育・防災の立地調査資料　／　金融機関ご提出用</div>
-    <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addr.replace(name,'').replace(/^[\s　]+/,'')||addr}</div></div>
-    <div class="meta">
+    <div class="cs">交通・生活・教育・防災の立地調査資料</div>
+    <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addrOnly(addr)}</div></div>
+    <div class="meta" style="grid-template-columns:1fr 1fr">
       <div><div class="k">発行日</div><div class="v">${dstr}</div></div>
       <div><div class="k">調査対象範囲</div><div class="v">半径 ${radius.toLocaleString()}m</div></div>
-      <div><div class="k">調査座標</div><div class="v" style="font-size:11px">${g.lat.toFixed(6)}, ${g.lon.toFixed(6)}</div></div>
     </div>
     <div class="toc"><div class="h">収録内容（全${toc.length}項目）</div>
       <ol>${toc.map((t,i)=>`<li><b>${String(i+1).padStart(2,'0')}</b>${t}</li>`).join('')}</ol></div>
@@ -894,11 +912,11 @@ async function buildReport(g){
   if(ownMen<=0&&bldg>0&&units>0)ownMen=Math.round(bldg/units*100)/100;
   if(rmin>0){
     compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,num('page'),g.title,
-      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||''});
+      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||'',name:query,struct:(STRUCT[val('pstruct')||'rc']||{}).name||''});
   }else if(cmp.length>0){
     /* 賃料未入力でも自動検索した募集事例は表で見せる（v3.1） */
     compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,num('page'),g.title,
-      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||''});
+      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:val('pmadori')||'',name:query,struct:(STRUCT[val('pstruct')||'rc']||{}).name||''});
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
     const city=cityOf(g.title);
