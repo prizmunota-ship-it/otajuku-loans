@@ -111,7 +111,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.8</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v3.9</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -409,17 +409,31 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   /* 本物件の自動サマリー（入力済み情報から算出） */
   const ownUnit=hasOwn&&own.men>0?Math.round(((own.min+own.max)/2)/own.men):0;
   const derivedTxt=opts.derived?`満室想定年収入${opts.units>0?'÷12ヶ月÷'+opts.units+'戸':'÷12ヶ月'}から自動算出`:'入力値';
-  /* 検索した物件そのものの概要を同じページに置き、比較の基準を明示する（下原提出資料の型） */
-  const ageTxt=(age===0||age==='0')?'新築':(age>0?'築'+age+'年':'—');
-  const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）</div>
+  /* 検索した物件そのものの概要を同じページに置き、比較の基準を明示する（下原提出資料の型）。
+     ⚠️SUUMO物件ライブラリーで実データが取れている場合は、フォームの初期値ではなく必ず実データを優先する */
+  const S=window.SELF&&window.SELF.addr?window.SELF:null;
+  let ageTxt=(age===0||age==='0')?'新築':(age>0?'築'+age+'年':'—');
+  if(S&&S.built){
+    const bm=S.built.match(/(\d{4})年\s*(\d{1,2})?月?/);
+    if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();
+      let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;
+      ageTxt=yrs<=0?'新築':'築'+yrs+'年（'+S.built+'築）';}
+    else ageTxt=S.built;
+  }
+  const structTxt=S&&S.struct?[S.kind,S.struct,S.floors].filter(Boolean).join(' '):(opts.struct||'—');
+  const stationCell=S&&S.station?S.station:(stationTxt?stationTxt.replace(/^・/,''):'—');
+  const addrCell=S&&S.addr?S.addr:(addrOnly(addr)||'—');
+  const nameCell=S&&S.name?S.name:(opts.name||'—');
+  const srcNote=S?'<span style="font-size:10px;font-weight:400;color:#e0e7ff;margin-left:8px">出典：SUUMO物件ライブラリー（実データ）</span>':'';
+  const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）${srcNote}</div>
     <table class="calc" style="margin-bottom:10px">
-      <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${opts.name||'—'}</td>
-          <td class="k" style="width:88px">所在地</td><td>${addrOnly(addr)||'—'}</td></tr>
-      <tr><td class="k">最寄駅</td><td>${stationTxt?stationTxt.replace(/^・/,''):'—'}</td>
+      <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${nameCell}</td>
+          <td class="k" style="width:88px">所在地</td><td>${addrCell}</td></tr>
+      <tr><td class="k">最寄駅</td><td>${stationCell}</td>
           <td class="k">築年</td><td>${ageTxt}</td></tr>
-      <tr><td class="k">構造・戸数</td><td>${(opts.struct||'—')}${opts.units>0?'／'+opts.units+'戸':''}</td>
+      <tr><td class="k">${S&&S.struct?'種別・構造':'構造・戸数'}</td><td>${structTxt}${(!S||!S.struct)&&opts.units>0?'／'+opts.units+'戸':''}</td>
           <td class="k">間取り・面積</td><td>${(opts.md||'—')}${own.men>0?'／'+own.men.toFixed(2)+'㎡':''}</td></tr>
-      ${hasOwn?`<tr class="sum"><td>想定月額総額（1戸）</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${derivedTxt}）</span></td>
+      ${hasOwn?`<tr class="sum"><td>${S?'募集中の賃料（月額総額）':'想定月額総額（1戸）'}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${S?'SUUMO掲載':derivedTxt}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
     </table>`;
   const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
@@ -459,15 +473,13 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       mapHtml=m.html+`<div class="legend"><span class="c">📍 青ピン＝本物件</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>`;
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
+    /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
     let selfBox='';
-    if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
-      const S=window.SELF;
+    if(S&&S.rooms&&S.rooms.length>1){
       selfBox=`<div class="evalbox" style="border-left-color:#16a34a;margin:0 0 10px">
-        <span class="tt">【基準となる本物件の募集内容】</span>SUUMO物件ライブラリー掲載の実データ<br>
-        <b>${S.name}</b>（${S.kind||''} ${S.struct||''} ${S.floors||''}／築年月 ${S.built||'—'}）　${S.addr||''}<br>
-        最寄駅：${S.station||'—'}<br>
-        募集中の部屋：${S.rooms.map(r=>`<b>${r.md} ${r.men}㎡ ${r.rent.toLocaleString()}円</b>`).join('　／　')}
-        <div style="font-size:10.5px;color:#64748b;margin-top:4px">この部屋の間取り・面積・賃料を基準に、同市区町村で募集中の類似物件を自動抽出しています。</div>
+        <span class="tt">【本物件の募集中の部屋】</span>SUUMO物件ライブラリー掲載の実データ（${S.rooms.length}戸）<br>
+        ${S.rooms.map(r=>`<b>${r.md} ${r.men}㎡ ${r.rent.toLocaleString()}円</b>`).join('　／　')}
+        <div style="font-size:10.5px;color:#64748b;margin-top:4px">最も戸数の多い条件を基準に、同市区町村で募集中の類似物件を自動抽出しています。</div>
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
