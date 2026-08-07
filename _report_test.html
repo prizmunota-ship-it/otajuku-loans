@@ -32,7 +32,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .paper .lead b{color:#0f766e;}
 /* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
 .map{width:100%;max-width:690px;height:520px;}
-.map.sm{height:400px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
+.map.sm{height:420px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:11px;padding:6px 8px;font-weight:700;color:#374151;text-align:left;}
@@ -116,7 +116,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v5.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.1</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -798,18 +798,14 @@ function initMaps(g){
        必ず最初の'idle'を待ってから合わせること。 */
     google.maps.event.addListenerOnce(map,'idle',()=>{
       if(cfg.fit==='markers'&&(cfg.markers||[]).length){
-        const b=new google.maps.LatLngBounds();b.extend(center);
+        const b=circle.getBounds();
         cfg.markers.forEach(mk=>b.extend({lat:mk.lat,lng:mk.lon}));
-        map.fitBounds(b,26);
+        map.fitBounds(b,8);
       }else{
-        /* 調査対象範囲（赤丸）が地図いっぱいに映るズーム。
-           円の直径を地図の“幅”に合わせるので、範囲外の余白が最小になる（上下は範囲外がわずかに切れる） */
-        const el=map.getDiv(),w=el.offsetWidth||690;
-        if(w>0&&cfg.radius>0){
-          const mpp=(cfg.radius*2*1.02)/w; /* 1m/px：直径＋2%の余白 */
-          const z=Math.log2(156543.03392*Math.cos(center.lat*Math.PI/180)/mpp);
-          map.setCenter(center);map.setZoom(Math.max(10,Math.min(18,Math.round(z*10)/10)));
-        }else{map.fitBounds(circle.getBounds(),10);}
+        /* 赤丸（調査対象範囲）が必ず収まるよう合わせる。地図は横長なので縦で決まり、
+           横は範囲外も写るが、その分だけ範囲内が大きく見える。
+           ⚠️構築直後に呼ぶとタイルが描画されないため、必ずidleを待ってから実行する */
+        map.fitBounds(circle.getBounds(),8);
       }
     });
   });
