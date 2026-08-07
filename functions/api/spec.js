@@ -191,19 +191,24 @@ async function bySearch(name, city, pref, dbg) {
 }
 
 /* ===== 共通 ===== */
+/* 一時的な失敗（混雑・レート制限）で「未取得」になってしまうのを防ぐため、1回だけ取り直す。
+   ⚠️取れなければ黙って未取得にする（推測で埋めない）のがこのAPIの原則。 */
 async function getText(u, dbg, tag) {
-  try {
-    const r = await fetch(u, {
-      headers: { 'user-agent': UA, 'accept-language': 'ja,en;q=0.8' },
-      cf: { cacheTtl: 86400, cacheEverything: true }, // 同じ市区町村の照会を繰り返しても速い
-    });
-    const t = r.ok ? await r.text() : '';
-    if (dbg) dbg.push({ tag, u: u.slice(8, 70), st: r.status, len: t.length });
-    return t;
-  } catch (e) {
-    if (dbg) dbg.push({ tag, u: u.slice(8, 70), err: String(e && e.message).slice(0, 60) });
-    return '';
+  for (let i = 0; i < 2; i++) {
+    try {
+      const r = await fetch(u, {
+        headers: { 'user-agent': UA, 'accept-language': 'ja,en;q=0.8' },
+        cf: { cacheTtl: 86400, cacheEverything: true }, // 同じ市区町村の照会を繰り返しても速い
+      });
+      const t = r.ok ? await r.text() : '';
+      if (dbg) dbg.push({ tag, try: i + 1, u: u.slice(8, 70), st: r.status, len: t.length });
+      if (t) return t;
+    } catch (e) {
+      if (dbg) dbg.push({ tag, try: i + 1, u: u.slice(8, 70), err: String(e && e.message).slice(0, 60) });
+    }
+    if (i === 0) await new Promise((r) => setTimeout(r, 500));
   }
+  return '';
 }
 async function pickLinks(pageUrl, urlRe, textOk, dbg, tag) {
   const html = await getText(pageUrl, dbg, tag);
