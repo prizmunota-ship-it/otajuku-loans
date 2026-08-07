@@ -65,6 +65,17 @@
        ここで日付を数値に起こしてカレンダーに置く（複数日イベントは期間中の全日に出す）。 */
     const YEAR = 2026;
     const WD = ['日', '月', '火', '水', '木', '金', '土'];
+    /* 令和8年(2026)の祝日。このカレンダーが扱う8〜12月分のみ。
+       9/22は敬老の日(21)と秋分の日(23)に挟まれるため「国民の休日」。12月に祝日はない。
+       秋分の日は国立天文台の暦要項どおり9/23。 */
+    const HOLIDAYS = {
+      '8-11': '山の日',
+      '9-21': '敬老の日', '9-22': '国民の休日', '9-23': '秋分の日',
+      '10-12': 'スポーツの日',
+      '11-3': '文化の日', '11-23': '勤労感謝の日'
+    };
+    /* マス塗りつぶし用の実色（Tailwindのbg-*と同じ色） */
+    const EV_HEX = { 'オンライン': '#3b82f6', 'リアル': '#10b981', 'リアル＆オンライン': '#a855f7' };
     const ALL_EVENTS = [];
     scheduleData.forEach(mo => {
       const mm = parseInt(mo.month, 10);
@@ -174,15 +185,21 @@
               if (!d) return <div key={i} className="bg-white/40 h-10"></div>;
               const evs = evOf(d);
               const on = sel === d;
+              const hol = HOLIDAYS[m + '-' + d];
+              /* 予定がある日はマスごと色で塗りつぶす（点だと小さくて見落とすため 2026-08-08）。
+                 種別が2つ以上ある日は斜めの2色分割にする。 */
+              const cols = [...new Set(evs.map(e => EV_HEX[e.type] || EV_HEX['リアル']))];
+              const fill = !cols.length ? null
+                : cols.length === 1 ? cols[0]
+                : `linear-gradient(135deg, ${cols[0]} 0 50%, ${cols[1]} 50% 100%)`;
+              const dow = i % 7;
+              const numColor = fill ? 'text-white'
+                : (hol || dow === 0) ? 'text-red-500' : dow === 6 ? 'text-blue-500' : 'text-slate-700';
               return (
-                <button key={i} onClick={() => setSel(on ? null : (evs.length ? d : null))}
-                  className={`h-10 bg-white flex flex-col items-center justify-start pt-1 gap-0.5 ${on ? 'ring-2 ring-amber-500 ring-inset' : ''} ${evs.length ? 'cursor-pointer' : 'cursor-default'}`}>
-                  <span className={`text-[11px] font-bold leading-none ${isToday(d) ? 'bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center' : i % 7 === 0 ? 'text-red-500' : i % 7 === 6 ? 'text-blue-500' : 'text-slate-700'}`}>{d}</span>
-                  <div className="flex gap-0.5 flex-wrap justify-center px-0.5">
-                    {evs.slice(0, 3).map((e, k) => (
-                      <div key={k} className={`w-1.5 h-1.5 rounded-full ${getDotColor(e.type)}`}></div>
-                    ))}
-                  </div>
+                <button key={i} title={hol || ''} onClick={() => setSel(on ? null : (evs.length ? d : null))}
+                  style={fill ? { background: fill } : undefined}
+                  className={`h-10 flex items-center justify-center ${fill ? '' : 'bg-white'} ${on ? 'ring-2 ring-amber-900 ring-inset' : ''} ${isToday(d) ? 'ring-2 ring-amber-500 ring-inset' : ''} ${evs.length ? 'cursor-pointer' : 'cursor-default'}`}>
+                  <span className={`text-[12px] font-black leading-none ${numColor}`}>{d}</span>
                 </button>
               );
             })}
