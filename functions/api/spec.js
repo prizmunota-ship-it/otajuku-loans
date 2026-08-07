@@ -83,13 +83,13 @@ async function findBuildingUrls(name, city, pref) {
       if (!r.ok) continue;
       html = await r.text();
     } catch (err) { continue; }
-    // 生URLと、検索エンジンのリダイレクト用にURLエンコードされた形の両方を拾う
-    const dec = decodeURIComponent(html.replace(/%25/g, '%'));
-    for (const src of [html, dec]) {
-      const re = /homes\.co\.jp\/archive\/(b-\d+)\//g;
+    // 生URL（…/archive/b-123/）と、検索エンジンのリダイレクト用にエンコードされた形（…%2Fb%2D123%2F）の両方を拾う。
+    // ⚠️ページ全体を decodeURIComponent すると "50%" 等の裸の%で URI malformed 例外になるので、必ず部分一致で拾うこと
+    const pats = [/homes\.co\.jp\/archive\/b-(\d+)\//g, /homes\.co\.jp%2Farchive%2Fb(?:%2D|-)(\d+)%2F/gi];
+    for (const re of pats) {
       let m;
-      while ((m = re.exec(src))) {
-        const u = 'https://www.homes.co.jp/archive/' + m[1] + '/';
+      while ((m = re.exec(html))) {
+        const u = 'https://www.homes.co.jp/archive/b-' + m[1] + '/';
         if (out.indexOf(u) < 0) out.push(u);
       }
     }
