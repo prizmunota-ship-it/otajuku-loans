@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>太田塾 融資相談補足レポート</title>
+<title>太田塾 物件補足レポート</title>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -121,7 +121,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">融資相談補足レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.6</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -1176,7 +1176,7 @@ async function buildReport(g){
   const author=(val('pauthor')||'').trim();
   h+=`<div class="paper cover"><div class="band"></div><div class="inner">
     <div class="kicker">SUPPLEMENTARY REPORT FOR FINANCING</div>
-    <h1>融資相談補足レポート</h1>
+    <h1>物件補足レポート</h1>
     <div class="cs">交通・生活・教育・防災の立地調査資料</div>
     <div class="box"><div class="lb">調査対象物件</div><div class="n">${name}</div><div class="a">${addrOnly(addr)}</div></div>
     <div class="meta" style="grid-template-columns:1fr 1fr">
@@ -1187,7 +1187,7 @@ async function buildReport(g){
       <ol>${toc.map((t,i)=>`<li><b>${String(i+1).padStart(2,'0')}</b>${t}</li>`).join('')}</ol></div>
     <div class="foot">
       <div class="who">${author?'作成者　<b>'+author+'</b>':'<span style="color:#94a3b8">※作成者名は入力欄で設定できます</span>'}</div>
-      <div class="brand"><div class="bn">🌻 太田塾 presents</div>融資相談補足レポート</div>
+      <div class="brand"><div class="bn">🌻 太田塾 presents</div>物件補足レポート</div>
     </div>
     <div class="disc">本レポートは、国土地理院・国土交通省・防災科学技術研究所・OpenStreetMap・Google・SUUMO等の公開情報をもとに自動作成したものです。データの正確性・最新性を保証するものではなく、契約・投資判断の最終確認は各公式情報および現地調査によってください。</div>
   </div></div>`;

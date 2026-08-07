@@ -256,8 +256,41 @@ async function readBuilding(u) {
   const bm = text.match(/\|築年月[^|]*\|\s*(\d{4}年\s*\d{1,2}月)/);
   if (bm) built = bm[1].replace(/\s+/g, '');
 
+  /* ★本物件の「部屋情報」＝間取り・専有面積・階（募集の有無に関わらず建物ページに載っている実データ）
+     例: |2階|33.06m²|1LDK|  */
+  const rooms = [];
+  {
+    const re = /\|(\d{1,3})階\|([\d.]{2,6})m²\|([^|]{1,14})\|/g;
+    let m;
+    while ((m = re.exec(text))) {
+      const r = { floor: m[1] + '階', men: parseFloat(m[2]), md: m[3].trim() };
+      if (!rooms.some((q) => q.floor === r.floor && q.men === r.men && q.md === r.md)) rooms.push(r);
+      if (rooms.length >= 12) break;
+    }
+  }
+  /* ★賃貸掲載履歴＝過去に募集された賃料の実績（成約賃料ではない点は必ず明記して使う）
+     例: |2023年4月〜2023年5月|4.9万円|-|1LDK|2階| */
+  const history = [];
+  {
+    const re = /\|(\d{4})年(\d{1,2})月([^|]{0,20})\|([\d.]{1,5})万円[^|]*\|([^|]*)\|([^|]*)\|([^|]*)\|/g;
+    let m;
+    while ((m = re.exec(text))) {
+      history.push({
+        y: +m[1], mo: +m[2],
+        period: m[1] + '年' + m[2] + '月' + (m[3] || ''),
+        rent: Math.round(parseFloat(m[4]) * 10000),
+        men: parseFloat(String(m[5]).replace(/[^\d.]/g, '')) || null,
+        md: /[0-9]?[SLDK]/.test(m[6]) ? m[6].trim() : '',
+        floor: m[7].trim(),
+      });
+      if (history.length >= 40) break;
+    }
+    history.sort((a, b) => b.y * 12 + b.mo - (a.y * 12 + a.mo));
+  }
+  const listing = (() => { const m = text.match(/の部屋情報\|募集中\|(\d+)\|件/); return m ? +m[1] : null; })();
+
   if (!name || (!struct && !built)) return null;
-  return { name, addr, kind, struct, built, floors };
+  return { name, addr, kind, struct, built, floors, rooms, history: history.slice(0, 12), listing };
 }
 
 /* 全角英数→半角・空白除去。過剰に丸めると別物件を誤って一致させるので、ここまでに留める */
