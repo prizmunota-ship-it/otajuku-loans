@@ -227,6 +227,7 @@ function kaishuStatus(p){
 }
 const yen = n => '¥' + (parseInt(n)||0).toLocaleString();
 function kaishuPanel(p){
+  if (!isOwner()) return '';           // 過失回収は太田(オーナー)のみ表示。本村さん(moto)には非表示
   const st = kaishuStatus(p); if (!st) return '';
   const s = seikyuOf(p); const { gaku, month } = kaishuOf(p.id);
   return `
@@ -287,9 +288,11 @@ function renderFilters(){
   let html = fs.map(f=>
     `<div class="chip ${currentFilter===f.id?'active':''}" onclick="setFilter('${f.id}')">${f.label}</div>`
   ).join('');
-  // 過失回収：状況を問わず過失請求のある部屋を横断表示（未回収件数を表示）
-  const mikaishu = data.filter(p=>{ const st=kaishuStatus(p); return st && st.key!=='kanryo'; }).length;
-  html += `<div class="chip chip-kaishu ${currentFilter==='kaishu'?'active':''}" onclick="setFilter('kaishu')">💰 過失回収${mikaishu?`（未${mikaishu}）`:''}</div>`;
+  // 過失回収：状況を問わず過失請求のある部屋を横断表示（未回収件数を表示）。太田(オーナー)のみ表示・本村さんには出さない
+  if(isOwner()){
+    const mikaishu = data.filter(p=>{ const st=kaishuStatus(p); return st && st.key!=='kanryo'; }).length;
+    html += `<div class="chip chip-kaishu ${currentFilter==='kaishu'?'active':''}" onclick="setFilter('kaishu')">💰 過失回収${mikaishu?`（未${mikaishu}）`:''}</div>`;
+  }
   // 完了フォルダー（右端に分離配置・緑）：完了した部屋はここで確認
   html += `<div class="chip chip-done ${currentFilter==='完了'?'active':''}" onclick="setFilter('完了')">📁 完了${kanryo?`（${kanryo}）`:''}</div>`;
   document.getElementById('filters').innerHTML = html;
@@ -298,8 +301,8 @@ function renderFilters(){
 function setFilter(f){ currentFilter=f; renderFilters(); renderCards(); }
 
 function renderCards(){
-  // 💰過失回収ビュー：状況を問わず過失請求のある部屋を、未回収→一部→済の順で横断表示
-  if(currentFilter==='kaishu'){ renderKaishuView(); return; }
+  // 💰過失回収ビュー：状況を問わず過失請求のある部屋を、未回収→一部→済の順で横断表示（太田のみ）
+  if(currentFilter==='kaishu'){ if(isOwner()){ renderKaishuView(); return; } else { currentFilter='all'; } }
   // 完了フォルダー選択時は完了のみ表示。それ以外は完了を除外（一覧をスッキリ保つ）。データはシートに残る。
   const list = currentFilter==='完了'
     ? data.filter(p=>p.status==='完了')
