@@ -269,14 +269,24 @@ async function gasByName(name){
     return j;
   }catch(e){return null;}
 }
+/* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す */
+async function apiJson(url){
+  for(let i=0;i<2;i++){
+    try{
+      const r=await fetch(url);
+      if(r.ok){const t=await r.text();
+        if(t&&t[0]==='{')return JSON.parse(t);}
+    }catch(e){}
+    if(i===0)await new Promise(r=>setTimeout(r,600));
+  }
+  return null;
+}
 /* 物件名→建物の実データ（種別・構造・築年月・階建）。Cloudflare Functions経由でHOME'S建物情報を照会。
    ⚠️物件名と市区町村が一致した建物ページしか返さないサーバー実装（functions/api/spec.js）＝誤情報防止 */
 async function fetchSpec(name,city,pref,addr){
   if(!name)return null;
   try{
-    const r=await fetch('/api/spec?name='+encodeURIComponent(name)+'&addr='+encodeURIComponent(addr||'')+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
-    if(!r.ok)return null;
-    const j=await r.json();
+    const j=await apiJson('/api/spec?name='+encodeURIComponent(name)+'&addr='+encodeURIComponent(addr||'')+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
     return (j&&j.found)?j:null;
   }catch(e){return null;}
 }
@@ -1034,9 +1044,8 @@ async function loadChika(){if(CHIKA)return CHIKA;try{const r=await fetch('chika2
 async function estimateLandPrice(lat,lon){
   /* ①全国API（不動産情報ライブラリ 地価公示・地価調査） */
   try{
-    const r=await fetch('/api/chika?lat='+lat+'&lon='+lon);
-    if(r.ok){const j=await r.json();
-      if(j&&j.found)return {price:j.price,refs:j.refs,year:j.year,src:j.src};}
+    const j=await apiJson('/api/chika?lat='+lat+'&lon='+lon);
+    if(j&&j.found)return {price:j.price,refs:j.refs,year:j.year,src:j.src};
   }catch(e){}
   /* ②APIが使えないときだけ同梱データ（福岡・佐賀のみ）にフォールバック */
   const C=await loadChika();if(!C.length)return null;
@@ -1053,10 +1062,9 @@ async function loadPop(){if(POP)return POP;try{const r=await fetch('pop2024.json
 async function popStats(lat,lon,radius){
   /* ①全国API（不動産情報ライブラリ 将来推計人口250mメッシュ） */
   try{
-    const r=await fetch('/api/pop?lat='+lat+'&lon='+lon+'&r='+Math.round(radius));
-    if(r.ok){const j=await r.json();
-      if(j&&j.found&&j.p25>0)return {p25:j.p25,a:j.a,b:j.b,c:j.c,p30:j.p30,g5:j.g5,n:j.n,
-        pn20:j.pn20,pn25:j.pn25,mesh:'250m',src:j.src};}
+    const j=await apiJson('/api/pop?lat='+lat+'&lon='+lon+'&r='+Math.round(radius));
+    if(j&&j.found&&j.p25>0)return {p25:j.p25,a:j.a,b:j.b,c:j.c,p30:j.p30,g5:j.g5,n:j.n,
+      pn20:j.pn20,pn25:j.pn25,mesh:'250m',src:j.src};
   }catch(e){}
   /* ②APIが使えないときだけ同梱データ（福岡・佐賀の1kmメッシュ）にフォールバック */
   const P=await loadPop();if(!P.length)return null;
