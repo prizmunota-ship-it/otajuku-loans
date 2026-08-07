@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>太田塾 融資相談補足レポート作成</title>
+<title>太田塾 融資相談補足レポート</title>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -121,7 +121,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">融資相談補足レポート作成（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">融資相談補足レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.6</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -832,14 +832,33 @@ function printBtnState(){
   const b=document.getElementById('prbtn'),s=document.getElementById('mapstat');
   if(!b)return;
   const ok=MAPTOT>0&&MAPRDY>=MAPTOT;
-  b.disabled=!ok&&!window.__forcePrint;
-  b.style.opacity=b.disabled?.5:1;
-  s.textContent=ok?'':'🗺 地図を読み込み中… '+MAPRDY+'/'+MAPTOT+'（完了すると印刷できます）';
+  s.textContent=ok?'':'🗺 地図 '+MAPRDY+'/'+MAPTOT+' 読込済（印刷ボタンを押すと残りを読み込んでから印刷します）';
   s.style.color=ok?'#0f766e':'#b45309';
   if(ok&&MAPTMR){clearTimeout(MAPTMR);MAPTMR=null;}
 }
-function doPrint(){
-  if(MAPTOT>0&&MAPRDY<MAPTOT&&!confirm('地図がまだ読み込み中です（'+MAPRDY+'/'+MAPTOT+'）。このまま印刷すると地図が白いページが出ます。印刷しますか？'))return;
+/* ★印刷前に全部の地図を画面に通してタイルを読み込ませる。
+   Googleマップは「画面外の地図はタイルを読まない」ため、スクロールせずに印刷すると
+   下の方のページが白い地図になる（ヘッドレスChromeで再現確認：10枚中2枚が白紙）。 */
+async function ensureMapsLoaded(){
+  const els=[...document.querySelectorAll('.map')];
+  const y0=window.scrollY;
+  for(const el of els){
+    if(MAPRDY>=MAPTOT)break;
+    window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-80);
+    await new Promise(r=>setTimeout(r,450));
+    printBtnState();
+  }
+  const t0=Date.now();
+  while(MAPRDY<MAPTOT&&Date.now()-t0<12000){await new Promise(r=>setTimeout(r,300));printBtnState();}
+  window.scrollTo(0,y0);
+  await new Promise(r=>setTimeout(r,500));
+}
+async function doPrint(){
+  const b=document.getElementById('prbtn');
+  b.disabled=true;b.textContent='🗺 地図を読み込み中…';
+  try{await ensureMapsLoaded();}catch(e){}
+  b.disabled=false;b.textContent='🖨 PDFで保存 / 印刷';
+  if(MAPRDY<MAPTOT&&!confirm('地図 '+MAPRDY+'/'+MAPTOT+' 枚しか読み込めませんでした。白い地図のページが出る可能性があります。このまま印刷しますか？'))return;
   window.print();
 }
 /* 地図＝Googleマップに統一（2026-08-07 v3.3・太田要望）。ハザードの公式タイルはImageMapTypeで重畳 */
@@ -860,11 +879,6 @@ const MAP_MONO=[
 ];
 function initMaps(g){
   MAPRDY=0;MAPTOT=MAPS.length;window.__forcePrint=false;printBtnState();
-  /* 何らかの理由でtilesloadedが来ない地図があっても、30秒で印刷は可能にする（警告は残す） */
-  if(MAPTMR)clearTimeout(MAPTMR);
-  MAPTMR=setTimeout(()=>{window.__forcePrint=true;printBtnState();
-    const s=document.getElementById('mapstat');
-    if(s&&MAPRDY<MAPTOT)s.textContent='⚠ 地図 '+MAPRDY+'/'+MAPTOT+' 読込済。白い地図があれば数秒待って再度印刷してください';},30000);
   MAPS.forEach(cfg=>{
     const el=document.getElementById(cfg.id);if(!el)return;
     const center={lat:cfg.center[0],lng:cfg.center[1]};
@@ -1014,28 +1028,44 @@ async function confirmGo(){
   document.getElementById('confirm').style.display='none';
   await buildReport(PENDING);
 }
-/* ====== 地価公示（積算の概算用） ====== */
+/* ====== 地価公示（積算の概算用）★全国対応：国交省 不動産情報ライブラリAPIをFunctions経由で ====== */
 let CHIKA=null;
 async function loadChika(){if(CHIKA)return CHIKA;try{const r=await fetch('chika2025.json');CHIKA=await r.json();}catch(e){CHIKA=[];}return CHIKA;}
 async function estimateLandPrice(lat,lon){
+  /* ①全国API（不動産情報ライブラリ 地価公示・地価調査） */
+  try{
+    const r=await fetch('/api/chika?lat='+lat+'&lon='+lon);
+    if(r.ok){const j=await r.json();
+      if(j&&j.found)return {price:j.price,refs:j.refs,year:j.year,src:j.src};}
+  }catch(e){}
+  /* ②APIが使えないときだけ同梱データ（福岡・佐賀のみ）にフォールバック */
   const C=await loadChika();if(!C.length)return null;
   const pts=C.map(p=>({price:p[2],use:p[3],addr:p[4],d:Math.round(dist(lat,lon,p[0],p[1]))})).sort((a,b)=>a.d-b.d);
   let sel=pts.filter(p=>p.use==='住宅').slice(0,5);
   if(sel.length<3)sel=pts.slice(0,5);
   if(!sel.length)return null;
   const prices=sel.map(p=>p.price).sort((a,b)=>a-b);
-  return {price:prices[Math.floor(prices.length/2)],refs:sel.slice(0,3)};
+  return {price:prices[Math.floor(prices.length/2)],refs:sel.slice(0,3),year:2025,src:'国土交通省 令和7年地価公示'};
 }
-/* ====== メッシュ人口（年齢別人口統計） ====== */
+/* ====== メッシュ人口（年齢別人口統計）★全国対応：250mメッシュをAPIで取得 ====== */
 let POP=null;
 async function loadPop(){if(POP)return POP;try{const r=await fetch('pop2024.json');POP=await r.json();}catch(e){POP=[];}return POP;}
 async function popStats(lat,lon,radius){
+  /* ①全国API（不動産情報ライブラリ 将来推計人口250mメッシュ） */
+  try{
+    const r=await fetch('/api/pop?lat='+lat+'&lon='+lon+'&r='+Math.round(radius));
+    if(r.ok){const j=await r.json();
+      if(j&&j.found&&j.p25>0)return {p25:j.p25,a:j.a,b:j.b,c:j.c,p30:j.p30,g5:j.g5,n:j.n,
+        pn20:j.pn20,pn25:j.pn25,mesh:'250m',src:j.src};}
+  }catch(e){}
+  /* ②APIが使えないときだけ同梱データ（福岡・佐賀の1kmメッシュ）にフォールバック */
   const P=await loadPop();if(!P.length)return null;
   const sel=P.filter(m=>dist(lat,lon,m[0],m[1])<=Math.max(radius,800));
   if(!sel.length)return null;
   const s=i=>sel.reduce((a,m)=>a+m[i],0);
   const g5=[];for(let i=7;i<26;i++)g5.push(s(i));
-  return {p25:s(2),a:s(3),b:s(4),c:s(5),p30:s(6),g5,n:sel.length};
+  return {p25:s(2),a:s(3),b:s(4),c:s(5),p30:s(6),g5,n:sel.length,mesh:'1km',
+    src:'国土交通省 国土数値情報「1kmメッシュ別将来推計人口（令和6年推計）」'};
 }
 function setCmpSearch(addr){
   const el=document.getElementById('cmpsearch');if(!el)return;
@@ -1169,7 +1199,7 @@ async function buildReport(g){
       <tr><td class="k">満室想定年収入</td><td class="r">${yen(income)}</td><td class="k">運営純収益（経費20%控除）</td><td class="r">${yen(noi)}</td></tr>
       <tr><td class="k">土地評価（${yen(lp)}/㎡${lpEst?'〈概算〉':''}×${land}㎡）</td><td class="r">${yen(lp*land)}</td><td class="k">建物評価（${st.name}・残存${remain}/${st.useful}年）</td><td class="r">${yen(bv)}</td></tr>
       <tr class="sum"><td>収益価格</td><td class="r">${yen(sp)}</td><td>積算価格</td><td class="r">${yen(kp)}</td></tr></table>
-      ${lpEst?'<div class="formula">※土地単価は周辺の公示地価から自動概算（出典：国土交通省 令和7年地価公示）— '+lpEst.refs.map(r=>r.addr+'（'+(r.d>=1000?(r.d/1000).toFixed(1)+'km':r.d+'m')+'・'+r.price.toLocaleString()+'円/㎡）').join('　／　')+'</div>':''}
+      ${lpEst?'<div class="formula">※土地単価は周辺の公示地価から自動概算（出典：'+(lpEst.src||'国土交通省 地価公示')+(lpEst.year?'・'+lpEst.year+'年':'')+'）— '+lpEst.refs.map(r=>r.addr+'（'+(r.d>=1000?(r.d/1000).toFixed(1)+'km':r.d+'m')+'・'+r.price.toLocaleString()+'円/㎡）').join('　／　')+'</div>':''}
       ${(srcOf('pstruct')!=='input'||srcOf('page')!=='input')?'<div class="formula" style="color:#b45309">※'+[srcOf('pstruct')!=='input'?'構造':'',srcOf('page')!=='input'?'築年数':''].filter(Boolean).join('・')+'が未入力のため、初期値（'+st.name+'・築'+age+'年）で試算しています。建物評価を正確にするにはフォームでご指定ください。</div>':''}`;
     h+=paper('収益評価・積算評価','入力値に基づく評価試算（収益還元法・積算法）',body,'入力値・一般的評価手法により算出（市場価格を保証するものではありません）');
   }
@@ -1251,11 +1281,21 @@ async function buildReport(g){
         <div class="t"><div class="l">総人口（2025年推計）</div><div class="v">${pop.p25.toLocaleString()}人</div></div>
         <div class="t"><div class="l">生産年齢人口（15〜64歳）</div><div class="v">${(pop.b/pop.p25*100).toFixed(1)}%</div></div>
         <div class="t"><div class="l">2030年推計</div><div class="v" style="font-size:16px">${pop.p30.toLocaleString()}人<small>（${chg>=0?'+':''}${chg.toFixed(1)}%）</small></div></div></div>
-        <div class="subttl">年齢5歳階級別人口（対象地点周辺 1kmメッシュ×${pop.n}区画の合算）</div>${bars}
+        <div class="subttl">年齢5歳階級別人口（調査対象範囲内 ${pop.mesh||'250m'}メッシュ×${pop.n}区画の合算）</div>${bars}
         ${(()=>{ /* 市区町村の人口増減（事業計画書アプリと同じ国勢調査ベース） */
           const cityN=cityOf(g.title);
           const hit=POP_DB.find(x=>x.m===cityN)||POP_DB.find(x=>cityN&&x.m.indexOf(cityN)>=0)||POP_DB.find(x=>cityN&&cityN.indexOf(x.m)>=0);
-          if(!hit)return '';
+          /* 国勢調査速報（福岡・佐賀のみ収録）が無い地域は、調査対象範囲のメッシュ推計で増減を示す */
+          if(!hit){
+            if(!(pop.pn20>0&&pop.pn25>0))return '';
+            const rr=(pop.pn25-pop.pn20)/pop.pn20*100, up=rr>=0;
+            return `<div class="bandttl">調査対象範囲の人口増減（2020年→2025年）</div>
+              <table class="calc"><tr><td class="k" style="width:190px">直近5年の人口増減率</td>
+              <td class="r" style="text-align:left;font-size:16px;color:${up?'#0f766e':'#b91c1c'}"><b>${up?'+':''}${rr.toFixed(1)}%</b>
+              <span style="font-weight:400;color:#64748b;font-size:11px">（${pop.pn20.toLocaleString()}人→${pop.pn25.toLocaleString()}人）</span></td></tr>
+              <tr><td class="k">賃貸需要の評価区分</td><td class="r" style="text-align:left">${rr>=0?'人口上昇エリア':(rr>-4?'人口減少4%未満':'人口減少4%以上')}</td></tr></table>
+              <div class="note" style="border:0;padding:0;margin:4px 0 8px">※市区町村単位ではなく、この調査対象範囲（半径${radius.toLocaleString()}m）内のメッシュ合計。2020年は国勢調査実績、2025年は推計値です。</div>`;
+          }
           const up=hit.r>=0;
           return `<div class="bandttl">${hit.m}の人口増減（2020年→2025年）</div>
             <table class="calc"><tr><td class="k" style="width:190px">直近5年の人口増減率</td>
@@ -1269,9 +1309,9 @@ async function buildReport(g){
         <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>生産年齢人口（15〜64歳）</td><td class="r">${pop.b.toLocaleString()}人</td><td class="r">${(pop.b/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>老年人口（65歳〜）</td><td class="r">${pop.c.toLocaleString()}人</td><td class="r">${(pop.c/pop.p25*100).toFixed(1)}%</td></tr></table>`;
-      h+=paper('年齢別人口統計','調査対象地点周辺の人口構成と将来推計',popBody,'国土交通省 国土数値情報「1kmメッシュ別将来推計人口（令和6年推計）」（2020年国勢調査ベース）');
+      h+=paper('年齢別人口統計','調査対象地点周辺の人口構成と将来推計',popBody,pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ');
     }else{
-      h+=paper('年齢別人口統計','調査対象エリアの人口構成','<div class="phase">この地点の人口データが見つかりませんでした（現在は福岡県・佐賀県に対応。他県は順次追加します）。</div>','国土数値情報');
+      h+=paper('年齢別人口統計','調査対象エリアの人口構成','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
     }
   }
   /* --- ハザード（選択） --- */
