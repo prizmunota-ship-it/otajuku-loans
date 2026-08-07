@@ -23,39 +23,37 @@
         month: "8月",
         events: [
           { date: "4(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
-          { date: "27(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
         ]
       },
       {
         month: "9月",
         events: [
-          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
+          { date: "15(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE, note: "※今月のみ第3火曜" },
           { date: "17(木)", type: "リアル", title: "第4回 金融機関グループ勉強会", location: "大分銀行" },
-          { date: "24(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+          { date: "24(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "天神ワンビルB1", note: "※今月のみ第4木曜" },
           { date: "26(土)", type: "リアル", title: "【仮】檜原新築AP完成見学会", location: "" },
         ]
       },
       {
         month: "10月",
         events: [
-          { date: "6(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
+          { date: "1(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "天神ワンビルB1", note: "※今月のみ第1木曜" },
           { date: "15(木)", type: "リアル", title: "金融機関祭りVol.3", location: "博多" },
-          { date: "22(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+          { date: "27(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE },
         ]
       },
       {
         month: "11月",
         events: [
-          { date: "10(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
-          { date: "26(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+          { date: "12(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "東京", highlight: true },
+          { date: "24(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE },
         ]
       },
       {
         month: "12月",
         events: [
-          { date: "1(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
           { date: "10(木)〜11(金)", type: "リアル", title: "忘年会", location: "福岡" },
-          { date: "24(木)", type: "リアル", title: "エンパワータイム", location: "天神ワンビルB1" },
+          { date: "22(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE },
         ]
       }
     ];
@@ -160,6 +158,11 @@
                                     {event.location && (
                                       <div className={`mt-0.5 ${event.highlight ? 'text-red-600 font-extrabold text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px] text-slate-400 font-semibold'}`}>
                                         @{event.location}
+                                      </div>
+                                    )}
+                                    {event.note && (
+                                      <div className="mt-0.5 text-[9px] sm:text-[10px] text-amber-700 font-bold">
+                                        {event.note}
                                       </div>
                                     )}
                                   </div>
