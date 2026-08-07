@@ -121,7 +121,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.7</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -533,7 +533,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   const nameCell=(S&&S.name)||opts.name||'';
   /* ── 間取り・面積：利用者入力かSUUMO実データのときだけ表示 */
   const mdTxt=[srcOf('pmadori')?opts.md:'',(srcOf('pmens')&&own.men>0)?own.men.toFixed(2)+'㎡':''].filter(Boolean).join('／');
-  const mdSrc=mdTxt?((srcOf('pmadori')==='suumo'||srcOf('pmens')==='suumo')?SRC_SUUMO:'作成者の入力値'):'';
+  const srcName=k=>k==='suumo'?SRC_SUUMO:(k==='homes'?((SP&&SP.src)||"LIFULL HOME'S 建物情報"):(k==='homes-hist'?"LIFULL HOME'S 賃貸掲載履歴":'作成者の入力値'));
+  const mdSrc=mdTxt?srcName(srcOf('pmadori')==='input'?(srcOf('pmens')||'input'):srcOf('pmadori')):'';
+  const rentKey=srcOf('prentmin');
+  const rentPeriod=(S&&S.rentPeriod)||'';
   const specTbl=`<div class="bandttl" style="margin-top:0">本物件の概要（比較の基準）</div>
     <table class="calc cmpspec" style="margin-bottom:6px">
       <tr><td class="k" style="width:88px">物件名</td><td style="font-weight:800">${cell(nameCell,'')}</td>
@@ -542,10 +545,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
           <td class="k">築年</td><td>${cell(ageTxt,ageSrc)}</td></tr>
       <tr><td class="k">種別・構造</td><td>${cell(structTxt,structSrc)}</td>
           <td class="k">間取り・面積</td><td>${cell(mdTxt,mdSrc)}</td></tr>
-      ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':'想定月額総額（1戸）'}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':derivedTxt}）</span></td>
+      ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':(rentKey==='homes-hist'?'直近の募集賃料（実績）':'想定月額総額（1戸）')}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':(rentKey==='homes-hist'?"LIFULL HOME'S 掲載履歴"+(rentPeriod?'・'+rentPeriod+'時点':''):derivedTxt)}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
     </table>
-    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${srcUsed.join('／')||'—'}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
+    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${(hasOwn&&rentKey&&srcUsed.indexOf(srcName(rentKey))<0?srcUsed.concat([srcName(rentKey)]):srcUsed).join('／')||'—'}${rentKey==='homes-hist'?'（掲載履歴は過去の募集時点の賃料であり、成約賃料・現在の募集賃料ではありません）':''}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
   if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td></tr>`;
   const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
@@ -582,7 +585,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const ucTxt=(ucAvg>0&&ownUc>0)?`㎡単価でみると周辺平均${Math.round(ucAvg).toLocaleString()}円/㎡に対し本物件は<b>${Math.round(ownUc).toLocaleString()}円/㎡</b>で、${ownUc<=ucAvg?'<b>割安な水準</b>':'同水準'}。`:'';
     const sBits=[];if(ownAgeVal!=null)sBits.push(ownAgeVal<=0?'新築':(ownAgeVal<=5?'築浅':'築'+ownAgeVal+'年'));if(stationTxt)sBits.push('駅近');
     const strength=sBits.length?sBits.join('×')+'の物件力':'本物件の立地条件';
-    note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
+    note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>${rentKey==='homes-hist'?'（'+(rentPeriod||'直近')+'の募集実績）':''}は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
       :`<div class="evalbox">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
     /* 比較物件の位置図（ジオコーディング成功分に番号ピン） */
     let mapHtml='';
@@ -1118,6 +1121,27 @@ async function buildReport(g){
         window.SELF.name=window.SELF.name||sp.name;
         window.SELF.addr=sp.addr||window.SELF.addr;
         window.SELF.spec=sp;
+        /* ★本物件の募集情報を実データで埋める（太田指摘：ここが空だと使えない）
+           ①建物ページの部屋情報＝間取り・専有面積 ②賃貸掲載履歴＝直近の募集賃料
+           いずれも「過去の募集時点の実績」なので、表示側で必ず出典と時点を明記する。 */
+        const cnt={},rooms=(sp.rooms||[]);
+        rooms.forEach(r=>{const k=r.md+'/'+r.men;cnt[k]=(cnt[k]||0)+1;});
+        let best=null,bn=0;Object.keys(cnt).forEach(k=>{if(cnt[k]>bn){bn=cnt[k];best=k;}});
+        const hist=(sp.history||[]);
+        const h0=hist.find(h=>h.rent>0);
+        if(best){const[md,men]=best.split('/');
+          if(!val('pmadori'))setByData('pmadori',md,'homes');
+          if(!num('pmens'))setByData('pmens',parseFloat(men),'homes');}
+        else if(h0){
+          if(!val('pmadori')&&h0.md)setByData('pmadori',h0.md,'homes');
+          const hm=hist.find(h=>h.men>0);
+          if(!num('pmens')&&hm)setByData('pmens',hm.men,'homes');}
+        if(h0&&!num('prentmin')){
+          const lo=Math.min(...hist.filter(h=>h.rent>0).slice(0,6).map(h=>h.rent));
+          setByData('prentmin',Math.min(lo,h0.rent),'homes-hist');
+          setByData('prentmax',h0.rent,'homes-hist');
+          window.SELF.rentPeriod=h0.period;window.SELF.rentN=hist.filter(h=>h.rent>0).length;
+        }
       }
     }
   }
@@ -1289,7 +1313,7 @@ async function buildReport(g){
         <div class="t"><div class="l">総人口（2025年推計）</div><div class="v">${pop.p25.toLocaleString()}人</div></div>
         <div class="t"><div class="l">生産年齢人口（15〜64歳）</div><div class="v">${(pop.b/pop.p25*100).toFixed(1)}%</div></div>
         <div class="t"><div class="l">2030年推計</div><div class="v" style="font-size:16px">${pop.p30.toLocaleString()}人<small>（${chg>=0?'+':''}${chg.toFixed(1)}%）</small></div></div></div>
-        <div class="subttl">年齢5歳階級別人口（調査対象範囲内 ${pop.mesh||'250m'}メッシュ×${pop.n}区画の合算）</div>${bars}
+        <div class="subttl">年齢5歳階級別人口（半径${radius.toLocaleString()}m圏内の${pop.mesh||'250m'}メッシュ×${pop.n}区画を合算）</div>${bars}
         ${(()=>{ /* 市区町村の人口増減（事業計画書アプリと同じ国勢調査ベース） */
           const cityN=cityOf(g.title);
           const hit=POP_DB.find(x=>x.m===cityN)||POP_DB.find(x=>cityN&&x.m.indexOf(cityN)>=0)||POP_DB.find(x=>cityN&&cityN.indexOf(x.m)>=0);
@@ -1317,9 +1341,10 @@ async function buildReport(g){
         <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>生産年齢人口（15〜64歳）</td><td class="r">${pop.b.toLocaleString()}人</td><td class="r">${(pop.b/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>老年人口（65歳〜）</td><td class="r">${pop.c.toLocaleString()}人</td><td class="r">${(pop.c/pop.p25*100).toFixed(1)}%</td></tr></table>`;
-      h+=paper('年齢別人口統計','調査対象地点周辺の人口構成と将来推計',popBody,pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ');
+      const popArea=(addrOnly(g.title)||g.title||'').replace(/\s+/g,' ').trim();
+      h+=paper('年齢別人口統計','<b>'+popArea+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏の人口構成と将来推計',popBody,pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ');
     }else{
-      h+=paper('年齢別人口統計','調査対象エリアの人口構成','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
+      h+=paper('年齢別人口統計','<b>'+(addrOnly(g.title)||g.title||'')+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
     }
   }
   /* --- ハザード（選択） --- */
