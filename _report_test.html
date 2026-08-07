@@ -116,11 +116,11 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v5.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v5.5</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
-  <input id="paddr" placeholder="例：キャナルシティ博多／福岡県筑後市羽犬塚○-○"></div>
+  <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3"></div>
   <div class="opts">
     <label>調査範囲
       <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
@@ -576,6 +576,30 @@ async function jshis(lat,lon){try{
 }catch(e){return null;}}
 
 /* ============ 分類 ============ */
+/* 市区町村別 人口増減率(%)＝令和7年(2025)国勢調査 人口速報集計（2020→2025）。事業計画書アプリと共通データ */
+const POP_DB = [
+  // ―― 佐賀県（2020→2025）――
+  {m:'上峰町',r:0.8},{m:'鳥栖市',r:0.4},{m:'基山町',r:0.2},
+  {m:'佐賀市',r:-2.4},{m:'武雄市',r:-4.5},{m:'神埼市',r:-5.2},{m:'伊万里市',r:-5.4},
+  {m:'鹿島市',r:-6.0},{m:'嬉野市',r:-6.0},{m:'唐津市',r:-6.1},
+  {m:'白石町',r:-8.3},{m:'大町町',r:-8.8},{m:'太良町',r:-11.9},{m:'玄海町',r:-17.7},
+  // ―― 福岡市（区別）――
+  {m:'福岡市東区',r:5.3},{m:'福岡市中央区',r:5.3},{m:'福岡市博多区',r:4.8},
+  {m:'福岡市南区',r:1.9},{m:'福岡市早良区',r:1.7},{m:'福岡市城南区',r:0.9},{m:'福岡市西区',r:0.5},
+  // ―― 福岡県 市町 ――
+  {m:'筑前町',r:4.2},{m:'福津市',r:3.0},{m:'筑紫野市',r:2.5},{m:'久山町',r:2.2},
+  {m:'糸島市',r:1.8},{m:'須恵町',r:1.5},{m:'須惠町',r:1.5},{m:'大野城市',r:1.4},{m:'粕屋町',r:0.7},{m:'宗像市',r:-0.1},
+  {m:'太宰府市',r:-0.5},{m:'古賀市',r:-0.7},{m:'小郡市',r:-1.2},{m:'春日市',r:-1.8},
+  {m:'行橋市',r:-1.9},{m:'久留米市',r:-2.1},{m:'新宮町',r:-2.2},{m:'筑後市',r:-2.3},
+  {m:'飯塚市',r:-3.2},{m:'田川市',r:-4.3},{m:'中間市',r:-4.6},{m:'那珂川市',r:-4.7},
+  {m:'直方市',r:-4.7},{m:'大木町',r:-4.7},{m:'八女市',r:-5.4},{m:'朝倉市',r:-5.6},
+  {m:'柳川市',r:-6.1},{m:'うきは市',r:-7.2},{m:'みやま市',r:-7.9},{m:'宮若市',r:-8.3},
+  {m:'大牟田市',r:-8.4},{m:'大川市',r:-9.9},{m:'嘉麻市',r:-10.1},
+  // ―― 北九州市（区別・全区減）――
+  {m:'北九州市小倉北区',r:-1.8},{m:'北九州市八幡西区',r:-3.0},{m:'北九州市小倉南区',r:-3.0},
+  {m:'北九州市若松区',r:-4.9},{m:'北九州市八幡東区',r:-6.0},{m:'北九州市戸畑区',r:-6.0},
+  {m:'北九州市門司区',r:-6.9}
+];
 let RADIUS=1500;
 function classify(els,lat,lon,radius){
   RADIUS=radius||RADIUS;
@@ -682,7 +706,7 @@ function facilityPaper(title,lead,groups,g,radius,src){
       +'</table>';
   }
   MAPS.push({id:m.id,center:[g.lat,g.lon],radius,markers});
-  const lg=`<div class="legend" style="margin:2px 0 8px"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>赤い点線の円＝調査対象範囲（半径${radius.toLocaleString()}m）</span><span class="c">番号は下表のNoと対応（重なる場合は引き出し線で実位置を表示）</span></div>`;
+  const lg=`<div class="legend" style="margin:2px 0 8px"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span><span class="c">番号は下表のNoと対応（重なる場合は引き出し線で実位置を表示）</span></div>`;
   return paper(title,lead,m.html+lg+body,src);
 }
 /* Googleマップ上にHTMLの番号ピンを描くOverlayView（Marker のicon/label非描画への対策） */
@@ -778,7 +802,14 @@ function initMaps(g){
         cfg.markers.forEach(mk=>b.extend({lat:mk.lat,lng:mk.lon}));
         map.fitBounds(b,26);
       }else{
-        map.fitBounds(circle.getBounds(),10);
+        /* 調査対象範囲（赤丸）が地図いっぱいに映るズーム。
+           円の直径を地図の“幅”に合わせるので、範囲外の余白が最小になる（上下は範囲外がわずかに切れる） */
+        const el=map.getDiv(),w=el.offsetWidth||690;
+        if(w>0&&cfg.radius>0){
+          const mpp=(cfg.radius*2*1.02)/w; /* 1m/px：直径＋2%の余白 */
+          const z=Math.log2(156543.03392*Math.cos(center.lat*Math.PI/180)/mpp);
+          map.setCenter(center);map.setZoom(Math.max(10,Math.min(18,Math.round(z*10)/10)));
+        }else{map.fitBounds(circle.getBounds(),10);}
       }
     });
   });
@@ -1104,6 +1135,18 @@ async function buildReport(g){
         <div class="t"><div class="l">生産年齢人口（15〜64歳）</div><div class="v">${(pop.b/pop.p25*100).toFixed(1)}%</div></div>
         <div class="t"><div class="l">2030年推計</div><div class="v" style="font-size:16px">${pop.p30.toLocaleString()}人<small>（${chg>=0?'+':''}${chg.toFixed(1)}%）</small></div></div></div>
         <div class="subttl">年齢5歳階級別人口（対象地点周辺 1kmメッシュ×${pop.n}区画の合算）</div>${bars}
+        ${(()=>{ /* 市区町村の人口増減（事業計画書アプリと同じ国勢調査ベース） */
+          const cityN=cityOf(g.title);
+          const hit=POP_DB.find(x=>x.m===cityN)||POP_DB.find(x=>cityN&&x.m.indexOf(cityN)>=0)||POP_DB.find(x=>cityN&&cityN.indexOf(x.m)>=0);
+          if(!hit)return '';
+          const up=hit.r>=0;
+          return `<div class="bandttl">${hit.m}の人口増減（2020年→2025年）</div>
+            <table class="calc"><tr><td class="k" style="width:190px">直近5年の人口増減率</td>
+            <td class="r" style="text-align:left;font-size:16px;color:${up?'#0f766e':'#b91c1c'}"><b>${up?'+':''}${hit.r}%</b>
+            <span style="font-weight:400;color:#64748b;font-size:11px">（${up?'人口増加':'人口減少'}）</span></td></tr>
+            <tr><td class="k">賃貸需要の評価区分</td><td class="r" style="text-align:left">${hit.r>=0?'人口上昇エリア':(hit.r>-4?'人口減少4%未満':'人口減少4%以上')}</td></tr></table>
+            <div class="note" style="border:0;padding:0;margin:4px 0 8px">※出典：令和7年（2025年）国勢調査 人口速報集計（2020年比）。確報は令和8年9月公表予定。</div>`;
+        })()}
         <div class="subttl" style="margin-top:10px">年齢3区分</div>
         <table class="lst"><tr><th>区分</th><th style="text-align:right">人口</th><th style="text-align:right">構成比</th></tr>
         <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
@@ -1119,7 +1162,7 @@ async function buildReport(g){
   if(document.getElementById('opt_flood').checked){
     const m1=mapDiv();MAPS.push({id:m1.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png']});
     h+=paper('浸水想定区域（洪水）','想定最大規模の降雨による浸水深（国土交通省 ハザードマップポータル公式データ）',
-      m1.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
+      m1.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
       <div class="legend"><span class="c"><span class="sw" style="background:#F7F5A9"></span>0.5m未満</span><span class="c"><span class="sw" style="background:#FFB7B7"></span>0.5〜3m</span><span class="c"><span class="sw" style="background:#FF9191"></span>3〜5m</span><span class="c"><span class="sw" style="background:#F285C9"></span>5〜10m</span><span class="c"><span class="sw" style="background:#DC7ADC"></span>10〜20m</span><span class="c"><span class="sw" style="background:#B40068"></span>20m以上</span><span class="c">色が付いていなければ浸水想定区域外</span></div>
       <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`,
       '国土交通省 ハザードマップポータルサイト（洪水浸水想定区域・想定最大規模）');
@@ -1128,7 +1171,7 @@ async function buildReport(g){
   if(document.getElementById('opt_dosha').checked){
     const m2=mapDiv();MAPS.push({id:m2.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png']});
     h+=paper('土砂災害警戒区域','土石流・急傾斜地の崩壊・地すべり（国土交通省 ハザードマップポータル公式データ）',
-      m2.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
+      m2.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
       <div class="legend"><span class="c"><span class="sw" style="background:#FBD7A3"></span>警戒区域（黄）</span><span class="c"><span class="sw" style="background:#F5B0A0"></span>特別警戒区域（赤）</span><span class="c">色が付いていなければ区域外</span></div>
       <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`,
       '国土交通省 ハザードマップポータルサイト（土砂災害警戒区域）');
