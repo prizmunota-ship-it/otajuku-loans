@@ -31,7 +31,8 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .paper .lead{font-size:12px;color:#374151;margin-bottom:10px;}
 .paper .lead b{color:#0f766e;}
 /* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
-.map{width:100%;max-width:690px;height:300px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
+.map{width:100%;max-width:690px;height:420px;}
+.map.sm{height:300px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:11px;padding:6px 8px;font-weight:700;color:#374151;text-align:left;}
@@ -40,7 +41,7 @@ table.lst td.no{width:34px;text-align:center;font-weight:800;color:#fff;}
 table.lst td.no span{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;font-size:11px;}
 table.lst td.r{text-align:right;white-space:nowrap;font-weight:700;}
 table.lst td.nm{font-weight:700;}
-.note{font-size:9.5px;color:#94a3b8;margin-top:9px;line-height:1.5;border-top:1px solid #eef2f2;padding-top:6px;}
+.note{font-size:9.5px;color:#94a3b8;margin-top:6px;line-height:1.5;border-top:1px solid #eef2f2;padding-top:6px;}
 .gbtn{display:inline-block;margin:2px 0 10px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
 /* ===== 表紙（金融機関提出用・1ページ完結） ===== */
 .cover{background:#fff;border:1px solid #d7dde3;padding:0;overflow:hidden;}
@@ -104,6 +105,8 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 @media print{
  /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+ /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
+ .gm-style-moc,.gm-style-mot,.gmnoprint,.gm-fullscreen-control,.gm-svpc{display:none!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
  .wrap{padding:0;max-width:none;}
  .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin-bottom:0;}
@@ -111,7 +114,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v4.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件周辺環境レポート（金融機関提出用）</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v4.7</div></div>
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
@@ -122,7 +125,10 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     </label>
     <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
     <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
-    <label><input type="checkbox" id="opt_haz" checked>ハザードマップ</label>
+    <label><input type="checkbox" id="opt_flood" checked>浸水想定区域</label>
+    <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
+    <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
+    <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
     <label style="font-weight:700">作成者名
       <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
     </label>
@@ -196,7 +202,7 @@ const CSE_CX='';  /* Custom Search APIは新規提供終了のため未使用 */
 /* ★類似物件の自動検索：太田さんのGAS(SUUMO一覧を自動発見→解析)を呼ぶ */
 const GAS_SEARCH='https://script.google.com/macros/s/AKfycbzXp4Ew-ilHYsXOVaUVwcz9Fy_LkehyVy18wf4iwwhStkWcmudNI0IsWMZuSrcSF3llDg/exec';
 /* 住所→都道府県／市区町村（政令市は「福岡市東区」、郡部は「大木町」を返す） */
-function prefOf(t){const m=(t||'').match(/(北海道|東京都|(?:京都|大阪)府|.{2,4}?県)/);return m?m[1]:'';}
+function prefOf(t){const m=(t||'').match(/(北海道|東京都|京都府|大阪府|[一-龥]{2,3}県)/);return m?m[1]:'';}
 /* 住所だけを取り出す（Google/SUUMOが返す物件名は実際の調査対象と異なる場合があるので表紙には載せない） */
 function addrOnly(t){
   t=(t||'').trim();
@@ -391,10 +397,16 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   own=own||{min:0,max:0,men:0};
   const today=new Date();
   const ownCity=(addr.replace(/^.*?[都道府県]/,'').match(/^(.{2,8}?[市区町村])/)||[])[1]||'';
-  /* 本物件から近い順に並べ替え（位置が取れなかったものは末尾） */
+  /* 本物件から近い順に並べ替え。★調査対象範囲の外と位置不明（＝地図に出ないもの）は除外 */
+  let outCnt=0;
   if(opts.center){
+    const R=opts.radius||1500;
     cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
-    cmp.sort((a,b)=>(a.d==null?1e9:a.d)-(b.d==null?1e9:b.d));
+    const before=cmp.length;
+    cmp=cmp.filter(c=>c.d!=null&&c.d<=R);
+    outCnt=before-cmp.length;
+    cmp.sort((a,b)=>a.d-b.d);
+    cmp=cmp.slice(0,5);
   }
   let mismatch=0;
   let rows='';cmp.forEach((c,i)=>{
@@ -470,11 +482,11 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     let mapHtml='';
     const withGeo=cmp.filter(c=>c.lat!=null&&c.lon!=null);
     if(withGeo.length&&opts.center){
-      const m=mapDiv();
+      const m=mapDiv('sm');
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
-      mapHtml=m.html+`<div class="legend"><span class="c">📍 青ピン＝本物件</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>
-      <div class="note" style="border:0;margin:0 0 8px;padding:0">※類似物件は<b>同一市区町村</b>から間取り・面積の近い順に抽出しているため、調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）の外の物件を含みます。距離は「本物件から」列をご確認ください。</div>`;
+      mapHtml=m.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="background:#d97706;border-radius:50%"></span>①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）</span></div>
+      <div class="note" style="border:0;margin:0 0 8px;padding:0">※<b>調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内</b>で募集中の類似物件のみを掲載しています。${outCnt>0?'（範囲外の'+outCnt+'件は除外）':''}件数が少ない場合は、調査対象範囲を広げて再作成してください。</div>`;
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
     /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
@@ -516,7 +528,7 @@ nwr["amenity"="dentist"](around:${radius},${lat},${lon});nwr["amenity"="police"]
 nwr["amenity"="kindergarten"](around:${radius},${lat},${lon});nwr["amenity"="childcare"](around:${radius},${lat},${lon});
 nwr["amenity"="school"](around:${radius},${lat},${lon});nwr["leisure"="park"](around:${radius},${lat},${lon});
 nwr["amenity"="social_facility"](around:${radius},${lat},${lon});nwr["amenity"="nursing_home"](around:${radius},${lat},${lon});
-node["railway"="station"](around:${Math.max(radius,2000)},${lat},${lon});
+node["railway"="station"](around:${radius},${lat},${lon});
 node["highway"="bus_stop"](around:${radius},${lat},${lon});node["public_transport"="platform"]["bus"="yes"](around:${radius},${lat},${lon});
 );out center tags;`;
   const eps=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter","https://overpass.private.coffee/api/interpreter"];
@@ -526,10 +538,17 @@ node["highway"="bus_stop"](around:${radius},${lat},${lon});node["public_transpor
       if(!r.ok)continue;const j=await r.json();return j.elements||[];}catch(e){}}
   return null;
 }
-async function jshis(lat,lon){try{const r=await fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/meshinfo.geojson?position=${lon},${lat}`);if(!r.ok)return null;const j=await r.json();return (j.features&&j.features[0]&&j.features[0].properties)||null;}catch(e){return null;}}
+/* J-SHIS 地震動予測（ブラウザから直接取得可・データセット名まで含めたパスが必須） */
+async function jshis(lat,lon){try{
+  const r=await fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/TTL_MTTL/meshinfo.geojson?position=${lon},${lat}&epsg=4612`);
+  if(!r.ok)return null;const j=await r.json();
+  return (j.features&&j.features[0]&&j.features[0].properties)||null;
+}catch(e){return null;}}
 
 /* ============ 分類 ============ */
-function classify(els,lat,lon){
+let RADIUS=1500;
+function classify(els,lat,lon,radius){
+  RADIUS=radius||RADIUS;
   const L={station:[],bus:[],super:[],conv:[],drug:[],hosp:[],dent:[],post:[],bank:[],police:[],welfare:[],kinder:[],elem:[],jhs:[],hs:[],school:[],park:[]};
   for(const e of (els||[])){
     const t=e.tags||{};const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);
@@ -557,8 +576,10 @@ function classify(els,lat,lon){
     else if(t.leisure==='park')k='park';
     if(k)L[k].push(item);
   }
-  /* 全カテゴリ：物件から近い順。駅・バス停は同名（上下線・複数ホーム）を最寄り1件に名寄せ */
+  /* 全カテゴリ：物件から近い順。駅・バス停は同名（上下線・複数ホーム）を最寄り1件に名寄せ。
+     ★調査対象範囲の外は載せない（地図に出ないものを表に出さないため・太田指示 2026-08-07） */
   for(const k in L){
+    L[k]=L[k].filter(it=>it.d<=RADIUS);
     L[k].sort((a,b)=>a.d-b.d);
     if(k==='station'||k==='bus'){
       const seen=new Set();
@@ -587,7 +608,7 @@ function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
 
 /* ============ ペーパー描画 ============ */
 let MAPS=[];let mapSeq=0;
-function mapDiv(){mapSeq++;return {id:'m'+mapSeq,html:`<div class="map" id="m${mapSeq}"></div>`};}
+function mapDiv(cls){mapSeq++;return {id:'m'+mapSeq,html:`<div class="map ${cls||''}" id="m${mapSeq}"></div>`};}
 function tbl(items,color,n,extraCol){
   if(!items.length)return `<div class="phase" style="margin:4px 0">この範囲では見つかりませんでした（地図データ未収録の場合あり）</div>`;
   let h=`<table class="lst"><tr><th style="width:34px">No</th><th>名称</th>${extraCol?'<th>'+extraCol.h+'</th>':''}<th style="width:88px;text-align:right">直線距離</th><th style="width:76px;text-align:right">徒歩</th></tr>`;
@@ -599,15 +620,30 @@ function paper(title,lead,body,src){
   return `<div class="paper"><h2>${title}</h2><div class="lead">${lead}</div>${body}
   <div class="note">※地図上のアイコンは付近住所に所在することを表すもので、施設の正確な地点を保証するものではありません。距離は直線距離。徒歩分数は道路距離換算（直線距離×1.3・80m/分）、「経路実測」表示はGoogleの徒歩経路による実測値。<br>※情報出典：${src}</div></div>`;
 }
+/* 1項目＝1ページに収めるため、区分が複数ある場合も「区分」列を持つ1つの表にまとめる（太田指示：地図を大きく・文字より絵で） */
 function facilityPaper(title,lead,groups,g,radius,src){
-  const m=mapDiv();const markers=[];let body=m.html;let idx=0;
+  const m=mapDiv();const markers=[];let idx=0;
+  const rows=[];let extraCol=null;
   for(const gr of groups){
-    const items=gr.items.slice(0,gr.n);
-    items.forEach(f=>{idx++;f.idx=idx;markers.push({lat:f.lat,lon:f.lon,label:idx,color:gr.color,name:f.name});});
-    body+=`<div class="subttl">${gr.label}</div>`+tbl(items,gr.color,gr.n,gr.extraCol);
+    if(gr.extraCol)extraCol=gr.extraCol;
+    gr.items.slice(0,gr.n).forEach(f=>{idx++;f.idx=idx;f._g=gr;
+      markers.push({lat:f.lat,lon:f.lon,label:idx,color:gr.color,name:f.name});rows.push(f);});
+  }
+  let body;
+  if(!rows.length){
+    body=`<div class="phase" style="margin-top:4px">この調査対象範囲（半径${radius.toLocaleString()}m）内では見つかりませんでした。調査対象範囲を広げて再作成すると見つかる場合があります。</div>`;
+  }else{
+    body=`<table class="lst"><tr><th style="width:34px">No</th><th style="width:96px">区分</th><th>名称</th>${extraCol?'<th style="width:118px">'+extraCol.h+'</th>':''}<th style="width:84px;text-align:right">直線距離</th><th style="width:74px;text-align:right">徒歩</th></tr>`
+      +rows.map(f=>`<tr><td class="no"><span style="background:${f._g.color}">${f.idx}</span></td>
+        <td style="font-size:11.5px;color:#475569;font-weight:700">${f._g.label}</td>
+        <td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}
+        <td class="r">${f.d.toLocaleString()}m${f.rd?'<div style="font-size:9px;color:#94a3b8;font-weight:400">経路'+f.rd.toLocaleString()+'m</div>':''}</td>
+        <td class="r">約${f.min}分${f.rd?'<div style="font-size:9px;color:#16a34a;font-weight:700">経路実測</div>':''}</td></tr>`).join('')
+      +'</table>';
   }
   MAPS.push({id:m.id,center:[g.lat,g.lon],radius,markers});
-  return paper(title,lead,body,src);
+  const lg=`<div class="legend" style="margin:-6px 0 10px"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>赤い点線の円＝調査対象範囲（半径${radius.toLocaleString()}m）</span><span class="c">番号は下表のNoと対応（重なる場合は引き出し線で実位置を表示）</span></div>`;
+  return paper(title,lead,m.html+lg+body,src);
 }
 /* Googleマップ上にHTMLの番号ピンを描くOverlayView（Marker のicon/label非描画への対策） */
 function htmlPins(map,pins){
@@ -626,7 +662,7 @@ function htmlPins(map,pins){
       dt.style.cssText='position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:#fff;border:2px solid #64748b;display:none;z-index:6;';
       this.div.appendChild(dt);this.dots.push(dt);
       const e=document.createElement('div');
-      e.style.cssText='position:absolute;line-height:0;transform:translate(-50%,'+(p.anchor==='bottom'?'-100%':'-50%')+');z-index:'+(p.top?9999:10)+';';
+      e.style.cssText='position:absolute;line-height:0;transform:translate(-50%,'+(p.anchorPct||(p.anchor==='bottom'?'-100%':'-50%'))+');z-index:'+(p.top?9999:10)+';';
       e.title=p.title||'';e.innerHTML=p.html;
       this.div.appendChild(e);return e;
     });
@@ -683,8 +719,16 @@ function initMaps(g){
     /* ピンはSVGで描く（CSSの円・回転は印刷時に形や色が崩れるため） */
     const pins=(cfg.markers||[]).map(mk=>({lat:mk.lat,lon:mk.lon,title:mk.name,
       html:`<svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10.5" fill="${mk.color}" stroke="#ffffff" stroke-width="2.5"/><text x="13" y="17.4" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold" fill="#ffffff">${mk.label}</text></svg>`}));
-    pins.push({lat:cfg.center[0],lon:cfg.center[1],title:'調査対象物件',top:true,anchor:'bottom',
-      html:`<svg width="30" height="39" viewBox="0 0 30 39"><path d="M15 37.5C15 37.5 27.5 21.5 27.5 14A12.5 12.5 0 1 0 2.5 14C2.5 21.5 15 37.5 15 37.5Z" fill="#1d4ed8" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/><circle cx="15" cy="14" r="4.6" fill="#ffffff"/></svg>`});
+    /* 本物件ピンは地図に埋もれないよう、大きめ＋白フチ＋濃紺の縁取り＋「本物件」ラベル */
+    pins.push({lat:cfg.center[0],lon:cfg.center[1],title:'調査対象物件',top:true,anchorPct:'-77.4%',
+      html:`<svg width="44" height="62" viewBox="0 0 44 62">
+        <ellipse cx="22" cy="48.5" rx="9" ry="3.2" fill="#000" opacity=".22"/>
+        <path d="M22 48C22 48 37 26.5 37 17A15 15 0 1 0 7 17C7 26.5 22 48 22 48Z" fill="#ffffff"/>
+        <path d="M22 44C22 44 34 25.5 34 17A12 12 0 1 0 10 17C10 25.5 22 44 22 44Z" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.2" stroke-linejoin="round"/>
+        <circle cx="22" cy="17" r="4.6" fill="#ffffff"/>
+        <g><rect x="0.5" y="50.5" width="43" height="11" rx="3" fill="#ffffff" stroke="#7f1d1d" stroke-width="1.2"/>
+        <text x="22" y="59" text-anchor="middle" font-family="Hiragino Kaku Gothic ProN,sans-serif" font-size="8.6" font-weight="bold" fill="#7f1d1d">本物件</text></g>
+      </svg>`});
     htmlPins(map,pins);
     /* 表示範囲：⚠️構築直後にfitBoundsを呼ぶとタイルが描画されない（実機検証済）。
        必ず最初の'idle'を待ってから合わせること。 */
@@ -854,12 +898,12 @@ async function buildReport(g){
   }
   const radius=parseInt(val('pradius'))||1500;
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
-  const [els,js]=await Promise.all([overpass(g.lat,g.lon,radius),document.getElementById('opt_haz').checked?jshis(g.lat,g.lon):null]);
+  const els=await overpass(g.lat,g.lon,radius);
   document.getElementById('go').disabled=false;
   if(els===null){setStatus('⚠️ 周辺データの取得が混み合っています。30秒ほど待って、もう一度「✅この位置でレポートを作成」を押してください。<br><button class="addrow" onclick="confirmGo()" style="margin-top:6px">🔁 もう一度作成する</button>',true);return;}
   hideStatus();
   const query=g.query||val('paddr');
-  const F0=classify(els,g.lat,g.lon);
+  const F0=classify(els,g.lat,g.lon,radius);
   /* バス停がOSMに無い／少ない地域はGoogle Placesで補完（羽犬塚など収録ゼロの地域対策） */
   if(F0.bus.length<3){
     try{
@@ -899,7 +943,10 @@ async function buildReport(g){
   toc.push('最寄り駅情報','バス停情報','ショッピング環境','医療環境','生活・公共施設','福祉施設','類似物件の賃貸情報');
   if(document.getElementById('opt_edu').checked)toc.push('教育施設・公園');
   if(document.getElementById('opt_pop').checked)toc.push('年齢別人口統計');
-  if(document.getElementById('opt_haz').checked)toc.push('ハザード関連情報');
+  if(document.getElementById('opt_flood').checked)toc.push('浸水想定区域（洪水）');
+  if(document.getElementById('opt_dosha').checked)toc.push('土砂災害警戒区域');
+  if(document.getElementById('opt_quake').checked)toc.push('地震ハザード（揺れやすさ・発生確率）');
+  if(document.getElementById('opt_snow').checked)toc.push('豪雪地帯の指定');
   toc.push('位置の確認（Googleマップ）');
   const author=(val('pauthor')||'').trim();
   h+=`<div class="paper cover"><div class="band"></div><div class="inner">
@@ -980,28 +1027,28 @@ async function buildReport(g){
 
   /* --- 最寄り駅 --- */
   h+=facilityPaper('最寄り駅情報','調査対象範囲近辺の駅までの距離と徒歩分数（距離順）',
-    [{label:'鉄道駅',color:'#2563eb',items:F.station,n:5,extraCol:{h:'路線・事業者'}}],g,radius,'OpenStreetMap');
+    [{label:'鉄道駅',color:'#2563eb',items:F.station,n:4,extraCol:{h:'路線・事業者'}}],g,radius,'OpenStreetMap');
   /* --- バス停 --- */
   h+=facilityPaper('バス停情報','調査対象範囲近辺のバス停留所（距離順）',
-    [{label:'バス停留所',color:'#d97706',items:F.bus,n:6,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
+    [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:3}],g,radius,'OpenStreetMap');
+    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
-    [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:4},{label:'歯科',color:'#9333ea',items:F.dent,n:3}],g,radius,'OpenStreetMap');
+    [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'OpenStreetMap');
   /* --- 生活・公共 --- */
   h+=facilityPaper('生活・公共施設','調査対象範囲近辺の公共施設・金融機関（距離順）',
-    [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:3},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'OpenStreetMap');
+    [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:2},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'OpenStreetMap');
   /* --- 福祉 --- */
   h+=facilityPaper('福祉施設','調査対象範囲近辺の福祉施設（距離順）',
-    [{label:'福祉施設（介護・支援等）',color:'#7c3aed',items:F.welfare,n:5}],g,radius,'OpenStreetMap');
+    [{label:'福祉施設（介護・支援等）',color:'#7c3aed',items:F.welfare,n:4}],g,radius,'OpenStreetMap');
   /* --- ④ 類似物件の賃貸情報 --- */
   h+=compHtml;
   /* --- 教育・公園（選択） --- */
   if(document.getElementById('opt_edu').checked){
     h+=facilityPaper('教育施設・公園','調査対象範囲近辺の教育施設と公園（距離順）※ファミリー向け物件の検討資料',
-      [{label:'幼稚園・保育所',color:'#f59e0b',items:F.kinder,n:3},{label:'小学校',color:'#16a34a',items:F.elem,n:3},{label:'中学校',color:'#2563eb',items:F.jhs,n:3},{label:'高校',color:'#7c3aed',items:F.hs,n:2},{label:'公園',color:'#059669',items:F.park,n:3}],g,radius,'OpenStreetMap');
+      [{label:'幼稚園・保育所',color:'#f59e0b',items:F.kinder,n:2},{label:'小学校',color:'#16a34a',items:F.elem,n:2},{label:'中学校',color:'#2563eb',items:F.jhs,n:1},{label:'高校',color:'#7c3aed',items:F.hs,n:1},{label:'公園',color:'#059669',items:F.park,n:2}],g,radius,'OpenStreetMap');
   }
   /* --- 人口（選択） --- */
   if(document.getElementById('opt_pop').checked){
@@ -1028,18 +1075,66 @@ async function buildReport(g){
     }
   }
   /* --- ハザード（選択） --- */
-  if(document.getElementById('opt_haz').checked){
+  /* --- 浸水想定区域（選択） --- */
+  if(document.getElementById('opt_flood').checked){
     const m1=mapDiv();MAPS.push({id:m1.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/01_flood_l2_shinsuishin_data/{z}/{x}/{y}.png']});
+    h+=paper('浸水想定区域（洪水）','想定最大規模の降雨による浸水深（国土交通省 ハザードマップポータル公式データ）',
+      m1.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
+      <div class="legend"><span class="c"><span class="sw" style="background:#F7F5A9"></span>0.5m未満</span><span class="c"><span class="sw" style="background:#FFB7B7"></span>0.5〜3m</span><span class="c"><span class="sw" style="background:#FF9191"></span>3〜5m</span><span class="c"><span class="sw" style="background:#F285C9"></span>5〜10m</span><span class="c"><span class="sw" style="background:#DC7ADC"></span>10〜20m</span><span class="c"><span class="sw" style="background:#B40068"></span>20m以上</span><span class="c">色が付いていなければ浸水想定区域外</span></div>
+      <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`,
+      '国土交通省 ハザードマップポータルサイト（洪水浸水想定区域・想定最大規模）');
+  }
+  /* --- 土砂災害警戒区域（選択） --- */
+  if(document.getElementById('opt_dosha').checked){
     const m2=mapDiv();MAPS.push({id:m2.id,center:[g.lat,g.lon],radius,markers:[],overlays:['https://disaportaldata.gsi.go.jp/raster/05_dosekiryukeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_kyukeishakeikaikuiki/{z}/{x}/{y}.png','https://disaportaldata.gsi.go.jp/raster/05_jisuberikeikaikuiki/{z}/{x}/{y}.png']});
-    let jsRow='';
-    if(js){const p=js.T30_I55_PS||js.T30_I60_PS;if(p!=null)jsRow=`<table class="calc" style="margin:8px 0"><tr><td class="k">30年以内に震度6強以上の地震が発生する確率</td><td class="r">${(p*100).toFixed(1)}%（防災科研 J-SHIS）</td></tr></table>`;}
-    let body=`<div class="subttl">洪水浸水想定区域（想定最大規模）</div>${m1.html}
-      <div class="legend"><span class="c"><span class="sw" style="background:#F7F5A9"></span>0.5m未満</span><span class="c"><span class="sw" style="background:#FFB7B7"></span>0.5〜3m</span><span class="c"><span class="sw" style="background:#FF9191"></span>3〜5m</span><span class="c"><span class="sw" style="background:#F285C9"></span>5〜10m</span><span class="c"><span class="sw" style="background:#DC7ADC"></span>10〜20m</span><span class="c"><span class="sw" style="background:#B40068"></span>20m以上</span></div>
-      <div class="subttl">土砂災害警戒区域（土石流・急傾斜地・地すべり）</div>${m2.html}
-      <div class="legend"><span class="c"><span class="sw" style="background:#FBD7A3"></span>警戒区域（黄）</span><span class="c"><span class="sw" style="background:#F5B0A0"></span>特別警戒区域（赤）</span><span class="c">色が表示されなければ区域外</span></div>
-      ${jsRow}
-      <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`;
-    h+=paper('ハザード関連情報','洪水浸水想定・土砂災害警戒区域（国土交通省 ハザードマップポータル公式データ）',body,'国土交通省 ハザードマップポータルサイト／防災科学技術研究所 J-SHIS');
+    h+=paper('土砂災害警戒区域','土石流・急傾斜地の崩壊・地すべり（国土交通省 ハザードマップポータル公式データ）',
+      m2.html+`<div class="legend"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>調査対象範囲（半径${radius.toLocaleString()}m）</span></div>
+      <div class="legend"><span class="c"><span class="sw" style="background:#FBD7A3"></span>警戒区域（黄）</span><span class="c"><span class="sw" style="background:#F5B0A0"></span>特別警戒区域（赤）</span><span class="c">色が付いていなければ区域外</span></div>
+      <a class="gbtn" href="https://disaportal.gsi.go.jp/maps/?ll=${g.lat},${g.lon}&z=15" target="_blank" rel="noopener">🗾 重ねるハザードマップで詳細確認 ↗</a>`,
+      '国土交通省 ハザードマップポータルサイト（土砂災害警戒区域）');
+  }
+  /* --- 地震（揺れやすさ・発生確率）（選択） --- */
+  if(document.getElementById('opt_quake').checked){
+    const q=await jshis(g.lat,g.lon);
+    let body;
+    if(q&&q.T30_I60_PS!=null){
+      const pc=v=>(parseFloat(v)*100);
+      const amp=(parseFloat(q.T30_P03_SV)||0)/(parseFloat(q.T30_P03_BV)||1);
+      const ampTxt=amp>=1.6?'揺れやすい':amp>=1.3?'やや揺れやすい':amp>=1.1?'ふつう':'揺れにくい';
+      const p60=pc(q.T30_I60_PS),p55=pc(q.T30_I55_PS),p50=pc(q.T30_I50_PS),p45=pc(q.T30_I45_PS);
+      const lv=p60>=6?'高い':p60>=3?'やや高い':p60>=0.5?'ふつう':'低い';
+      body=`<div class="kpi3">
+        <div class="t hl"><div class="l">30年以内に震度6強以上</div><div class="v">${p60.toFixed(1)}%</div><div class="s">全国的な水準：${lv}</div></div>
+        <div class="t"><div class="l">30年以内に震度6弱以上</div><div class="v" style="font-size:17px">${p55.toFixed(1)}%</div></div>
+        <div class="t"><div class="l">30年以内に震度5強以上</div><div class="v" style="font-size:17px">${p50.toFixed(1)}%</div></div></div>
+        <div class="bandttl">地震発生確率（今後30年間の超過確率）</div>
+        <table class="lst"><tr><th>想定される震度</th><th style="width:120px;text-align:right">30年以内の確率</th><th style="width:150px;text-align:right">目安</th></tr>
+        <tr><td>震度5弱以上</td><td class="r">${p45.toFixed(1)}%</td><td class="r">${p45>=50?'高い':'—'}</td></tr>
+        <tr><td>震度5強以上</td><td class="r">${p50.toFixed(1)}%</td><td class="r">${p50>=26?'100年に1度以上':p50>=6?'500年に1度':'—'}</td></tr>
+        <tr><td>震度6弱以上</td><td class="r">${p55.toFixed(1)}%</td><td class="r">${p55>=6?'500年に1度':'—'}</td></tr>
+        <tr class="own"><td>震度6強以上</td><td class="r">${p60.toFixed(1)}%</td><td class="r">${p60>=6?'500年に1度':p60>=3?'1000年に1度':'それ以下'}</td></tr></table>
+        <div class="bandttl">地震時の揺れやすさ</div>
+        <table class="calc"><tr><td class="k" style="width:200px">地表／工学的基盤の速度応答比</td><td class="r" style="text-align:left"><b>${amp.toFixed(2)} 倍</b>　（${ampTxt}）</td></tr>
+        <tr><td class="k">地表の速度応答（30年3%）</td><td class="r" style="text-align:left">${q.T30_P03_SV} cm/s</td></tr>
+        <tr><td class="k">工学的基盤の速度応答（30年3%）</td><td class="r" style="text-align:left">${q.T30_P03_BV} cm/s</td></tr></table>
+        <div class="evalbox"><span class="tt">【読み方】</span>数値は地震調査研究推進本部「全国地震動予測地図」の確率論的地震動予測（平均ケース）による、この地点（約1km四方）の値です。速度応答比は地表の揺れが工学的基盤の何倍になるかの目安で、大きいほど表層地盤が軟らかく揺れやすいことを示します。
+        <div style="margin-top:6px"><a class="gbtn" href="https://www.j-shis.bosai.go.jp/map/?lat=${g.lat}&lon=${g.lon}&z=13" target="_blank" rel="noopener">🔎 J-SHIS 地震ハザードステーションで確認 ↗</a></div></div>`;
+    }else{
+      body='<div class="phase">地震ハザードのデータを取得できませんでした（防災科研 J-SHIS の応答なし）。時間をおいて再作成してください。</div>';
+    }
+    h+=paper('地震ハザード（揺れやすさ・発生確率）','この地点の地震動予測（防災科学技術研究所 J-SHIS）',body,
+      '防災科学技術研究所 J-SHIS 地震ハザードステーション／地震調査研究推進本部「全国地震動予測地図」（2023年版・平均ケース）');
+  }
+  /* --- 豪雪地帯（選択） --- */
+  if(document.getElementById('opt_snow').checked){
+    const SNOW={'北海道':'全域','青森県':'全域','岩手県':'全域','宮城県':'一部','秋田県':'全域','山形県':'全域','福島県':'一部','茨城県':'一部','栃木県':'一部','群馬県':'一部','埼玉県':'一部','新潟県':'全域','富山県':'全域','石川県':'全域','福井県':'全域','山梨県':'一部','長野県':'全域','岐阜県':'一部','静岡県':'一部','滋賀県':'一部','京都府':'一部','兵庫県':'一部','鳥取県':'全域','島根県':'一部','岡山県':'一部','広島県':'一部','山口県':'一部','愛媛県':'一部','高知県':'一部'};
+    const pf=prefOf(addrOnly(addr))||prefOf(addr);
+    const hit=SNOW[pf];
+    const body=hit
+      ? `<div class="evalbox" style="border-left-color:#2563eb"><span class="tt">【判定】</span><b>${pf}</b>は豪雪地帯対策特別措置法にもとづく<b>豪雪地帯の指定市町村を含む都道府県</b>です（指定：${hit}）。<br>本物件所在地が指定区域に該当するかは<b>市町村単位</b>で決まるため、下記の国土交通省の指定状況でご確認ください。</div>
+        <div class="bandttl">確認先</div><a class="gbtn" href="https://www.mlit.go.jp/kokudoseisaku/chisei/kokudoseisaku_chisei_tk_000021.html" target="_blank" rel="noopener">🗾 国土交通省 豪雪地帯・特別豪雪地帯の指定状況 ↗</a>`
+      : `<div class="evalbox" style="border-left-color:#16a34a"><span class="tt">【判定】</span><b>${pf||'本物件の所在都道府県'}</b>には、豪雪地帯対策特別措置法にもとづく<b>豪雪地帯の指定はありません</b>。積雪による建物荷重・除雪費用の追加負担は想定不要です。</div>`;
+    h+=paper('豪雪地帯の指定','豪雪地帯対策特別措置法にもとづく地域指定の有無',body,'国土交通省「豪雪地帯・特別豪雪地帯の指定状況」');
   }
 
   /* --- Googleマップ確認リンク --- */
