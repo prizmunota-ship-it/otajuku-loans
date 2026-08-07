@@ -141,6 +141,45 @@
       );
     }
 
+    /* 「エンパワータイムとは？」の説明パネル（ヘッダーのボタンで開閉）。
+       会の趣旨＝太田本人の言葉なので、文言は勝手に要約せずそのまま載せる。 */
+    const EMPOWER_TOPICS = [
+      '購入物件の相談、資料の確認、使い方など',
+      '質問',
+      '困ってること',
+      '活動報告（成果報告、失敗談）',
+      '旬なネタ（あれば）小話',
+      '不動産以外の話',
+      '人生の相談、家族、恋愛（経験薄い笑）',
+      'など...'
+    ];
+    function AboutEmpower({ onClose }) {
+      return (
+        <div className="mb-4 bg-white rounded-2xl border-2 border-amber-300 shadow-sm p-4 text-left">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="text-[13px] font-black text-amber-900">【エンパワータイム】</div>
+            <button onClick={onClose} className="text-[11px] font-bold text-amber-700 underline shrink-0">閉じる</button>
+          </div>
+          <div className="text-[11px] sm:text-[12px] text-slate-700 font-semibold leading-relaxed space-y-2">
+            <p>※自分と仲間を勇気づける座談会的なもの。情報交換等</p>
+            <p>※エンパワーとは、「力や権限を与える」「力をつける」という意味でみなさんの背中を押す、チャレンジに向かい豊かな人生を創ってもらうという意図でネーミングしました！</p>
+            <p>たくさんの質問や不安、悩みがあると思います（不動産に限らず）。<br />そんな困ったことを解決し、前に進むために行動できるようになる機会創りを意図しています。</p>
+            <p>特に不動産は<b className="text-amber-800">人と情報が命</b>です。みなさんで最新の情報を共有しながら、チームで前に進みましょう。</p>
+            <div className="pt-1">
+              <div className="font-black text-amber-900 mb-1">○話の内容（例）</div>
+              <ul className="space-y-0.5">
+                {EMPOWER_TOPICS.map((t, i) => (
+                  <li key={i} className="flex gap-1.5">
+                    <span className="text-amber-400">・</span><span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     /* カレンダー表示。スマホ1画面に収めるため「月の格子＋その月の予定リスト」の縦2段。
        日付をタップするとその日だけに絞り込み、もう一度タップで解除。 */
     function CalendarView() {
@@ -228,6 +267,7 @@
       const hasZoom = scheduleData.some(m => m.events.some(e => e.zoom));
       /* 表示モード（カレンダー／一覧）。選んだ方を次回も開くよう端末に覚えさせる。 */
       const [view, setView] = useState(localStorage.getItem('otajuku_sched_view') || 'calendar');
+      const [help, setHelp] = useState(false);
       const pick = (v) => { setView(v); try { localStorage.setItem('otajuku_sched_view', v); } catch (e) {} };
       const tab = (v) => `flex-1 py-1.5 rounded-full text-[12px] font-black transition-colors ${view === v ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-800'}`;
       return (
@@ -262,14 +302,23 @@
                 <div>○第二木曜日　リアルエンパワータイム（３ヶ月に一度東京目安）</div>
                 <div>○第四火曜日　オンラインエンパワータイム</div>
               </div>
-              {(hasChousei || hasZoom) && (
-                <div className="mt-2 mx-auto w-fit max-w-full bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full leading-snug">
-                  {hasChousei && <span>📋 は<span className="underline decoration-orange-400">タイトルをタップ</span>で参加表明（調整さん）</span>}
-                  {hasChousei && hasZoom && <span> / </span>}
-                  {hasZoom && <span>🎥 は<span className="underline decoration-blue-400">タップ</span>でZOOM入室</span>}
-                </div>
-              )}
+              {/* ヒントと「エンパワータイムとは？」は横1行に並べて、スマホ1画面の高さを崩さない */}
+              <div className="mt-2 flex flex-wrap justify-center items-center gap-1.5">
+                {(hasChousei || hasZoom) && (
+                  <div className="bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full leading-snug">
+                    {hasChousei && <span>📋 は<span className="underline decoration-orange-400">タイトルをタップ</span>で参加表明（調整さん）</span>}
+                    {hasChousei && hasZoom && <span> / </span>}
+                    {hasZoom && <span>🎥 は<span className="underline decoration-blue-400">タップ</span>でZOOM入室</span>}
+                  </div>
+                )}
+                <button onClick={() => setHelp(!help)}
+                  className="bg-amber-500 text-white text-[10px] sm:text-[11px] font-black px-3 py-1 rounded-full shadow-sm hover:bg-amber-600 transition-colors">
+                  ❓ エンパワータイムとは？ {help ? '▲' : '▼'}
+                </button>
+              </div>
             </div>
+
+            {help && <AboutEmpower onClose={() => setHelp(false)} />}
 
             {/* 表示切替（LINEオープンチャットのように カレンダー⇄一覧） */}
             <div className="flex gap-1 bg-amber-100/70 p-1 rounded-full mb-3">
