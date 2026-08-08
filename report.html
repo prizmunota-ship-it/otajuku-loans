@@ -123,6 +123,12 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 <div class="wrap">
 <div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.8</div></div>
 
+<div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
+  ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
+  作成する前に、画面の「…」から<b>「ブラウザで開く（Safari／Chrome）」</b>を選んで開き直してください。
+  <div style="margin-top:6px"><button class="btn sec" style="font-size:12px;padding:6px 12px" onclick="copyUrl()">🔗 URLをコピー</button><span id="cpmsg2" style="margin-left:8px;font-weight:800;color:#0f766e"></span></div>
+</div>
+
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
   <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3"></div>
@@ -186,7 +192,16 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
   <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
 </div>
-<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span></div>
+<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
+  <a href="javascript:void(0)" onclick="printHelp()" style="margin-left:10px;font-size:12px;font-weight:800;color:#0f766e">印刷できない時は？</a>
+  <div id="prhelp" class="scronly" style="display:none;margin-top:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.9;color:#78350f;max-width:690px">
+    <div style="font-weight:800;margin-bottom:4px">📱 スマホで印刷できない時</div>
+    <div><b>① LINEなどアプリの中で開いている場合</b><br>アプリ内ブラウザには印刷機能がありません。画面右下（または右上）の「…」から<b>「ブラウザで開く」「Safariで開く」</b>を選び、開き直してから作成してください。</div>
+    <div style="margin-top:6px"><b>② iPhone（Safari）の場合</b><br>「🖨 PDFで保存 / 印刷」を押す → 地図の読み込みが終わると<b>ボタンが緑色に変わる</b>ので、<b>もう一度押す</b>と印刷画面が出ます。<br>印刷画面が出ない時は、Safari下部の<b>共有ボタン → プリント</b>（または「オプション」→PDF）でも保存できます。</div>
+    <div style="margin-top:6px"><b>③ Android（Chrome）の場合</b><br>右上「⋮」→<b>共有 → 印刷</b>でもPDF保存できます。</div>
+    <div style="margin-top:8px"><button class="btn sec" style="font-size:12px;padding:6px 12px" onclick="copyUrl()">🔗 このページのURLをコピー</button><span id="cpmsg" style="margin-left:8px;font-weight:800;color:#0f766e"></span></div>
+  </div>
+</div>
 <div id="excluded" style="display:none"></div>
 <div id="report"></div>
 </div>
@@ -929,13 +944,48 @@ async function ensureMapsLoaded(){
   window.scrollTo(0,y0);
   await new Promise(r=>setTimeout(r,500));
 }
+/* ★スマホで印刷できなかった件の対策（2026-08-08）
+   iOS(Safari)は window.print() を「タップと同じ処理の流れ」でしか実行しない。
+   従来は await ensureMapsLoaded() を挟んでいたため、タップ由来の流れが切れて
+   iPhoneでは押しても無反応になっていた。
+   → 地図が揃っていればタップ直後にそのまま印刷。揃っていなければ読み込んでボタンを
+     「もう一度押すと印刷」に変え、2回目のタップ（＝タップ直下）で印刷する。
+     PCは従来どおり1回で印刷まで進む。 */
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !/Android/i.test(navigator.userAgent)); /* iPadOSはUAがMacを名乗る */
+const IS_INAPP = /Line\/|FBAN|FBAV|Instagram|Twitter|MicroMessenger/i.test(navigator.userAgent);
 async function doPrint(){
   const b=document.getElementById('prbtn');
+  if(IS_INAPP){printHelp();return;} /* アプリ内ブラウザは印刷機能そのものが無い */
+  if((MAPTOT>0&&MAPRDY>=MAPTOT)||window.__forcePrint){window.print();return;}
   b.disabled=true;b.textContent='🗺 地図を読み込み中…';
-  try{await ensureMapsLoaded();}catch(e){}
-  b.disabled=false;b.textContent='🖨 PDFで保存 / 印刷';
+  /* 読み込みが返ってこないとボタンが押せないまま固まる（＝スマホで「何も起きない」状態に見える）。
+     20秒で必ず打ち切って操作を返す。 */
+  try{await Promise.race([ensureMapsLoaded(),new Promise(r=>setTimeout(r,20000))]);}catch(e){}
+  b.disabled=false;
+  if(MAPRDY<MAPTOT)window.__forcePrint=true; /* 次のタップは待たずに印刷する */
+  if(IS_IOS){
+    b.textContent=(MAPRDY>=MAPTOT)?'🖨 準備OK！もう一度押すと印刷':'🖨 このまま印刷する（地図 '+MAPRDY+'/'+MAPTOT+'）';
+    b.style.background='#0f766e';b.style.color='#fff';
+    return;
+  }
+  b.textContent='🖨 PDFで保存 / 印刷';
   if(MAPRDY<MAPTOT&&!confirm('地図 '+MAPRDY+'/'+MAPTOT+' 枚しか読み込めませんでした。白い地図のページが出る可能性があります。このまま印刷しますか？'))return;
   window.print();
+}
+/* 「印刷できない時は？」の案内。LINE等のアプリ内ブラウザには印刷機能が無いため、
+   Safari/Chromeで開き直してもらうしかない。URLコピーだけ用意して手順を出す。 */
+function printHelp(){
+  const d=document.getElementById('prhelp');
+  d.style.display=d.style.display==='block'?'none':'block';
+}
+function copyUrl(){
+  const u=location.href;
+  const done=()=>{['cpmsg','cpmsg2'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='コピーしました！';setTimeout(()=>{e.textContent='';},2500);}});};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(done).catch(()=>{});return;}
+  const t=document.createElement('textarea');t.value=u;document.body.appendChild(t);t.select();
+  try{document.execCommand('copy');done();}catch(e){}
+  document.body.removeChild(t);
 }
 /* 地図＝Googleマップに統一（2026-08-07 v3.3・太田要望）。ハザードの公式タイルはImageMapTypeで重畳 */
 /* 地図本体はモノクロ（v6.3・太田要望）＝色が付くのは自分で載せた印だけにして見やすくする。
@@ -1492,5 +1542,7 @@ async function buildReport(g){
   }else{exEl.style.display='none';exEl.innerHTML='';}
   setTimeout(()=>initMaps(g),50);
 }
+/* アプリ内ブラウザは印刷できないので、作成する前（＝入力し直しにならないうち）に警告を出す */
+if(IS_INAPP){const w=document.getElementById('inappwarn');if(w)w.style.display='block';}
 </script>
 </body></html>
