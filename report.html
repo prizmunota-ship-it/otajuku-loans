@@ -32,8 +32,14 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .paper .lead{font-size:12px;color:#374151;margin-bottom:8px;}
 .paper .lead b{color:#0f766e;}
 /* 地図は画面でも印刷でも同じ寸法にする（幅が変わるとGoogleが別のタイルを取り直し、印刷時に地図が欠ける） */
-.map{width:100%;max-width:690px;height:520px;}
-.map.sm{height:270px;border:1px solid #cbd5e1;border-radius:4px;margin:0 auto 12px;background:#eef2f2;position:relative;z-index:0;}
+/* ★地図は常に690px（＝印刷時の用紙内容幅）で描画し、画面が狭い端末では
+   CSS transformで見た目だけ縮める。Googleマップのズームは「コンテナの幅」で決まるため、
+   画面幅で組むとスマホの狭い幅のズームのまま印刷され、赤丸（調査対象範囲）が
+   枠いっぱいに写らなかった（2026-08-08 太田報告）。DOM上の幅を固定すれば画面＝印刷になる。 */
+.mapwrap{width:100%;max-width:690px;margin:0 auto 6px;overflow:hidden;}
+.mapwrap.sm{margin-bottom:12px;}
+.map{width:690px;height:520px;transform-origin:top left;}
+.map.sm{height:270px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:10.5px;padding:3px 7px;font-weight:700;color:#374151;text-align:left;}
@@ -113,6 +119,9 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
  /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
  .gm-style-moc,.gm-style-mot,.gmnoprint,.gm-fullscreen-control,.gm-svpc{display:none!important;}
  .map,.map *{will-change:auto!important;}
+ /* 印刷は等倍。画面用の縮小(transform)と高さ合わせを解除する */
+ .mapwrap{width:690px!important;height:auto!important;overflow:visible!important;}
+ .map{transform:none!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
  .wrap{padding:0;max-width:none;}
  /* 画面と同じ内容幅690pxに固定（左右パディングを外して690pxを確保・狭い用紙では100%に縮む） */
@@ -818,7 +827,18 @@ async function officialList(g,radius,type,fallback){
 
 /* ============ ペーパー描画 ============ */
 let MAPS=[];let mapSeq=0;
-function mapDiv(cls){mapSeq++;return {id:'m'+mapSeq,html:`<div class="map ${cls||''}" id="m${mapSeq}"></div>`};}
+function mapDiv(cls){mapSeq++;return {id:'m'+mapSeq,html:`<div class="mapwrap ${cls||''}"><div class="map ${cls||''}" id="m${mapSeq}"></div></div>`};}
+/* 画面が狭い時だけ、690pxで組んだ地図を見た目のサイズに合わせて縮小する。
+   （DOM上の幅は690pxのままなので、Googleマップのズームは画面でも印刷でも同じ） */
+function scaleMaps(){
+  document.querySelectorAll('.mapwrap').forEach(w=>{
+    const m=w.querySelector('.map');if(!m)return;
+    const s=Math.min(1,w.clientWidth/690);
+    m.style.transform=s<1?'scale('+s+')':'none';
+    w.style.height=Math.round(m.offsetHeight*s)+'px';
+  });
+}
+window.addEventListener('resize',scaleMaps);
 function tbl(items,color,n,extraCol){
   if(!items.length)return `<div class="phase" style="margin:4px 0">この範囲では見つかりませんでした（地図データ未収録の場合あり）</div>`;
   let h=`<table class="lst"><tr><th style="width:34px">No</th><th>名称</th>${extraCol?'<th>'+extraCol.h+'</th>':''}<th style="width:88px;text-align:right">直線距離</th><th style="width:76px;text-align:right">徒歩</th></tr>`;
@@ -1540,7 +1560,8 @@ async function buildReport(g){
       <div style="font-size:12px;line-height:1.9;color:#78350f">${window.CMP_EXCLUDED.map(x=>'・<b>'+x.name+'</b>　—　'+x.reason).join('<br>')}</div>
       <div style="font-size:11px;color:#a16207;margin-top:6px">金融機関から「他にどんな募集があるか」と聞かれた際の想定問答にお使いください。</div></div>`;
   }else{exEl.style.display='none';exEl.innerHTML='';}
-  setTimeout(()=>initMaps(g),50);
+  scaleMaps(); /* 地図の枠を画面幅に合わせてから初期化する */
+  setTimeout(()=>{initMaps(g);scaleMaps();},50);
 }
 /* アプリ内ブラウザは印刷できないので、作成する前（＝入力し直しにならないうち）に警告を出す */
 if(IS_INAPP){const w=document.getElementById('inappwarn');if(w)w.style.display='block';}
