@@ -45,6 +45,28 @@ body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FF
 .app-card.soon{opacity:.6;cursor:default;border-style:dashed;box-shadow:none;background:#FFFDF3;}
 .logout{display:block;margin:9px auto 0;font-size:11px;color:#9A8030;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;}
 .foot{text-align:center;font-size:10px;color:#A89050;margin-top:8px;}
+
+/* ===== NEWバッジ（キラキラ） ===== */
+/* 金→ピンクのグラデを流しつつ、光の帯が横切る＋外側がふわっと明滅する。
+   バッジは横並びの文字と一緒に動くので、点滅ではなく光沢で目を引かせている。 */
+.new-badge{display:inline-block;position:relative;overflow:hidden;vertical-align:2px;
+  background:linear-gradient(100deg,#FF9800 0%,#FFD54A 22%,#FF6FB5 50%,#FFD54A 78%,#FF9800 100%);
+  background-size:220% 100%;color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;
+  padding:2px 8px;border-radius:999px;text-shadow:0 1px 2px rgba(160,70,0,.4);
+  animation:newFlow 3.2s linear infinite, newGlow 1.9s ease-in-out infinite;}
+.new-badge::after{content:'';position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.9) 50%,rgba(255,255,255,0) 100%);
+  transform:skewX(-20deg);animation:newShine 2.6s ease-in-out infinite;}
+.new-badge .spk{display:inline-block;margin-left:1px;animation:newTwinkle 1.4s ease-in-out infinite;}
+@keyframes newFlow{to{background-position:-220% 0;}}
+@keyframes newGlow{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.45) inset, 0 1px 5px rgba(255,140,0,.45);}
+  50%{box-shadow:0 0 0 1px rgba(255,255,255,.7) inset, 0 2px 12px rgba(255,110,181,.85);}}
+@keyframes newShine{0%{left:-60%;}45%,100%{left:135%;}}
+@keyframes newTwinkle{0%,100%{opacity:1;transform:scale(1) rotate(0deg);}50%{opacity:.5;transform:scale(1.35) rotate(18deg);}}
+@media (prefers-reduced-motion:reduce){
+  .new-badge,.new-badge::after,.new-badge .spk{animation:none;}
+  .new-badge{background-position:0 0;}}
 </style>
 </head>
 <body>
@@ -91,7 +113,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FF
 
   <a class="app-card" href="report.html">
     <div class="ic">🗺️</div>
-    <div class="t"><div class="nm">物件補足レポート <span style="display:inline-block;background:#E8A000;color:#fff;font-size:9px;font-weight:900;border-radius:4px;padding:1px 5px;vertical-align:2px;letter-spacing:.5px">NEW✨️</span></div><div class="ds">物件名か住所を入れるだけ。駅・買い物・医療・学校・ハザード・人口・類似物件をA4レポートに自動作成</div></div>
+    <div class="t"><div class="nm">物件補足レポート <span class="new-badge">NEW<span class="spk">✨</span></span></div><div class="ds">物件名か住所を入れるだけ。駅・買い物・医療・学校・ハザード・人口・類似物件をA4レポートに自動作成</div></div>
     <div class="arrow">›</div>
   </a>
 
