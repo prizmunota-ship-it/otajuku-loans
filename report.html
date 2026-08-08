@@ -783,18 +783,76 @@ function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
 });}
 /* Google Placesを距離順で取得（rankBy:DISTANCE＝半径指定不可・近い順に最大20件）。
    閉店（CLOSED_PERMANENTLY）は除外し、公式名称＋実測座標を返す。 */
-function placesRanked(lat,lon,type){return new Promise(res=>{
-  try{
-    const svc=new google.maps.places.PlacesService(document.createElement('div'));
-    let done=false;const fin=v=>{if(!done){done=true;res(v||[]);}};
-    svc.nearbySearch({location:new google.maps.LatLng(lat,lon),rankBy:google.maps.places.RankBy.DISTANCE,type:type},(r,s)=>{
-      if(s!=='OK'||!r){fin([]);return;}
-      fin(r.filter(p=>p.geometry&&p.name&&p.business_status!=='CLOSED_PERMANENTLY')
-          .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng()})));
-    });
-    setTimeout(()=>fin([]),8000);
-  }catch(e){res([]);}
-});}
+/* ★Places検索は必ずこの関数を通す（1本ずつ順番に投げる）。
+   ⚠️同時に投げるとGoogleがOVER_QUERY_LIMITを返し、全部“0件”で返ってくる。
+   2026-08-08に8本並列で実測したところ全滅し、OSMのままの表が出ていた。
+   上限に当たった時は間隔を空けて2回まで再試行する。 */
+let PQ=Promise.resolve();
+function psearch(kind,req){
+  const run=()=>new Promise(res=>{
+    try{
+      const svc=new google.maps.places.PlacesService(document.createElement('div'));
+      let done=false;const fin=v=>{if(!done){done=true;res(v);}};
+      const cb=(r,s)=>{
+        if(s==='OVER_QUERY_LIMIT'){fin('RETRY');return;}
+        if(s!=='OK'||!r){fin([]);return;}
+        fin(r.filter(p=>p.geometry&&p.name&&p.business_status!=='CLOSED_PERMANENTLY')
+            .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),types:p.types||[]})));
+      };
+      if(kind==='near')svc.nearbySearch(req,cb);else svc.textSearch(req,cb);
+      setTimeout(()=>fin([]),8000);
+    }catch(e){res([]);}
+  });
+  const job=async()=>{
+    for(let i=0;i<3;i++){
+      const v=await run();
+      if(v!=='RETRY')return Array.isArray(v)?v:[];
+      await new Promise(s=>setTimeout(s,400*(i+1)));
+    }
+    return [];
+  };
+  const p=PQ.then(job);
+  PQ=p.catch(()=>{}).then(()=>new Promise(s=>setTimeout(s,120)));
+  return p;
+}
+function placesRanked(lat,lon,type){
+  return psearch('near',{location:new google.maps.LatLng(lat,lon),rankBy:google.maps.places.RankBy.DISTANCE,type:type});
+}
+/* Googleのキーワード検索。業種タグが付いていない店を拾うために使う。
+   ⚠️実例：A-プライス前原店はtypesが[store]だけで type:'supermarket' の検索に出てこないが、
+   キーワード「スーパー」なら出る（2026-08-08 太田報告で判明）。 */
+/* ⚠️関数名に注意：住所ジオコーディング用の placesText(q) が別にあるので名前を分けている */
+function placesKeyword(lat,lon,radius,query){
+  return psearch('text',{query:query,location:new google.maps.LatLng(lat,lon),radius:Math.min(radius,5000)});
+}
+/* ★OSMに載っていない店をGoogle Placesで足し込む（2026-08-08 太田報告の対策）
+   OSMは住民が編集する地図なので、日本の店舗は登録漏れが珍しくない（コンビニ・スーパーが
+   すぐ近くにあるのに表に出ない）。OSMを消さずに、Googleで見つかった分を足して名寄せする。
+   ng＝スーパー検索に紛れる小売（直売所・青果店など）を落とすための除外パターン。 */
+const NG_SUPER=/直売所|青果|精肉|鮮魚|乾物|かまぼこ|米穀|酒店|酒販|サプリ|不動産|物産|食料品店|食品店/;
+/* Googleのtype:'doctor'は歯科・整骨院・デイサービスまで返してくるため、
+   「病院・クリニック」欄に紛れないよう名称で除く（歯科は歯科欄に別途出る） */
+const NG_HOSP=/歯科|デンタル|矯正歯科|デイサービス|訪問看護|介護|居宅|接骨|整骨|鍼灸|あん摩|マッサージ|動物病院|薬局|薬品/;
+async function addPlaces(list,g,radius,opt){
+  const found=[];
+  for(const t of (opt.types||[])){try{found.push(...(await placesRanked(g.lat,g.lon,t)||[]));}catch(e){}}
+  if(opt.text){try{found.push(...(await placesKeyword(g.lat,g.lon,radius,opt.text)||[]));}catch(e){}}
+  if(!found.length)return list;
+  const norm=s=>s.replace(/[\s　]/g,'');
+  const out=list.slice();const seen=new Set(out.map(x=>norm(x.name)));
+  for(const p of found){
+    if(opt.ng&&opt.ng.test(p.name))continue;
+    const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
+    if(d>radius)continue;
+    const key=norm(p.name);
+    if(seen.has(key))continue;
+    if(out.some(x=>{const a=norm(x.name);return (a.includes(key)||key.includes(a))&&dist(x.lat,x.lon,p.lat,p.lon)<80;}))continue;
+    seen.add(key);
+    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
+  }
+  out.sort((a,b)=>a.d-b.d);
+  return out;
+}
 /* ★郵便局・銀行・警察はGoogle Placesを正とする（太田指示 2026-08-08）
    OSMは誤登録・重複が多く、久留米で「久留米郵便局」が福岡銀行の建物上にも登録され、
    同名2件（262m/330m）が並ぶ誤表示が出た。Googleは日本の郵便局・銀行・交番の収録が確実なため、
@@ -807,18 +865,29 @@ const NAME_OK={
   bank:/銀行|信用金庫|信金|信用組合|信組|労働金庫|ろうきん|農業協同組合|ＪＡ|JA|ゆうちょ/i,
   police:/交番|警察|駐在所|派出所/
 };
+/* 施設そのものではないPOI（例：「糸島警察署相談電話」）を落とす */
+const NAME_NG={
+  post_office:/ATM|郵便ポスト|集配/,
+  bank:/ATM$|ATMコーナー|ローンプラザ|事務センター/,
+  police:/相談電話|相談窓口|協会|会館|連絡所$/
+};
 async function officialList(g,radius,type,fallback){
-  const ok=NAME_OK[type]||/./;
+  const ok=NAME_OK[type]||/./, ng=NAME_NG[type];
   let ps=[];
-  try{ps=await placesRanked(g.lat,g.lon,type);}catch(e){ps=[];}
+  try{ps=(await placesRanked(g.lat,g.lon,type))||[];}catch(e){ps=[];}
   if(!ps.length)return (fallback||[]).filter(f=>ok.test(f.name)); /* Places自体が使えなかった場合のみOSMを使う */
   const seen=new Set();const out=[];
   for(const p of ps){
     if(!ok.test(p.name))continue; /* 名称が合わないものは載せない */
+    if(ng&&ng.test(p.name))continue;
     const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
     if(d>radius)continue;
     const key=p.name.replace(/[\s　]/g,'');
-    if(seen.has(key))continue;seen.add(key);
+    if(seen.has(key))continue;
+    /* 同じ施設がGoogleに複数POIで載っていることがある（「福岡県 糸島警察署」と
+       「糸島警察署相談電話」が同じ座標に並んだ）。40m以内の同区分は1件にまとめる。 */
+    if(out.some(x=>dist(x.lat,x.lon,p.lat,p.lon)<40))continue;
+    seen.add(key);
     out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
   }
   out.sort((a,b)=>a.d-b.d);
@@ -863,8 +932,12 @@ function facilityPaper(title,lead,groups,g,radius,src){
   const MAXROWS=6;
   if(rows.length>MAXROWS){
     rows.sort((a,b)=>a.d-b.d);
-    const keep=rows.slice(0,MAXROWS);
-    const drop=new Set(rows.slice(MAXROWS).map(f=>f.idx));
+    /* 単純に近い順で6件に切ると、近所に薬局が2軒あるだけでスーパーが押し出される。
+       まず各区分の最寄り1件を確保してから、残り枠を近い順で埋める（2026-08-08） */
+    const keep=[],seenG=new Set();
+    rows.forEach(f=>{if(!seenG.has(f._g.label)&&keep.length<MAXROWS){seenG.add(f._g.label);keep.push(f);}});
+    rows.forEach(f=>{if(keep.indexOf(f)<0&&keep.length<MAXROWS)keep.push(f);});
+    keep.sort((a,b)=>a.d-b.d);
     markers.length=0;let n=0;
     keep.forEach(f=>{n++;f.idx=n;markers.push({lat:f.lat,lon:f.lon,label:n,color:f._g.color,name:f.name});});
     rows.length=0;keep.forEach(f=>rows.push(f));
@@ -1312,12 +1385,23 @@ async function buildReport(g){
         if(el.status==='OK'){dmT[i].min=Math.max(1,Math.round(el.duration.value/60));dmT[i].rd=el.distance.value;}});
     }
   }catch(e){}
-  /* 郵便局・銀行・警察はGoogle Placesで取り直す（OSMの誤登録・重複対策／officialList参照） */
+  /* Google Placesで補強。郵便局・銀行・警察は誤登録が多いのでPlacesで置き換え（officialList）、
+     買い物・医療はOSMの登録漏れを埋めるため足し込み（addPlaces）。まとめて並列で取る。 */
+  setStatus('🛰️ 周辺の店舗・医療機関をGoogleで照合中…');
   try{
-    F0.post=await officialList(g,radius,'post_office',F0.post);
-    F0.bank=await officialList(g,radius,'bank',F0.bank);
-    F0.police=await officialList(g,radius,'police',F0.police);
+    const [po,bk,pl,sp,cv,dg,hp,dt]=await Promise.all([
+      officialList(g,radius,'post_office',F0.post),
+      officialList(g,radius,'bank',F0.bank),
+      officialList(g,radius,'police',F0.police),
+      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパー',ng:NG_SUPER}),
+      addPlaces(F0.conv,g,radius,{types:['convenience_store']}),
+      addPlaces(F0.drug,g,radius,{types:['drugstore','pharmacy']}),
+      addPlaces(F0.hosp,g,radius,{types:['hospital','doctor'],ng:NG_HOSP}),
+      addPlaces(F0.dent,g,radius,{types:['dentist']})
+    ]);
+    F0.post=po;F0.bank=bk;F0.police=pl;F0.super=sp;F0.conv=cv;F0.drug=dg;F0.hosp=hp;F0.dent=dt;
   }catch(e){}
+  hideStatus();
   const F=F0;
   const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
   const name=query, addr=g.title;
@@ -1421,10 +1505,10 @@ async function buildReport(g){
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'OpenStreetMap');
+    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
-    [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'OpenStreetMap');
+    [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 生活・公共 --- */
   h+=facilityPaper('生活・公共施設','調査対象範囲近辺の公共施設・金融機関（距離順）',
     [{label:'郵便局',color:'#dc2626',items:F.post,n:2},{label:'銀行',color:'#0e7490',items:F.bank,n:2},{label:'警察・交番',color:'#334155',items:F.police,n:2}],g,radius,'Google Places（公式名称・営業中の施設のみ）');
