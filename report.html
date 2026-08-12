@@ -21,6 +21,14 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .bigbtn{width:100%;margin-top:12px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
 .bigbtn:disabled{background:#9ca3af;}
 .qhint{font-size:11px;color:#6b7280;margin-top:8px;}
+/* 検索履歴（v7.0・太田要望）＝直前に調べた物件をワンタップで呼び出す。端末内(localStorage)のみ保存 */
+.hist{display:none;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
+.hist .hl{font-size:11px;font-weight:800;color:#6b7280;margin-right:2px;}
+.hist .hc{display:inline-flex;align-items:center;gap:5px;background:#f0fdfa;border:1px solid #99f6e4;color:#0f766e;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;max-width:100%;}
+.hist .hc:hover{background:#ccfbf1;}
+.hist .hc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;}
+.hist .hx{border:none;background:none;color:#94a3b8;font-size:13px;line-height:1;cursor:pointer;padding:0 2px;font-weight:800;}
+.hist .hclr{font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;text-decoration:underline;}
 .status{display:none;margin:12px 4px;font-size:13px;color:#0f766e;font-weight:700;}
 .status.err{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;}
 .toolbar{display:none;margin-bottom:12px;}
@@ -130,7 +138,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v6.8</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -140,7 +148,8 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
-  <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3"></div>
+  <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3">
+  <div class="hist" id="hist"></div></div>
   <div class="opts">
     <label>調査範囲
       <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
@@ -664,6 +673,7 @@ async function geocode(q){
 async function overpass(lat,lon,radius){
   const q=`[out:json][timeout:50];(
 nwr["shop"="convenience"](around:${radius},${lat},${lon});nwr["shop"="supermarket"](around:${radius},${lat},${lon});
+nwr["shop"="mall"](around:${radius},${lat},${lon});nwr["shop"="department_store"](around:${radius},${lat},${lon});
 nwr["amenity"="pharmacy"](around:${radius},${lat},${lon});nwr["shop"="chemist"](around:${radius},${lat},${lon});
 nwr["amenity"="post_office"](around:${radius},${lat},${lon});nwr["amenity"="bank"](around:${radius},${lat},${lon});
 nwr["amenity"="hospital"](around:${radius},${lat},${lon});nwr["amenity"="clinic"](around:${radius},${lat},${lon});
@@ -716,7 +726,7 @@ const POP_DB = [
 let RADIUS=1500;
 function classify(els,lat,lon,radius){
   RADIUS=radius||RADIUS;
-  const L={station:[],bus:[],super:[],conv:[],drug:[],hosp:[],dent:[],post:[],bank:[],police:[],welfare:[],kinder:[],elem:[],jhs:[],hs:[],school:[],park:[]};
+  const L={station:[],bus:[],mall:[],super:[],conv:[],drug:[],hosp:[],dent:[],post:[],bank:[],police:[],welfare:[],kinder:[],elem:[],jhs:[],hs:[],school:[],park:[]};
   for(const e of (els||[])){
     const t=e.tags||{};const la=e.lat||(e.center&&e.center.lat),lo=e.lon||(e.center&&e.center.lon);
     if(la==null)continue;
@@ -727,6 +737,7 @@ function classify(els,lat,lon,radius){
     let k=null;
     if(t.railway==='station')k='station';
     else if(t.highway==='bus_stop'||(t.public_transport==='platform'&&t.bus==='yes'))k='bus';
+    else if(t.shop==='mall'||t.shop==='department_store')k='mall';
     else if(t.shop==='supermarket')k='super';
     else if(t.shop==='convenience')k='conv';
     else if(t.amenity==='pharmacy'||t.shop==='chemist')k='drug';
@@ -829,24 +840,36 @@ function placesKeyword(lat,lon,radius,query){
    OSMは住民が編集する地図なので、日本の店舗は登録漏れが珍しくない（コンビニ・スーパーが
    すぐ近くにあるのに表に出ない）。OSMを消さずに、Googleで見つかった分を足して名寄せする。
    ng＝スーパー検索に紛れる小売（直売所・青果店など）を落とすための除外パターン。 */
-const NG_SUPER=/直売所|青果|精肉|鮮魚|乾物|かまぼこ|米穀|酒店|酒販|サプリ|不動産|物産|食料品店|食品店/;
+const NG_SUPER=/直売所|青果|精肉|鮮魚|乾物|かまぼこ|米穀|酒店|酒販|サプリ|不動産|物産|物產|食料品店|食品店|配送|デリバリー/;
 /* Googleのtype:'doctor'は歯科・整骨院・デイサービスまで返してくるため、
    「病院・クリニック」欄に紛れないよう名称で除く（歯科は歯科欄に別途出る） */
 const NG_HOSP=/歯科|デンタル|矯正歯科|デイサービス|訪問看護|介護|居宅|接骨|整骨|鍼灸|あん摩|マッサージ|動物病院|薬局|薬品/;
+/* ★大型商業施設（v7.0・太田＆宇都さん報告）
+   「近所にコンビニが多すぎて、載せたいイオン伊都が表から押し出される」対策。
+   大型店を独立した区分にすると、facilityPaper が各区分の最寄り1件を必ず確保する仕組みに乗り、
+   コンビニに埋もれなくなる。モール内のテナント（専門店・フードコート等）は落とす。 */
+const NG_MALL=/駐車場|駐輪|バス停|フードコート|専門店街|入口|出口|ATM|銀行|クリニック|歯科|薬局|美容室|コインランドリー/;
+/* ⚠️Googleはモール内のテナントにも type:'shopping_mall' を付ける（実例：イオンモール福岡伊都の
+   すぐ隣に「駄菓子の下町屋イオンモール伊都店」が同じtypeで697mに出る）。施設名の頭にブランド名が来る
+   のが本体、店名の後ろにモール名が付くのはテナント、という並びで見分ける（「モール」等の出現位置が
+   先頭寄りなら本体）。あわせて、既に採用した大型店の200m以内は同一敷地とみなして採らない。 */
+function isMallTenant(n){const m=/モール|ショッピングセンター|アウトレット|プラザ/.exec(n||'');return !!m&&m.index>6;}
 async function addPlaces(list,g,radius,opt){
   const found=[];
   for(const t of (opt.types||[])){try{found.push(...(await placesRanked(g.lat,g.lon,t)||[]));}catch(e){}}
-  if(opt.text){try{found.push(...(await placesKeyword(g.lat,g.lon,radius,opt.text)||[]));}catch(e){}}
+  for(const q of [].concat(opt.text||[])){try{found.push(...(await placesKeyword(g.lat,g.lon,radius,q)||[]));}catch(e){}}
   if(!found.length)return list;
   const norm=s=>s.replace(/[\s　]/g,'');
   const out=list.slice();const seen=new Set(out.map(x=>norm(x.name)));
   for(const p of found){
     if(opt.ng&&opt.ng.test(p.name))continue;
+    if(opt.drop&&opt.drop(p.name))continue;
     const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
     if(d>radius)continue;
     const key=norm(p.name);
     if(seen.has(key))continue;
     if(out.some(x=>{const a=norm(x.name);return (a.includes(key)||key.includes(a))&&dist(x.lat,x.lon,p.lat,p.lon)<80;}))continue;
+    if(opt.minGap&&out.some(x=>dist(x.lat,x.lon,p.lat,p.lon)<opt.minGap))continue;
     seen.add(key);
     out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
   }
@@ -935,7 +958,10 @@ function facilityPaper(title,lead,groups,g,radius,src){
     /* 単純に近い順で6件に切ると、近所に薬局が2軒あるだけでスーパーが押し出される。
        まず各区分の最寄り1件を確保してから、残り枠を近い順で埋める（2026-08-08） */
     const keep=[],seenG=new Set();
-    rows.forEach(f=>{if(!seenG.has(f._g.label)&&keep.length<MAXROWS){seenG.add(f._g.label);keep.push(f);}});
+    /* must指定の区分（大型商業施設）は先に全件確保する。イオン等はコンビニより遠くても
+       レポートに必ず載せたい施設だから（2026-08-13 太田・宇都さん要望） */
+    rows.forEach(f=>{if(f._g.must&&keep.length<MAXROWS){seenG.add(f._g.label);keep.push(f);}});
+    rows.forEach(f=>{if(!seenG.has(f._g.label)&&keep.indexOf(f)<0&&keep.length<MAXROWS){seenG.add(f._g.label);keep.push(f);}});
     rows.forEach(f=>{if(keep.indexOf(f)<0&&keep.length<MAXROWS)keep.push(f);});
     keep.sort((a,b)=>a.d-b.d);
     markers.length=0;let n=0;
@@ -1170,6 +1196,31 @@ function placesText(q){return new Promise(res=>{
   }catch(e){fin(null);}
 });}
 let PENDING=null,confMap=null,confMarker=null;
+/* ===== 検索履歴（v7.0・太田要望「検索窓で検索履歴がでればいいな」）=====
+   位置の特定に成功したものだけを、この端末のブラウザ(localStorage)に最大8件保存する。
+   サーバーには一切送らない。タップで入力欄に入り、×で1件削除・「履歴を消す」で全消去。 */
+const HKEY='otajuku_report_hist', HMAX=8;
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function histLoad(){try{const v=JSON.parse(localStorage.getItem(HKEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'&&x):[];}catch(e){return [];}}
+function histSave(a){try{localStorage.setItem(HKEY,JSON.stringify(a.slice(0,HMAX)));}catch(e){}}
+function histAdd(q){
+  q=(q||'').trim(); if(!q)return;
+  const a=histLoad().filter(x=>x!==q); a.unshift(q); histSave(a); histRender();
+}
+function histDel(i){const a=histLoad();a.splice(i,1);histSave(a);histRender();}
+function histClear(){if(!confirm('検索履歴をすべて消しますか？'))return;histSave([]);histRender();}
+function histPick(i){const a=histLoad();const el=document.getElementById('paddr');if(!a[i]||!el)return;el.value=a[i];el.focus();}
+function histRender(){
+  const box=document.getElementById('hist'); if(!box)return;
+  const a=histLoad();
+  if(!a.length){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='flex';
+  box.innerHTML='<span class="hl">🕘 最近の検索</span>'
+    +a.map((q,i)=>`<span class="hc" onclick="histPick(${i})"><span>${esc(q)}</span><button class="hx" title="削除" onclick="event.stopPropagation();histDel(${i})">×</button></span>`).join('')
+    +'<button class="hclr" onclick="histClear()">履歴を消す</button>';
+}
+window.addEventListener('DOMContentLoaded',histRender);
+
 async function locate(){
   const query=val('paddr');
   if(!query){setStatus('🙏 物件名または住所を入力してください',true);return;}
@@ -1213,6 +1264,7 @@ function reverseGeocode(lat,lon){return new Promise(res=>{
 });}
 function showConfirm(res,query){
   PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:''};
+  histAdd(query); /* 位置が特定できた入力だけを履歴に残す（打ち間違いを溜めない） */
   const c=document.getElementById('confirm');c.style.display='block';
   document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
   const w=document.getElementById('confwarn');
@@ -1389,17 +1441,31 @@ async function buildReport(g){
      買い物・医療はOSMの登録漏れを埋めるため足し込み（addPlaces）。まとめて並列で取る。 */
   setStatus('🛰️ 周辺の店舗・医療機関をGoogleで照合中…');
   try{
-    const [po,bk,pl,sp,cv,dg,hp,dt]=await Promise.all([
+    const [po,bk,pl,ml,sp,cv,dg,hp,dt]=await Promise.all([
       officialList(g,radius,'post_office',F0.post),
       officialList(g,radius,'bank',F0.bank),
       officialList(g,radius,'police',F0.police),
+      addPlaces(F0.mall,g,radius,{types:['shopping_mall','department_store'],ng:NG_MALL,drop:isMallTenant,minGap:200}),
       addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパー',ng:NG_SUPER}),
       addPlaces(F0.conv,g,radius,{types:['convenience_store']}),
       addPlaces(F0.drug,g,radius,{types:['drugstore','pharmacy']}),
       addPlaces(F0.hosp,g,radius,{types:['hospital','doctor'],ng:NG_HOSP}),
       addPlaces(F0.dent,g,radius,{types:['dentist']})
     ]);
-    F0.post=po;F0.bank=bk;F0.police=pl;F0.super=sp;F0.conv=cv;F0.drug=dg;F0.hosp=hp;F0.dent=dt;
+    F0.post=po;F0.bank=bk;F0.police=pl;F0.mall=ml;F0.super=sp;F0.conv=cv;F0.drug=dg;F0.hosp=hp;F0.dent=dt;
+    /* 大型店はスーパー欄にも出るので重複を防ぐ。①同名（包含）を除く
+       ②大型店の250m以内にある「◯◯モール◯◯店」はモール内テナント（実例：わくわく広場
+       イオンモール伊都店）なので除く＝大型商業施設の行で代表させる */
+    if(F0.mall.length){
+      const nz=s=>s.replace(/[\s　]/g,'');
+      const mk=F0.mall.map(m=>nz(m.name));
+      F0.super=F0.super.filter(s=>{
+        const a=nz(s.name);
+        if(mk.some(m=>a.includes(m)||m.includes(a)))return false;
+        if(/モール/.test(a)&&F0.mall.some(m=>dist(s.lat,s.lon,m.lat,m.lon)<250))return false;
+        return true;
+      });
+    }
   }catch(e){}
   hideStatus();
   const F=F0;
@@ -1505,7 +1571,7 @@ async function buildReport(g){
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
+    [{label:'大型商業施設',color:'#7c3aed',items:F.mall,n:2,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
     [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'Google Places／OpenStreetMap');
