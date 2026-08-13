@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.2</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -681,7 +681,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
-      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:96px;text-align:right">月額総額</th><th style="width:74px;text-align:right">㎡単価</th></tr>${rows}</table>`;
+      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:96px;text-align:right">月額総額</th><th style="width:74px;text-align:right">㎡単価</th></tr>${rows}</table>`
+      /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
+      +((cmp.length<5&&opts.radius)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※調査対象範囲（半径${opts.radius.toLocaleString()}m）内で募集中の類似物件が${cmp.length}件のため、掲載も${cmp.length}件です（範囲外の物件は地図に載せられないため掲載していません）。件数を増やすには、フォームの<b>調査範囲</b>を広げて再作成するか、「類似物件の賃貸情報を追加」に手入力してください。</div>`:'');
   }
   const body=kpi+tbl+note;
   return paper('類似物件の賃貸情報','',body,
