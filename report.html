@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.5</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -385,7 +385,9 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
     if(!j||!j.found||!(j.items||[]).length)return 0;
     window.CMP_FROM_ASSESS=false;
     window.CHINTAI=j;
-    let pool=j.items.slice();
+    /* ★SUUMOは名称非公開の物件に「西鉄天神大牟田線 西鉄久留米駅 2階建」を物件名として出す。
+       金融機関に出す比較表にこれが並ぶのは論外なので、行にする前に落とす（太田指摘 2026-08-13）。 */
+    let pool=j.items.filter(x=>!x.anon);
     /* ★まず「本物件からの距離」で絞る。
        市域の広い地域では一覧の先頭20件が全部遠方になり、範囲内の物件がほとんど残らなかった
        （久留米＝1,010件中、掲載できたのが2件だけ・2026-08-14 実測）。
