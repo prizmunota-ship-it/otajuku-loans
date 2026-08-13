@@ -138,7 +138,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.1</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -946,13 +946,23 @@ function paper(title,lead,body,src){
 function facilityPaper(title,lead,groups,g,radius,src){
   const m=mapDiv();const markers=[];let idx=0;
   const rows=[];let extraCol=null;
-  for(const gr of groups){
-    if(gr.extraCol)extraCol=gr.extraCol;
-    gr.items.slice(0,gr.n).forEach(f=>{idx++;f.idx=idx;f._g=gr;
-      markers.push({lat:f.lat,lon:f.lon,label:idx,color:gr.color,name:f.name});rows.push(f);});
-  }
   /* 1ページに確実に収めるため、掲載は近い順に最大6件まで（地図を大きく取るため） */
   const MAXROWS=6;
+  for(const gr of groups){
+    if(gr.extraCol)extraCol=gr.extraCol;
+    gr.items.slice(0,gr.n).forEach(f=>{f._g=gr;rows.push(f);});
+  }
+  /* nMax指定の区分（コンビニ）は通常n件だけ。ただし他に載せる施設が少なく枠が余るときだけ
+     nMaxまで補充する（太田指示 2026-08-13「コンビニは一番近い1件でいい。よっぽど情報が
+     なければ表示してもOK」） */
+  if(rows.length<MAXROWS){
+    const spare=[];
+    for(const gr of groups){if(gr.nMax>gr.n)gr.items.slice(gr.n,gr.nMax).forEach(f=>{f._g=gr;spare.push(f);});}
+    spare.sort((a,b)=>a.d-b.d);
+    for(const f of spare){if(rows.length>=MAXROWS)break;rows.push(f);}
+  }
+  rows.sort((a,b)=>a.d-b.d);
+  rows.forEach(f=>{idx++;f.idx=idx;markers.push({lat:f.lat,lon:f.lon,label:idx,color:f._g.color,name:f.name});});
   if(rows.length>MAXROWS){
     rows.sort((a,b)=>a.d-b.d);
     /* 単純に近い順で6件に切ると、近所に薬局が2軒あるだけでスーパーが押し出される。
@@ -1199,24 +1209,52 @@ let PENDING=null,confMap=null,confMarker=null;
 /* ===== 検索履歴（v7.0・太田要望「検索窓で検索履歴がでればいいな」）=====
    位置の特定に成功したものだけを、この端末のブラウザ(localStorage)に最大8件保存する。
    サーバーには一切送らない。タップで入力欄に入り、×で1件削除・「履歴を消す」で全消去。 */
+/* ★保存するのは「最終的に確定した状態」＝レポート作成ボタンを押した時点のPENDING（太田指示 2026-08-13）。
+   物件名で検索したあとピンをドラッグして位置を直すことが多く、入力文字だけ覚えても意味がないため、
+   修正後の緯度経度・住所ごと保存し、履歴から呼び出すとその位置まで復元する。 */
 const HKEY='otajuku_report_hist', HMAX=8;
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function histLoad(){try{const v=JSON.parse(localStorage.getItem(HKEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'&&x):[];}catch(e){return [];}}
+function histLoad(){try{
+  const v=JSON.parse(localStorage.getItem(HKEY)||'[]');
+  if(!Array.isArray(v))return [];
+  /* v7.0の文字列だけの履歴も読めるように移行 */
+  return v.map(x=>typeof x==='string'?{q:x}:x).filter(x=>x&&x.q);
+}catch(e){return [];}}
 function histSave(a){try{localStorage.setItem(HKEY,JSON.stringify(a.slice(0,HMAX)));}catch(e){}}
-function histAdd(q){
-  q=(q||'').trim(); if(!q)return;
-  const a=histLoad().filter(x=>x!==q); a.unshift(q); histSave(a); histRender();
+/* 同じ入力語で再検索したら、古い履歴は消して最新の確定状態で置き換える */
+function histAdd(e){
+  if(!e||!e.q)return;
+  const q=String(e.q).trim(); if(!q)return;
+  const a=histLoad().filter(x=>x.q!==q); a.unshift({q:q,lat:e.lat,lon:e.lon,title:e.title||'',moved:!!e.moved});
+  histSave(a); histRender();
 }
 function histDel(i){const a=histLoad();a.splice(i,1);histSave(a);histRender();}
 function histClear(){if(!confirm('検索履歴をすべて消しますか？'))return;histSave([]);histRender();}
-function histPick(i){const a=histLoad();const el=document.getElementById('paddr');if(!a[i]||!el)return;el.value=a[i];el.focus();}
+async function histPick(i){
+  const a=histLoad(),e=a[i],el=document.getElementById('paddr');
+  if(!e||!el)return;
+  el.value=e.q;
+  if(!(e.lat&&e.lon)){el.focus();return;} /* 位置未保存（旧形式）は入力だけ入れる */
+  await locate(); /* SUUMO/HOME'Sの物件情報は毎回取り直す。そのうえで確定済みの位置を復元 */
+  if(document.getElementById('confirm').style.display!=='block')return;
+  restorePos(e);
+}
+/* 履歴から呼び出したときに、前回レポートを作った位置へピンを戻す */
+function restorePos(e){
+  PENDING.lat=e.lat;PENDING.lon=e.lon;
+  if(e.title)PENDING.title=e.title;
+  try{const p={lat:e.lat,lng:e.lon};if(confMarker)confMarker.setPosition(p);if(confMap)confMap.setCenter(p);}catch(_){}
+  const w=document.getElementById('confwarn');if(w)w.style.display='none';
+  document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ 前回作成した位置を復元しました</span>';
+  setCmpSearch(addrPlain(PENDING.title)||PENDING.title);
+}
 function histRender(){
   const box=document.getElementById('hist'); if(!box)return;
   const a=histLoad();
   if(!a.length){box.style.display='none';box.innerHTML='';return;}
   box.style.display='flex';
   box.innerHTML='<span class="hl">🕘 最近の検索</span>'
-    +a.map((q,i)=>`<span class="hc" onclick="histPick(${i})"><span>${esc(q)}</span><button class="hx" title="削除" onclick="event.stopPropagation();histDel(${i})">×</button></span>`).join('')
+    +a.map((e,i)=>`<span class="hc" title="${esc(e.title||e.q)}" onclick="histPick(${i})"><span>${e.moved?'📍':''}${esc(e.q)}</span><button class="hx" title="削除" onclick="event.stopPropagation();histDel(${i})">×</button></span>`).join('')
     +'<button class="hclr" onclick="histClear()">履歴を消す</button>';
 }
 window.addEventListener('DOMContentLoaded',histRender);
@@ -1263,8 +1301,7 @@ function reverseGeocode(lat,lon){return new Promise(res=>{
   }catch(e){fin('');}
 });}
 function showConfirm(res,query){
-  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:''};
-  histAdd(query); /* 位置が特定できた入力だけを履歴に残す（打ち間違いを溜めない） */
+  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:'',moved:false};
   const c=document.getElementById('confirm');c.style.display='block';
   document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
   const w=document.getElementById('confwarn');
@@ -1279,7 +1316,7 @@ function showConfirm(res,query){
       confMarker=new google.maps.Marker({map:confMap,position:pos,draggable:true,title:'ドラッグで位置修正'});
       /* ピンを動かしたら住所を取り直す（市区町村が変わると類似物件の検索先も変わるため必須） */
       confMarker.addListener('dragend',async()=>{
-        const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();
+        const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();PENDING.moved=true;
         document.getElementById('confwarn').style.display='none';
         const rev=await reverseGeocode(PENDING.lat,PENDING.lon);
         if(rev){PENDING.title=(PENDING.name?PENDING.name+'　':'')+rev;setCmpSearch(rev);}
@@ -1297,6 +1334,8 @@ function showConfirm(res,query){
 }
 async function confirmGo(){
   document.getElementById('confirm').style.display='none';
+  /* ★履歴はここで保存する＝ピンを直したあとの「最終的にレポートを作った状態」を残す */
+  histAdd({q:PENDING.query,lat:PENDING.lat,lon:PENDING.lon,title:PENDING.title,moved:PENDING.moved});
   await buildReport(PENDING);
 }
 /* ====== 地価公示（積算の概算用）★全国対応：国交省 不動産情報ライブラリAPIをFunctions経由で ====== */
@@ -1571,7 +1610,7 @@ async function buildReport(g){
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'大型商業施設',color:'#7c3aed',items:F.mall,n:2,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:2},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
+    [{label:'大型商業施設',color:'#7c3aed',items:F.mall,n:2,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
     [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'Google Places／OpenStreetMap');
