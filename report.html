@@ -48,7 +48,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .mapwrap{width:100%;max-width:690px;margin:0 auto 6px;overflow:hidden;}
 .mapwrap.sm{margin-bottom:12px;}
 .map{width:690px;height:520px;transform-origin:top left;}
-.map.sm{height:170px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
+.map.sm{height:340px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:10.5px;padding:3px 7px;font-weight:700;color:#374151;text-align:left;}
@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.2</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -169,6 +169,9 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
     <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
     <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
+    <label style="font-weight:700" title="購入後に改名した物件など、SUUMO・HOME'S・Googleマップに別の名前で載っている場合に入れてください（例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）">別名・旧名
+      <input id="palias" placeholder="例：シャトレ鷹の巣Ⅴ" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:150px">
+    </label>
     <label style="font-weight:700">作成者名
       <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
     </label>
@@ -388,7 +391,7 @@ async function gasSearchCmp(city,md,hint,pref,selfOnly){
   hint=hint||ownHints();
   pref=pref||prefOf(window._lastTitle||val('paddr'));
   const raw=(val('paddr')||'').trim();
-  const nameQ=looksLikeName(raw)?raw:'';
+  const nameQ=val('palias')||(looksLikeName(raw)?raw:''); /* 別名（ポータル掲載名）があれば優先 */
   try{
     let j=null;
     /* 位置確認時に物件名で取得済みなら、その結果をそのまま使う */
@@ -741,7 +744,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const m=mapDiv('sm');
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
-      mapHtml=m.html+`<div class="note" style="border:0;margin:2px 0 6px;padding:0">📍赤ピン＝本物件／①②…＝比較物件（番号は下表のNoと対応・所在地は町丁目レベルの概算位置）。<b>調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内</b>で募集中の類似物件のみ掲載${outCnt>0?'（範囲外の'+outCnt+'件は除外）':''}。</div>`;
+      mapHtml=m.html+`<div class="note" style="border:0;margin:2px 0 5px;padding:0">📍本物件／①②…＝比較物件（下表のNoと対応）</div>`;
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
     /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
@@ -750,14 +753,13 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       selfBox=`<div class="evalbox" style="border-left-color:#16a34a;margin:0 0 10px">
         <span class="tt">【本物件の募集中の部屋】</span>SUUMO物件ライブラリー掲載の実データ（${S.rooms.length}戸）<br>
         ${S.rooms.map(r=>`<b>${r.md} ${r.men}㎡ ${r.rent.toLocaleString()}円</b>`).join('　／　')}
-        <div style="font-size:10.5px;color:#64748b;margin-top:4px">最も戸数の多い条件を基準に、同市区町村で募集中の類似物件を自動抽出しています。</div>
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
       <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:96px;text-align:right">月額総額</th><th style="width:74px;text-align:right">㎡単価</th><th style="width:72px;text-align:right">駐車場</th></tr>${rows}</table>`
       /* ★駐車場の相場（太田要望 2026-08-13）＝周辺の募集情報に書かれた駐車場代の中央値。
          「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
-      +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（同市区町村で募集中の物件${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'・'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}${window.CHINTAI.park.noneCount?'／駐車場なしの物件 '+window.CHINTAI.park.noneCount+'件':''}）　※出典：SUUMO掲載の募集情報</div>`:'')
+      +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（募集中${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'／'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}・出典SUUMO）</div>`:'')
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
       /* どういう基準で選んだのかを明示する（想定問答用） */
       +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${opts.md?'／同間取り（'+opts.md+'）':''}${own.men>0?'／専有面積 ±25%':''}${(ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':''}</div>`
@@ -1403,11 +1405,15 @@ async function locate(){
   /* ★物件名入力ならSUUMO物件ライブラリーで正式住所を先に取得し、それを位置特定に使う。
      （Placesのあいまい一致で「プライマリー日吉町」→「プライマリー野中町」を掴む事故を防ぐ） */
   let libQuery='';
-  if(looksLikeName(query)){
-    setStatus('🔎 「'+query+'」をSUUMO物件ライブラリーで照会中…');
-    const j=await gasByName(query);
+  /* ★購入後に改名した物件は、SUUMO・HOME'S・Googleマップに旧名で載っていて情報が取れない
+     （例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）。別名欄があればそちらで照会する（太田指摘 2026-08-13） */
+  const alias=val('palias');
+  const lookupName=alias||query;
+  if(alias||looksLikeName(query)){
+    setStatus('🔎 「'+lookupName+'」をSUUMO物件ライブラリーで照会中…');
+    const j=await gasByName(lookupName);
     /* SUUMO掲載でもWeb検索由来でも、住所が取れたらそれを位置特定に使う */
-    if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+query;
+    if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+lookupName;
   }
   setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
   let res=libQuery?await googleGeocodeFull(libQuery):null;
@@ -1559,7 +1565,7 @@ async function buildReport(g){
   /* ★構造・築年がSUUMOで取れていない物件は、建物情報（LIFULL HOME'S）から実データを補う。
      物件名と市区町村が一致したものだけが返るので、別物件の情報が混ざることはない（/api/spec） */
   {
-    const qn=(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
+    const qn=val('palias')||(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
     if(qn&&!(window.SELF&&(window.SELF.struct||window.SELF.built))){
       setStatus('🏢 '+qn+' の建物情報（構造・築年）を照会中…');
       const sp=await fetchSpec(qn,cityOf(g.title),prefOf(g.title),addrOnly(g.title));
