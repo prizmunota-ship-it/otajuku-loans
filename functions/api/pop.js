@@ -40,6 +40,11 @@ export async function onRequest(context) {
       if (fc && fc.features) feats = feats.concat(fc.features);
     }
     if (!feats.length) return json({ found: false, reason: 'no_data', tiles: tiles.length });
+    // ?probe=1 でメッシュが持つ属性名を確認する（世帯数など使える項目を調べる用）
+    if (url.searchParams.get('probe')) {
+      const p = (feats[0] && feats[0].properties) || {};
+      return json({ probe: true, keys: Object.keys(p), sample: p });
+    }
 
     const acc = { p25: 0, a: 0, b: 0, c: 0, p30: 0, pn20: 0, pn25: 0, n: 0 };
     const g5 = new Array(19).fill(0);

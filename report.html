@@ -26,7 +26,8 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .hist .hl{font-size:11px;font-weight:800;color:#6b7280;margin-right:2px;}
 .hist .hc{display:inline-flex;align-items:center;gap:5px;background:#f0fdfa;border:1px solid #99f6e4;color:#0f766e;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;max-width:100%;}
 .hist .hc:hover{background:#ccfbf1;}
-.hist .hc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;}
+.hist .hc .ht{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;}
+.hist .hc .ha{display:block;font-weight:600;font-size:10.5px;color:#0d9488;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;}
 .hist .hx{border:none;background:none;color:#94a3b8;font-size:13px;line-height:1;cursor:pointer;padding:0 2px;font-weight:800;}
 .hist .hclr{font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;text-decoration:underline;}
 .status{display:none;margin:12px 4px;font-size:13px;color:#0f766e;font-weight:700;}
@@ -1243,6 +1244,7 @@ async function histPick(i){
 function restorePos(e){
   PENDING.lat=e.lat;PENDING.lon=e.lon;
   if(e.title)PENDING.title=e.title;
+  if(e.moved)PENDING.moved=true; /* 手動修正で得た位置を復元したので、次に保存する時もその印を残す */
   try{const p={lat:e.lat,lng:e.lon};if(confMarker)confMarker.setPosition(p);if(confMap)confMap.setCenter(p);}catch(_){}
   const w=document.getElementById('confwarn');if(w)w.style.display='none';
   document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ 前回作成した位置を復元しました</span>';
@@ -1254,7 +1256,13 @@ function histRender(){
   if(!a.length){box.style.display='none';box.innerHTML='';return;}
   box.style.display='flex';
   box.innerHTML='<span class="hl">🕘 最近の検索</span>'
-    +a.map((e,i)=>`<span class="hc" title="${esc(e.title||e.q)}" onclick="histPick(${i})"><span>${e.moved?'📍':''}${esc(e.q)}</span><button class="hx" title="削除" onclick="event.stopPropagation();histDel(${i})">×</button></span>`).join('')
+    /* ★入力語だけでなく「最後に確定した住所」も出す。物件名で検索してピンで位置を直す運用が
+       多いので、何が記憶されているのかが見えないと意味がない（太田指摘 2026-08-13） */
+    +a.map((e,i)=>{
+      const ad=addrPlain(e.title||'')||e.title||'';
+      const sub=(e.lat&&ad&&ad!==e.q)?`<span class="ha">${e.moved?'📍修正済 ':''}${esc(ad)}</span>`:'';
+      return `<span class="hc" title="${esc(e.title||e.q)}" onclick="histPick(${i})"><span class="ht">${esc(e.q)}${sub}</span><button class="hx" title="削除" onclick="event.stopPropagation();histDel(${i})">×</button></span>`;
+    }).join('')
     +'<button class="hclr" onclick="histClear()">履歴を消す</button>';
 }
 window.addEventListener('DOMContentLoaded',histRender);
