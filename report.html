@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.2</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -245,6 +245,9 @@ function setStatus(t,err){const s=document.getElementById('status');s.style.disp
 function hideStatus(){document.getElementById('status').style.display='none';}
 
 let gGeocoder=null; window._gload=function(){try{gGeocoder=new google.maps.Geocoder();}catch(e){}};
+/* ★Mapsのcallbackはキャッシュ読込の順序次第で不発になることがある（gGeocoder=nullのまま
+   「見つかりませんでした」になる・2026-08-14実測）。使う直前に必ずこの遅延初期化を通す。 */
+function GC(){if(!gGeocoder&&window.google&&google.maps)try{gGeocoder=new google.maps.Geocoder();}catch(e){}return gGeocoder;}
 /* ====== 類似物件の自動検索（Google公式 Custom Search API） ====== */
 const GKEY='AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI';
 const CSE_CX='';  /* Custom Search APIは新規提供終了のため未使用 */
@@ -913,7 +916,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     (window.CMP_SRC||'不動産ポータルサイトの募集情報')+`（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
 }
 function googleGeocode(q){return new Promise(res=>{
-  if(!gGeocoder){res(null);return;}
+  if(!GC()){res(null);return;}
   gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
     if(s==='OK'&&r&&r[0]){const L=r[0].geometry.location;res({lat:L.lat(),lon:L.lng(),title:r[0].formatted_address.replace(/^日本、?/,''),src:'Google'});}
     else res(null);
@@ -1468,7 +1471,7 @@ function initMaps(g){
 /* ============ メイン ============ */
 /* ====== ステップ1：検索→位置確認 ====== */
 function googleGeocodeFull(q){return new Promise(res=>{
-  if(!gGeocoder){res(null);return;}
+  if(!GC()){res(null);return;}
   gGeocoder.geocode({address:q,region:'JP'},(r,s)=>{
     if(s==='OK'&&r&&r[0]){const L=r[0].geometry.location;
       res({lat:L.lat(),lon:L.lng(),title:r[0].formatted_address.replace(/^日本、?/,''),locType:r[0].geometry.location_type,src:'Google'});}
@@ -1580,7 +1583,7 @@ async function locate(){
 }
 /* 緯度経度→住所（ピン移動後の市区町村の取り直しに使う） */
 function reverseGeocode(lat,lon){return new Promise(res=>{
-  if(!gGeocoder){res('');return;}
+  if(!GC()){res('');return;}
   let done=false;const fin=v=>{if(!done){done=true;res(v||'');}};
   try{
     gGeocoder.geocode({location:{lat:lat,lng:lon}},(r,s)=>{
