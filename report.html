@@ -21,15 +21,14 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .bigbtn{width:100%;margin-top:12px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
 .bigbtn:disabled{background:#9ca3af;}
 .qhint{font-size:11px;color:#6b7280;margin-top:8px;}
-/* 検索履歴（v7.0・太田要望）＝直前に調べた物件をワンタップで呼び出す。端末内(localStorage)のみ保存 */
-.hist{display:none;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
-.hist .hl{font-size:11px;font-weight:800;color:#6b7280;margin-right:2px;}
-.hist .hc{display:inline-flex;align-items:center;gap:5px;background:#f0fdfa;border:1px solid #99f6e4;color:#0f766e;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;max-width:100%;}
-.hist .hc:hover{background:#ccfbf1;}
-.hist .hc .ht{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;}
-.hist .hc .ha{display:block;font-weight:600;font-size:10.5px;color:#0d9488;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px;}
-.hist .hx{border:none;background:none;color:#94a3b8;font-size:13px;line-height:1;cursor:pointer;padding:0 2px;font-weight:800;}
-.hist .hclr{font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;text-decoration:underline;}
+/* 検索履歴（v12.2・太田指示）＝画面には並べず「🕘 検索履歴」ボタンから一覧を開く。端末内(localStorage)のみ保存 */
+.histbtn{margin-top:12px;background:#fff;color:#0f766e;border:2px solid #0f766e;border-radius:10px;padding:14px 16px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.histbtn:hover{background:#f0fdfa;}
+.hrow{display:flex;align-items:center;gap:9px;padding:11px 2px;border-bottom:1px solid #f1f5f9;}
+.hrow .hnm{font-size:13.5px;font-weight:800;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hrow .hsub{font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hrow .hopen{border:1.5px solid #0f766e;background:#fff;color:#0f766e;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.hrow .hico{border:1px solid #e5e7eb;background:#fff;color:#9ca3af;border-radius:8px;padding:7px 9px;font-size:12px;cursor:pointer;}
 .status{display:none;margin:12px 4px;font-size:13px;color:#0f766e;font-weight:700;}
 .status.err{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 13px;}
 .toolbar{display:none;margin-bottom:12px;}
@@ -141,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -152,9 +151,12 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
   <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3">
-  <div class="hist" id="hist"></div></div>
-  <button class="bigbtn" id="go" onclick="locate()">🔍 位置を検索</button>
-  <div class="qhint">物件名でも住所でもOK。あとは全部自動です。<a href="javascript:void(0)" onclick="svOpen()" style="margin-left:10px;font-weight:800;color:#0f766e;white-space:nowrap">🕘 作成履歴</a></div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:stretch;">
+    <button class="bigbtn" id="go" onclick="locate()" style="flex:1">🔍 位置を検索</button>
+    <button class="histbtn" onclick="histOpen()" title="前に作ったレポートを呼び出します（この端末に最大10件）">🕘 検索履歴</button>
+  </div>
+  <div class="qhint">物件名でも住所でもOK。あとは全部自動です。</div>
   <div class="opts">
     <label>調査範囲
       <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
@@ -218,7 +220,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
   <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
 </div>
-<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><button class="btn sec" onclick="confirmGo()" title="調査範囲やチェック、類似物件の編集を変えたあとに押すと、レポートに反映されます">🔄 情報を更新</button><button class="btn sec" onclick="svOpen()" title="タイトルを付けて保存し、あとから呼び出せます（この端末に最大10件）">🕘 作成履歴</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
+<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><button class="btn sec" onclick="confirmGo()" title="調査範囲やチェック、類似物件の編集を変えたあとに押すと、レポートに反映されます">🔄 情報を更新</button><button class="btn sec" onclick="histOpen()" title="前に作ったレポートを呼び出します。名前を付けて整理もできます（この端末に最大10件）">🕘 検索履歴</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
   <a href="javascript:void(0)" onclick="printHelp()" style="margin-left:10px;font-size:12px;font-weight:800;color:#0f766e">印刷できない時は？</a>
   <div id="prhelp" class="scronly" style="display:none;margin-top:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.9;color:#78350f;max-width:690px">
     <div style="font-weight:800;margin-bottom:4px">📱 スマホで印刷できない時</div>
@@ -232,22 +234,23 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 <div id="report"></div>
 </div>
 
-<!-- 作成履歴モーダル（タイトル付きでこの端末に最大10件保存→一覧から呼び出し） -->
-<div id="svModal" class="scronly" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)svClose()">
+<!-- 検索履歴モーダル（この端末に最大10件・レポート作成時に自動保存／名前を付けて整理できる） -->
+<div id="svModal" class="scronly" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)histClose()">
   <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.25);">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #e5e7eb;">
-      <b style="font-size:14px;color:#0f766e;">🕘 作成履歴</b>
-      <button onclick="svClose()" style="border:none;background:none;font-size:18px;cursor:pointer;color:#9ca3af;line-height:1;">✕</button>
+      <b style="font-size:14px;color:#0f766e;">🕘 検索履歴</b>
+      <button onclick="histClose()" style="border:none;background:none;font-size:18px;cursor:pointer;color:#9ca3af;line-height:1;">✕</button>
     </div>
-    <div id="svSaveBox" style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
-      <div style="font-size:11px;color:#6b7280;margin-bottom:6px;">いまのレポート内容（位置・調査範囲・類似物件の編集など）にタイトルを付けて保存します（同じタイトルは上書き・最大10件、超えると古いものから消えます）</div>
+    <div style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
+      <div style="font-size:11px;color:#6b7280;margin-bottom:6px;">レポートを作成すると、位置・調査範囲・類似物件の内容ごと自動で保存されます（この端末に最大10件・超えると古いものから消えます）。<b>「📂 開く」でそのままの状態で作り直せます。</b></div>
       <div style="display:flex;gap:8px;">
         <input id="svtitle" placeholder="例：◯◯アパート（融資打診用）" style="flex:1;min-width:0;border:1px solid #d1d5db;border-radius:8px;padding:9px 11px;font-size:13px;">
-        <button onclick="svSaveNow()" style="border:none;background:#0f766e;color:#fff;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">💾 保存</button>
+        <button onclick="histSaveNow()" style="border:none;background:#0f766e;color:#fff;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">💾 名前を付けて保存</button>
       </div>
-      <div id="svhint" style="display:none;font-size:11.5px;color:#b45309;font-weight:700;margin-top:6px;">※ まだレポートを作成していません。「🔍 位置を検索」→「✅ この位置でレポートを作成」のあとに保存できます。</div>
+      <div id="svhint" style="display:none;font-size:11.5px;color:#b45309;font-weight:700;margin-top:6px;">※ まだ物件が確定していません。「🔍 位置を検索」のあとで保存できます。</div>
     </div>
     <div id="svListBox" style="overflow-y:auto;padding:6px 16px 14px;"></div>
+    <div style="padding:9px 16px;border-top:1px solid #e5e7eb;text-align:right;"><button onclick="histClear()" style="font-size:11px;color:#94a3b8;background:none;border:none;cursor:pointer;text-decoration:underline;">履歴をすべて消す</button></div>
   </div>
 </div>
 
@@ -1576,13 +1579,15 @@ function placesText(q){return new Promise(res=>{
   }catch(e){fin(null);}
 });}
 let PENDING=null,confMap=null,confMarker=null;
-/* ===== 検索履歴（v7.0・太田要望「検索窓で検索履歴がでればいいな」）=====
-   位置の特定に成功したものだけを、この端末のブラウザ(localStorage)に最大8件保存する。
-   サーバーには一切送らない。タップで入力欄に入り、×で1件削除・「履歴を消す」で全消去。 */
+/* ===== 検索履歴（v12.2で作成履歴と統合・太田指示「名前は検索履歴に統一、押したら履歴が出る」）=====
+   ・画面に羅列せず「🕘 検索履歴」ボタン→モーダルで一覧（v12.1までのチップ表示は廃止）。
+   ・レポートを作るたびに、位置だけでなく調査範囲・チェック・類似物件の編集行まで丸ごと自動保存。
+   ・あとで何のレポートか分かるように、任意で名前（タイトル）を付けられる。
+   ・この端末のブラウザ(localStorage)に最大10件。サーバーには一切送らない。 */
 /* ★保存するのは「最終的に確定した状態」＝レポート作成ボタンを押した時点のPENDING（太田指示 2026-08-13）。
    物件名で検索したあとピンをドラッグして位置を直すことが多く、入力文字だけ覚えても意味がないため、
    修正後の緯度経度・住所ごと保存し、履歴から呼び出すとその位置まで復元する。 */
-const HKEY='otajuku_report_hist', HMAX=8;
+const HKEY='otajuku_report_hist', HMAX=10;
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function histLoad(){try{
   const v=JSON.parse(localStorage.getItem(HKEY)||'[]');
@@ -1591,23 +1596,87 @@ function histLoad(){try{
   return v.map(x=>typeof x==='string'?{q:x}:x).filter(x=>x&&x.q);
 }catch(e){return [];}}
 function histSave(a){try{localStorage.setItem(HKEY,JSON.stringify(a.slice(0,HMAX)));}catch(e){}}
-/* 同じ入力語で再検索したら、古い履歴は消して最新の確定状態で置き換える */
+function histFmt(ts){if(!ts)return '';const d=new Date(ts),p=n=>('0'+n).slice(-2);return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
+/* いまの画面の状態をまるごと1件分に */
+function histSnap(){
+  if(!(PENDING&&PENDING.lat))return null;
+  return {q:PENDING.query||val('paddr'),ts:Date.now(),
+    lat:PENDING.lat,lon:PENDING.lon,title:PENDING.title,name:PENDING.name,moved:!!PENDING.moved,
+    alias:val('palias'),author:val('pauthor'),radius:document.getElementById('pradius').value,
+    opts:['opt_edu','opt_pop','opt_flood','opt_dosha','opt_quake','opt_snow'].reduce((o,id)=>{o[id]=document.getElementById(id).checked;return o;},{}),
+    madori:val('pmadori'),mens:val('pmens'),rentmin:val('prentmin'),appeal:val('pappeal'),
+    ageTol:isFinite(window.__ageTol)?window.__ageTol:null,
+    /* 類似物件の行は空欄行を除いて生の値のまま（作成者の手修正を残す） */
+    cmp:[...document.querySelectorAll('#cmpRows .cmprow')].map(r=>[...r.querySelectorAll('input')].map(x=>x.value)).filter(v=>v.some(x=>String(x).trim()))};
+}
+/* 同じ入力語のものは1件にまとめる。渡されなかった項目（名前など）は前の値を引き継ぐ */
 function histAdd(e){
   if(!e||!e.q)return;
   const q=String(e.q).trim(); if(!q)return;
-  const a=histLoad().filter(x=>x.q!==q); a.unshift({q:q,lat:e.lat,lon:e.lon,title:e.title||'',moved:!!e.moved});
+  const all=histLoad(), old=all.find(x=>x.q===q)||{};
+  const a=all.filter(x=>x.q!==q);
+  a.unshift(Object.assign({},old,e,{q:q,ts:e.ts||Date.now()}));
   histSave(a); histRender();
 }
-function histDel(i){const a=histLoad();a.splice(i,1);histSave(a);histRender();}
+function histDel(i){
+  const a=histLoad(),e=a[i];if(!e)return;
+  if(!confirm('「'+(e.t||e.q)+'」を検索履歴から削除しますか？'))return;
+  a.splice(i,1);histSave(a);histRender();
+}
 function histClear(){if(!confirm('検索履歴をすべて消しますか？'))return;histSave([]);histRender();}
+/* あとで何のレポートか分かるように名前を付ける（任意） */
+function histRename(i){
+  const a=histLoad(),e=a[i];if(!e)return;
+  const t=prompt('このレポートに付ける名前を入力してください（例：◯◯アパート（融資打診用））',e.t||e.q||'');
+  if(t===null)return;
+  e.t=t.trim();histSave(a);histRender();
+}
+/* モーダルの「💾 名前を付けて保存」＝いまの状態を、入力した名前で残す */
+function histSaveNow(){
+  const s=histSnap();
+  if(!s){document.getElementById('svhint').style.display='block';return;}
+  const t=(document.getElementById('svtitle').value||'').trim();
+  if(t)s.t=t;
+  histAdd(s);
+  document.getElementById('svhint').style.display='none';
+}
+function histOpen(){
+  const t=document.getElementById('svtitle');
+  if(t&&!t.value)t.value=(PENDING&&PENDING.name)||val('paddr')||'';
+  document.getElementById('svhint').style.display=(PENDING&&PENDING.lat)?'none':'block';
+  histRender();
+  document.getElementById('svModal').style.display='flex';
+}
+function histClose(){document.getElementById('svModal').style.display='none';}
+/* 履歴から呼び出す＝物件情報を取り直し、保存した位置・条件のままレポートを作り直す */
 async function histPick(i){
-  const a=histLoad(),e=a[i],el=document.getElementById('paddr');
+  const e=histLoad()[i],el=document.getElementById('paddr');
   if(!e||!el)return;
+  histClose();
+  /* ①位置検索に使う入力から先に復元（locateがpaddr/paliasを見るため） */
   el.value=e.q;
-  if(!(e.lat&&e.lon)){el.focus();return;} /* 位置未保存（旧形式）は入力だけ入れる */
-  await locate(); /* SUUMO/HOME'Sの物件情報は毎回取り直す。そのうえで確定済みの位置を復元 */
+  document.getElementById('palias').value=e.alias||'';
+  document.getElementById('pauthor').value=e.author||'';
+  if(e.radius)document.getElementById('pradius').value=e.radius;
+  for(const k in (e.opts||{})){const c=document.getElementById(k);if(c)c.checked=!!e.opts[k];}
+  document.getElementById('pmadori').value=e.madori||'';
+  document.getElementById('pmens').value=e.mens||'';
+  document.getElementById('prentmin').value=e.rentmin||'';
+  document.getElementById('pappeal').value=e.appeal||'';
+  window.__ageTol=(e.ageTol==null?undefined:e.ageTol);
+  if(!(e.lat&&e.lon)){el.focus();return;} /* 位置未保存（v7.0形式）は入力だけ入れる */
+  /* ②SUUMO/HOME'Sの物件情報は毎回取り直す。そのうえで確定済みの位置を復元 */
+  await locate();
   if(document.getElementById('confirm').style.display!=='block')return;
   restorePos(e);
+  if(e.name)PENDING.name=e.name;
+  /* ③類似物件の編集行は locate のあとに復元（別エリア判定の自動クリアで消されないように） */
+  if(e.cmp&&e.cmp.length){
+    document.getElementById('cmpRows').innerHTML='';
+    e.cmp.forEach(v=>addCmpRow(v));
+  }
+  /* ④保存した状態のままレポートを作り直す */
+  await confirmGo();
 }
 /* 履歴から呼び出したときに、前回レポートを作った位置へピンを戻す */
 function restorePos(e){
@@ -1621,100 +1690,23 @@ function restorePos(e){
   setCmpSearch(addrPlain(PENDING.title)||PENDING.title);
 }
 function histRender(){
-  const box=document.getElementById('hist'); if(!box)return;
+  const box=document.getElementById('svListBox'); if(!box)return;
   const a=histLoad();
-  if(!a.length){box.style.display='none';box.innerHTML='';return;}
-  box.style.display='flex';
-  box.innerHTML='<span class="hl">🕘 最近の検索</span>'
-    /* ★入力語だけでなく「最後に確定した住所」も出す。物件名で検索してピンで位置を直す運用が
-       多いので、何が記憶されているのかが見えないと意味がない（太田指摘 2026-08-13） */
-    +a.map((e,i)=>{
-      const ad=addrPlain(e.title||'')||e.title||'';
-      const sub=(e.lat&&ad&&ad!==e.q)?`<span class="ha">${e.moved?'📍修正済 ':''}${esc(ad)}</span>`:'';
-      return `<span class="hc" title="${esc(e.title||e.q)}" onclick="histPick(${i})"><span class="ht">${esc(e.q)}${sub}</span><button class="hx" title="削除" onclick="event.stopPropagation();histDel(${i})">×</button></span>`;
-    }).join('')
-    +'<button class="hclr" onclick="histClear()">履歴を消す</button>';
-}
-window.addEventListener('DOMContentLoaded',histRender);
-
-/* ===== 作成履歴（v12.1・太田要望）＝タイトルを付けてこの端末に最大10件保存 =====
-   検索履歴(hist)と別物。フォームの入力・チェック・調査範囲・確定した位置(PENDING)・
-   類似物件の編集行まで丸ごと保存し、呼び出すと物件情報を取り直したうえで
-   保存した位置・編集内容のままレポートを自動で再作成する。サーバーには送らない。 */
-const SKEY='otajuku_report_saves', SMAX=10;
-function svList(){try{const a=JSON.parse(localStorage.getItem(SKEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
-function svStore(a){try{localStorage.setItem(SKEY,JSON.stringify(a.slice(0,SMAX)));}catch(e){alert('保存に失敗しました。端末の空き容量を確認してください。');}}
-function svFmt(ts){const d=new Date(ts),p=n=>('0'+n).slice(-2);return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
-function svOpen(){
-  const t=document.getElementById('svtitle');
-  if(t&&!t.value)t.value=(PENDING&&PENDING.name)||val('paddr')||'';
-  document.getElementById('svhint').style.display=(PENDING&&PENDING.lat)?'none':'block';
-  svRender();
-  document.getElementById('svModal').style.display='flex';
-}
-function svClose(){document.getElementById('svModal').style.display='none';}
-function svSaveNow(){
-  if(!(PENDING&&PENDING.lat)){document.getElementById('svhint').style.display='block';return;}
-  const t=(document.getElementById('svtitle').value.trim())||PENDING.name||val('paddr')||'無題のレポート';
-  const e={t:t,ts:Date.now(),
-    q:val('paddr'),alias:val('palias'),author:val('pauthor'),
-    radius:document.getElementById('pradius').value,
-    opts:['opt_edu','opt_pop','opt_flood','opt_dosha','opt_quake','opt_snow'].reduce((o,id)=>{o[id]=document.getElementById(id).checked;return o;},{}),
-    madori:val('pmadori'),mens:val('pmens'),rentmin:val('prentmin'),appeal:val('pappeal'),
-    ageTol:isFinite(window.__ageTol)?window.__ageTol:null,
-    pending:{lat:PENDING.lat,lon:PENDING.lon,title:PENDING.title,query:PENDING.query,name:PENDING.name,moved:!!PENDING.moved},
-    /* 類似物件の行は空欄行を除いて生の値のまま保存（作成者の手修正を残す） */
-    cmp:[...document.querySelectorAll('#cmpRows .cmprow')].map(r=>[...r.querySelectorAll('input')].map(x=>x.value)).filter(v=>v.some(x=>String(x).trim()))
-  };
-  const a=svList().filter(x=>x.t!==t);   /* 同じタイトルは上書き */
-  a.unshift(e); svStore(a); svRender();
-  document.getElementById('svhint').style.display='none';
-}
-function svDel(i){
-  const a=svList(),e=a[i];if(!e)return;
-  if(!confirm('「'+e.t+'」を作成履歴から削除しますか？'))return;
-  a.splice(i,1);svStore(a);svRender();
-}
-async function svLoad(i){
-  const e=svList()[i];if(!e)return;
-  svClose();
-  /* ①位置検索に使う入力から復元（locateがpaddr/paliasを参照するため先に入れる） */
-  document.getElementById('paddr').value=e.q||'';
-  document.getElementById('palias').value=e.alias||'';
-  document.getElementById('pauthor').value=e.author||'';
-  if(e.radius)document.getElementById('pradius').value=e.radius;
-  for(const k in (e.opts||{})){const el=document.getElementById(k);if(el)el.checked=!!e.opts[k];}
-  document.getElementById('pmadori').value=e.madori||'';
-  document.getElementById('pmens').value=e.mens||'';
-  document.getElementById('prentmin').value=e.rentmin||'';
-  document.getElementById('pappeal').value=e.appeal||'';
-  window.__ageTol=(e.ageTol==null?undefined:e.ageTol);
-  if(!(e.pending&&e.pending.lat)){document.getElementById('paddr').focus();return;}
-  /* ②SUUMO/HOME'Sの物件情報は毎回取り直す（検索履歴histPickと同じ流儀） */
-  await locate();
-  if(document.getElementById('confirm').style.display!=='block')return; /* 位置特定失敗時は入力復元のみで停止 */
-  restorePos({lat:e.pending.lat,lon:e.pending.lon,title:e.pending.title,moved:e.pending.moved});
-  if(e.pending.query)PENDING.query=e.pending.query;
-  if(e.pending.name)PENDING.name=e.pending.name;
-  /* ③類似物件の編集行は locate の別エリア自動クリアの後に復元（消されないように） */
-  document.getElementById('cmpRows').innerHTML='';
-  (e.cmp&&e.cmp.length?e.cmp:[[],[],[]]).forEach(v=>addCmpRow(v));
-  /* ④保存した位置・内容のままレポートを自動再作成 */
-  await confirmGo();
-}
-function svRender(){
-  const box=document.getElementById('svListBox');if(!box)return;
-  const a=svList();
-  if(!a.length){box.innerHTML='<div style="text-align:center;color:#9ca3af;font-size:12px;padding:22px 0;">まだ作成履歴はありません。レポート作成後に上の「💾 保存」で残せます。</div>';return;}
+  if(!a.length){box.innerHTML='<div style="text-align:center;color:#9ca3af;font-size:12px;padding:22px 0;">まだ履歴はありません。レポートを作成すると、ここに自動で残ります。</div>';return;}
+  /* ★入力語だけでなく「最後に確定した住所」も出す。物件名で検索してピンで位置を直す運用が
+     多いので、何が記憶されているのかが見えないと意味がない（太田指摘 2026-08-13） */
   box.innerHTML=a.map((e,i)=>{
-    const ad=addrPlain(e.pending&&e.pending.title||'')||'';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #f1f5f9;">
+    const ad=addrPlain(e.title||'')||e.title||'';
+    const nm=e.t||e.q;
+    const sub=[histFmt(e.ts),(e.t?e.q:''),(e.moved?'📍修正済':''),(ad&&ad!==e.q?ad:'')].filter(Boolean).join('　');
+    return `<div class="hrow">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:800;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.t)}</div>
-        <div style="font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${svFmt(e.ts)} 保存${ad?'　'+esc(ad):''}</div>
+        <div class="hnm">${esc(nm)}</div>
+        <div class="hsub">${esc(sub)}</div>
       </div>
-      <button onclick="svLoad(${i})" style="border:1.5px solid #0f766e;background:#fff;color:#0f766e;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">📂 開く</button>
-      <button onclick="svDel(${i})" title="削除" style="border:1px solid #e5e7eb;background:#fff;color:#9ca3af;border-radius:8px;padding:7px 9px;font-size:12px;cursor:pointer;">✕</button>
+      <button class="hopen" onclick="histPick(${i})">📂 開く</button>
+      <button class="hico" title="名前を付ける" onclick="histRename(${i})">✏️</button>
+      <button class="hico" title="削除" onclick="histDel(${i})">✕</button>
     </div>`;}).join('');
 }
 
@@ -2296,6 +2288,9 @@ async function buildReport(g){
   document.getElementById('report').style.display='block';
   document.getElementById('toolbar').style.display='block';
   placeCmpEdit(); /* 類似物件の編集UIを作成者向けメモ内へ（画面のみ・印刷されない） */
+  /* ★ここで履歴を上書き保存する＝類似物件の自動取得まで終わった「完成状態」を残すため。
+     confirmGo時点だと比較行がまだ空で、履歴から開いても毎回検索し直しになる（v12.2） */
+  try{const s=histSnap();if(s)histAdd(s);}catch(e){}
   /* 比較対象から外した物件の一覧表示は廃止（太田指示 2026-08-14「いちいち表示しなくていい」）。
      CMP_EXCLUDEDは内部の選定記録としてだけ残す。 */
   const exEl=document.getElementById('excluded');

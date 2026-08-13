@@ -111,6 +111,7 @@ select.fval{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg x
 .fab button{border:none;border-radius:26px;padding:13px 20px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.18);white-space:nowrap;flex-shrink:0;}
 .fab .f-print{background:#1a1a1a;color:#fff;}
 .fab .f-clear{background:#fff;color:#777;border:1.5px solid #DDD;padding:13px 16px;}
+@media(max-width:480px){ .fab .flab{display:none;} .fab button{padding:13px 15px;} .fab .f-clear{padding:13px 13px;} }
 
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:11px 20px;border-radius:24px;z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;}
@@ -1004,9 +1005,10 @@ function isOwner(){ try{ return (localStorage.getItem('otajuku_email')||'').trim
 function renderFab(){
   const f = document.getElementById('fab');
   // データ保存/読込は太田(prizmun.ota@gmail.com)のみ表示。他の太田塾メンバーには出さない
-  const dataBtns = isOwner() ? `<button class="f-clear" onclick="importData()">📂 読込</button><button class="f-clear" onclick="exportData()">💾 保存</button>` : '';
+  // JSONの読込/保存は太田のみ。狭い画面では文字を隠してアイコンだけにする（作成履歴を押せる幅を確保）
+  const dataBtns = isOwner() ? `<button class="f-clear" onclick="importData()">📂<span class="flab"> 読込</span></button><button class="f-clear" onclick="exportData()">💾<span class="flab"> 保存</span></button>` : '';
   // 作成履歴は全メンバーに表示（タイトル付きで各自の端末に最大10件）
-  const histBtn = `<button class="f-clear" onclick="openHistModal()">🕘 履歴</button>`;
+  const histBtn = `<button class="f-clear" onclick="openHistModal()">🕘 作成履歴</button>`;
   if(tab==='result'){
     f.innerHTML = `<button class="f-print" onclick="downloadPDF()">📄 A4のPDFを作成</button>`+histBtn+dataBtns;
   }else{
