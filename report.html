@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.8</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -208,7 +208,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンク（SUUMO／アットホーム／HOME'S／スマサテ）がここに表示されます。</div>
     <button type="button" class="addrow" onclick="autoCmpClick()" style="background:#0f766e;color:#fff;border:none">🤖 このエリアの募集を自動検索して取り込む（SUUMO）</button>
     <div class="subhd2">📋 まとめて貼り付け（ポータルの物件情報をコピーして貼ると自動で行になります）</div>
-    <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※「6.1万円」表記や、物件名と賃料が別の行になっている貼り付けにも対応しています"></textarea>
+    <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※賃料査定システムの「部屋一覧」をそのまま全選択してコピー＆貼り付けすると、物件名・番地・距離・駐車場代までまとめて取り込みます"></textarea>
     <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
     <div class="subhd2">比較物件（現在募集中）— 物件名／築年／面積㎡／月額総額（賃料＋共益費）円</div>
     <div id="cmpRows"></div>
@@ -463,8 +463,57 @@ function addCmpRow(v){
 }
 function clearCmpRows(){document.getElementById('cmpRows').innerHTML='';for(let i=0;i<3;i++)addCmpRow();}
 window.addEventListener('DOMContentLoaded',()=>{for(let i=0;i<3;i++)addCmpRow();});
+/* ★賃料査定システムの「部屋一覧」をそのまま貼り付けたときの解析（2026-08-13）。
+   1行に 賃料/㎡単価/坪単価/面積/築年/間取り/駅徒歩/階/向き/構造/募集状況/更新日/募集期間/
+   補正賃料.../距離/住所（番地まで）/管理費/敷金/礼金/…/駐車場 が並ぶ。列の欠けがある行が
+   混ざるので位置ではなくパターンで拾う。物件名は直前の行にある。
+   ⚠️レポート上の出典は「不動産ポータルサイトの募集情報」と中立表記にする（実データの出所も
+   ポータルの募集情報なので誤りではない）。取得元サービス名は一切出さない。 */
+function parseAssess(txt){
+  const lines=String(txt||'').split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&x!=='削除');
+  const out=[];let prevName='';
+  const PREF=/(北海道|東京都|京都府|大阪府|..県)/;
+  for(const ln of lines){
+    if(!/[¥￥]/.test(ln)||!/m²|㎡/.test(ln)){ if(!/^[¥￥\d]/.test(ln)&&ln.length<=30)prevName=ln.replace(/…$/,''); continue; }
+    const yen=[...ln.matchAll(/[¥￥]([\d,]+)/g)].map(m=>parseInt(m[1].replace(/,/g,''),10));
+    const rent=yen.length?yen[0]:0; if(!rent)continue;
+    const men=parseFloat((ln.match(/([\d.]+)\s*(?:m²|㎡)/)||[])[1]||'')||0;
+    const ageM=ln.match(/(\d+)\s*年/); const age=ageM?parseInt(ageM[1],10):null;
+    const md=(ln.match(/\b(1R|1K|1DK|1LDK|2K|2DK|2LDK|3K|3DK|3LDK|4K|4DK|4LDK)\b/)||[])[1]||'';
+    const addrM=ln.match(new RegExp(PREF.source+'[^\\s¥￥]+'));
+    const addr=addrM?addrM[0]:'';
+    /* 距離は住所の直前の「◯m」。面積のm²と混ざらないよう住所位置を基準にする */
+    let d=null;
+    if(addrM){const pre=ln.slice(0,addrM.index); const dm=pre.match(/(\d+)m\s*$/); if(dm)d=parseInt(dm[1],10);}
+    /* 管理費＝住所の直後の最初の金額。月額総額＝賃料＋管理費 */
+    let admin=0;
+    if(addrM){const post=ln.slice(addrM.index+addr.length); const am=post.match(/[¥￥]([\d,]+)/); if(am)admin=parseInt(am[1].replace(/,/g,''),10);}
+    const pk=ln.match(/(?:空有|敷地内|近隣[^\s]*?|平置)[^\s]*?([\d,]+)\s*円/);
+    const park=pk?parseInt(pk[1].replace(/,/g,''),10):0;
+    const status=/募集終了/.test(ln)?'終了':(/募集/.test(ln)?'募集中':'');
+    out.push({name:prevName||'物件',addr:addr,age:age,men:men,md:md,total:rent+admin,d:d,park:park,status:status});
+  }
+  return out;
+}
 function parseCmp(){
   const txt=document.getElementById('cmppaste').value;
+  /* まず査定システム形式かを試す（住所と距離が入っている行が2件以上あれば採用） */
+  const asr=parseAssess(txt).filter(x=>x.addr&&x.total>0);
+  if(asr.length>=2){
+    const seenA=new Set();let n=0;
+    window.PARK=window.PARK||new Map();
+    window.CMP_DIST=window.CMP_DIST||new Map();
+    for(const it of asr){
+      const key=it.name+'_'+it.total; if(seenA.has(key))continue; seenA.add(key);
+      if(it.park>0)window.PARK.set(nzName(it.name),{text:it.park.toLocaleString()+'円',fee:it.park});
+      if(it.d!=null)window.CMP_DIST.set(nzName(it.name),it.d);
+      addCmpRow([it.name,it.addr,it.age==null?'':it.age,it.men||'',it.total]);n++;
+    }
+    window.CMP_SRC='不動産ポータルサイトの募集情報';
+    document.getElementById('cmppaste').value='';
+    alert(n+'件の募集事例を取り込みました。「レポートを作成」してください。');
+    return;
+  }
   let added=0;const seen=new Set();
   /* 物件ブロック方式：賃料が2回目に出たら前の物件を確定（複数行の貼り付けに対応） */
   let pend=null;
@@ -777,8 +826,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       })();
   }
   const body=kpi+tbl+note;
+  /* 出典はサービス名を出さず「不動産ポータルサイトの募集情報」で統一する（太田指示 2026-08-13）。
+     実際にポータルの募集情報が元データなので、事実として誤りではない。 */
   return paper('類似物件の賃貸情報','',body,
-    `SUUMO・アットホーム・HOME'S 等の賃貸ポータルサイト（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
+    (window.CMP_SRC||'不動産ポータルサイトの募集情報')+`（${today.getFullYear()}年${today.getMonth()+1}月調査）`);
 }
 function googleGeocode(q){return new Promise(res=>{
   if(!gGeocoder){res(null);return;}
