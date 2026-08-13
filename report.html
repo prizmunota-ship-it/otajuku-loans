@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.6</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1332,6 +1332,10 @@ function showConfirm(res,query){
         const rev=await reverseGeocode(PENDING.lat,PENDING.lon);
         if(rev){PENDING.title=(PENDING.name?PENDING.name+'　':'')+rev;setCmpSearch(rev);}
         document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ ピン位置を手動修正済み</span>';
+        /* ★ドラッグした時点で履歴に反映する（v7.6）。作成ボタンを押す前に別の検索をしても
+           修正した位置が残るように。以前は confirmGo でしか保存しておらず「履歴が更新されない」
+           という不具合になっていた（太田報告・プライマリー鷹の巣） */
+        histAdd({q:PENDING.query,lat:PENDING.lat,lon:PENDING.lon,title:PENDING.title,moved:true});
       });
     }else{confMap.setCenter(pos);confMarker.setPosition(pos);}
   }catch(e){}
@@ -1529,7 +1533,13 @@ async function buildReport(g){
         const k=nz(st.name); if(!k)return;
         const hit=ek.stations.find(x=>nz(x.name)===k)
               ||ek.stations.find(x=>{const a=nz(x.name);return a&&(a.includes(k)||k.includes(a));});
-        if(hit){st.pax=hit.latest;st.paxSeries=hit.series;}
+        if(hit){
+          st.pax=hit.latest;st.paxSeries=hit.series;
+          /* 「路線・事業者」列はOSMのoperator/networkが空で「—」になりがち。
+             国土数値情報側は路線名・運営会社を必ず持っているのでこちらを優先する（太田指摘 2026-08-13） */
+          const nm=[hit.line,hit.op].filter(Boolean).join('／');
+          if(nm)st.op=nm;
+        }
       });
     }
   }catch(e){}
