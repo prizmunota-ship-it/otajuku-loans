@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.6</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -803,7 +803,11 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   /* 最寄駅は本レポートの実測値。範囲内に駅が無い場合は「未取得」ではなく事実を書く */
   const stationCell=stationTxt?stationTxt.replace(/^・/,''):((S&&S.station)||'調査対象範囲内に駅なし');
   const stationSrc=stationTxt?'本レポートの経路実測':(S&&S.station?SRC_SUUMO:'');
-  const nameCell=(S&&S.name)||opts.name||'';
+  /* ★物件名は表紙と揃えて「利用者が入力した名前」を優先する。
+     改名物件は別名（ポータル掲載名）で情報を引くので、そのままだと
+     表紙＝プライマリー鷹の巣／この表＝シャトレ鷹の巣Ⅴ と食い違う（2026-08-14 実測）。
+     住所を入力した人には従来どおりSUUMO側の建物名を出す。 */
+  const nameCell=((opts.name&&looksLikeName(opts.name))?opts.name:'')||(S&&S.name)||opts.name||'';
   /* ── 間取り・面積：利用者入力かSUUMO実データのときだけ表示 */
   const mdTxt=[srcOf('pmadori')?opts.md:'',(srcOf('pmens')&&own.men>0)?own.men.toFixed(2)+'㎡':''].filter(Boolean).join('／');
   const srcName=k=>k==='suumo'?SRC_SUUMO:(k==='homes'?((SP&&SP.src)||"LIFULL HOME'S 建物情報"):(k==='homes-hist'?"LIFULL HOME'S 賃貸掲載履歴":'作成者の入力値'));
