@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.5</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1706,7 +1706,10 @@ async function buildReport(g){
             <div class="note" style="border:0;padding:0;margin:4px 0 8px">※出典：令和7年（2025年）国勢調査 人口速報集計（2020年比）。確報は令和8年9月公表予定。</div>`;
         })()}
         ${(()=>{ /* ★人口の推移（太田要望 2026-08-13）。2020年は国勢調査実績、以降は将来推計 */
-          const S=(pop.series||[]).filter(x=>x.v>0);
+          /* 1ページ厳守（A4=1046px）。世帯数の表を足すと溢れるので、推移は10年刻み＋現在(2025)に間引く */
+          const KEEP=[2020,2025,2030,2040,2050];
+          let S=(pop.series||[]).filter(x=>x.v>0&&KEEP.indexOf(x.y)>=0);
+          if(S.length<3)S=(pop.series||[]).filter(x=>x.v>0);
           if(S.length<3)return '';
           const base=S[0].v, mx=Math.max(...S.map(x=>x.v));
           return `<div class="subttl" style="margin-top:10px">人口の推移（半径${radius.toLocaleString()}m圏内・2020年＝100）</div>
@@ -1720,7 +1723,11 @@ async function buildReport(g){
         })()}
         ${(()=>{ /* ★世帯数の推移（e-Stat・市区町村単位）。単身化＝賃貸需要の裏づけとして1世帯当たり人員も出す */
           if(!SETAI||!SETAI.series||SETAI.series.length<2)return '';
-          const S=SETAI.series, f=S[0], l=S[S.length-1];
+          /* 1ページ厳守のため10年刻みに間引く（2000/2010/2020）。足りなければ全件 */
+          const KEEP=[2000,2010,2020];
+          let S=SETAI.series.filter(x=>KEEP.indexOf(x.y)>=0);
+          if(S.length<2)S=SETAI.series;
+          const f=S[0], l=S[S.length-1];
           const hr=(l.h-f.h)/f.h*100;
           const rows=S.map(x=>`<tr><td>${x.y}年</td><td class="r">${x.h.toLocaleString()}世帯</td><td class="r">${x.p?x.p.toLocaleString()+'人':'—'}</td><td class="r">${x.pph?x.pph.toFixed(2)+'人':'—'}</td></tr>`).join('');
           const pphMsg=(f.pph&&l.pph&&l.pph<f.pph)
