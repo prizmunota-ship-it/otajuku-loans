@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -316,7 +316,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='10'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
+const APIV='11'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -338,7 +338,35 @@ async function fetchSpec(name,city,pref,addr){
     return (j&&j.found)?j:null;
   }catch(e){return null;}
 }
-async function gasSearchCmp(city,md,hint,pref){
+/* ★SUUMOの募集一覧を自前API経由で取得（/api/chintai）。
+   ページ送りで母数を確保し、駐車場代も同時に取る。取れた件数を返す（0＝失敗）。 */
+async function suumoSearchCmp(city,pref,md){
+  try{
+    const j=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
+      +(md?'&md='+encodeURIComponent(md):'')+'&pages=5&detail=14');
+    if(!j||!j.found||!(j.items||[]).length)return 0;
+    window.CHINTAI=j;
+    /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
+    window.PARK=new Map();
+    j.items.forEach(it=>{if(it.park)window.PARK.set(nzName(it.name),{text:it.park,fee:it.parkFee||0});});
+    let n=0;
+    for(const it of j.items){
+      if(n>=40)break; /* 行を作りすぎない。絞り込みは buildCompPaper 側で行う */
+      addCmpRow([it.name,it.addr||'',it.age==null?'':it.age,it.men||'',it.total]);n++;
+    }
+    return n;
+  }catch(e){return 0;}
+}
+function nzName(s){return String(s||'').replace(/[\s　]/g,'');}
+/* 比較表の「駐車場」セル。SUUMOの詳細ページに書かれた内容をそのまま出す。
+   取れていない物件は推測せず「—」（[[feedback_no_guessed_data]]の方針） */
+function parkTxt(name){
+  const p=window.PARK&&window.PARK.get(nzName(name));
+  if(!p||!p.text)return '—';
+  if(p.fee>0)return p.fee.toLocaleString()+'円';
+  return /無|なし/.test(p.text)?'なし':(p.text==='-'?'—':p.text.slice(0,10));
+}
+async function gasSearchCmp(city,md,hint,pref,selfOnly){
   hint=hint||ownHints();
   pref=pref||prefOf(window._lastTitle||val('paddr'));
   const raw=(val('paddr')||'').trim();
@@ -364,6 +392,7 @@ async function gasSearchCmp(city,md,hint,pref){
       if(!num('prentmin')){setByData('prentmin',r0.rent,'suumo');setByData('prentmax',r0.rent,'suumo');}
     }
     let n=0;
+    if(selfOnly)return 0; /* 本物件情報(self)だけ欲しいときは比較行を作らない */
     (j.items||[]).forEach(it=>{
       if(n>=10)return;
       addCmpRow([it.name,it.addr||'',it.age||'',it.men||'',it.total]);n++;
@@ -550,7 +579,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}${c._relaxed?' <span style="color:#94a3b8">※参考（'+c._relaxed.replace(/（.*$/,'')+'）</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td></tr>`;});
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}${c._relaxed?' <span style="color:#94a3b8">※参考（'+c._relaxed.replace(/（.*$/,'')+'）</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
@@ -623,7 +652,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     </table>
     <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${(hasOwn&&rentKey&&srcUsed.indexOf(srcName(rentKey))<0?srcUsed.concat([srcName(rentKey)]):srcUsed).join('／')||'—'}${rentKey==='homes-hist'?'（掲載履歴は過去の募集時点の賃料であり、成約賃料・現在の募集賃料ではありません）':''}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td></tr>`;
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
   const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
   let note='',tbl='';
   if(cmp.length===0){
@@ -681,7 +710,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
-      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:96px;text-align:right">月額総額</th><th style="width:74px;text-align:right">㎡単価</th></tr>${rows}</table>`
+      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:96px;text-align:right">月額総額</th><th style="width:74px;text-align:right">㎡単価</th><th style="width:72px;text-align:right">駐車場</th></tr>${rows}</table>`
+      /* ★駐車場の相場（太田要望 2026-08-13）＝周辺の募集情報に書かれた駐車場代の中央値。
+         「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
+      +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（同市区町村で募集中の物件${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'・'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}${window.CHINTAI.park.noneCount?'／駐車場なしの物件 '+window.CHINTAI.park.noneCount+'件':''}）　※出典：SUUMO掲載の募集情報</div>`:'')
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
       +((cmp.length<5&&opts.radius)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※調査対象範囲（半径${opts.radius.toLocaleString()}m）内で募集中の類似物件が${cmp.length}件のため、掲載も${cmp.length}件です（範囲外の物件は地図に載せられないため掲載していません）。件数を増やすには、フォームの<b>調査範囲</b>を広げて再作成するか、「類似物件の賃貸情報を追加」に手入力してください。</div>`:'');
   }
@@ -1457,8 +1489,16 @@ async function buildReport(g){
     }
     if(cityA){
       setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…（SUUMO）');
-      let got=await gasSearchCmp(cityA,val('pmadori')||'');
-      if(got===0){await gasSearchCmp(cityA,val('pmadori')||'');} /* 初回起動失敗時のリトライ */
+      /* ★本命は /api/chintai（SUUMO一覧をページ送りで取得＝母数が桁違い＋駐車場代つき）。
+         GASは1ページ目10件しか見ておらず、範囲内に数件しか残らなかった（太田指摘 2026-08-13）。
+         GASは本物件の募集内容(self)を返すので、そちらは従来どおり別に呼ぶ。 */
+      const got=await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori')||'');
+      if(!got){
+        let n=await gasSearchCmp(cityA,val('pmadori')||'');
+        if(n===0){await gasSearchCmp(cityA,val('pmadori')||'');}
+      }else if(!window.SELF){
+        try{await gasSearchCmp(cityA,val('pmadori')||'',null,null,true);}catch(e){} /* 本物件情報(self)だけ取得 */
+      }
     }
   }
   /* ★構造・築年がSUUMOで取れていない物件は、建物情報（LIFULL HOME'S）から実データを補う。
