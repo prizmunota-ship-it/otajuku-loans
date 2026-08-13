@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.8</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.9</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -150,7 +150,12 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
   <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3">
-  <div class="hist" id="hist"></div></div>
+  <div class="hist" id="hist"></div>
+  <div class="qhint" style="margin-top:7px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 10px;line-height:1.8">
+    📋 <b>類似物件は「賃料査定システムの部屋一覧」を貼り付けるのが一番正確です。</b>
+    査定結果の部屋一覧を全選択してコピーし、下の「▶ 類似物件の賃貸情報を追加」を開いて<b>「まとめて貼り付け」</b>に貼ってください。
+    物件名・番地・本物件からの距離・駐車場代までそのまま取り込みます（貼り付けが無いときは自動検索を使います）。
+  </div></div>
   <div class="opts">
     <label>調査範囲
       <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
@@ -1047,6 +1052,11 @@ async function addPlaces(list,g,radius,opt){
   const minRt=opt.minRt||0;
   const passRt=found.filter(p=>(p.rt||0)>=minRt);
   const pool=(minRt&&passRt.length)?passRt:found; /* 全滅する地域では閾値を外す */
+  /* ★opt.replace＝Googleで拾えたらOSMの一覧は捨てて置き換える。
+     OSMは住民編集なので「肉屋」「abcﾌﾗﾜｰ」がスーパーとして登録されていたりする。
+     口コミ件数のような品質指標も持たないため、Googleが答えた時はそちらを正とする
+     （郵便局・銀行・警察で既に採用している officialList と同じ考え方）。 */
+  if(opt.replace&&pool.length){out.length=0;seen.clear();}
   for(const p of pool){
     if(opt.ng&&opt.ng.test(p.name))continue;
     if(opt.drop&&opt.drop(p.name))continue;
@@ -1705,10 +1715,10 @@ async function buildReport(g){
       officialList(g,radius,'post_office',F0.post),
       officialList(g,radius,'bank',F0.bank),
       officialList(g,radius,'police',F0.police),
-      addPlaces(F0.mall,g,radius,{types:['shopping_mall','department_store'],ng:NG_MALL,drop:isMallTenant,minGap:120,minRt:100}),
-      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパーマーケット',ng:NG_SUPER,minRt:150}),
-      addPlaces(F0.conv,g,radius,{types:['convenience_store']}),
-      addPlaces(F0.drug,g,radius,{types:['drugstore'],ng:NG_DRUG,minRt:50}),
+      addPlaces(F0.mall,g,radius,{types:['shopping_mall','department_store'],ng:NG_MALL,drop:isMallTenant,minGap:120,minRt:100,replace:true}),
+      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパーマーケット',ng:NG_SUPER,minRt:150,replace:true}),
+      addPlaces(F0.conv,g,radius,{types:['convenience_store'],replace:true}),
+      addPlaces(F0.drug,g,radius,{types:['drugstore'],ng:NG_DRUG,minRt:50,replace:true}),
       addPlaces(F0.hosp,g,radius,{types:['hospital','doctor'],ng:NG_HOSP}),
       addPlaces(F0.dent,g,radius,{types:['dentist']})
     ]);
