@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.6</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -379,6 +379,8 @@ async function suumoSearchCmp(city,pref,md){
   }catch(e){return 0;}
 }
 function nzName(s){return String(s||'').replace(/[\s　]/g,'');}
+/* 掲載の優先度を「知られている順（口コミ件数）」にする。表示自体は距離順に並ぶ */
+function byFame(list){return (list||[]).slice().sort((a,b)=>(b.rt||0)-(a.rt||0));}
 /* 比較表の「駐車場」セル。SUUMOの詳細ページに書かれた内容をそのまま出す。
    取れていない物件は推測せず「—」（[[feedback_no_guessed_data]]の方針） */
 function parkTxt(name){
@@ -929,7 +931,7 @@ function psearch(kind,req){
         if(s==='OVER_QUERY_LIMIT'){fin('RETRY');return;}
         if(s!=='OK'||!r){fin([]);return;}
         fin(r.filter(p=>p.geometry&&p.name&&p.business_status!=='CLOSED_PERMANENTLY')
-            .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),types:p.types||[]})));
+            .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),types:p.types||[],rt:p.user_ratings_total||0})));
       };
       if(kind==='near')svc.nearbySearch(req,cb);else svc.textSearch(req,cb);
       setTimeout(()=>fin([]),8000);
@@ -975,6 +977,11 @@ const NG_MALL=/駐車場|駐輪|バス停|フードコート|専門店街|入口
    のが本体、店名の後ろにモール名が付くのはテナント、という並びで見分ける（「モール」等の出現位置が
    先頭寄りなら本体）。あわせて、既に採用した大型店の200m以内は同一敷地とみなして採らない。 */
 function isMallTenant(n){const m=/モール|ショッピングセンター|アウトレット|プラザ/.exec(n||'');return !!m&&m.index>6;}
+/* ★「みんなが知っている施設」の判定＝Googleの口コミ件数（太田指摘 2026-08-13
+   「紳士服のフタタとか不要」「ショッピング環境の情報、全部いらない」）。
+   久留米で実測すると レイリア久留米712件／くるめりあ六ツ門689件 に対し、
+   六ツ門商店街8件・タワーモール0件・玄米通販0件・肉屋0件 と、はっきり差が出る。
+   opt.minRt 未満は載せない。ただし1件も残らない地域では閾値を外す（田舎で全滅させない）。 */
 async function addPlaces(list,g,radius,opt){
   const found=[];
   for(const t of (opt.types||[])){try{found.push(...(await placesRanked(g.lat,g.lon,t)||[]));}catch(e){}}
@@ -982,7 +989,10 @@ async function addPlaces(list,g,radius,opt){
   if(!found.length)return list;
   const norm=s=>s.replace(/[\s　]/g,'');
   const out=list.slice();const seen=new Set(out.map(x=>norm(x.name)));
-  for(const p of found){
+  const minRt=opt.minRt||0;
+  const passRt=found.filter(p=>(p.rt||0)>=minRt);
+  const pool=(minRt&&passRt.length)?passRt:found; /* 全滅する地域では閾値を外す */
+  for(const p of pool){
     if(opt.ng&&opt.ng.test(p.name))continue;
     if(opt.drop&&opt.drop(p.name))continue;
     const d=Math.round(dist(g.lat,g.lon,p.lat,p.lon));
@@ -992,7 +1002,7 @@ async function addPlaces(list,g,radius,opt){
     if(out.some(x=>{const a=norm(x.name);return (a.includes(key)||key.includes(a))&&dist(x.lat,x.lon,p.lat,p.lon)<80;}))continue;
     if(opt.minGap&&out.some(x=>dist(x.lat,x.lon,p.lat,p.lon)<opt.minGap))continue;
     seen.add(key);
-    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
+    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:'',rt:p.rt||0});
   }
   out.sort((a,b)=>a.d-b.d);
   return out;
@@ -1032,7 +1042,7 @@ async function officialList(g,radius,type,fallback){
        「糸島警察署相談電話」が同じ座標に並んだ）。40m以内の同区分は1件にまとめる。 */
     if(out.some(x=>dist(x.lat,x.lon,p.lat,p.lon)<40))continue;
     seen.add(key);
-    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:''});
+    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:'',rt:p.rt||0});
   }
   out.sort((a,b)=>a.d-b.d);
   return out; /* 範囲内に無ければ空＝「見つかりませんでした」と正直に出す */
@@ -1640,10 +1650,10 @@ async function buildReport(g){
       officialList(g,radius,'post_office',F0.post),
       officialList(g,radius,'bank',F0.bank),
       officialList(g,radius,'police',F0.police),
-      addPlaces(F0.mall,g,radius,{types:['shopping_mall','department_store'],ng:NG_MALL,drop:isMallTenant,minGap:120}),
-      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパー',ng:NG_SUPER}),
+      addPlaces(F0.mall,g,radius,{types:['shopping_mall','department_store'],ng:NG_MALL,drop:isMallTenant,minGap:120,minRt:100}),
+      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパー',ng:NG_SUPER,minRt:50}),
       addPlaces(F0.conv,g,radius,{types:['convenience_store']}),
-      addPlaces(F0.drug,g,radius,{types:['drugstore','pharmacy']}),
+      addPlaces(F0.drug,g,radius,{types:['drugstore','pharmacy'],minRt:15}),
       addPlaces(F0.hosp,g,radius,{types:['hospital','doctor'],ng:NG_HOSP}),
       addPlaces(F0.dent,g,radius,{types:['dentist']})
     ]);
@@ -1798,7 +1808,7 @@ async function buildReport(g){
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'大型商業施設',color:'#7c3aed',items:F.mall,n:3,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
+    [{label:'大型商業施設',color:'#7c3aed',items:byFame(F.mall),n:3,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
     [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'Google Places／OpenStreetMap');
