@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.8</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.9</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -536,7 +536,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
      実データ（建築年月）→作成者の入力、の順。無ければ null＝築年での絞り込みはしない。 */
   let ownAge=null;
   {
-    const br=(S&&S.built)||(SP&&SP.built)||'';
+    /* ⚠️ここは S / SP の宣言より前なので window.SELF から直接読む（constの巻き上げでエラーになる） */
+    const _S=window.SELF&&window.SELF.addr?window.SELF:null;
+    const _SP=(_S&&_S.spec&&(_S.spec.struct||_S.spec.built))?_S.spec:null;
+    const br=(_S&&_S.built)||(_SP&&_SP.built)||'';
     const bm=br&&br.match(/(\d{4})年\s*(\d{1,2})?月?/);
     if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();
       let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;ownAge=Math.max(0,yrs);}
