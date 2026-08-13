@@ -38,7 +38,6 @@ export async function onRequest(context) {
   const pages = Math.min(Math.max(parseInt(u.searchParams.get('pages') || '8', 10) || 8, 1), 15);
   const detail = Math.min(Math.max(parseInt(u.searchParams.get('detail') || '12', 10) || 12, 0), 15);
   const dbg = u.searchParams.get('debug');
-  if (!pref) return json({ found: false, reason: 'no_pref' }, 400);
 
   const log = [];
   const get = async (url) => {
@@ -55,6 +54,24 @@ export async function onRequest(context) {
       return '';
     }
   };
+
+  // ★POST＝enrich（後追い取得）モード。
+  //   一覧だけ先に返し、クライアントが「本物件からの距離」で絞ってから、
+  //   残った物件についてだけ駐車場代と番地までの住所を取りに来る。
+  //   （GETの先頭N件方式だと、市域が広い地域では遠方の物件ばかりを調べてしまい、
+  //     「周辺の駐車場相場」が市内ランダムの中央値になっていた＝久留米で実測 2026-08-14）
+  if (request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const rows = (body && body.rows || []).slice(0, 15);
+      if (!rows.length) return json({ found: false, reason: 'no_rows' });
+      const r = await enrich(rows, get, new URL(request.url).origin, 15, 12);
+      return json({ found: true, items: rows, park: r.park, debug: dbg ? log : undefined });
+    } catch (e) {
+      return json({ found: false, reason: 'exception: ' + (e && e.message) });
+    }
+  }
+  if (!pref) return json({ found: false, reason: 'no_pref' }, 400);
 
   try {
     // ① 市区町村名 → SUUMOの sc_ コード（公式の市区町村インデックスから引く）
@@ -86,52 +103,10 @@ export async function onRequest(context) {
     }
     if (!items.length) return json({ found: false, reason: 'no_items', url: base, debug: dbg ? log : undefined });
 
-    // ③ 駐車場は詳細ページにしか無いので、先頭 detail 件だけ取りに行く
-    const fees = [];
-    let none = 0;
-    for (let i = 0; i < Math.min(detail, items.length); i++) {
-      const it = items[i];
-      if (!it.href) continue;
-      const html = await get('https://suumo.jp' + it.href);
-      if (!html) continue;
-      const pk = parseParking(html);
-      it.park = pk.text;
-      it.parkFee = pk.fee;
-      if (pk.fee > 0) fees.push(pk.fee);
-      else if (pk.text && /無|なし|-/.test(pk.text)) none++;
-    }
-    // ④ 詳細住所（番地まで）をLIFULL HOME'Sの建物ページから補う。
-    //    SUUMOは一覧も詳細も丁目までしか出さないため、比較物件のピンが丁目の概算位置になる
-    //    （太田指摘 2026-08-13「HOME'Sは詳細な住所が載っている」）。
-    //    経路は既存の /api/spec と同じなので、自前のエンドポイントを呼んで使い回す。
+    // ③④ 駐車場（詳細ページ）と番地までの住所（HOME'S）は、要求があったときだけ先頭N件を調べる。
+    //     クライアントは detail=0&addr=0 で一覧だけ取り、距離で絞ってからPOSTで取りに来る。
     const wantAddr = u.searchParams.get('addr') !== '0';
-    if (wantAddr) {
-      const seen = new Map();
-      const origin = new URL(request.url).origin;
-      for (let i = 0; i < Math.min(12, items.length); i++) {
-        const it = items[i];
-        if (!it.name || it.anon) continue; // 名称非公開はHOME'Sで引けない
-        const key = it.name + '|' + it.addr;
-        if (seen.has(key)) { it.addr2 = seen.get(key); continue; }
-        const cityName = (String(it.addr || '').replace(/^.*?[都道府県]/, '').match(/^(.{2,8}?[市区町村])/) || [])[1] || '';
-        const prefName = (String(it.addr || '').match(/(北海道|東京都|京都府|大阪府|.{2,3}県)/) || [])[1] || '';
-        const su = `${origin}/api/spec?name=${encodeURIComponent(it.name)}&city=${encodeURIComponent(cityName)}&pref=${encodeURIComponent(prefName)}&addr=${encodeURIComponent(it.addr || '')}`;
-        try {
-          const r = await fetch(su, { cf: { cacheTtl: 86400, cacheEverything: true } });
-          const j = await r.json();
-          if (j && j.found && j.addr && /\d/.test(j.addr.replace(/^.*?[都道府県]/, ''))) {
-            // 「波多江駅南1丁目729-6、729-32、731-2」のように番地が並ぶことがある。
-            // 住所検索に通らないので先頭の1つだけ使う。
-            const a = String(j.addr).split(/[、，,]/)[0].trim();
-            it.addr2 = a;
-            seen.set(key, a);
-          }
-        } catch (e) { /* 取れなければ丁目までの住所のまま使う */ }
-      }
-    }
-
-    fees.sort((a, b) => a - b);
-    const med = fees.length ? (fees.length % 2 ? fees[(fees.length - 1) / 2] : Math.round((fees[fees.length / 2 - 1] + fees[fees.length / 2]) / 2)) : 0;
+    const en = await enrich(items, get, new URL(request.url).origin, detail, wantAddr ? 12 : 0);
 
     return json({
       found: true,
@@ -139,13 +114,57 @@ export async function onRequest(context) {
       sc: sc,
       total: total,
       items: items,
-      park: { n: fees.length, median: med, min: fees[0] || 0, max: fees[fees.length - 1] || 0, noneCount: none },
+      park: en.park,
       src: 'SUUMO 賃貸（募集中物件一覧）',
       debug: dbg ? log : undefined,
     });
   } catch (e) {
     return json({ found: false, reason: 'exception: ' + (e && e.message), debug: dbg ? log : undefined });
   }
+}
+
+// 駐車場代（SUUMOの詳細ページ）と番地までの住所（LIFULL HOME'S 建物ページ）を後追いで埋める。
+// 渡された順に nPark 件／nAddr 件だけ調べるので、呼ぶ側が「近い順」に並べてから渡すこと。
+async function enrich(items, get, origin, nPark, nAddr) {
+  const fees = [];
+  let none = 0;
+  for (let i = 0; i < Math.min(nPark, items.length); i++) {
+    const it = items[i];
+    if (!it.href) continue;
+    const html = await get('https://suumo.jp' + it.href);
+    if (!html) continue;
+    const pk = parseParking(html);
+    it.park = pk.text;
+    it.parkFee = pk.fee;
+    if (pk.fee > 0) fees.push(pk.fee);
+    else if (pk.text && /無|なし|-/.test(pk.text)) none++;
+  }
+  // SUUMOは一覧も詳細も丁目までしか出さないため、比較物件のピンが丁目の概算位置になる
+  // （太田指摘 2026-08-13「HOME'Sは詳細な住所が載っている」）。経路は /api/spec と同じ。
+  const seen = new Map();
+  for (let i = 0; i < Math.min(nAddr, items.length); i++) {
+    const it = items[i];
+    if (!it.name || it.anon) continue; // 名称非公開はHOME'Sで引けない
+    const key = it.name + '|' + it.addr;
+    if (seen.has(key)) { it.addr2 = seen.get(key); continue; }
+    const cityName = (String(it.addr || '').replace(/^.*?[都道府県]/, '').match(/^(.{2,8}?[市区町村])/) || [])[1] || '';
+    const prefName = (String(it.addr || '').match(/(北海道|東京都|京都府|大阪府|.{2,3}県)/) || [])[1] || '';
+    const su = `${origin}/api/spec?name=${encodeURIComponent(it.name)}&city=${encodeURIComponent(cityName)}&pref=${encodeURIComponent(prefName)}&addr=${encodeURIComponent(it.addr || '')}`;
+    try {
+      const r = await fetch(su, { cf: { cacheTtl: 86400, cacheEverything: true } });
+      const j = await r.json();
+      if (j && j.found && j.addr && /\d/.test(j.addr.replace(/^.*?[都道府県]/, ''))) {
+        // 「波多江駅南1丁目729-6、729-32、731-2」のように番地が並ぶことがある。
+        // 住所検索に通らないので先頭の1つだけ使う。
+        const a = String(j.addr).split(/[、，,]/)[0].trim();
+        it.addr2 = a;
+        seen.set(key, a);
+      }
+    } catch (e) { /* 取れなければ丁目までの住所のまま使う */ }
+  }
+  fees.sort((a, b) => a - b);
+  const med = fees.length ? (fees.length % 2 ? fees[(fees.length - 1) / 2] : Math.round((fees[fees.length / 2 - 1] + fees[fees.length / 2]) / 2)) : 0;
+  return { park: { n: fees.length, median: med, min: fees[0] || 0, max: fees[fees.length - 1] || 0, noneCount: none } };
 }
 
 function esc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }

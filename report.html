@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.4</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -356,28 +356,76 @@ async function fetchSpec(name,city,pref,addr){
 }
 /* ★SUUMOの募集一覧を自前API経由で取得（/api/chintai）。
    ページ送りで母数を確保し、駐車場代も同時に取る。取れた件数を返す（0＝失敗）。 */
-async function suumoSearchCmp(city,pref,md){
+/* 町丁目の代表点を国土地理院の住所検索で引く（キー不要・無料・件数制限なし）。
+   Googleのジオコーディングは上限に当たるので、母数の足切りにはこちらを使う。 */
+const _gsiGeo={};
+function normTown(a){
+  return String(a||'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/(\D)(\d+)$/,'$1$2丁目').trim();
+}
+async function gsiGeocode(q){
+  if(_gsiGeo[q]!==undefined)return _gsiGeo[q];
+  try{const ls=localStorage.getItem('gsi:'+q);if(ls){const v=JSON.parse(ls);_gsiGeo[q]=v;return v;}}catch(e){}
+  let v=null;
   try{
+    const r=await fetch('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(q));
+    const j=await r.json();
+    if(j&&j[0]&&j[0].geometry&&j[0].geometry.coordinates)
+      v={lat:j[0].geometry.coordinates[1],lon:j[0].geometry.coordinates[0]};
+  }catch(e){}
+  _gsiGeo[q]=v;
+  if(v){try{localStorage.setItem('gsi:'+q,JSON.stringify(v));}catch(e){}} /* 失敗はキャッシュしない（一時的な詰まりを固定化させない） */
+  return v;
+}
+async function suumoSearchCmp(city,pref,md,lat,lon,radius){
+  try{
+    /* 一覧だけ先に取る（駐車場・番地は距離で絞ってから後追いで取りに行く） */
     const j=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
-      +(md?'&md='+encodeURIComponent(md):'')+'&pages=10&detail=14');
+      +(md?'&md='+encodeURIComponent(md):'')+'&pages=10&detail=0&addr=0');
     if(!j||!j.found||!(j.items||[]).length)return 0;
     window.CMP_FROM_ASSESS=false;
     window.CHINTAI=j;
-    /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
-    window.PARK=new Map();
-    j.items.forEach(it=>{if(it.park)window.PARK.set(nzName(it.name),{text:it.park,fee:it.parkFee||0});});
-    /* ★行を作る前に間取り・面積で絞る。行にした分だけ後段でジオコーディングが走るため、
-       母数(150〜250件)をそのまま行にすると生成が極端に遅くなる（2026-08-13 実測）。
-       ここは座標が要らない条件だけで足切りし、範囲内かどうかの判定は後段に任せる。 */
+    let pool=j.items.slice();
+    /* ★まず「本物件からの距離」で絞る。
+       市域の広い地域では一覧の先頭20件が全部遠方になり、範囲内の物件がほとんど残らなかった
+       （久留米＝1,010件中、掲載できたのが2件だけ・2026-08-14 実測）。
+       町丁目は100種類程度しかないので、国土地理院で代表点を引けば安く距離が出せる。 */
+    if(lat&&lon){
+      const towns=[...new Set(pool.map(x=>normTown(x.addr)))].filter(Boolean);
+      setStatus('📍 募集物件の所在地（'+towns.length+'地区）を照合中…');
+      for(let i=0;i<towns.length;i+=8){await Promise.all(towns.slice(i,i+8).map(t=>gsiGeocode(t)));}
+      pool.forEach(x=>{const g=_gsiGeo[normTown(x.addr)];x._d=g?Math.round(dist(lat,lon,g.lat,g.lon)):null;});
+      /* 代表点と実際の建物のずれ分だけ余裕を持たせる。厳密な範囲判定は後段（建物単位の座標）で行う */
+      const near=pool.filter(x=>x._d!=null&&x._d<=(radius||1500)+600);
+      if(near.length)pool=near;
+    }
+    /* 続いて座標の要らない条件（間取り・面積）で足切りし、近い順に20件だけ行にする。
+       行にした分だけ後段でジオコーディングが走るため、母数をそのまま行にすると極端に遅い。 */
     const wantMd=(md||'').trim();
     const ownM=num('pmens')||0;
-    let pool=j.items.slice();
     if(wantMd)  { const f=pool.filter(x=>x.md===wantMd); if(f.length>=6)pool=f; }
     if(ownM>0)  { const f=pool.filter(x=>x.men>0&&Math.abs(x.men-ownM)/ownM<=0.25); if(f.length>=6)pool=f; }
-    if(ownM>0)pool.sort((a,b)=>Math.abs((a.men||0)-ownM)-Math.abs((b.men||0)-ownM));
+    pool.sort((a,b)=>(a._d==null?9e9:a._d)-(b._d==null?9e9:b._d));
+    const picked=pool.slice(0,20);
+    /* ★駐車場代と番地までの住所は、近い順に絞ったこの物件についてだけ取りに行く。
+       以前は一覧の先頭から調べていたので「周辺の駐車場相場」が市内ランダムの中央値だった。 */
+    if(picked.length){
+      setStatus('🅿️ 近隣'+Math.min(picked.length,15)+'件の駐車場代・所在地を確認中…');
+      try{
+        const r=await fetch('/api/chintai',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({rows:picked.slice(0,15).map(x=>({name:x.name,addr:x.addr,href:x.href,anon:!!x.anon}))})});
+        const e=await r.json();
+        if(e&&e.found){
+          (e.items||[]).forEach((it,i)=>{if(!picked[i])return;picked[i].park=it.park;picked[i].parkFee=it.parkFee;picked[i].addr2=it.addr2;});
+          if(e.park)j.park=e.park;
+        }
+      }catch(err){}
+    }
+    /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
+    window.PARK=new Map();
+    picked.forEach(it=>{if(it.park)window.PARK.set(nzName(it.name),{text:it.park,fee:it.parkFee||0});});
     let n=0;
-    for(const it of pool){
-      if(n>=20)break;
+    for(const it of picked){
       /* addr2＝HOME'Sの建物ページから取れた番地までの住所。あればそちらを使う（ピンが正確になる） */
       addCmpRow([it.name,it.addr2||it.addr||'',it.age==null?'':it.age,it.men||'',it.total]);n++;
     }
@@ -1646,7 +1694,7 @@ async function buildReport(g){
       /* ★本命は /api/chintai（SUUMO一覧をページ送りで取得＝母数が桁違い＋駐車場代つき）。
          GASは1ページ目10件しか見ておらず、範囲内に数件しか残らなかった（太田指摘 2026-08-13）。
          GASは本物件の募集内容(self)を返すので、そちらは従来どおり別に呼ぶ。 */
-      const got=await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori')||'');
+      const got=await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori')||'',g.lat,g.lon,parseInt(val('pradius'))||1500);
       if(!got){
         let n=await gasSearchCmp(cityA,val('pmadori')||'');
         if(n===0){await gasSearchCmp(cityA,val('pmadori')||'');}
