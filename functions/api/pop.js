@@ -48,6 +48,11 @@ export async function onRequest(context) {
 
     const acc = { p25: 0, a: 0, b: 0, c: 0, p30: 0, pn20: 0, pn25: 0, n: 0 };
     const g5 = new Array(19).fill(0);
+    // 人口の推移（太田要望 2026-08-13）。PTN_YYYY＝総人口。2020は国勢調査実績、以降は推計。
+    // ※このデータセットに世帯数は含まれない（属性を実査して確認済み・2026-08-13）
+    const YEARS = [2020, 2025, 2030, 2035, 2040, 2045, 2050];
+    const ser = {};
+    YEARS.forEach((y) => (ser[y] = 0));
     const seen = new Set();
     for (const f of feats) {
       const p = f.properties || {};
@@ -63,6 +68,7 @@ export async function onRequest(context) {
       acc.pn20 += num(p.PTN_2020);
       acc.pn25 += num(p.PTN_2025);
       for (let i = 1; i <= 19; i++) g5[i - 1] += num(p['PT' + String(i).padStart(2, '0') + '_2025']);
+      YEARS.forEach((y) => (ser[y] += num(p['PTN_' + y])));
     }
     if (!acc.n || acc.p25 <= 0) return json({ found: false, reason: 'no_mesh_in_radius' });
 
@@ -77,6 +83,8 @@ export async function onRequest(context) {
       pn20: Math.round(acc.pn20),
       pn25: Math.round(acc.pn25),
       g5: g5.map((v) => Math.round(v)),
+      series: YEARS.map((y) => ({ y: y, v: Math.round(ser[y]) })).filter((o) => o.v > 0),
+      households: null, // 世帯数はこのデータセットに無い（不動産情報ライブラリに世帯数APIも無い）
       src: '国土交通省 不動産情報ライブラリ「将来推計人口250mメッシュ（令和6年推計・2020年国勢調査ベース）」',
     });
   } catch (e) {

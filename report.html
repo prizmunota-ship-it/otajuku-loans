@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.2</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -312,7 +312,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='7';
+const APIV='8'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -1372,7 +1372,7 @@ async function popStats(lat,lon,radius){
   try{
     const j=await apiJson('/api/pop?lat='+lat+'&lon='+lon+'&r='+Math.round(radius));
     if(j&&j.found&&j.p25>0)return {p25:j.p25,a:j.a,b:j.b,c:j.c,p30:j.p30,g5:j.g5,n:j.n,
-      pn20:j.pn20,pn25:j.pn25,mesh:'250m',src:j.src};
+      pn20:j.pn20,pn25:j.pn25,series:j.series||[],mesh:'250m',src:j.src};
   }catch(e){}
   /* ②APIが使えないときだけ同梱データ（福岡・佐賀の1kmメッシュ）にフォールバック */
   const P=await loadPop();if(!P.length)return null;
@@ -1670,6 +1670,19 @@ async function buildReport(g){
             <span style="font-weight:400;color:#64748b;font-size:11px">（${up?'人口増加':'人口減少'}）</span></td></tr>
             <tr><td class="k">賃貸需要の評価区分</td><td class="r" style="text-align:left">${hit.r>=0?'人口上昇エリア':(hit.r>-4?'人口減少4%未満':'人口減少4%以上')}</td></tr></table>
             <div class="note" style="border:0;padding:0;margin:4px 0 8px">※出典：令和7年（2025年）国勢調査 人口速報集計（2020年比）。確報は令和8年9月公表予定。</div>`;
+        })()}
+        ${(()=>{ /* ★人口の推移（太田要望 2026-08-13）。2020年は国勢調査実績、以降は将来推計 */
+          const S=(pop.series||[]).filter(x=>x.v>0);
+          if(S.length<3)return '';
+          const base=S[0].v, mx=Math.max(...S.map(x=>x.v));
+          return `<div class="subttl" style="margin-top:10px">人口の推移（半径${radius.toLocaleString()}m圏内・2020年＝100）</div>
+            ${S.map(x=>{const rt=(x.v/base*100), d=(x.v-base)/base*100;
+              return `<div style="display:flex;align-items:center;gap:6px;margin:1px 0">
+                <div style="width:52px;font-size:9.5px;color:#64748b;text-align:right">${x.y}年</div>
+                <div style="flex:1;background:#eef2f7;border-radius:3px"><div style="width:${Math.round(x.v/mx*100)}%;background:${x.y<=2025?'#0f766e':'#7ba7d1'};height:11px;border-radius:3px"></div></div>
+                <div style="width:60px;font-size:10px;font-weight:700;text-align:right">${x.v.toLocaleString()}人</div>
+                <div style="width:52px;font-size:10px;font-weight:700;text-align:right;color:${d>=0?'#0f766e':'#b91c1c'}">${rt.toFixed(0)}</div></div>`;}).join('')}
+            <div class="note" style="border:0;padding:0;margin:4px 0 8px">※右端は2020年を100とした指数。<b>2020年は国勢調査実績</b>、2025年以降は将来推計です（濃い色＝実績・確定に近い年）。</div>`;
         })()}
         <div class="subttl" style="margin-top:10px">年齢3区分</div>
         <table class="lst"><tr><th>区分</th><th style="text-align:right">人口</th><th style="text-align:right">構成比</th></tr>
