@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.4</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -969,7 +969,7 @@ const NG_HOSP=/歯科|デンタル|矯正歯科|デイサービス|訪問看護|
    「近所にコンビニが多すぎて、載せたいイオン伊都が表から押し出される」対策。
    大型店を独立した区分にすると、facilityPaper が各区分の最寄り1件を必ず確保する仕組みに乗り、
    コンビニに埋もれなくなる。モール内のテナント（専門店・フードコート等）は落とす。 */
-const NG_MALL=/駐車場|駐輪|バス停|フードコート|専門店街|入口|出口|ATM|銀行|クリニック|歯科|薬局|美容室|コインランドリー/;
+const NG_MALL=/駐車場|駐輪|バス停|フードコート|専門店街|入口|出口|ATM|銀行|クリニック|歯科|薬局|美容室|コインランドリー|商店街|アーケード|一番街|日曜市|朝市|市場|通り$/;
 /* ⚠️Googleはモール内のテナントにも type:'shopping_mall' を付ける（実例：イオンモール福岡伊都の
    すぐ隣に「駄菓子の下町屋イオンモール伊都店」が同じtypeで697mに出る）。施設名の頭にブランド名が来る
    のが本体、店名の後ろにモール名が付くのはテナント、という並びで見分ける（「モール」等の出現位置が
@@ -1798,7 +1798,7 @@ async function buildReport(g){
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'大型商業施設',color:'#7c3aed',items:F.mall,n:2,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
+    [{label:'大型商業施設',color:'#7c3aed',items:F.mall,n:3,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
     [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'Google Places／OpenStreetMap');
