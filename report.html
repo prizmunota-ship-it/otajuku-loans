@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.7</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -963,7 +963,7 @@ function placesKeyword(lat,lon,radius,query){
    OSMは住民が編集する地図なので、日本の店舗は登録漏れが珍しくない（コンビニ・スーパーが
    すぐ近くにあるのに表に出ない）。OSMを消さずに、Googleで見つかった分を足して名寄せする。
    ng＝スーパー検索に紛れる小売（直売所・青果店など）を落とすための除外パターン。 */
-const NG_SUPER=/直売所|青果|精肉|鮮魚|乾物|かまぼこ|米穀|酒店|酒販|サプリ|不動産|物産|物產|食料品店|食品店|配送|デリバリー/;
+const NG_SUPER=/直売所|青果|精肉|鮮魚|乾物|かまぼこ|米穀|酒店|酒販|サプリ|不動産|物産|物產|食料品店|食品店|配送|デリバリー|フラワー|花屋|生花|ﾌﾗﾜｰ|パン|ベーカリー|菓子|弁当|惣菜店|商店$|ショップ$/;
 /* Googleのtype:'doctor'は歯科・整骨院・デイサービスまで返してくるため、
    「病院・クリニック」欄に紛れないよう名称で除く（歯科は歯科欄に別途出る） */
 const NG_HOSP=/歯科|デンタル|矯正歯科|デイサービス|訪問看護|介護|居宅|接骨|整骨|鍼灸|あん摩|マッサージ|動物病院|薬局|薬品/;
@@ -971,6 +971,10 @@ const NG_HOSP=/歯科|デンタル|矯正歯科|デイサービス|訪問看護|
    「近所にコンビニが多すぎて、載せたいイオン伊都が表から押し出される」対策。
    大型店を独立した区分にすると、facilityPaper が各区分の最寄り1件を必ず確保する仕組みに乗り、
    コンビニに埋もれなくなる。モール内のテナント（専門店・フードコート等）は落とす。 */
+/* 調剤薬局（病院前・門前）は生活利便とは言えず賃貸ニーズに関係ないので載せない
+   （太田指摘 2026-08-13「大賀薬局 久留米総合病院前店…こんなリアル薬局不要」）。
+   ドラッグストアだけを残す。 */
+const NG_DRUG=/調剤|処方せん|処方箋|病院前|医院前|クリニック|門前|漢方|薬品|薬店/;
 const NG_MALL=/駐車場|駐輪|バス停|フードコート|専門店街|入口|出口|ATM|銀行|クリニック|歯科|薬局|美容室|コインランドリー|商店街|アーケード|一番街|日曜市|朝市|市場|通り$|紳士服|洋服|衣料|本部$|本社|事務所|営業所|流通センター/;
 /* ⚠️Googleはモール内のテナントにも type:'shopping_mall' を付ける（実例：イオンモール福岡伊都の
    すぐ隣に「駄菓子の下町屋イオンモール伊都店」が同じtypeで697mに出る）。施設名の頭にブランド名が来る
@@ -1651,9 +1655,9 @@ async function buildReport(g){
       officialList(g,radius,'bank',F0.bank),
       officialList(g,radius,'police',F0.police),
       addPlaces(F0.mall,g,radius,{types:['shopping_mall','department_store'],ng:NG_MALL,drop:isMallTenant,minGap:120,minRt:100}),
-      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパー',ng:NG_SUPER,minRt:50}),
+      addPlaces(F0.super,g,radius,{types:['supermarket'],text:'スーパーマーケット',ng:NG_SUPER,minRt:150}),
       addPlaces(F0.conv,g,radius,{types:['convenience_store']}),
-      addPlaces(F0.drug,g,radius,{types:['drugstore','pharmacy'],minRt:15}),
+      addPlaces(F0.drug,g,radius,{types:['drugstore'],ng:NG_DRUG,minRt:50}),
       addPlaces(F0.hosp,g,radius,{types:['hospital','doctor'],ng:NG_HOSP}),
       addPlaces(F0.dent,g,radius,{types:['dentist']})
     ]);
@@ -1808,7 +1812,7 @@ async function buildReport(g){
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
   /* --- ショッピング --- */
   h+=facilityPaper('ショッピング環境','調査対象範囲近辺の買い物施設（距離順）',
-    [{label:'大型商業施設',color:'#7c3aed',items:byFame(F.mall),n:3,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア・薬局',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
+    [{label:'大型商業施設',color:'#7c3aed',items:byFame(F.mall),n:3,must:true},{label:'スーパー',color:'#16a34a',items:F.super,n:3},{label:'コンビニエンスストア',color:'#0891b2',items:F.conv,n:1,nMax:3},{label:'ドラッグストア',color:'#db2777',items:F.drug,n:2}],g,radius,'Google Places／OpenStreetMap');
   /* --- 医療 --- */
   h+=facilityPaper('医療環境','調査対象範囲近辺の医療施設（距離順）',
     [{label:'病院・クリニック',color:'#dc2626',items:F.hosp,n:3},{label:'歯科',color:'#9333ea',items:F.dent,n:2}],g,radius,'Google Places／OpenStreetMap');
