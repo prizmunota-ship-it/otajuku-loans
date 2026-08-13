@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -312,7 +312,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='8'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
+const APIV='9'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -983,10 +983,13 @@ function facilityPaper(title,lead,groups,g,radius,src){
   if(!rows.length){
     body=`<div class="phase" style="margin-top:4px">この調査対象範囲（半径${radius.toLocaleString()}m）内では見つかりませんでした。調査対象範囲を広げて再作成すると見つかる場合があります。</div>`;
   }else{
-    body=`<table class="lst"><tr><th style="width:34px">No</th><th style="width:96px">区分</th><th>名称</th>${extraCol?'<th style="width:118px">'+extraCol.h+'</th>':''}<th style="width:84px;text-align:right">直線距離</th><th style="width:74px;text-align:right">徒歩</th></tr>`
+    /* 乗降客数の列は、その値を持つ行が1件でもあるときだけ出す（駅ページ専用） */
+    const hasPax=rows.some(f=>f.pax&&f.pax.v>0);
+    body=`<table class="lst"><tr><th style="width:34px">No</th><th style="width:96px">区分</th><th>名称</th>${extraCol?'<th style="width:118px">'+extraCol.h+'</th>':''}${hasPax?'<th style="width:96px;text-align:right">乗降客数<div style="font-size:8.5px;font-weight:400;color:#94a3b8">令和5年度／日</div></th>':''}<th style="width:84px;text-align:right">直線距離</th><th style="width:74px;text-align:right">徒歩</th></tr>`
       +rows.map(f=>`<tr><td class="no"><span style="background:${f._g.color}">${f.idx}</span></td>
         <td style="font-size:11.5px;color:#475569;font-weight:700">${f._g.label}</td>
         <td class="nm">${f.name}</td>${extraCol?'<td style="font-size:11px;color:#64748b">'+(f.op||'—')+'</td>':''}
+        ${hasPax?'<td class="r">'+(f.pax&&f.pax.v>0?'<b>'+f.pax.v.toLocaleString()+'</b>人':'—')+'</td>':''}
         <td class="r">${f.d.toLocaleString()}m${f.rd?'<div style="font-size:9px;color:#94a3b8;font-weight:400">経路'+f.rd.toLocaleString()+'m</div>':''}</td>
         <td class="r">約${f.min}分${f.rd?'<div style="font-size:9px;color:#16a34a;font-weight:700">経路実測</div>':''}</td></tr>`).join('')
       +'</table>';
@@ -1514,6 +1517,22 @@ async function buildReport(g){
       });
     }
   }catch(e){}
+  /* ★駅別乗降客数（太田要望 2026-08-13）。金融機関向けは公表データの数字で裏付けるのが原則なので、
+     最寄り駅の1日あたり乗降客数を表に出す。OSMの駅名と国土数値情報の駅名を正規化して突き合わせる。 */
+  let EKI=null;
+  try{
+    const ek=await apiJson('/api/eki?lat='+g.lat+'&lon='+g.lon+'&r='+Math.max(radius,2000));
+    if(ek&&ek.found&&ek.stations&&ek.stations.length){
+      EKI=ek;
+      const nz=s=>String(s||'').replace(/[\s　]/g,'').replace(/駅$/,'');
+      F0.station.forEach(st=>{
+        const k=nz(st.name); if(!k)return;
+        const hit=ek.stations.find(x=>nz(x.name)===k)
+              ||ek.stations.find(x=>{const a=nz(x.name);return a&&(a.includes(k)||k.includes(a));});
+        if(hit){st.pax=hit.latest;st.paxSeries=hit.series;}
+      });
+    }
+  }catch(e){}
   hideStatus();
   const F=F0;
   const today=new Date();const dstr=today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日';
@@ -1611,8 +1630,18 @@ async function buildReport(g){
   }
 
   /* --- 最寄り駅 --- */
-  h+=facilityPaper('最寄り駅情報','調査対象範囲近辺の駅までの距離と徒歩分数（距離順）',
-    [{label:'鉄道駅',color:'#2563eb',items:F.station,n:4,extraCol:{h:'路線・事業者'}}],g,radius,'OpenStreetMap');
+  /* 乗降客数が取れた駅があれば、最寄り駅の推移をリード文に添える（賃貸需要の定量的な裏づけ） */
+  let ekiLead='調査対象範囲近辺の駅までの距離と徒歩分数（距離順）';
+  const ekiTop=(F.station||[]).find(s=>s.paxSeries&&s.paxSeries.length>=2);
+  if(ekiTop){
+    const S=ekiTop.paxSeries, last=S[S.length-1], first=S[0];
+    const rr=first.v>0?((last.v-first.v)/first.v*100):0;
+    ekiLead+=`<br><span style="color:#0f766e;font-weight:700">${ekiTop.name}の乗降客数：${last.v.toLocaleString()}人／日（${last.y}年度）</span>`
+      +`<span style="color:#64748b">　※${first.y}年度 ${first.v.toLocaleString()}人 → ${last.y}年度 ${last.v.toLocaleString()}人（${rr>=0?'+':''}${rr.toFixed(1)}%）</span>`;
+  }
+  h+=facilityPaper('最寄り駅情報',ekiLead,
+    [{label:'鉄道駅',color:'#2563eb',items:F.station,n:4,extraCol:{h:'路線・事業者'}}],g,radius,
+    EKI?'OpenStreetMap／乗降客数：国土交通省 不動産情報ライブラリ「国土数値情報（駅別乗降客数・令和5年度）」':'OpenStreetMap');
   /* --- バス停 --- */
   h+=facilityPaper('バス停情報','調査対象範囲近辺のバス停留所（距離順）',
     [{label:'バス停留所',color:'#d97706',items:F.bus,n:5,extraCol:{h:'事業者'}}],g,radius,'OpenStreetMap');
