@@ -141,7 +141,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.1</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -154,7 +154,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3">
   <div class="hist" id="hist"></div></div>
   <button class="bigbtn" id="go" onclick="locate()">🔍 位置を検索</button>
-  <div class="qhint">物件名でも住所でもOK。あとは全部自動です。</div>
+  <div class="qhint">物件名でも住所でもOK。あとは全部自動です。<a href="javascript:void(0)" onclick="svOpen()" style="margin-left:10px;font-weight:800;color:#0f766e;white-space:nowrap">🕘 作成履歴</a></div>
   <div class="opts">
     <label>調査範囲
       <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
@@ -218,7 +218,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
   <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
 </div>
-<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><button class="btn sec" onclick="confirmGo()" title="調査範囲やチェック、類似物件の編集を変えたあとに押すと、レポートに反映されます">🔄 情報を更新</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
+<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><button class="btn sec" onclick="confirmGo()" title="調査範囲やチェック、類似物件の編集を変えたあとに押すと、レポートに反映されます">🔄 情報を更新</button><button class="btn sec" onclick="svOpen()" title="タイトルを付けて保存し、あとから呼び出せます（この端末に最大10件）">🕘 作成履歴</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
   <a href="javascript:void(0)" onclick="printHelp()" style="margin-left:10px;font-size:12px;font-weight:800;color:#0f766e">印刷できない時は？</a>
   <div id="prhelp" class="scronly" style="display:none;margin-top:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.9;color:#78350f;max-width:690px">
     <div style="font-weight:800;margin-bottom:4px">📱 スマホで印刷できない時</div>
@@ -230,6 +230,25 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 </div>
 <div id="excluded" style="display:none"></div>
 <div id="report"></div>
+</div>
+
+<!-- 作成履歴モーダル（タイトル付きでこの端末に最大10件保存→一覧から呼び出し） -->
+<div id="svModal" class="scronly" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)svClose()">
+  <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.25);">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #e5e7eb;">
+      <b style="font-size:14px;color:#0f766e;">🕘 作成履歴</b>
+      <button onclick="svClose()" style="border:none;background:none;font-size:18px;cursor:pointer;color:#9ca3af;line-height:1;">✕</button>
+    </div>
+    <div id="svSaveBox" style="padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
+      <div style="font-size:11px;color:#6b7280;margin-bottom:6px;">いまのレポート内容（位置・調査範囲・類似物件の編集など）にタイトルを付けて保存します（同じタイトルは上書き・最大10件、超えると古いものから消えます）</div>
+      <div style="display:flex;gap:8px;">
+        <input id="svtitle" placeholder="例：◯◯アパート（融資打診用）" style="flex:1;min-width:0;border:1px solid #d1d5db;border-radius:8px;padding:9px 11px;font-size:13px;">
+        <button onclick="svSaveNow()" style="border:none;background:#0f766e;color:#fff;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">💾 保存</button>
+      </div>
+      <div id="svhint" style="display:none;font-size:11.5px;color:#b45309;font-weight:700;margin-top:6px;">※ まだレポートを作成していません。「🔍 位置を検索」→「✅ この位置でレポートを作成」のあとに保存できます。</div>
+    </div>
+    <div id="svListBox" style="overflow-y:auto;padding:6px 16px 14px;"></div>
+  </div>
 </div>
 
 <script>
@@ -1595,6 +1614,87 @@ function histRender(){
     +'<button class="hclr" onclick="histClear()">履歴を消す</button>';
 }
 window.addEventListener('DOMContentLoaded',histRender);
+
+/* ===== 作成履歴（v12.1・太田要望）＝タイトルを付けてこの端末に最大10件保存 =====
+   検索履歴(hist)と別物。フォームの入力・チェック・調査範囲・確定した位置(PENDING)・
+   類似物件の編集行まで丸ごと保存し、呼び出すと物件情報を取り直したうえで
+   保存した位置・編集内容のままレポートを自動で再作成する。サーバーには送らない。 */
+const SKEY='otajuku_report_saves', SMAX=10;
+function svList(){try{const a=JSON.parse(localStorage.getItem(SKEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+function svStore(a){try{localStorage.setItem(SKEY,JSON.stringify(a.slice(0,SMAX)));}catch(e){alert('保存に失敗しました。端末の空き容量を確認してください。');}}
+function svFmt(ts){const d=new Date(ts),p=n=>('0'+n).slice(-2);return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function svOpen(){
+  const t=document.getElementById('svtitle');
+  if(t&&!t.value)t.value=(PENDING&&PENDING.name)||val('paddr')||'';
+  document.getElementById('svhint').style.display=(PENDING&&PENDING.lat)?'none':'block';
+  svRender();
+  document.getElementById('svModal').style.display='flex';
+}
+function svClose(){document.getElementById('svModal').style.display='none';}
+function svSaveNow(){
+  if(!(PENDING&&PENDING.lat)){document.getElementById('svhint').style.display='block';return;}
+  const t=(document.getElementById('svtitle').value.trim())||PENDING.name||val('paddr')||'無題のレポート';
+  const e={t:t,ts:Date.now(),
+    q:val('paddr'),alias:val('palias'),author:val('pauthor'),
+    radius:document.getElementById('pradius').value,
+    opts:['opt_edu','opt_pop','opt_flood','opt_dosha','opt_quake','opt_snow'].reduce((o,id)=>{o[id]=document.getElementById(id).checked;return o;},{}),
+    madori:val('pmadori'),mens:val('pmens'),rentmin:val('prentmin'),appeal:val('pappeal'),
+    ageTol:isFinite(window.__ageTol)?window.__ageTol:null,
+    pending:{lat:PENDING.lat,lon:PENDING.lon,title:PENDING.title,query:PENDING.query,name:PENDING.name,moved:!!PENDING.moved},
+    /* 類似物件の行は空欄行を除いて生の値のまま保存（作成者の手修正を残す） */
+    cmp:[...document.querySelectorAll('#cmpRows .cmprow')].map(r=>[...r.querySelectorAll('input')].map(x=>x.value)).filter(v=>v.some(x=>String(x).trim()))
+  };
+  const a=svList().filter(x=>x.t!==t);   /* 同じタイトルは上書き */
+  a.unshift(e); svStore(a); svRender();
+  document.getElementById('svhint').style.display='none';
+}
+function svDel(i){
+  const a=svList(),e=a[i];if(!e)return;
+  if(!confirm('「'+e.t+'」を作成履歴から削除しますか？'))return;
+  a.splice(i,1);svStore(a);svRender();
+}
+async function svLoad(i){
+  const e=svList()[i];if(!e)return;
+  svClose();
+  /* ①位置検索に使う入力から復元（locateがpaddr/paliasを参照するため先に入れる） */
+  document.getElementById('paddr').value=e.q||'';
+  document.getElementById('palias').value=e.alias||'';
+  document.getElementById('pauthor').value=e.author||'';
+  if(e.radius)document.getElementById('pradius').value=e.radius;
+  for(const k in (e.opts||{})){const el=document.getElementById(k);if(el)el.checked=!!e.opts[k];}
+  document.getElementById('pmadori').value=e.madori||'';
+  document.getElementById('pmens').value=e.mens||'';
+  document.getElementById('prentmin').value=e.rentmin||'';
+  document.getElementById('pappeal').value=e.appeal||'';
+  window.__ageTol=(e.ageTol==null?undefined:e.ageTol);
+  if(!(e.pending&&e.pending.lat)){document.getElementById('paddr').focus();return;}
+  /* ②SUUMO/HOME'Sの物件情報は毎回取り直す（検索履歴histPickと同じ流儀） */
+  await locate();
+  if(document.getElementById('confirm').style.display!=='block')return; /* 位置特定失敗時は入力復元のみで停止 */
+  restorePos({lat:e.pending.lat,lon:e.pending.lon,title:e.pending.title,moved:e.pending.moved});
+  if(e.pending.query)PENDING.query=e.pending.query;
+  if(e.pending.name)PENDING.name=e.pending.name;
+  /* ③類似物件の編集行は locate の別エリア自動クリアの後に復元（消されないように） */
+  document.getElementById('cmpRows').innerHTML='';
+  (e.cmp&&e.cmp.length?e.cmp:[[],[],[]]).forEach(v=>addCmpRow(v));
+  /* ④保存した位置・内容のままレポートを自動再作成 */
+  await confirmGo();
+}
+function svRender(){
+  const box=document.getElementById('svListBox');if(!box)return;
+  const a=svList();
+  if(!a.length){box.innerHTML='<div style="text-align:center;color:#9ca3af;font-size:12px;padding:22px 0;">まだ作成履歴はありません。レポート作成後に上の「💾 保存」で残せます。</div>';return;}
+  box.innerHTML=a.map((e,i)=>{
+    const ad=addrPlain(e.pending&&e.pending.title||'')||'';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #f1f5f9;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:800;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.t)}</div>
+        <div style="font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${svFmt(e.ts)} 保存${ad?'　'+esc(ad):''}</div>
+      </div>
+      <button onclick="svLoad(${i})" style="border:1.5px solid #0f766e;background:#fff;color:#0f766e;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">📂 開く</button>
+      <button onclick="svDel(${i})" title="削除" style="border:1px solid #e5e7eb;background:#fff;color:#9ca3af;border-radius:8px;padding:7px 9px;font-size:12px;cursor:pointer;">✕</button>
+    </div>`;}).join('');
+}
 
 async function locate(){
   const query=val('paddr');
