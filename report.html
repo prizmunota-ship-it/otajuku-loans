@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.1</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -896,9 +896,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
          このレポートは金融機関に出すものなので、わざわざ不利に読める説明は載せない（太田指示 2026-08-13）。 */
       +(()=>{
         const relaxN=cmp.filter(c=>c._relaxed).length;
-        if(!(opts.radius&&(cmp.length<5||relaxN>0)))return '';
+        /* 標準の10件に満たないときは、その場で条件を広げ直せるボタンを出す（画面のみ） */
+        if(!(opts.radius&&(cmp.length<10||relaxN>0))||ageTol()>=99)return '';
         return `<div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>`
-          +(cmp.length<5?`調査対象範囲（半径${opts.radius.toLocaleString()}m）内で条件に合う募集が${cmp.length}件しかありませんでした。`:'')
+          +(cmp.length<5?`調査対象範囲（半径${opts.radius.toLocaleString()}m）内で条件に合う募集が${cmp.length}件しかありませんでした。`:`築年±${ageTol()}年の自動条件で${cmp.length}件です。`)
           +(relaxN>0?`このうち<b>${relaxN}件</b>は、件数を確保するため<b>築年数・面積・間取りの条件を緩めて</b>掲載しています（${cmp.filter(c=>c._relaxed).map(c=>c.name+'＝'+c._relaxed).join('／')}）。`:'')
           +`<br><b>築年の条件を広げて取り直す：</b>`
           +[7,10,99].filter(n=>n>ageTol()).map(n=>`<button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(${n})">${n===99?'築年を問わない':'±'+n+'年'}</button>`).join('')
