@@ -35,7 +35,7 @@ export async function onRequest(context) {
   let sc = (u.searchParams.get('sc') || '').trim();
   const mdIn = (u.searchParams.get('md') || '').trim();
   const md = MD[mdIn] || (/^\d{2}$/.test(mdIn) ? mdIn : '');
-  const pages = Math.min(Math.max(parseInt(u.searchParams.get('pages') || '5', 10) || 5, 1), 8);
+  const pages = Math.min(Math.max(parseInt(u.searchParams.get('pages') || '8', 10) || 8, 1), 15);
   const detail = Math.min(Math.max(parseInt(u.searchParams.get('detail') || '12', 10) || 12, 0), 15);
   const dbg = u.searchParams.get('debug');
   if (!pref) return json({ found: false, reason: 'no_pref' }, 400);
@@ -67,11 +67,13 @@ export async function onRequest(context) {
     if (!sc) return json({ found: false, reason: 'no_city_code', debug: dbg ? log : undefined });
 
     // ② 一覧をページ送りで取得
-    const base = `https://suumo.jp/chintai/${pref}/${sc}/` + (md ? `?md=${md}` : '');
+    // pc=50 で1ページ50棟（既定は20棟）。市域が広いと母数が足りず、
+    // 半径1.5km内に数件しか残らない事故が起きた（久留米で実測・太田指摘 2026-08-13）。
+    const base = `https://suumo.jp/chintai/${pref}/${sc}/?pc=50` + (md ? `&md=${md}` : '');
     const items = [];
     let total = 0;
     for (let p = 1; p <= pages; p++) {
-      const url = base + (md ? '&' : '?') + 'page=' + p;
+      const url = base + '&page=' + p;
       const html = await get(url);
       if (!html) break;
       if (p === 1) {

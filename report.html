@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -354,7 +354,7 @@ async function fetchSpec(name,city,pref,addr){
 async function suumoSearchCmp(city,pref,md){
   try{
     const j=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
-      +(md?'&md='+encodeURIComponent(md):'')+'&pages=5&detail=14');
+      +(md?'&md='+encodeURIComponent(md):'')+'&pages=10&detail=14');
     if(!j||!j.found||!(j.items||[]).length)return 0;
     window.CHINTAI=j;
     /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
