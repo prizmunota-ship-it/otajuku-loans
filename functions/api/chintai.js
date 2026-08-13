@@ -118,8 +118,11 @@ export async function onRequest(context) {
           const r = await fetch(su, { cf: { cacheTtl: 86400, cacheEverything: true } });
           const j = await r.json();
           if (j && j.found && j.addr && /\d/.test(j.addr.replace(/^.*?[都道府県]/, ''))) {
-            it.addr2 = j.addr;
-            seen.set(key, j.addr);
+            // 「波多江駅南1丁目729-6、729-32、731-2」のように番地が並ぶことがある。
+            // 住所検索に通らないので先頭の1つだけ使う。
+            const a = String(j.addr).split(/[、，,]/)[0].trim();
+            it.addr2 = a;
+            seen.set(key, a);
           }
         } catch (e) { /* 取れなければ丁目までの住所のまま使う */ }
       }
