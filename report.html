@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -361,6 +361,7 @@ async function suumoSearchCmp(city,pref,md){
     const j=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
       +(md?'&md='+encodeURIComponent(md):'')+'&pages=10&detail=14');
     if(!j||!j.found||!(j.items||[]).length)return 0;
+    window.CMP_FROM_ASSESS=false;
     window.CHINTAI=j;
     /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
     window.PARK=new Map();
@@ -521,6 +522,7 @@ function parseCmp(){
       addCmpRow([it.name,it.addr,it.age==null?'':it.age,it.men||'',it.total]);n++;
     }
     window.CMP_SRC='不動産ポータルサイトの募集情報';
+    window.CMP_FROM_ASSESS=true; /* 査定システム側が既に類似条件で抽出済み＝こちらで重ねて絞らない */
     document.getElementById('cmppaste').value='';
     alert(n+'件の募集事例を取り込みました。「レポートを作成」してください。');
     return;
@@ -640,6 +642,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       if(c.d==null){window.CMP_EXCLUDED.push({name:c.name,reason:'位置が特定できず地図に載せられない'});return;}
       if(c.d>R){window.CMP_EXCLUDED.push({name:c.name,reason:'調査対象範囲外（'+(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m')+'）'});return;}
       let ng='';
+      /* ★査定システムから取り込んだ事例は、向こう側が既に「面積・築年・駅徒歩」の
+         抽出条件で類似物件を選んでいる。こちらで重ねて絞ると良い事例まで落ちるので、
+         同じ建物の別部屋を1件にまとめる処理だけ掛ける（太田指示 2026-08-13）。 */
+      if(window.CMP_FROM_ASSESS){kept.push(c);return;}
       if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
       else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
       /* ★築年数が離れた物件は入居ターゲットが違うので比較にならない（操川さん指摘 2026-08-13）。
@@ -830,7 +836,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（募集中${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'／'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}・出典SUUMO）</div>`:'')
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
       /* どういう基準で選んだのかを明示する（想定問答用） */
-      +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${opts.md?'／同間取り（'+opts.md+'）':''}${own.men>0?'／専有面積 ±25%':''}${(ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':''}</div>`
+      +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${window.CMP_FROM_ASSESS?'／同規模・同年代の募集事例（1棟につき1件）':''}${window.CMP_FROM_ASSESS?'':(opts.md?'／同間取り（'+opts.md+'）':'')}${window.CMP_FROM_ASSESS?'':(own.men>0?'／専有面積 ±25%':'')}${(!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':''}</div>`
       /* ★件数が少ない事情は「作成者向け」＝画面だけに出す（.scronlyは印刷で非表示）。
          このレポートは金融機関に出すものなので、わざわざ不利に読める説明は載せない（太田指示 2026-08-13）。 */
       +(()=>{
