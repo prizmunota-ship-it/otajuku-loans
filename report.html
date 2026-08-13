@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.2</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -625,7 +625,13 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   if(opts.center){
     const R=opts.radius||1500;
     const ownMidR=hasOwn?(own.min+own.max)/2:0;
-    cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
+    cmp.forEach(c=>{
+      c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;
+      /* 貼り付けた事例一覧には「本物件からの距離」が入っている。住所から計算し直すと
+         本物件のピンが丁目中心のときにズレる（エスプリポート 実測5m→計算197m）ので元の値を優先 */
+      const dd=window.CMP_DIST&&window.CMP_DIST.get(nzName(c.name));
+      if(dd!=null)c.d=dd;
+    });
     /* kept＝厳格な条件を満たすもの。soft＝間取り/面積だけが外れたもの（範囲内・位置は特定済み）。
        hard＝範囲外や位置不明で、地図に載せられないため何があっても採用しない。 */
     const AGE_TOL=ageTol(); /* 築年数の許容差（年）。フォームの「類似物件の築年」で切替 */
