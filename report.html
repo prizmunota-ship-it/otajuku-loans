@@ -175,7 +175,6 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <!-- 収益・積算評価の入力は廃止（太田指示 2026-08-14「自動で算定できないなら削除」）。
        構造・築年数などのIDはコードが参照するため非表示のまま残す。 -->
   <div style="display:none">
-    <select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select>
     <input id="page" type="number" value="0">
     <input id="pincome" type="number"><input id="punits" type="number">
     <input id="pland" type="number"><input id="pbldg" type="number">
@@ -190,6 +189,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     <div class="grid">
       <div class="fld"><label>間取り</label><input id="pmadori" placeholder="例：1LDK"></div>
       <div class="fld"><label>専有面積 ㎡</label><input id="pmens" type="number" step="0.01" placeholder="例：41.4"></div>
+      <div class="fld"><label>種別・構造<span style="font-weight:400;color:#64748b">（自動取得が違うとき）</span></label><select id="pstruct"><option value="" selected>（自動取得を使う）</option><option value="wood">木造（アパート）</option><option value="lgs">軽量鉄骨（アパート）</option><option value="steel">鉄骨（マンション）</option><option value="rc">RC（マンション）</option><option value="src">SRC（マンション）</option></select></div>
       <div class="fld"><label>想定月額賃料（1戸・円）</label><input id="prentmin" type="number" placeholder="例：63500"></div>
       <div class="fld" style="display:none"><input id="prentmax" type="number"></div>
     </div>
@@ -709,11 +709,12 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
      木造・軽量鉄骨＝アパート系／鉄骨・RC・SRC＝マンション系（太田の種別ルールと同じ区分）。
      抽出条件の注記でも使うので、選定ブロックの外で確定させておく（スコープ注意）。 */
   const structCat=s=>{s=String(s||'');return /木造|軽量/.test(s)?'A':/(SRC|RC|鉄筋|鉄骨|コンクリ)/.test(s)?'M':'';};
-  const ownStructTxt=(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct)||structIn()||'';
+  const ownStructTxt=structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct)||''; /* 入力優先 */
   const ownCat=structCat(ownStructTxt);
   let outCnt=0;window.CMP_EXCLUDED=[];
   if(opts.center){
     const R=opts.radius||1500;
+    const allRows=cmp.slice(); /* 成約事例の母集団（選定前の全行） */
     const ownMidR=hasOwn?(own.min+own.max)/2:0;
     cmp.forEach(c=>{
       c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;
@@ -783,6 +784,33 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const pick=uniq.slice(0,CAP);
     pick.sort((a,b)=>a.d-b.d);
     uniq.slice(CAP).forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:'掲載枠（'+CAP+'件）超過'}));
+    /* ★成約事例（太田指示 2026-08-14）＝掲載が終了した募集の実績。
+       募集中の表と同じ建物は載せない（別建物の履歴だけ）。青の行・青ピンで区別する。
+       類似の条件（間取り・面積±25%・構造系統・築年±N年）は募集中と同じものを掛ける。 */
+    window.SEIYAKU=[];
+    if(window.CMPHIST&&window.CMPHIST.size&&!window.CMP_FROM_ASSESS){
+      const pickedKeys=new Set(pick.map(c=>bkey(c.name)));
+      const cand=[];
+      allRows.forEach(c=>{
+        if(c.d==null||c.d>R)return;
+        if(pickedKeys.has(bkey(c.name)))return;
+        const hs=window.CMPHIST.get(nzName(c.name));if(!hs||!hs.length)return;
+        if(ownCat&&c.struct&&structCat(c.struct)&&structCat(c.struct)!==ownCat)return;
+        if(ownAge!=null&&c.age!=null&&Math.abs(c.age-ownAge)>ageTol())return;
+        hs.forEach(h=>{
+          if(opts.md&&h.md&&h.md!==opts.md)return;
+          if(own.men>0&&h.men>0&&Math.abs(h.men-own.men)/own.men>0.25)return;
+          cand.push({c:c,period:h.period,md:h.md||c.md||'',men:h.men||null,rent:h.rent,y:h.y,mo:h.mo});
+        });
+      });
+      cand.sort((a,b)=>(b.y*12+b.mo)-(a.y*12+a.mo));
+      const scap=Math.max(0,Math.min(3,(hasOwn?12:13)-pick.length)),sseen=new Set();
+      cand.forEach(x=>{
+        if(window.SEIYAKU.length>=scap)return;
+        const k=bkey(x.c.name);if(sseen.has(k))return;sseen.add(k);
+        window.SEIYAKU.push(x);
+      });
+    }
     cmp=pick;
   }
   let mismatch=0;
@@ -792,32 +820,16 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
     rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
-  /* ★募集終了事例（太田指示 2026-08-14「成約実績も入れてほしい」）＝掲載が終了した募集の実績。
-     表に載せた比較物件の掲載履歴から同条件のものを新しい順に、グレーの行として同じ表に足す
-     （独立の表にすると1ページに収まらない）。金額は募集時点の賃料＝成約賃料そのものではない。 */
+  /* ★成約事例（太田指示 2026-08-14）＝募集中とは別の建物の、掲載が終了した募集の実績。
+     青の行（薄青背景・青バッジ）で募集中と色分けし、番号は募集中の続き＝地図の青ピンと連動。 */
   let histN=0;
-  if(window.CMPHIST&&window.CMPHIST.size&&!window.CMP_FROM_ASSESS){
-    const hrows=[];
-    cmp.forEach(c=>{
-      const hs=window.CMPHIST.get(nzName(c.name));if(!hs)return;
-      hs.forEach(h=>{
-        if(opts.md&&h.md&&h.md!==opts.md)return;
-        if(own.men>0&&h.men>0&&Math.abs(h.men-own.men)/own.men>0.25)return;
-        if(h.men&&c.men&&Math.abs(h.men-c.men)<0.01&&h.rent===c.total)return; /* いま募集中の部屋と同一は除く */
-        hrows.push({c:c,period:h.period,md:h.md||c.md||'',men:h.men||null,rent:h.rent,y:h.y,mo:h.mo});
-      });
-    });
-    hrows.sort((a,b)=>(b.y*12+b.mo)-(a.y*12+a.mo));
-    /* 同じ部屋（同一物件・同間取り・同面積）の期間違いは最新1件だけ。枠は表全体で13行まで */
-    const hseen=new Set(),hcap=Math.max(0,Math.min(3,(hasOwn?12:13)-cmp.length));
-    hrows.forEach(h=>{
-      if(histN>=hcap)return;
-      const k=h.c.no+'|'+h.md+'|'+(h.men||0);if(hseen.has(k))return;hseen.add(k);
-      const dtxt=h.c.d!=null?(h.c.d>=1000?(h.c.d/1000).toFixed(1)+'km':h.c.d+'m'):'—';
-      rows+=`<tr style="color:#64748b"><td class="no"><span style="background:#94a3b8">${h.c.no}</span></td><td class="nm" style="font-weight:400">${h.c.name} <span style="font-size:9.5px">（成約 ${h.period.replace(/^.*?〜/,'')}）</span></td><td style="font-size:10.5px">${(h.c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}</td><td class="r">${dtxt}</td><td class="r">${h.c.age!=null?'築'+h.c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(h.c.struct)||'—'}</td><td class="r">${h.men?h.men.toFixed(2)+'㎡':'—'}</td><td class="r">${h.rent.toLocaleString()}円</td><td class="r">${h.men>0?Math.round(h.rent/h.men).toLocaleString()+'円':'—'}</td><td class="r">—</td></tr>`;
-      histN++;
-    });
-  }
+  (window.SEIYAKU||[]).forEach(x=>{
+    x.no=cmp.length+histN+1;
+    const c=x.c;
+    const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
+    rows+=`<tr style="background:#eff6ff"><td class="no"><span style="background:#2563eb">${x.no}</span></td><td class="nm">${c.name} <span style="font-size:9.5px;color:#2563eb;font-weight:800">（成約 ${x.period.replace(/^.*?〜/,'')}）</span></td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${x.men?x.men.toFixed(2)+'㎡':'—'}</td><td class="r">${x.rent.toLocaleString()}円</td><td class="r">${x.men>0?Math.round(x.rent/x.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;
+    histN++;
+  });
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
@@ -854,12 +866,13 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   const kindByStruct=st=>/軽量鉄骨|木造/.test(st)?'アパート':(/鉄骨|ＲＣ|RC|鉄筋|SRC|ＳＲＣ/.test(st)?'マンション':'');
   let structTxt=null,structSrc='';
   const stRaw=(S&&S.struct)||(SP&&SP.struct)||'';
-  if(stRaw){
-    structSrc=(S&&S.struct)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
-    structTxt=[(S&&S.kind)||(SP&&SP.kind)||kindByStruct(stRaw),stRaw,(S&&S.floors)||(SP&&SP.floors)].filter(Boolean).join(' ');
-  }else if(opts.struct){
+  /* ★作成者の入力を自動取得より優先する（太田指摘 2026-08-14「自動検索した結果、適切な情報ではない」） */
+  if(opts.struct){
     structSrc='作成者の入力値';
     structTxt=[kindByStruct(opts.struct),opts.struct].filter(Boolean).join(' ')+(opts.units>0?'／'+opts.units+'戸':'');
+  }else if(stRaw){
+    structSrc=(S&&S.struct)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    structTxt=[(S&&S.kind)||(SP&&SP.kind)||kindByStruct(stRaw),stRaw,(S&&S.floors)||(SP&&SP.floors)].filter(Boolean).join(' ');
   }
   /* ── 所在地：SUUMO実データ ＞ 建物情報 ＞ Web検索（推定と明記） ＞ Googleマップの住所検索 */
   let addrCell='',addrSrc='';
@@ -894,7 +907,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     </table>
     ${((!ageTxt||!structTxt)||(SP&&SP.url))?`<div class="note scronly" style="border:0;margin:0 0 8px;padding:0">${(SP&&SP.url)?'<a href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>　':''}${(!ageTxt||!structTxt)?'<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>下の「条件の変更や追加はこちら🤞」から間取り・専有面積などを入力して更新してください（推測値は載せません）。':''}</div>`:''}`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})((window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct)||structIn())}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})(structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct))}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
   const kpi=specTbl; /* ℹ️の長い案内は廃止（太田指示 2026-08-14「内容よくわからないので不要」） */
   let note='',tbl='';
   if(cmp.length===0){
@@ -934,7 +947,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     if(withGeo.length&&opts.center){
       const m=mapDiv('sm');
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
-        markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
+        markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))
+          .concat((window.SEIYAKU||[]).filter(x=>x.c.lat!=null&&x.c.lon!=null).map(x=>({lat:x.c.lat,lon:x.c.lon,label:x.no,color:'#2563eb',name:x.c.name+'（成約 '+x.period+'）'})))});
       mapHtml=m.html; /* 📍の説明は削除（太田指示 2026-08-14「地図上でわかる」） */
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
@@ -952,7 +966,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
          「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（募集中${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'／'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}・出典SUUMO）</div>`:'')
       /* 募集終了事例（グレー行）の説明。行そのものはrowsに統合済み */
-      +(histN>0?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※グレーの行＝<b>成約事例</b>（募集が終了した事例。賃料は募集時点のもの／出典：LIFULL HOME'S 掲載履歴）。</div>`:'')
+      +(histN>0?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※青の行・青ピン＝<b>成約事例</b>（募集が終了した別物件の事例。賃料は募集時点のもの／出典：LIFULL HOME'S 掲載履歴）。</div>`:'')
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
       /* どういう基準で選んだのかを明示する（想定問答用） */
       /* ★作成者向けメモ（画面のみ・.scronlyは印刷で非表示）＝抽出条件・件数事情・条件変更UI。
