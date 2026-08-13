@@ -126,7 +126,14 @@ function parseList(html) {
   const blocks = html.split('<div class="cassetteitem"');
   for (let i = 1; i < blocks.length; i++) {
     const b = blocks[i];
-    const name = txt((b.match(/cassetteitem_content-title"[^>]*>([^<]+)</) || [])[1]);
+    let name = txt((b.match(/cassetteitem_content-title"[^>]*>([^<]+)</) || [])[1]);
+    // SUUMOは建物名非公開の物件だと「◯◯線 ◯◯駅 10階建 築12年」をタイトルに出す。
+    // 築年は表に別列があるので落とし、名称非公開だと分かる形に整える。
+    let anon = false;
+    if (/階建/.test(name) && /築|新築/.test(name)) {
+      anon = true;
+      name = name.replace(/\s*(築\s*\d+年|新築)\s*$/, '').trim();
+    }
     const addr = txt((b.match(/cassetteitem_detail-col1"[^>]*>([^<]+)</) || [])[1]);
     const ageM = b.match(/cassetteitem_detail-col3"[^>]*>\s*<div>([^<]+)</);
     const ageT = txt(ageM && ageM[1]);
@@ -146,7 +153,7 @@ function parseList(html) {
       const href = (r.match(/href="(\/chintai\/jnc_[^"]+)"/) || [])[1] || '';
       if (!rent) continue;
       out.push({
-        name, addr,
+        name, addr, anon,
         age: isFinite(age) ? age : null,
         md: mdT, men: men || null,
         rent, admin, total: rent + admin, href,
