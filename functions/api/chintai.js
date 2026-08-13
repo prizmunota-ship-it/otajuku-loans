@@ -138,6 +138,10 @@ async function enrich(items, get, origin, nPark, nAddr) {
     it.parkFee = pk.fee;
     if (pk.fee > 0) fees.push(pk.fee);
     else if (pk.text && /無|なし|-/.test(pk.text)) none++;
+    // 構造も同じ詳細ページにある（「構造・階建て 木造2階建」等）。
+    // 類似物件の選定条件に構造を使う（太田指示 2026-08-14：間取り・構造・築年が近くないと比較にならない）
+    const st = parseStruct(html);
+    if (st) it.bstruct = st;
   }
   // SUUMOは一覧も詳細も丁目までしか出さないため、比較物件のピンが丁目の概算位置になる
   // （太田指摘 2026-08-13「HOME'Sは詳細な住所が載っている」）。経路は /api/spec と同じ。
@@ -159,6 +163,12 @@ async function enrich(items, get, origin, nPark, nAddr) {
         const a = String(j.addr).split(/[、，,]/)[0].trim();
         it.addr2 = a;
         seen.set(key, a);
+      }
+      if (j && j.found) {
+        // 構造（SUUMO詳細で取れなかった物件の補完）と、募集終了事例（掲載履歴）。
+        // 履歴は「過去の募集時点の賃料」であって成約賃料ではない——表示側で必ず明記する。
+        if (!it.bstruct && j.struct) it.bstruct = j.struct;
+        if (j.history && j.history.length) it.hist = j.history.filter((h) => h.rent > 0).slice(0, 4);
       }
     } catch (e) { /* 取れなければ丁目までの住所のまま使う */ }
   }
@@ -215,6 +225,16 @@ function parseList(html) {
 }
 
 // 詳細ページの「駐車場」欄。'近隣 5,500円' / '空有 5,000円' / '敷地内 3300円' / '-' 等。
+// SUUMO詳細ページの「構造・階建て」から構造だけを抜く（例：木造2階建→木造）
+function parseStruct(html) {
+  const m = html.match(/構造[・･]?階建て?<\/th>\s*<td[^>]*>([\s\S]{0,60}?)<\/td>/) ||
+            html.match(/>建物構造<[\s\S]{0,120}?<td[^>]*>([\s\S]{0,40}?)<\/td>/);
+  if (!m) return '';
+  const t = txt(m[1]);
+  const s = t.match(/(木造|軽量鉄骨|重量鉄骨|鉄骨鉄筋コンクリート|鉄筋コンクリート|鉄骨|SRC|RC|ALC|ブロック)/);
+  return s ? s[1] : '';
+}
+
 function parseParking(html) {
   const m = html.match(/駐車場<\/th>\s*<td[^>]*>([\s\S]{0,160}?)<\/td>/);
   let t = m ? txt(m[1]) : '';

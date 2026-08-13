@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -322,7 +322,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='13'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
+const APIV='14'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -416,14 +416,18 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
           body:JSON.stringify({rows:picked.slice(0,15).map(x=>({name:x.name,addr:x.addr,href:x.href,anon:!!x.anon}))})});
         const e=await r.json();
         if(e&&e.found){
-          (e.items||[]).forEach((it,i)=>{if(!picked[i])return;picked[i].park=it.park;picked[i].parkFee=it.parkFee;picked[i].addr2=it.addr2;});
+          (e.items||[]).forEach((it,i)=>{if(!picked[i])return;picked[i].park=it.park;picked[i].parkFee=it.parkFee;picked[i].addr2=it.addr2;picked[i].bstruct=it.bstruct;picked[i].hist=it.hist;});
           if(e.park)j.park=e.park;
         }
       }catch(err){}
     }
-    /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
-    window.PARK=new Map();
-    picked.forEach(it=>{if(it.park)window.PARK.set(nzName(it.name),{text:it.park,fee:it.parkFee||0});});
+    /* 駐車場・構造・募集終了事例は物件名で引けるようにしておく（表の列と選定条件に使う） */
+    window.PARK=new Map();window.CMPSTRUCT=new Map();window.CMPHIST=new Map();
+    picked.forEach(it=>{
+      if(it.park)window.PARK.set(nzName(it.name),{text:it.park,fee:it.parkFee||0});
+      if(it.bstruct)window.CMPSTRUCT.set(nzName(it.name),it.bstruct);
+      if(it.hist&&it.hist.length)window.CMPHIST.set(nzName(it.name),it.hist);
+    });
     let n=0;
     for(const it of picked){
       /* addr2＝HOME'Sの建物ページから取れた番地までの住所。あればそちらを使う（ピンが正確になる） */
@@ -682,6 +686,12 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;ownAge=Math.max(0,yrs);}
     else if(age!=null)ownAge=age;
   }
+  /* ★構造（太田指示 2026-08-14：間取り・構造・築年が近くないと比較にならない）。
+     木造・軽量鉄骨＝アパート系／鉄骨・RC・SRC＝マンション系（太田の種別ルールと同じ区分）。
+     抽出条件の注記でも使うので、選定ブロックの外で確定させておく（スコープ注意）。 */
+  const structCat=s=>{s=String(s||'');return /木造|軽量/.test(s)?'A':/(SRC|RC|鉄筋|鉄骨|コンクリ)/.test(s)?'M':'';};
+  const ownStructTxt=(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct)||structIn()||'';
+  const ownCat=structCat(ownStructTxt);
   let outCnt=0;window.CMP_EXCLUDED=[];
   if(opts.center){
     const R=opts.radius||1500;
@@ -695,7 +705,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     });
     /* kept＝厳格な条件を満たすもの。soft＝間取り/面積だけが外れたもの（範囲内・位置は特定済み）。
        hard＝範囲外や位置不明で、地図に載せられないため何があっても採用しない。 */
-    const AGE_TOL=ageTol(); /* 築年数の許容差（年）。フォームの「類似物件の築年」で切替 */
+    const AGE_TOL=ageTol(); /* 築年数の許容差（年）。既定±5・作成者向けメモから拡大可 */
+    /* 構造は本物件と同じ系統だけを「類似」とする。取れていない物件は落とさない（データ欠落で除外しない） */
+    cmp.forEach(c=>{if(!c.struct){const st=window.CMPSTRUCT&&window.CMPSTRUCT.get(nzName(c.name));if(st)c.struct=st;}});
     const kept=[],soft=[];
     cmp.forEach(c=>{
       if(c.d==null){window.CMP_EXCLUDED.push({name:c.name,reason:'位置が特定できず地図に載せられない'});return;}
@@ -707,9 +719,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       if(window.CMP_FROM_ASSESS){kept.push(c);return;}
       if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
       else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
-      /* ★築年数が離れた物件は入居ターゲットが違うので比較にならない（操川さん指摘 2026-08-13）。
-         本物件の築年が分かっているときだけ、±8年に収まるものを「類似」とする。 */
+      /* ★築年数が離れた物件は入居ターゲットが違うので比較にならない（操川さん指摘 2026-08-13）。 */
       else if(ownAge!=null&&c.age!=null&&Math.abs(c.age-ownAge)>AGE_TOL)ng='築年数が離れている（築'+c.age+'年）';
+      else if(ownCat&&c.struct&&structCat(c.struct)&&structCat(c.struct)!==ownCat)ng='構造が異なる（'+c.struct+'）';
       if(ng){c._soft=ng;soft.push(c);return;}
       kept.push(c);
     });
@@ -759,7 +771,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}${c._relaxed?' <span class="scronly" style="color:#94a3b8">※参考（'+c._relaxed.replace(/（.*$/,'')+'）</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
+    const stShort=s=>String(s||'').replace('鉄骨鉄筋コンクリート','SRC').replace('鉄筋コンクリート','RC').replace('軽量鉄骨','軽鉄').slice(0,3);
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}${c._relaxed?' <span class="scronly" style="color:#94a3b8">※参考（'+c._relaxed.replace(/（.*$/,'')+'）</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
@@ -836,7 +849,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     </table>
     <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${(hasOwn&&rentKey&&srcUsed.indexOf(srcName(rentKey))<0?srcUsed.concat([srcName(rentKey)]):srcUsed).join('／')||'—'}${rentKey==='homes-hist'?'（掲載履歴は過去の募集時点の賃料であり、成約賃料・現在の募集賃料ではありません）':''}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${String((window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct)||structIn()||'—').replace('鉄骨鉄筋コンクリート','SRC').replace('鉄筋コンクリート','RC').replace('軽量鉄骨','軽鉄').slice(0,3)}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
   const kpi=specTbl+(!hasOwn?`<div class="phase" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
   let note='',tbl='';
   if(cmp.length===0){
@@ -888,13 +901,36 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
-      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:66px;text-align:right">本物件から</th><th style="width:60px;text-align:right">築年</th><th style="width:74px;text-align:right">面積</th><th style="width:96px;text-align:right">月額総額</th><th style="width:74px;text-align:right">㎡単価</th><th style="width:72px;text-align:right">駐車場</th></tr>${rows}</table>`
+      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:60px;text-align:right">本物件から</th><th style="width:52px;text-align:right">築年</th><th style="width:48px">構造</th><th style="width:68px;text-align:right">面積</th><th style="width:90px;text-align:right">月額総額</th><th style="width:70px;text-align:right">㎡単価</th><th style="width:66px;text-align:right">駐車場</th></tr>${rows}</table>`
       /* ★駐車場の相場（太田要望 2026-08-13）＝周辺の募集情報に書かれた駐車場代の中央値。
          「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（募集中${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'／'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}・出典SUUMO）</div>`:'')
+      /* ★募集終了事例（太田指示 2026-08-14「成約実績も入れてほしい」）＝掲載が終了した募集の実績。
+         上の表に載せた比較物件の掲載履歴から、同条件（間取り・面積±25%）のものを新しい順に最大4件。
+         成約賃料そのものではなく「募集時点の賃料」である点は必ず明記する（[[feedback_no_guessed_data]]） */
+      +(()=>{
+        if(!window.CMPHIST||!window.CMPHIST.size)return '';
+        const hrows=[];
+        cmp.forEach(c=>{
+          const hs=window.CMPHIST.get(nzName(c.name));if(!hs)return;
+          hs.forEach(h=>{
+            if(opts.md&&h.md&&h.md!==opts.md)return;
+            if(own.men>0&&h.men>0&&Math.abs(h.men-own.men)/own.men>0.25)return;
+            if(h.men&&c.men&&Math.abs(h.men-c.men)<0.01&&h.rent===c.total)return; /* いま募集中の部屋と同一は除く */
+            hrows.push({no:c.no,name:c.name,period:h.period,md:h.md||c.md||'',men:h.men||null,rent:h.rent,y:h.y,mo:h.mo});
+          });
+        });
+        if(!hrows.length)return '';
+        hrows.sort((a,b)=>(b.y*12+b.mo)-(a.y*12+a.mo));
+        const top=hrows.slice(0,4);
+        return `<div class="bandttl" style="margin-top:10px">募集終了事例（過去の募集実績）</div>
+          <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th style="width:110px">募集時期</th><th style="width:64px">間取り</th><th style="width:74px;text-align:right">面積</th><th style="width:90px;text-align:right">賃料</th><th style="width:74px;text-align:right">㎡単価</th></tr>
+          ${top.map(h=>`<tr><td class="no"><span style="background:#64748b">${h.no}</span></td><td class="nm">${h.name}</td><td style="font-size:10.5px">${h.period}</td><td>${h.md||'—'}</td><td class="r">${h.men?h.men.toFixed(2)+'㎡':'—'}</td><td class="r">${h.rent.toLocaleString()}円</td><td class="r">${h.men>0?Math.round(h.rent/h.men).toLocaleString()+'円':'—'}</td></tr>`).join('')}</table>
+          <div class="note" style="border:0;padding:0;margin:4px 0 0">※募集が終了した（＝入居が決まったとみられる）過去の募集実績。賃料は募集時点のもので、成約賃料そのものではありません（出典：LIFULL HOME'S 掲載履歴）。Noは上表の物件と対応。</div>`;
+      })()
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
       /* どういう基準で選んだのかを明示する（想定問答用） */
-      +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${window.CMP_FROM_ASSESS?'／同規模・同年代の募集事例（1棟につき1件）':''}${window.CMP_FROM_ASSESS?'':(opts.md?'／同間取り（'+opts.md+'）':'')}${window.CMP_FROM_ASSESS?'':(own.men>0?'／専有面積 ±25%':'')}${(!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':''}</div>`
+      +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${window.CMP_FROM_ASSESS?'／同規模・同年代の募集事例（1棟につき1件）':''}${window.CMP_FROM_ASSESS?'':(opts.md?'／同間取り（'+opts.md+'）':'')}${window.CMP_FROM_ASSESS?'':(own.men>0?'／専有面積 ±25%':'')}${(!window.CMP_FROM_ASSESS&&ownCat)?'／同種別（'+(ownCat==='A'?'アパート系構造':'マンション系構造')+'）':''}${(!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':''}</div>`
       /* ★件数が少ない事情は「作成者向け」＝画面だけに出す（.scronlyは印刷で非表示）。
          このレポートは金融機関に出すものなので、わざわざ不利に読める説明は載せない（太田指示 2026-08-13）。 */
       +(()=>{
@@ -2116,15 +2152,10 @@ async function buildReport(g){
   document.getElementById('report').innerHTML=h;
   document.getElementById('report').style.display='block';
   document.getElementById('toolbar').style.display='block';
-  /* 比較対象から外した物件を作成者向けに表示（印刷はされない） */
+  /* 比較対象から外した物件の一覧表示は廃止（太田指示 2026-08-14「いちいち表示しなくていい」）。
+     CMP_EXCLUDEDは内部の選定記録としてだけ残す。 */
   const exEl=document.getElementById('excluded');
-  if(window.CMP_EXCLUDED&&window.CMP_EXCLUDED.length){
-    exEl.style.display='block';
-    exEl.innerHTML=`<div class="form" style="border-color:#fde68a;background:#fffbeb">
-      <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px">🗒 比較対象から外した物件（${window.CMP_EXCLUDED.length}件）※この欄は印刷されません</div>
-      <div style="font-size:12px;line-height:1.9;color:#78350f">${window.CMP_EXCLUDED.map(x=>'・<b>'+x.name+'</b>　—　'+x.reason).join('<br>')}</div>
-      <div style="font-size:11px;color:#a16207;margin-top:6px">金融機関から「他にどんな募集があるか」と聞かれた際の想定問答にお使いください。</div></div>`;
-  }else{exEl.style.display='none';exEl.innerHTML='';}
+  if(exEl){exEl.style.display='none';exEl.innerHTML='';}
   scaleMaps(); /* 地図の枠を画面幅に合わせてから初期化する */
   setTimeout(()=>{initMaps(g);scaleMaps();},50);
 }
