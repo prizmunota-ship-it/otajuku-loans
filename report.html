@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -150,39 +150,28 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 <div class="form">
   <div class="mainq"><label>物件名 または 住所を入力</label>
   <input id="paddr" placeholder="例：○○エステート／福岡県久留米市○○町1-2-3">
-  <div class="hist" id="hist"></div>
-  <div class="qhint" style="margin-top:7px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 10px;line-height:1.8">
-    📋 <b>類似物件は「賃料査定システムの部屋一覧」を貼り付けるのが一番正確です。</b>
-    査定結果の部屋一覧を全選択してコピーし、下の「▶ 類似物件の賃貸情報を追加」を開いて<b>「まとめて貼り付け」</b>に貼ってください。
-    物件名・番地・本物件からの距離・駐車場代までそのまま取り込みます（貼り付けが無いときは自動検索を使います）。
-  </div></div>
-  <div class="opts">
-    <label>調査範囲
-      <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
-    </label>
-    <label>類似物件の築年
-      <select id="pagetol" title="本物件の築年から何年の差までを「類似」とみなすか。件数が少ないときは広げてください">
-        <option value="5" selected>±5年（標準）</option>
-        <option value="7">±7年</option>
-        <option value="10">±10年</option>
-        <option value="99">指定なし</option>
-      </select>
-    </label>
-    <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
-    <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
-    <label><input type="checkbox" id="opt_flood" checked>浸水想定区域</label>
-    <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
-    <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
-    <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
-    <label style="font-weight:700" title="購入後に改名した物件など、SUUMO・HOME'S・Googleマップに別の名前で載っている場合に入れてください（例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）">別名・旧名
-      <input id="palias" placeholder="例：シャトレ鷹の巣Ⅴ" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:150px">
-    </label>
-    <label style="font-weight:700">作成者名
-      <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
-    </label>
-  </div>
+  <div class="hist" id="hist"></div></div>
   <button class="bigbtn" id="go" onclick="locate()">🔍 位置を検索</button>
-  <div class="qhint">物件名でも住所でもOK。まず地図で位置を確認してから、レポートを作成します（<b>ずれていたらピンをドラッグで修正</b>できます）。</div>
+  <div class="qhint">物件名でも住所でもOK。あとは全部自動です。</div>
+  <details class="opt"><summary>▶ 設定を変える（任意）</summary>
+    <div class="opts">
+      <label>調査範囲
+        <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
+      </label>
+      <label style="font-weight:700" title="購入後に改名した物件など、SUUMO・HOME'S・Googleマップに別の名前で載っている場合に入れてください（例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）">別名・旧名
+        <input id="palias" placeholder="例：シャトレ鷹の巣Ⅴ" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:150px">
+      </label>
+      <label style="font-weight:700">作成者名
+        <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
+      </label>
+      <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
+      <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
+      <label><input type="checkbox" id="opt_flood" checked>浸水想定区域</label>
+      <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
+      <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
+      <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
+    </div>
+  </details>
   <details class="opt"><summary>▶ 収益・積算評価を追加（任意）</summary>
     <div class="grid">
       <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
@@ -209,11 +198,9 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
       <div class="fld"><label>月額総額 下限 円</label><input id="prentmin" type="number" placeholder="例：63500"></div>
       <div class="fld"><label>月額総額 上限 円</label><input id="prentmax" type="number" placeholder="例：66000"></div>
     </div>
-    <div class="subhd2">🔍 募集中の類似物件を探す（ポータルサイト）</div>
-    <div id="cmpsearch" class="qhint" style="margin-bottom:8px">「位置を検索」すると、このエリアの賃貸検索リンク（SUUMO／アットホーム／HOME'S／スマサテ）がここに表示されます。</div>
-    <button type="button" class="addrow" onclick="autoCmpClick()" style="background:#0f766e;color:#fff;border:none">🤖 このエリアの募集を自動検索して取り込む（SUUMO）</button>
-    <div class="subhd2">📋 まとめて貼り付け（ポータルの物件情報をコピーして貼ると自動で行になります）</div>
-    <textarea id="cmppaste" style="width:100%;height:80px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円&#10;※賃料査定システムの「部屋一覧」をそのまま全選択してコピー＆貼り付けすると、物件名・番地・距離・駐車場代までまとめて取り込みます"></textarea>
+    <div id="cmpsearch" class="qhint" style="margin-bottom:8px;display:none"></div>
+    <div class="subhd2">📋 まとめて貼り付け（募集情報をコピーして貼ると行になります）</div>
+    <textarea id="cmppaste" style="width:100%;height:70px;padding:9px;border:1px solid #d1d5db;border-radius:7px;font-size:12px" placeholder="例）アルカンシエルII 築4年 50.08㎡ 61,200円"></textarea>
     <button type="button" class="addrow" onclick="parseCmp()">↓ 貼り付け内容から行を作成</button>
     <div class="subhd2">比較物件（現在募集中）— 物件名／築年／面積㎡／月額総額（賃料＋共益費）円</div>
     <div id="cmpRows"></div>
@@ -408,6 +395,14 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
     if(wantMd)  { const f=pool.filter(x=>x.md===wantMd); if(f.length>=6)pool=f; }
     if(ownM>0)  { const f=pool.filter(x=>x.men>0&&Math.abs(x.men-ownM)/ownM<=0.25); if(f.length>=6)pool=f; }
     pool.sort((a,b)=>(a._d==null?9e9:a._d)-(b._d==null?9e9:b._d));
+    /* ★築年の近い物件を優先して枠に入れる。近い順に20件取るだけだと、
+       同年代が1件しか入らず「参考」だらけの表になった（久留米・築28年で実測）。 */
+    const oa=ownAgeNow(),tol=ageTol();
+    if(oa>0&&tol<99){
+      const ok=x=>x.age!=null&&isFinite(x.age)&&Math.abs(x.age-oa)<=tol;
+      const hit=pool.filter(ok),rest=pool.filter(x=>!ok(x));
+      if(hit.length)pool=hit.slice(0,14).concat(rest.slice(0,6));
+    }
     const picked=pool.slice(0,20);
     /* ★駐車場代と番地までの住所は、近い順に絞ったこの物件についてだけ取りに行く。
        以前は一覧の先頭から調べていたので「周辺の駐車場相場」が市内ランダムの中央値だった。 */
@@ -590,7 +585,7 @@ function parseCmp(){
   for(const ln of txt.split(/\n+/)){
     const t=ln.trim();if(!t)continue;
     const addrM=(t.match(/([一-龯]{2,3}[都道府県][^\s¥￥]{3,25})/)||[])[1]||'';
-    /* --- スマサテ形式：「カーサ フィオーレ ¥53,300 ¥1,217 ¥4,023 43.79m² 3年 1LDK 4分 2階 … 福岡県筑後市…」 --- */
+    /* --- 査定システム形式：「カーサ フィオーレ ¥53,300 ¥1,217 ¥4,023 43.79m² 3年 1LDK 4分 2階 … 福岡県筑後市…」 --- */
     const sm=t.match(/^(.+?)\s*[¥￥]([\d,]+)\s+[¥￥][\d,]+\s+[¥￥][\d,]+\s+([\d.]+)\s*(?:m²|m2|㎡)\s+(\d+)\s*年/);
     if(sm){
       flush();
@@ -625,7 +620,7 @@ function parseCmp(){
   }
   flush();
   if(added){document.getElementById('cmppaste').value='';}
-  else alert('物件情報を読み取れませんでした。SUUMO・アットホーム等の物件情報やスマサテの事例一覧をそのままコピーするか、「物件名 築◯年 ◯◯㎡ ◯◯円」の形で貼ってください。');
+  else alert('物件情報を読み取れませんでした。「物件名 築◯年 ◯◯㎡ ◯◯円」の形で貼ってください。');
 }
 function collectCmp(){
   const rows=[];document.querySelectorAll('#cmpRows .cmprow').forEach(r=>{
@@ -650,7 +645,18 @@ async function geocodeCmp(cmp){
 }
 /* 類似物件とみなす築年数の許容差（年）。本物件の築年±この年数。
    標準は±5年で、件数が少ないときに作成者がフォームで±7/±10/指定なしに広げられる（太田指示 2026-08-13）。 */
-function ageTol(){const v=parseInt((document.getElementById('pagetol')||{}).value||'5',10);return isFinite(v)?v:5;}
+/* 類似物件とみなす築年の許容差。既定は±5年で自動。件数が少なかったときだけ、
+   レポート下の作成者向けメモから広げられる（入口に選択肢を置かない＝太田指示 2026-08-14）。 */
+function ageTol(){const v=window.__ageTol;return isFinite(v)?v:5;}
+function widenAge(n){window.__ageTol=n;clearCmpRows();confirmGo();}
+/* 本物件の築年（実データ or 入力があるときだけ。推測はしない） */
+function ownAgeNow(){
+  const S=window.SELF||null,SP=(S&&S.spec)||null;
+  const br=(S&&S.built)||(SP&&SP.built)||'';
+  const bm=br&&String(br).match(/(\d{4})年\s*(\d{1,2})?月?/);
+  if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;return Math.max(0,yrs);}
+  return userNum('page')||0;
+}
 function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   opts=opts||{};
   const hasOwn=!!(own&&own.min>0); /* 本物件の賃料が未入力でも募集事例だけは表示する */
@@ -832,16 +838,11 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   let note='',tbl='';
   if(cmp.length===0){
     /* 比較物件が無くても本物件情報は自動表示 */
-    const q=opts.city?encodeURIComponent(opts.city+' '+(opts.md||'')+' 賃貸'):'';
-    tbl=`<div class="subttl">周辺の募集事例（追加すると比較表になります）</div>
-      <div class="phase" style="font-size:12px;line-height:1.85">
-        現在、比較用の募集事例が未登録です。下のリンクで<b>SUUMO・アットホーム等</b>の募集を開き、気になる物件の情報を<b>コピーして「まとめて貼り付け」に貼るだけ</b>で、この欄が比較表＋分析文に変わります。
-      </div>
-      ${opts.city?`<div style="margin-top:6px">
-        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Asuumo.jp">🔍 SUUMOで${opts.city}の募集を見る ↗</a>
-        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Aathome.co.jp">🔍 アットホーム ↗</a>
-        <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${q}+site%3Ahomes.co.jp">🔍 HOME'S ↗</a>
-      </div>`:''}`;
+    tbl=`<div class="subttl">周辺の募集事例</div>
+      <div class="phase" style="font-size:12px;line-height:1.85">調査対象範囲内に、比較できる募集中の物件が見つかりませんでした。</div>
+      <div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>調査範囲を広げるか、築年の条件を広げて取り直してください：
+        <button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(10)">±10年</button>
+        <button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(99)">築年を問わない</button></div>`;
     note=appeal?`<div class="pos-note"><div class="appeal" style="margin:0">◎ ${appeal}</div></div>`:'';
   }else{
     const totals=cmp.map(c=>c.total),rMin=Math.min(...totals),rMax=Math.max(...totals);
@@ -899,7 +900,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         return `<div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>`
           +(cmp.length<5?`調査対象範囲（半径${opts.radius.toLocaleString()}m）内で条件に合う募集が${cmp.length}件しかありませんでした。`:'')
           +(relaxN>0?`このうち<b>${relaxN}件</b>は、件数を確保するため<b>築年数・面積・間取りの条件を緩めて</b>掲載しています（${cmp.filter(c=>c._relaxed).map(c=>c.name+'＝'+c._relaxed).join('／')}）。`:'')
-          +`<br>件数を増やすには、フォーム上部の<b>「類似物件の築年」を±${ageTol()<7?'7年／±10年':'10年／指定なし'}</b>に広げるか、<b>調査範囲</b>を広げて再作成してください（「類似物件の賃貸情報を追加」で手入力・差し替えもできます）。</div>`;
+          +`<br><b>築年の条件を広げて取り直す：</b>`
+          +[7,10,99].filter(n=>n>ageTol()).map(n=>`<button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(${n})">${n===99?'築年を問わない':'±'+n+'年'}</button>`).join('')
+          +`</div>`;
       })();
   }
   const body=kpi+tbl+note;
@@ -1670,44 +1673,26 @@ async function popStats(lat,lon,radius){
   return {p25:s(2),a:s(3),b:s(4),c:s(5),p30:s(6),g5,n:sel.length,mesh:'1km',
     src:'国土交通省 国土数値情報「1kmメッシュ別将来推計人口（令和6年推計）」'};
 }
-function setCmpSearch(addr){
-  const el=document.getElementById('cmpsearch');if(!el)return;
-  const m=(addr||'').match(/([^\s、〒0-9０-９-]{2,10}?[市区町村])/);const city=m?m[1]:'';
-  if(!city)return;
-  const md=val('pmadori')||'1LDK';
-  const q=encodeURIComponent(city+' '+md+' 賃貸');
-  el.innerHTML='<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Asuumo.jp">🔍 SUUMO ↗</a>'
-   +'<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Aathome.co.jp">🔍 アットホーム ↗</a>'
-   +'<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'+site%3Ahomes.co.jp">🔍 HOME\'S ↗</a>'
-   +'<a class="gbtn" target="_blank" rel="noopener" href="https://owners.sumasate.jp/assessments/new">📊 スマサテ ↗</a>'
-   +'<div style="margin-top:4px">'+city+'の'+md+'を検索できます。見つけた物件の情報を下の欄に貼り付けてください。</div>';
-}
+/* 検索リンク集は廃止（2026-08-14 太田指示＝入力の入口を最小限に。類似物件は全自動が本線） */
+function setCmpSearch(addr){}
 /* ====== ステップ2：レポート生成 ====== */
 async function buildReport(g){
   document.getElementById('go').disabled=true;
   window._lastLoc={lat:g.lat,lon:g.lon};window._lastTitle=g.title;
   MAPS=[];mapSeq=0;
-  /* ★比較物件が空なら、このエリアの募集事例を自動検索して反映（ゼロタップ） */
-  if(collectCmp().length===0){
-    let cityA=cityOf(g.title);
-    /* タイトルに市区町村が無い（物件名だけ／ピン移動後など）は座標から住所を取り直す */
-    if(!cityA){
-      const rev=await reverseGeocode(g.lat,g.lon);
-      if(rev){g.title=g.title&&g.title.indexOf(rev)<0?g.title+'　'+rev:rev;cityA=cityOf(rev);}
-    }
-    if(cityA){
-      setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…（SUUMO）');
-      /* ★本命は /api/chintai（SUUMO一覧をページ送りで取得＝母数が桁違い＋駐車場代つき）。
-         GASは1ページ目10件しか見ておらず、範囲内に数件しか残らなかった（太田指摘 2026-08-13）。
-         GASは本物件の募集内容(self)を返すので、そちらは従来どおり別に呼ぶ。 */
-      const got=await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori')||'',g.lat,g.lon,parseInt(val('pradius'))||1500);
-      if(!got){
-        let n=await gasSearchCmp(cityA,val('pmadori')||'');
-        if(n===0){await gasSearchCmp(cityA,val('pmadori')||'');}
-      }else if(!window.SELF){
-        try{await gasSearchCmp(cityA,val('pmadori')||'',null,null,true);}catch(e){} /* 本物件情報(self)だけ取得 */
-      }
-    }
+  let cityA=cityOf(g.title);
+  /* タイトルに市区町村が無い（物件名だけ／ピン移動後など）は座標から住所を取り直す */
+  if(!cityA){
+    const rev=await reverseGeocode(g.lat,g.lon);
+    if(rev){g.title=g.title&&g.title.indexOf(rev)<0?g.title+'　'+rev:rev;cityA=cityOf(rev);}
+  }
+  const needAuto=collectCmp().length===0;
+  /* ★先に「本物件そのもの」（築年・間取り・面積）を確定させてから類似物件を探す。
+     順番が逆だと条件が空のまま近い順に20件を掴んでしまい、同年代の物件が
+     1件しか残らなかった（久留米・築28年で実測 2026-08-14）。 */
+  if(needAuto&&cityA&&!window.SELF){
+    setStatus('🏢 本物件の募集内容を照会中…');
+    try{await gasSearchCmp(cityA,val('pmadori')||'',null,null,true);}catch(e){} /* 本物件情報(self)だけ取得 */
   }
   /* ★構造・築年がSUUMOで取れていない物件は、建物情報（LIFULL HOME'S）から実データを補う。
      物件名と市区町村が一致したものだけが返るので、別物件の情報が混ざることはない（/api/spec） */
@@ -1746,6 +1731,16 @@ async function buildReport(g){
     }
   }
   const radius=parseInt(val('pradius'))||1500;
+  /* ★本物件が確定してから類似物件を自動検索する（ゼロタップ）。
+     /api/chintai＝SUUMO一覧をページ送りで取得（母数が桁違い＋駐車場代・番地つき）。 */
+  if(needAuto&&cityA){
+    setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…');
+    const got=await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori')||'',g.lat,g.lon,radius);
+    if(!got){
+      let n=await gasSearchCmp(cityA,val('pmadori')||'');
+      if(n===0){await gasSearchCmp(cityA,val('pmadori')||'');}
+    }
+  }
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
   const els=await overpass(g.lat,g.lon,radius);
   document.getElementById('go').disabled=false;
