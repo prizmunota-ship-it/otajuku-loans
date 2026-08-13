@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.5</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -349,9 +349,18 @@ async function suumoSearchCmp(city,pref,md){
     /* 駐車場は物件名で引けるようにしておく（比較表に列として出す） */
     window.PARK=new Map();
     j.items.forEach(it=>{if(it.park)window.PARK.set(nzName(it.name),{text:it.park,fee:it.parkFee||0});});
+    /* ★行を作る前に間取り・面積で絞る。行にした分だけ後段でジオコーディングが走るため、
+       母数(150〜250件)をそのまま行にすると生成が極端に遅くなる（2026-08-13 実測）。
+       ここは座標が要らない条件だけで足切りし、範囲内かどうかの判定は後段に任せる。 */
+    const wantMd=(md||'').trim();
+    const ownM=num('pmens')||0;
+    let pool=j.items.slice();
+    if(wantMd)  { const f=pool.filter(x=>x.md===wantMd); if(f.length>=6)pool=f; }
+    if(ownM>0)  { const f=pool.filter(x=>x.men>0&&Math.abs(x.men-ownM)/ownM<=0.25); if(f.length>=6)pool=f; }
+    if(ownM>0)pool.sort((a,b)=>Math.abs((a.men||0)-ownM)-Math.abs((b.men||0)-ownM));
     let n=0;
-    for(const it of j.items){
-      if(n>=40)break; /* 行を作りすぎない。絞り込みは buildCompPaper 側で行う */
+    for(const it of pool){
+      if(n>=20)break;
       addCmpRow([it.name,it.addr||'',it.age==null?'':it.age,it.men||'',it.total]);n++;
     }
     return n;
