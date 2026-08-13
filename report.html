@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.8</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -532,6 +532,16 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   /* ★比較物件の選定（太田方針）：調査範囲内で「本当に類似」の物件に絞り、
      本物件の賃料設定が妥当に見える＝同等以上の水準で募集されている事例を優先して5件。
      除外した物件は画面側（印刷されない欄）に理由付きで一覧表示する。 */
+  /* 本物件の築年数（比較物件の絞り込みにも使うので、表示より先に確定させる）。
+     実データ（建築年月）→作成者の入力、の順。無ければ null＝築年での絞り込みはしない。 */
+  let ownAge=null;
+  {
+    const br=(S&&S.built)||(SP&&SP.built)||'';
+    const bm=br&&br.match(/(\d{4})年\s*(\d{1,2})?月?/);
+    if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();
+      let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;ownAge=Math.max(0,yrs);}
+    else if(age!=null)ownAge=age;
+  }
   let outCnt=0;window.CMP_EXCLUDED=[];
   if(opts.center){
     const R=opts.radius||1500;
@@ -539,6 +549,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
     /* kept＝厳格な条件を満たすもの。soft＝間取り/面積だけが外れたもの（範囲内・位置は特定済み）。
        hard＝範囲外や位置不明で、地図に載せられないため何があっても採用しない。 */
+    const AGE_TOL=8; /* 築年数の許容差（年）。±8年＝入居ターゲットが概ね同じ範囲 */
     const kept=[],soft=[];
     cmp.forEach(c=>{
       if(c.d==null){window.CMP_EXCLUDED.push({name:c.name,reason:'位置が特定できず地図に載せられない'});return;}
@@ -546,6 +557,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       let ng='';
       if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
       else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
+      /* ★築年数が離れた物件は入居ターゲットが違うので比較にならない（操川さん指摘 2026-08-13）。
+         本物件の築年が分かっているときだけ、±8年に収まるものを「類似」とする。 */
+      else if(ownAge!=null&&c.age!=null&&Math.abs(c.age-ownAge)>AGE_TOL)ng='築年数が離れている（築'+c.age+'年）';
       if(ng){c._soft=ng;soft.push(c);return;}
       kept.push(c);
     });
@@ -553,8 +567,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     kept.forEach(c=>{
       c._adv=(ownMidR>0&&c.total>=ownMidR*0.98)?0:1;
       c._men=own.men>0&&c.men>0?Math.abs(c.men-own.men):99;
+      c._age=(ownAge!=null&&c.age!=null)?Math.abs(c.age-ownAge):99;
     });
-    kept.sort((a,b)=>(a._adv-b._adv)||(a._men-b._men)||(a.d-b.d));
+    /* 並び：①本物件と同等以上の賃料 ②築年数の近さ ③面積の近さ ④距離 */
+    kept.sort((a,b)=>(a._adv-b._adv)||(a._age-b._age)||(a._men-b._men)||(a.d-b.d));
     /* ★同じ建物で複数の部屋が募集中だと、その物件だけで表が埋まって他の物件が出ない
        （操川さん指摘 2026-08-13）。1棟につき最も条件の近い1部屋だけ残す。 */
     const seenB=new Set(),uniq=[];
@@ -729,7 +745,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
          「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（同市区町村で募集中の物件${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'・'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}${window.CHINTAI.park.noneCount?'／駐車場なしの物件 '+window.CHINTAI.park.noneCount+'件':''}）　※出典：SUUMO掲載の募集情報</div>`:'')
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
-      +((cmp.length<5&&opts.radius)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※調査対象範囲（半径${opts.radius.toLocaleString()}m）内で募集中の類似物件が${cmp.length}件のため、掲載も${cmp.length}件です（範囲外の物件は地図に載せられないため掲載していません）。件数を増やすには、フォームの<b>調査範囲</b>を広げて再作成するか、「類似物件の賃貸情報を追加」に手入力してください。</div>`:'');
+      /* どういう基準で選んだのかを明示する（想定問答用） */
+      +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${opts.md?'／同間取り（'+opts.md+'）':''}${own.men>0?'／専有面積 ±25%':''}${ownAge!=null?'／築年数 '+Math.max(0,ownAge-8)+'〜'+(ownAge+8)+'年（本物件±8年）':''}</div>`
+      +((cmp.length<5&&opts.radius)?`<div class="note" style="border:0;padding:0;margin:2px 0 0">※調査対象範囲（半径${opts.radius.toLocaleString()}m）内で募集中の類似物件が${cmp.length}件のため、掲載も${cmp.length}件です（範囲外の物件は地図に載せられないため掲載していません）。件数を増やすには、フォームの<b>調査範囲</b>を広げて再作成するか、「類似物件の賃貸情報を追加」に手入力してください。</div>`:'');
   }
   const body=kpi+tbl+note;
   return paper('類似物件の賃貸情報','',body,
