@@ -48,7 +48,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .mapwrap{width:100%;max-width:690px;margin:0 auto 6px;overflow:hidden;}
 .mapwrap.sm{margin-bottom:12px;}
 .map{width:690px;height:520px;transform-origin:top left;}
-.map.sm{height:245px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
+.map.sm{height:280px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:10.5px;padding:3px 7px;font-weight:700;color:#374151;text-align:left;}
@@ -141,7 +141,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -155,50 +155,43 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <div class="hist" id="hist"></div></div>
   <button class="bigbtn" id="go" onclick="locate()">🔍 位置を検索</button>
   <div class="qhint">物件名でも住所でもOK。あとは全部自動です。</div>
-  <details class="opt"><summary>▶ 設定を変える（任意）</summary>
-    <div class="opts">
-      <label>調査範囲
-        <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
-      </label>
-      <label style="font-weight:700" title="購入後に改名した物件など、SUUMO・HOME'S・Googleマップに別の名前で載っている場合に入れてください（例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）">別名・旧名
-        <input id="palias" placeholder="例：シャトレ鷹の巣Ⅴ" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:150px">
-      </label>
-      <label style="font-weight:700">作成者名
-        <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
-      </label>
-      <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
-      <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
-      <label><input type="checkbox" id="opt_flood" checked>浸水想定区域</label>
-      <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
-      <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
-      <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
-    </div>
-  </details>
-  <details class="opt"><summary>▶ 収益・積算評価を追加（任意）</summary>
-    <div class="grid">
-      <div class="fld"><label>構造</label><select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select></div>
-      <div class="fld"><label>築年数</label><input id="page" type="number" value="0"></div>
-      <div class="fld"><label>満室想定年収入 円</label><input id="pincome" type="number"></div>
-      <div class="fld"><label>総戸数 戸</label><input id="punits" type="number" placeholder="例：9"></div>
-      <div class="fld"><label>土地面積 ㎡</label><input id="pland" type="number"></div>
-      <div class="fld"><label>建物延床 ㎡</label><input id="pbldg" type="number"></div>
-      <div class="fld"><label>土地単価 円/㎡</label><input id="plandprice" type="number"></div>
-      <div class="fld"><label>売出価格 円</label><input id="paskprice" type="number"></div>
-      <div class="fld"><label>還元利回り %</label><input id="acap" type="number" step="0.1" value="8.0"></div>
-    </div>
-  </details>
-  <details class="opt"><summary>▶ 類似物件の賃貸情報を追加（任意｜賃料の妥当性資料）</summary>
-    <div class="qhint" style="margin:6px 0 8px">SUUMO・アットホーム・HOME'S など<b>お好きなポータルサイト</b>で調べた「募集中」の類似物件を入れると、比較表と<b>賃料設定の考え方（本物件が有利に見える分析文）</b>を自動作成します。</div>
-    <div class="qhint" style="margin:0 0 8px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 10px;line-height:1.8">
-      💡 <b>自動検索の結果は、ここで自由に直せます。</b>レポートを作成すると周辺の募集物件が下の行に自動で入りますが、<b>行の書き換え・✕での削除・「行を追加」での手入力</b>がそのままレポートに反映されます。<br>
-      ご自身でポータルサイトから選んだ物件だけで比較表を作りたい場合は、自動で入った行を✕で消してから入力してください。
-    </div>
+  <div class="opts">
+    <label>調査範囲
+      <select id="pradius"><option value="1000">1,000m</option><option value="1500" selected>1,500m</option><option value="2000">2,000m</option></select>
+    </label>
+    <label style="font-weight:700" title="購入後に改名した物件など、SUUMO・HOME'S・Googleマップに別の名前で載っている場合に入れてください（例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）">別名・旧名
+      <input id="palias" placeholder="例：シャトレ鷹の巣Ⅴ" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:150px">
+    </label>
+    <label style="font-weight:700">作成者名
+      <input id="pauthor" placeholder="例：太田 圭一" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;width:130px">
+    </label>
+    <label><input type="checkbox" id="opt_edu" checked>教育施設・公園</label>
+    <label><input type="checkbox" id="opt_pop">年齢別人口統計</label>
+    <label><input type="checkbox" id="opt_flood" checked>浸水想定区域</label>
+    <label><input type="checkbox" id="opt_dosha" checked>土砂災害警戒区域</label>
+    <label><input type="checkbox" id="opt_quake" checked>地震（揺れやすさ・発生確率）</label>
+    <label><input type="checkbox" id="opt_snow">豪雪地帯</label>
+  </div>
+  <!-- 収益・積算評価の入力は廃止（太田指示 2026-08-14「自動で算定できないなら削除」）。
+       構造・築年数などのIDはコードが参照するため非表示のまま残す。 -->
+  <div style="display:none">
+    <select id="pstruct"><option value="wood">木造</option><option value="lgs">軽量鉄骨</option><option value="steel">鉄骨</option><option value="rc" selected>RC</option><option value="src">SRC</option></select>
+    <input id="page" type="number" value="0">
+    <input id="pincome" type="number"><input id="punits" type="number">
+    <input id="pland" type="number"><input id="pbldg" type="number">
+    <input id="plandprice" type="number"><input id="paskprice" type="number">
+    <input id="acap" type="number" step="0.1" value="8.0">
+  </div>
+  <!-- 類似物件の編集UI＝レポート作成後に「作成者向けメモ」内へ移動する（太田指示 2026-08-14）。
+       作成前はここに隠しておく（cmpeditHome＝待機場所） -->
+  <div id="cmpeditHome" style="display:none">
+  <details class="opt" id="cmpdetails"><summary style="color:#dc2626;font-weight:800">▶ 条件の変更や追加はこちら🤞</summary>
     <div class="subhd2">本物件の想定</div>
     <div class="grid">
       <div class="fld"><label>間取り</label><input id="pmadori" placeholder="例：1LDK"></div>
       <div class="fld"><label>専有面積 ㎡</label><input id="pmens" type="number" step="0.01" placeholder="例：41.4"></div>
-      <div class="fld"><label>月額総額 下限 円</label><input id="prentmin" type="number" placeholder="例：63500"></div>
-      <div class="fld"><label>月額総額 上限 円</label><input id="prentmax" type="number" placeholder="例：66000"></div>
+      <div class="fld"><label>想定月額賃料（1戸・円）</label><input id="prentmin" type="number" placeholder="例：63500"></div>
+      <div class="fld" style="display:none"><input id="prentmax" type="number"></div>
     </div>
     <div id="cmpsearch" class="qhint" style="margin-bottom:8px;display:none"></div>
     <div class="subhd2">📋 まとめて貼り付け（募集情報をコピーして貼ると行になります）</div>
@@ -208,7 +201,12 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
     <div id="cmpRows"></div>
     <button type="button" class="addrow" onclick="addCmpRow()">＋ 比較物件の行を追加</button>
     <div class="fld"><label>アピールポイント（任意・赤字で強調）</label><input id="pappeal" placeholder="例：駅徒歩5分以内の築浅は募集なし＝競合不在"></div>
+    <div style="margin-top:8px">
+      <button type="button" class="addrow" style="background:#0f766e;color:#fff;border:none;font-weight:800" onclick="confirmGo()">🔄 情報を更新（変更を反映）</button>
+      <button type="button" class="addrow" onclick="clearCmpRows();confirmGo()">🔁 類似物件を検索し直す</button>
+    </div>
   </details>
+  </div>
 </div>
 
 <div class="status" id="status"></div>
@@ -220,7 +218,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
   <button class="bigbtn" onclick="confirmGo()">✅ この位置でレポートを作成</button>
   <div class="qhint">ピンの位置がずれている場合は、<b>ピンをドラッグして実際の物件位置に合わせて</b>から作成してください。</div>
 </div>
-<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
+<div class="toolbar" id="toolbar"><button class="btn sec" id="prbtn" onclick="doPrint()">🖨 PDFで保存 / 印刷</button><button class="btn sec" onclick="confirmGo()" title="調査範囲やチェック、類似物件の編集を変えたあとに押すと、レポートに反映されます">🔄 情報を更新</button><span id="mapstat" style="margin-left:10px;font-size:12px;font-weight:700;color:#b45309"></span>
   <a href="javascript:void(0)" onclick="printHelp()" style="margin-left:10px;font-size:12px;font-weight:800;color:#0f766e">印刷できない時は？</a>
   <div id="prhelp" class="scronly" style="display:none;margin-top:8px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.9;color:#78350f;max-width:690px">
     <div style="font-weight:800;margin-bottom:4px">📱 スマホで印刷できない時</div>
@@ -774,7 +772,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}${c._relaxed?' <span class="scronly" style="color:#94a3b8">※参考（'+c._relaxed.replace(/（.*$/,'')+'）</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
   /* ★募集終了事例（太田指示 2026-08-14「成約実績も入れてほしい」）＝掲載が終了した募集の実績。
      表に載せた比較物件の掲載履歴から同条件のものを新しい順に、グレーの行として同じ表に足す
      （独立の表にすると1ページに収まらない）。金額は募集時点の賃料＝成約賃料そのものではない。 */
@@ -797,7 +795,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       if(histN>=hcap)return;
       const k=h.c.no+'|'+h.md+'|'+(h.men||0);if(hseen.has(k))return;hseen.add(k);
       const dtxt=h.c.d!=null?(h.c.d>=1000?(h.c.d/1000).toFixed(1)+'km':h.c.d+'m'):'—';
-      rows+=`<tr style="color:#64748b"><td class="no"><span style="background:#94a3b8">${h.c.no}</span></td><td class="nm" style="font-weight:400">${h.c.name} <span style="font-size:9.5px">（募集終了 ${h.period.replace(/^.*?〜/,'')}）</span></td><td style="font-size:10.5px">${(h.c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}</td><td class="r">${dtxt}</td><td class="r">${h.c.age!=null?'築'+h.c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(h.c.struct)||'—'}</td><td class="r">${h.men?h.men.toFixed(2)+'㎡':'—'}</td><td class="r">${h.rent.toLocaleString()}円</td><td class="r">${h.men>0?Math.round(h.rent/h.men).toLocaleString()+'円':'—'}</td><td class="r">—</td></tr>`;
+      rows+=`<tr style="color:#64748b"><td class="no"><span style="background:#94a3b8">${h.c.no}</span></td><td class="nm" style="font-weight:400">${h.c.name} <span style="font-size:9.5px">（成約 ${h.period.replace(/^.*?〜/,'')}）</span></td><td style="font-size:10.5px">${(h.c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}</td><td class="r">${dtxt}</td><td class="r">${h.c.age!=null?'築'+h.c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(h.c.struct)||'—'}</td><td class="r">${h.men?h.men.toFixed(2)+'㎡':'—'}</td><td class="r">${h.rent.toLocaleString()}円</td><td class="r">${h.men>0?Math.round(h.rent/h.men).toLocaleString()+'円':'—'}</td><td class="r">—</td></tr>`;
       histN++;
     });
   }
@@ -875,10 +873,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':(rentKey==='homes-hist'?'直近の募集賃料（実績）':'想定月額総額（1戸）')}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':(rentKey==='homes-hist'?"LIFULL HOME'S 掲載履歴"+(rentPeriod?'・'+rentPeriod+'時点':''):derivedTxt)}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
     </table>
-    <div class="note" style="border:0;margin:0 0 8px;padding:0">※出典：${(hasOwn&&rentKey&&srcUsed.indexOf(srcName(rentKey))<0?srcUsed.concat([srcName(rentKey)]):srcUsed).join('／')||'—'}${rentKey==='homes-hist'?'（掲載履歴は過去の募集時点の賃料であり、成約賃料・現在の募集賃料ではありません）':''}${(SP&&SP.url&&srcUsed.indexOf(SP.src)>=0)?' <a class="scronly" href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>':''}${(!ageTxt||!structTxt)?'　／　<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>正確な資料にするため、フォームの「収益・積算評価を追加」内の<b>構造・築年数</b>、「類似物件の募集状況を追加」内の<b>間取り・専有面積</b>をご入力のうえ再作成してください（推測値は載せません）。':''}</div>`;
+    ${((!ageTxt||!structTxt)||(SP&&SP.url))?`<div class="note scronly" style="border:0;margin:0 0 8px;padding:0">${(SP&&SP.url)?'<a href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>　':''}${(!ageTxt||!structTxt)?'<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>下の「条件の変更や追加はこちら🤞」から間取り・専有面積などを入力して更新してください（推測値は載せません）。':''}</div>`:''}`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
   if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})((window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct)||structIn())}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
-  const kpi=specTbl+(!hasOwn?`<div class="phase scronly" style="font-size:12px;line-height:1.85;margin-bottom:10px">ℹ️ <b>本物件の想定賃料</b>（「類似物件の募集状況を追加」の月額総額、または「収益・積算評価を追加」の満室想定年収入＋総戸数）を入力して再作成すると、下の表に<b>本物件の行</b>と<b>【賃料設定の考え方】の分析文</b>が自動で入ります。</div>`:'');
+  const kpi=specTbl; /* ℹ️の長い案内は廃止（太田指示 2026-08-14「内容よくわからないので不要」） */
   let note='',tbl='';
   if(cmp.length===0){
     /* 比較物件が無くても本物件情報は自動表示 */
@@ -886,7 +884,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       <div class="phase" style="font-size:12px;line-height:1.85">調査対象範囲内に、比較できる募集中の物件が見つかりませんでした。</div>
       <div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>調査範囲を広げるか、築年の条件を広げて取り直してください：
         <button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(10)">±10年</button>
-        <button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(99)">築年を問わない</button></div>`;
+        <button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(99)">築年を問わない</button>
+        <div id="cmpeditSlot" style="margin-top:8px"></div></div>`;
     note=appeal?`<div class="pos-note"><div class="appeal" style="margin:0">◎ ${appeal}</div></div>`:'';
   }else{
     const totals=cmp.map(c=>c.total),rMin=Math.min(...totals),rMax=Math.max(...totals);
@@ -917,7 +916,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const m=mapDiv('sm');
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))});
-      mapHtml=m.html+`<div class="note" style="border:0;margin:2px 0 5px;padding:0">📍本物件／①②…＝比較物件（下表のNoと対応）</div>`;
+      mapHtml=m.html; /* 📍の説明は削除（太田指示 2026-08-14「地図上でわかる」） */
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
     /* 概要表に統合済みのため、募集中の部屋が複数ある場合だけ内訳を補足する */
@@ -928,27 +927,31 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         ${S.rooms.map(r=>`<b>${r.md} ${r.men}㎡ ${r.rent.toLocaleString()}円</b>`).join('　／　')}
       </div>`;
     }
-    tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件（自動検索）'}</div>${areaWarn}
+    tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件'}</div>${areaWarn}
       <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:60px;text-align:right">本物件から</th><th style="width:52px;text-align:right">築年</th><th style="width:48px">構造</th><th style="width:68px;text-align:right">面積</th><th style="width:90px;text-align:right">月額総額</th><th style="width:70px;text-align:right">㎡単価</th><th style="width:66px;text-align:right">駐車場</th></tr>${rows}</table>`
       /* ★駐車場の相場（太田要望 2026-08-13）＝周辺の募集情報に書かれた駐車場代の中央値。
          「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div class="note" style="border:0;padding:0;margin:5px 0 0">🅿️ <b>周辺の駐車場相場</b>：月額 <b>${window.CHINTAI.park.median.toLocaleString()}円</b>（募集中${window.CHINTAI.park.n}件の中央値${window.CHINTAI.park.min!==window.CHINTAI.park.max?'／'+window.CHINTAI.park.min.toLocaleString()+'〜'+window.CHINTAI.park.max.toLocaleString()+'円':''}・出典SUUMO）</div>`:'')
       /* 募集終了事例（グレー行）の説明。行そのものはrowsに統合済み */
-      +(histN>0?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※グレーの行＝<b>募集終了事例</b>（過去の募集実績・賃料は募集時点／出典：LIFULL HOME'S 掲載履歴）。</div>`:'')
+      +(histN>0?`<div class="note" style="border:0;padding:0;margin:5px 0 0">※グレーの行＝<b>成約事例</b>（募集が終了した事例。賃料は募集時点のもの／出典：LIFULL HOME'S 掲載履歴）。</div>`:'')
       /* 標準10件・最低5件に届かないときは、範囲内の募集が少ないだけだと分かるように明示する */
       /* どういう基準で選んだのかを明示する（想定問答用） */
-      +`<div class="note" style="border:0;padding:0;margin:5px 0 0">※抽出条件：調査対象範囲内${window.CMP_FROM_ASSESS?'／同規模・同年代の募集事例（1棟につき1件）':''}${window.CMP_FROM_ASSESS?'':(opts.md?'／同間取り（'+opts.md+'）':'')}${window.CMP_FROM_ASSESS?'':(own.men>0?'／専有面積 ±25%':'')}${(!window.CMP_FROM_ASSESS&&ownCat)?'／構造系統が同じ（'+(ownCat==='A'?'木造・軽量鉄骨':'鉄骨・RC・SRC')+'）':''}${(!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':''}</div>`
-      /* ★件数が少ない事情は「作成者向け」＝画面だけに出す（.scronlyは印刷で非表示）。
-         このレポートは金融機関に出すものなので、わざわざ不利に読める説明は載せない（太田指示 2026-08-13）。 */
+      /* ★作成者向けメモ（画面のみ・.scronlyは印刷で非表示）＝抽出条件・件数事情・条件変更UI。
+         印刷面には抽出条件などの説明を出さない（太田指示 2026-08-14「この説明不要」）。 */
       +(()=>{
         const relaxN=cmp.filter(c=>c._relaxed).length;
-        /* 標準の10件に満たないときは、その場で条件を広げ直せるボタンを出す（画面のみ） */
-        if(!(opts.radius&&(cmp.length<10||relaxN>0))||ageTol()>=99)return '';
-        return `<div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>`
-          +(cmp.length<5?`調査対象範囲（半径${opts.radius.toLocaleString()}m）内で条件に合う募集が${cmp.length}件しかありませんでした。`:`築年±${ageTol()}年の自動条件で${cmp.length}件です。`)
+        const cond='抽出条件：調査対象範囲内'
+          +(window.CMP_FROM_ASSESS?'／同規模・同年代の募集事例（1棟につき1件）':'')
+          +(window.CMP_FROM_ASSESS?'':(opts.md?'／同間取り（'+opts.md+'）':''))
+          +(window.CMP_FROM_ASSESS?'':(own.men>0?'／専有面積 ±25%':''))
+          +((!window.CMP_FROM_ASSESS&&ownCat)?'／構造系統が同じ（'+(ownCat==='A'?'木造・軽量鉄骨':'鉄骨・RC・SRC')+'）':'')
+          +((!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':'');
+        return `<div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>${cond}<br>`
+          +(cmp.length<5?`調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内で条件に合う募集が${cmp.length}件しかありませんでした。`:`築年±${ageTol()}年の自動条件で${cmp.length}件です。`)
           +(relaxN>0?`このうち<b>${relaxN}件</b>は、件数を確保するため<b>築年数・面積・間取りの条件を緩めて</b>掲載しています（${cmp.filter(c=>c._relaxed).map(c=>c.name+'＝'+c._relaxed).join('／')}）。`:'')
-          +`<br><b>築年の条件を広げて取り直す：</b>`
-          +[7,10,99].filter(n=>n>ageTol()).map(n=>`<button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(${n})">${n===99?'築年を問わない':'±'+n+'年'}</button>`).join('')
+          +(ageTol()<99?`<br><b>築年の条件を広げて取り直す：</b>`
+            +[7,10,99].filter(n=>n>ageTol()).map(n=>`<button class="addrow" style="margin:4px 4px 0 0;padding:4px 10px;font-size:12px" onclick="widenAge(${n})">${n===99?'築年を問わない':'±'+n+'年'}</button>`).join(''):'')
+          +`<div id="cmpeditSlot" style="margin-top:8px"></div>`
           +`</div>`;
       })();
   }
@@ -1723,8 +1726,19 @@ async function popStats(lat,lon,radius){
 /* 検索リンク集は廃止（2026-08-14 太田指示＝入力の入口を最小限に。類似物件は全自動が本線） */
 function setCmpSearch(addr){}
 /* ====== ステップ2：レポート生成 ====== */
+/* 類似物件の編集UIはレポート内（作成者向けメモ）に住むが、innerHTML再描画で消えないよう
+   描画の前に必ずフォーム側の待機場所（cmpeditHome）へ戻す（太田指示 2026-08-14） */
+function parkCmpEdit(){
+  const h=document.getElementById('cmpeditHome'),d=document.getElementById('cmpdetails');
+  if(h&&d&&d.parentNode!==h)h.appendChild(d);
+}
+function placeCmpEdit(){
+  const s=document.getElementById('cmpeditSlot'),d=document.getElementById('cmpdetails');
+  if(s&&d){s.appendChild(d);d.open=false;}
+}
 async function buildReport(g){
   document.getElementById('go').disabled=true;
+  parkCmpEdit();
   window._lastLoc={lat:g.lat,lon:g.lon};window._lastTitle=g.title;
   MAPS=[];mapSeq=0;
   let cityA=cityOf(g.title);
@@ -2159,6 +2173,7 @@ async function buildReport(g){
   document.getElementById('report').innerHTML=h;
   document.getElementById('report').style.display='block';
   document.getElementById('toolbar').style.display='block';
+  placeCmpEdit(); /* 類似物件の編集UIを作成者向けメモ内へ（画面のみ・印刷されない） */
   /* 比較対象から外した物件の一覧表示は廃止（太田指示 2026-08-14「いちいち表示しなくていい」）。
      CMP_EXCLUDEDは内部の選定記録としてだけ残す。 */
   const exEl=document.getElementById('excluded');
