@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.6</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -558,11 +558,15 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
        （操川さん指摘 2026-08-13）。1棟につき最も条件の近い1部屋だけ残す。 */
     const seenB=new Set(),uniq=[];
     const bkey=n=>String(n||'').replace(/[\s　]/g,'').replace(/[0-9０-９]+(号室|号|階)?$/,'');
+    /* SUUMOは同じ部屋を「実名」と「建物名非公開（◯◯線 ◯◯駅 2階建）」の2通りで載せることがある。
+       名前が違うので名寄せできないため、住所＋面積＋賃料が一致するものも同一物件として落とす。 */
+    const pkey=c=>[String(c.addr||'').replace(/[\s　]/g,''),(c.men||0).toFixed(2),c.total].join('|');
     const dedupe=(list,arr)=>list.forEach(c=>{
-      const k=bkey(c.name);
-      if(!k){arr.push(c);return;}
+      const k=bkey(c.name), p=pkey(c);
+      if(seenB.has(p)){window.CMP_EXCLUDED.push({name:c.name,reason:'同じ物件の重複掲載（住所・面積・賃料が一致）'});return;}
+      if(!k){seenB.add(p);arr.push(c);return;}
       if(seenB.has(k)){window.CMP_EXCLUDED.push({name:c.name,reason:'同じ物件の別の部屋（1棟につき1件に集約）'});return;}
-      seenB.add(k);arr.push(c);
+      seenB.add(k);seenB.add(p);arr.push(c);
     });
     dedupe(kept,uniq);
     /* ★件数の方針（太田指示 2026-08-13）＝標準10件、ただし最低5件は確保する。
