@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.7</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1329,6 +1329,9 @@ function showConfirm(res,query){
       confMarker.addListener('dragend',async()=>{
         const p=confMarker.getPosition();PENDING.lat=p.lat();PENDING.lon=p.lng();PENDING.moved=true;
         document.getElementById('confwarn').style.display='none';
+        /* ★まず座標だけ先に履歴へ保存する。この下の reverseGeocode を待ってからだと、
+           住所の取得に失敗・遅延したときに保存まで到達しない（v7.6でその不具合を出した） */
+        histAdd({q:PENDING.query,lat:PENDING.lat,lon:PENDING.lon,title:PENDING.title,moved:true});
         const rev=await reverseGeocode(PENDING.lat,PENDING.lon);
         if(rev){PENDING.title=(PENDING.name?PENDING.name+'　':'')+rev;setCmpSearch(rev);}
         document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ ピン位置を手動修正済み</span>';
