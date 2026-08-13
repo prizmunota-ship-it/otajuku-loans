@@ -141,7 +141,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.2</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -804,14 +804,22 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         });
       });
       cand.sort((a,b)=>(b.y*12+b.mo)-(a.y*12+a.mo));
-      const scap=Math.max(0,Math.min(3,(hasOwn?12:13)-pick.length)),sseen=new Set();
+      const scap=2,sseen=new Set(); /* 成約事例は最大2件（1ページ厳守のため） */
       cand.forEach(x=>{
         if(window.SEIYAKU.length>=scap)return;
         const k=bkey(x.c.name);if(sseen.has(k))return;sseen.add(k);
         window.SEIYAKU.push(x);
       });
     }
-    cmp=pick;
+    /* ★1ページ厳守：表の総行数（募集中＋成約＋本物件行）を10行に抑える。
+       行は物件名・番地で折り返して1行約40pxになるため、12行だと1418px＞1046pxで溢れた（実測）。 */
+    const budget=10-(hasOwn?1:0)-window.SEIYAKU.length;
+    if(pick.length>budget){
+      pick.slice(budget).forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:'掲載枠（1ページに収める）超過'}));
+      cmp=pick.slice(0,budget);
+    }else{
+      cmp=pick;
+    }
   }
   let mismatch=0;
   const stShort=s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'';};
