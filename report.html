@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.8</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1250,7 +1250,8 @@ function restorePos(e){
   if(e.moved)PENDING.moved=true; /* 手動修正で得た位置を復元したので、次に保存する時もその印を残す */
   try{const p={lat:e.lat,lng:e.lon};if(confMarker)confMarker.setPosition(p);if(confMap)confMap.setCenter(p);}catch(_){}
   const w=document.getElementById('confwarn');if(w)w.style.display='none';
-  document.getElementById('confaddr').innerHTML='📍 <b>'+PENDING.title+'</b>　<span style="color:#16a34a;font-weight:800">✅ 前回作成した位置を復元しました</span>';
+  /* Googleの住所には無関係な建物名（例：萩原歯科医院）が混ざることがあるので落として表示する */
+  document.getElementById('confaddr').innerHTML='📍 <b>'+((PENDING.name?PENDING.name+'　':'')+(addrPlain(PENDING.title)||PENDING.title))+'</b>　<span style="color:#16a34a;font-weight:800">✅ 前回作成した位置を復元しました</span>';
   setCmpSearch(addrPlain(PENDING.title)||PENDING.title);
 }
 function histRender(){
