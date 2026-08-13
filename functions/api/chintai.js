@@ -65,7 +65,7 @@ export async function onRequest(context) {
       const body = await request.json();
       const rows = (body && body.rows || []).slice(0, 15);
       if (!rows.length) return json({ found: false, reason: 'no_rows' });
-      const r = await enrich(rows, get, new URL(request.url).origin, 15, 12);
+      const r = await enrich(rows, get, new URL(request.url).origin, 15, 15);
       return json({ found: true, items: rows, park: r.park, debug: dbg ? log : undefined });
     } catch (e) {
       return json({ found: false, reason: 'exception: ' + (e && e.message) });
