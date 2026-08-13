@@ -48,7 +48,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .mapwrap{width:100%;max-width:690px;margin:0 auto 6px;overflow:hidden;}
 .mapwrap.sm{margin-bottom:12px;}
 .map{width:690px;height:520px;transform-origin:top left;}
-.map.sm{height:280px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
+.map.sm{height:245px;border:1px solid #cbd5e1;border-radius:4px;background:#eef2f2;position:relative;z-index:0;}
 .subttl{font-size:13px;font-weight:800;color:#1f2937;margin:12px 0 5px;padding-left:8px;border-left:4px solid #4b7fb5;}
 table.lst{width:100%;border-collapse:collapse;}
 table.lst th{background:#eef4fb;border:1px solid #cfd8e3;font-size:10.5px;padding:3px 7px;font-weight:700;color:#374151;text-align:left;}
@@ -58,6 +58,7 @@ table.lst td.no span{display:inline-block;width:22px;height:22px;line-height:22p
 table.lst td.r{text-align:right;white-space:nowrap;font-weight:700;}
 table.lst td.nm{font-weight:700;}
 table.lst.cmp td{font-size:10.5px;padding:2px 5px;}
+table.calc.cmpspec td{padding:2px 6px;font-size:11px;}
 table.lst.cmp td.nm{font-size:11px;}
 table.lst.cmp td.no span{width:19px;height:19px;line-height:19px;font-size:10px;}
 .note{font-size:9.5px;color:#94a3b8;margin-top:5px;line-height:1.45;border-top:1px solid #eef2f2;padding-top:5px;}
@@ -140,7 +141,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v11.7</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -791,7 +792,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     });
     hrows.sort((a,b)=>(b.y*12+b.mo)-(a.y*12+a.mo));
     /* 同じ部屋（同一物件・同間取り・同面積）の期間違いは最新1件だけ。枠は表全体で13行まで */
-    const hseen=new Set(),hcap=Math.max(0,Math.min(3,13-cmp.length));
+    const hseen=new Set(),hcap=Math.max(0,Math.min(3,(hasOwn?12:13)-cmp.length));
     hrows.forEach(h=>{
       if(histN>=hcap)return;
       const k=h.c.no+'|'+h.md+'|'+(h.men||0);if(hseen.has(k))return;hseen.add(k);
