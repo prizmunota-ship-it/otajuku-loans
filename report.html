@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v7.4</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -312,7 +312,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='9'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
+const APIV='10'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -1375,7 +1375,7 @@ async function popStats(lat,lon,radius){
   try{
     const j=await apiJson('/api/pop?lat='+lat+'&lon='+lon+'&r='+Math.round(radius));
     if(j&&j.found&&j.p25>0)return {p25:j.p25,a:j.a,b:j.b,c:j.c,p30:j.p30,g5:j.g5,n:j.n,
-      pn20:j.pn20,pn25:j.pn25,series:j.series||[],mesh:'250m',src:j.src};
+      pn20:j.pn20,pn25:j.pn25,series:j.series||[],shicode:j.shicode||null,mesh:'250m',src:j.src};
   }catch(e){}
   /* ②APIが使えないときだけ同梱データ（福岡・佐賀の1kmメッシュ）にフォールバック */
   const P=await loadPop();if(!P.length)return null;
@@ -1667,6 +1667,10 @@ async function buildReport(g){
   /* --- 人口（選択） --- */
   if(document.getElementById('opt_pop').checked){
     const pop=await popStats(g.lat,g.lon,Math.max(radius,1000));
+    /* ★世帯数の推移（太田要望 2026-08-13）。不動産情報ライブラリに世帯数が無いのでe-Statから。
+       市区町村コードは人口メッシュのSHICODEを使う。キー未設定なら静かに省略する。 */
+    let SETAI=null;
+    if(pop&&pop.shicode){try{const s=await apiJson('/api/setai?city='+pop.shicode);if(s&&s.found)SETAI=s;}catch(e){}}
     if(pop&&pop.p25>0){
       const lbl=['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65-69','70-74','75-79','80-84','85-89','90+'];
       const mx=Math.max(...pop.g5,1);
@@ -1679,6 +1683,7 @@ async function buildReport(g){
         <div class="t"><div class="l">2030年推計</div><div class="v" style="font-size:16px">${pop.p30.toLocaleString()}人<small>（${chg>=0?'+':''}${chg.toFixed(1)}%）</small></div></div></div>
         <div class="subttl">年齢5歳階級別人口（半径${radius.toLocaleString()}m圏内の${pop.mesh||'250m'}メッシュ×${pop.n}区画を合算）</div>${bars}
         ${(()=>{ /* 市区町村の人口増減（事業計画書アプリと同じ国勢調査ベース） */
+          if(SETAI&&SETAI.series&&SETAI.series.length>=2)return ''; /* 世帯数表の注記に吸収済み（1ページ厳守） */
           const cityN=cityOf(g.title);
           const hit=POP_DB.find(x=>x.m===cityN)||POP_DB.find(x=>cityN&&x.m.indexOf(cityN)>=0)||POP_DB.find(x=>cityN&&cityN.indexOf(x.m)>=0);
           /* 国勢調査速報（福岡・佐賀のみ収録）が無い地域は、調査対象範囲のメッシュ推計で増減を示す */
@@ -1713,13 +1718,30 @@ async function buildReport(g){
                 <div style="width:52px;font-size:10px;font-weight:700;text-align:right;color:${d>=0?'#0f766e':'#b91c1c'}">${rt.toFixed(0)}</div></div>`;}).join('')}
             <div class="note" style="border:0;padding:0;margin:4px 0 8px">※右端は2020年を100とした指数。<b>2020年は国勢調査実績</b>、2025年以降は将来推計です（濃い色＝実績・確定に近い年）。</div>`;
         })()}
+        ${(()=>{ /* ★世帯数の推移（e-Stat・市区町村単位）。単身化＝賃貸需要の裏づけとして1世帯当たり人員も出す */
+          if(!SETAI||!SETAI.series||SETAI.series.length<2)return '';
+          const S=SETAI.series, f=S[0], l=S[S.length-1];
+          const hr=(l.h-f.h)/f.h*100;
+          const rows=S.map(x=>`<tr><td>${x.y}年</td><td class="r">${x.h.toLocaleString()}世帯</td><td class="r">${x.p?x.p.toLocaleString()+'人':'—'}</td><td class="r">${x.pph?x.pph.toFixed(2)+'人':'—'}</td></tr>`).join('');
+          const pphMsg=(f.pph&&l.pph&&l.pph<f.pph)
+            ?`1世帯当たり人員は ${f.pph.toFixed(2)}人 → ${l.pph.toFixed(2)}人 に減少しており、少人数・単身世帯の増加＝<b>賃貸需要の下支え</b>が読み取れます。`
+            :'';
+          /* 1ページに収めるため、市区町村の人口増減率（2020→2025速報）はこの注記に1行で吸収する */
+          const cn=cityOf(g.title);
+          const ph=POP_DB.find(x=>x.m===cn)||POP_DB.find(x=>cn&&x.m.indexOf(cn)>=0)||POP_DB.find(x=>cn&&cn.indexOf(x.m)>=0);
+          const phMsg=ph?`　なお直近の人口増減率（2020→2025年・国勢調査速報）は<b style="color:${ph.r>=0?'#0f766e':'#b91c1c'}">${ph.r>=0?'+':''}${ph.r}%</b>です。`:'';
+          return `<div class="subttl" style="margin-top:10px">${esc(SETAI.name||'')}の世帯数・人口の推移（国勢調査）</div>
+            <table class="lst"><tr><th>年</th><th style="text-align:right">世帯数</th><th style="text-align:right">人口</th><th style="text-align:right">1世帯当たり人員</th></tr>${rows}</table>
+            <div class="note" style="border:0;padding:0;margin:4px 0 8px">※${f.y}年→${l.y}年で世帯数は<b style="color:${hr>=0?'#0f766e':'#b91c1c'}">${hr>=0?'+':''}${hr.toFixed(1)}%</b>。${pphMsg}${phMsg}</div>`;
+        })()}
         <div class="subttl" style="margin-top:10px">年齢3区分</div>
         <table class="lst"><tr><th>区分</th><th style="text-align:right">人口</th><th style="text-align:right">構成比</th></tr>
         <tr><td>年少人口（0〜14歳）</td><td class="r">${pop.a.toLocaleString()}人</td><td class="r">${(pop.a/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>生産年齢人口（15〜64歳）</td><td class="r">${pop.b.toLocaleString()}人</td><td class="r">${(pop.b/pop.p25*100).toFixed(1)}%</td></tr>
         <tr><td>老年人口（65歳〜）</td><td class="r">${pop.c.toLocaleString()}人</td><td class="r">${(pop.c/pop.p25*100).toFixed(1)}%</td></tr></table>`;
       const popArea=(addrPlain(g.title)||g.title||'').replace(/\s+/g,' ').trim();
-      h+=paper('年齢別人口統計','<b>'+popArea+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏の人口構成と将来推計',popBody,pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ');
+      h+=paper('年齢別人口統計','<b>'+popArea+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏の人口構成と将来推計',popBody,
+        (pop.src||'国土交通省 国土数値情報 将来推計人口メッシュ')+(SETAI?'／世帯数：'+SETAI.src:''));
     }else{
       h+=paper('年齢別人口統計','<b>'+(addrPlain(g.title)||g.title||'')+'</b> を中心とする半径 '+radius.toLocaleString()+'m 圏','<div class="phase">この地点の人口データを取得できませんでした（通信状況によることがあります。もう一度レポートを作成してください）。</div>','国土交通省 不動産情報ライブラリ');
     }
