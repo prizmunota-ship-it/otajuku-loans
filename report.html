@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.1</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -498,17 +498,18 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const R=opts.radius||1500;
     const ownMidR=hasOwn?(own.min+own.max)/2:0;
     cmp.forEach(c=>{c.d=(c.lat!=null)?Math.round(dist(opts.center[0],opts.center[1],c.lat,c.lon)):null;});
-    const kept=[];
+    /* kept＝厳格な条件を満たすもの。soft＝間取り/面積だけが外れたもの（範囲内・位置は特定済み）。
+       hard＝範囲外や位置不明で、地図に載せられないため何があっても採用しない。 */
+    const kept=[],soft=[];
     cmp.forEach(c=>{
+      if(c.d==null){window.CMP_EXCLUDED.push({name:c.name,reason:'位置が特定できず地図に載せられない'});return;}
+      if(c.d>R){window.CMP_EXCLUDED.push({name:c.name,reason:'調査対象範囲外（'+(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m')+'）'});return;}
       let ng='';
-      if(c.d==null)ng='位置が特定できず地図に載せられない';
-      else if(c.d>R)ng='調査対象範囲外（'+(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m')+'）';
-      else if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
+      if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
       else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
-      if(ng){window.CMP_EXCLUDED.push({name:c.name,reason:ng});return;}
+      if(ng){c._soft=ng;soft.push(c);return;}
       kept.push(c);
     });
-    outCnt=window.CMP_EXCLUDED.length;
     /* 並び：①本物件と同等以上の賃料 ②面積の近さ ③距離の近さ */
     kept.forEach(c=>{
       c._adv=(ownMidR>0&&c.total>=ownMidR*0.98)?0:1;
@@ -518,13 +519,27 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     /* ★同じ建物で複数の部屋が募集中だと、その物件だけで表が埋まって他の物件が出ない
        （操川さん指摘 2026-08-13）。1棟につき最も条件の近い1部屋だけ残す。 */
     const seenB=new Set(),uniq=[];
-    kept.forEach(c=>{
-      const k=String(c.name||'').replace(/[\s　]/g,'').replace(/[0-9０-９]+(号室|号|階)?$/,'');
-      if(!k){uniq.push(c);return;}
+    const bkey=n=>String(n||'').replace(/[\s　]/g,'').replace(/[0-9０-９]+(号室|号|階)?$/,'');
+    const dedupe=(list,arr)=>list.forEach(c=>{
+      const k=bkey(c.name);
+      if(!k){arr.push(c);return;}
       if(seenB.has(k)){window.CMP_EXCLUDED.push({name:c.name,reason:'同じ物件の別の部屋（1棟につき1件に集約）'});return;}
-      seenB.add(k);uniq.push(c);
+      seenB.add(k);arr.push(c);
     });
-    const CAP=8; /* 掲載枠。太田・操川さん要望で5→8件 */
+    dedupe(kept,uniq);
+    /* ★件数の方針（太田指示 2026-08-13）＝標準10件、ただし最低5件は確保する。
+       厳格な条件（同間取り・面積±25%）で5件に届かないときだけ、範囲内の物件を
+       距離順で足して5件まで埋める（範囲外・位置不明は地図に出せないので足さない）。 */
+    const CAP=10, MIN=5;
+    if(uniq.length<MIN&&soft.length){
+      soft.sort((a,b)=>a.d-b.d);
+      const add=[];dedupe(soft,add);
+      add.forEach(c=>{if(uniq.length<MIN){c._relaxed=c._soft;uniq.push(c);}
+        else window.CMP_EXCLUDED.push({name:c.name,reason:c._soft});});
+    }else{
+      soft.forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:c._soft}));
+    }
+    outCnt=window.CMP_EXCLUDED.length;
     const pick=uniq.slice(0,CAP);
     pick.sort((a,b)=>a.d-b.d);
     uniq.slice(CAP).forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:'掲載枠（'+CAP+'件）超過'}));
@@ -535,7 +550,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td></tr>`;});
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${c.name}</td><td style="font-size:10.5px;color:#475569">${(c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'')}${off?' <span style="color:#d97706">※別エリア</span>':''}${c._relaxed?' <span style="color:#94a3b8">※参考（'+c._relaxed.replace(/（.*$/,'')+'）</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td></tr>`;});
   const ownRent=hasOwn?(own.min===own.max?own.min.toLocaleString()+'円':own.min.toLocaleString()+'〜'+own.max.toLocaleString()+'円'):'';
   const areaWarn=(cmp.length>0&&mismatch===cmp.length&&ownCity)?`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12px;color:#b91c1c;font-weight:700;margin-bottom:8px">⚠️ 比較物件がすべて「${ownCity}」以外の物件です。前に入力した別物件の比較データが残っていないかご確認ください（行の✕で削除できます）。</div>`:'';
   /* 本物件の自動サマリー（入力済み情報から算出） */
