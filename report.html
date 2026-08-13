@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v9.9</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v10.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -508,7 +508,10 @@ function parseCmp(){
     const seenA=new Set();let n=0;
     window.PARK=window.PARK||new Map();
     window.CMP_DIST=window.CMP_DIST||new Map();
+    /* 本物件そのものの行が事例一覧に含まれるので比較表からは除く */
+    const selfN=nzName(val('palias')||val('paddr')||(window.SELF&&window.SELF.name)||'');
     for(const it of asr){
+      if(selfN&&nzName(it.name)===selfN)continue;
       const key=it.name+'_'+it.total; if(seenA.has(key))continue; seenA.add(key);
       if(it.park>0)window.PARK.set(nzName(it.name),{text:it.park.toLocaleString()+'円',fee:it.park});
       if(it.d!=null)window.CMP_DIST.set(nzName(it.name),it.d);
