@@ -139,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v8.7</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -316,7 +316,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='12'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
+const APIV='13'; /* v8＝/api/pop に series（人口の推移）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -361,7 +361,8 @@ async function suumoSearchCmp(city,pref,md){
     let n=0;
     for(const it of pool){
       if(n>=20)break;
-      addCmpRow([it.name,it.addr||'',it.age==null?'':it.age,it.men||'',it.total]);n++;
+      /* addr2＝HOME'Sの建物ページから取れた番地までの住所。あればそちらを使う（ピンが正確になる） */
+      addCmpRow([it.name,it.addr2||it.addr||'',it.age==null?'':it.age,it.men||'',it.total]);n++;
     }
     return n;
   }catch(e){return 0;}

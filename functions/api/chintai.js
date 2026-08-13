@@ -98,6 +98,33 @@ export async function onRequest(context) {
       if (pk.fee > 0) fees.push(pk.fee);
       else if (pk.text && /無|なし|-/.test(pk.text)) none++;
     }
+    // ④ 詳細住所（番地まで）をLIFULL HOME'Sの建物ページから補う。
+    //    SUUMOは一覧も詳細も丁目までしか出さないため、比較物件のピンが丁目の概算位置になる
+    //    （太田指摘 2026-08-13「HOME'Sは詳細な住所が載っている」）。
+    //    経路は既存の /api/spec と同じなので、自前のエンドポイントを呼んで使い回す。
+    const wantAddr = u.searchParams.get('addr') !== '0';
+    if (wantAddr) {
+      const seen = new Map();
+      const origin = new URL(request.url).origin;
+      for (let i = 0; i < Math.min(12, items.length); i++) {
+        const it = items[i];
+        if (!it.name || it.anon) continue; // 名称非公開はHOME'Sで引けない
+        const key = it.name + '|' + it.addr;
+        if (seen.has(key)) { it.addr2 = seen.get(key); continue; }
+        const cityName = (String(it.addr || '').replace(/^.*?[都道府県]/, '').match(/^(.{2,8}?[市区町村])/) || [])[1] || '';
+        const prefName = (String(it.addr || '').match(/(北海道|東京都|京都府|大阪府|.{2,3}県)/) || [])[1] || '';
+        const su = `${origin}/api/spec?name=${encodeURIComponent(it.name)}&city=${encodeURIComponent(cityName)}&pref=${encodeURIComponent(prefName)}&addr=${encodeURIComponent(it.addr || '')}`;
+        try {
+          const r = await fetch(su, { cf: { cacheTtl: 86400, cacheEverything: true } });
+          const j = await r.json();
+          if (j && j.found && j.addr && /\d/.test(j.addr.replace(/^.*?[都道府県]/, ''))) {
+            it.addr2 = j.addr;
+            seen.set(key, j.addr);
+          }
+        } catch (e) { /* 取れなければ丁目までの住所のまま使う */ }
+      }
+    }
+
     fees.sort((a, b) => a - b);
     const med = fees.length ? (fees.length % 2 ? fees[(fees.length - 1) / 2] : Math.round((fees[fees.length / 2 - 1] + fees[fees.length / 2]) / 2)) : 0;
 
