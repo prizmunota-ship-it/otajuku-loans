@@ -111,26 +111,47 @@ async function byAddress(name, addr, city, pref, dbg) {
   if (!cityUrl) return [];
 
   // 丁目（-addr）ページ。住所から「有田中央２丁目」を作って一致させる
+  // ⚠️「合川町」のように丁目を持たない町名は -addr ではなく -town リンクにしかない。
+  //    -addr だけを見ていたため、久留米市合川町の物件が丸ごと取得できなかった（2026-08-14 実測）。
   const town = townKey(addr, cityName);
-  const addrUrls = await pickLinks(cityUrl, /-addr\/$/, (t) => {
+  const townBase = normAddr(String(addr || '').replace(/^.*?[市区町村]/, '')).replace(/\d.*$/, '');
+  const match = (t) => {
     const k = normAddr(t);
-    return town && (k === town || (town.length > 2 && k.startsWith(town)) || (k.length > 2 && town.startsWith(k)));
-  }, dbg, 'town');
+    if (!k) return false;
+    if (town && (k === town || (town.length > 2 && k.startsWith(town)) || (k.length > 2 && town.startsWith(k)))) return true;
+    return townBase.length > 1 && k === townBase;
+  };
+  const addrUrls = await pickLinks(cityUrl, /-(addr|town)\/$/, match, dbg, 'town');
   if (!addrUrls.length) return [];
 
   // 丁目ページの建物一覧から、名前が一致する建物ページを拾う
   const out = [];
-  for (const au of addrUrls.slice(0, 3)) {
-    const html = await getText(au, dbg, 'addrpage');
-    if (!html) continue;
-    const re = /\/archive\/(b-\d+)\/"[\s\S]{0,900}?font-bold[^>]*>([^<]{1,60})</g;
-    let m;
-    while ((m = re.exec(html))) {
-      if (!sameName(m[2].trim(), name)) continue;
-      const u = 'https://www.homes.co.jp/archive/' + m[1] + '/';
-      if (out.indexOf(u) < 0) out.push(u);
+  for (const au of addrUrls.slice(0, 2)) {
+    for (let pg = 1; pg <= 6; pg++) {
+      const html = await getText(pg === 1 ? au : au + '?page=' + pg, dbg, 'addrpage');
+      if (!html) break;
+      const found = listBuildings(html);
+      if (!found.length) break;
+      found.forEach((b) => {
+        if (!sameName(b.name, name)) return;
+        const u = 'https://www.homes.co.jp/archive/' + b.id + '/';
+        if (out.indexOf(u) < 0) out.push(u);
+      });
+      if (out.length) break;
     }
     if (out.length) break;
+  }
+  return out;
+}
+
+/* 町・丁目ページに並ぶ建物（b-ID と建物名）を取り出す */
+function listBuildings(html) {
+  const out = [];
+  const re = /\/archive\/(b-\d+)\/"[\s\S]{0,900}?font-bold[^>]*>([^<]{1,60})</g;
+  let m;
+  while ((m = re.exec(html))) {
+    const id = m[1], nm = m[2].trim();
+    if (!out.some((x) => x.id === id)) out.push({ id: id, name: nm });
   }
   return out;
 }
