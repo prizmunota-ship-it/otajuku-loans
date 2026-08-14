@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.5</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1865,7 +1865,11 @@ async function buildReport(g){
   /* ★先に「本物件そのもの」（築年・間取り・面積）を確定させてから類似物件を探す。
      順番が逆だと条件が空のまま近い順に20件を掴んでしまい、同年代の物件が
      1件しか残らなかった（久留米・築28年で実測 2026-08-14）。 */
-  if(needAuto&&cityA&&!(window.SELF&&(window.SELF.struct||window.SELF.built))){
+  /* ⚠️locate()の物件名照会で SELF に構造・築年だけが入ることがある。
+     その状態を「取得済み」と見なすと間取り・面積・賃料が空のままになり、
+     類似物件の絞り込み（面積±25%）が効かない（合川A棟＝1R19㎡に56〜66㎡が並んだ）。
+     間取りと面積が揃っていなければ必ず /api/suumolib を引く。 */
+  if(needAuto&&cityA&&!(val('pmadori')&&num('pmens')>0)){
     setStatus('🏢 本物件の募集内容を照会中…');
     /* ★本命＝/api/suumolib（SUUMO物件ライブラリー）。種別・構造・築年月・階建・
        募集中の部屋（間取り・面積・賃料）まで実データで取れる。
@@ -1880,7 +1884,8 @@ async function buildReport(g){
           /* 間取り・面積・賃料は募集中の部屋の実データで埋める（最頻＝最初の部屋） */
           const r0=(L.rooms||[])[0];
           if(r0){
-            if(!val('pmadori'))setByData('pmadori',r0.md,'suumo');
+            const md0=String(r0.md||'').replace(/^ワンルーム$/,'1R');
+            if(!val('pmadori')&&md0)setByData('pmadori',md0,'suumo');
             if(!num('pmens')&&r0.men>0)setByData('pmens',r0.men,'suumo');
             if(!num('prentmin')&&r0.rent>0){setByData('prentmin',r0.rent,'suumo');setByData('prentmax',r0.rent,'suumo');}
           }
