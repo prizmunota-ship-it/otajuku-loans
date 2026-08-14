@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.9</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v13.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -806,12 +806,13 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     if(uniq.length<MIN&&soft.length){
       /* ★㎡単価が極端に高い物件（家具家電付き・短期向けのレオパレス系など）は
          賃料帯を壊して分析文の説得力を落とすので、緩和補充では採用しない。
-         基準＝範囲内物件の㎡単価の中央値の1.8倍（若宮で3,473円/㎡が混入・2026-08-14）。 */
+         基準＝範囲内物件の㎡単価の中央値の1.5倍（若宮で中央値1,800円に対し
+         レオパレス3,070円が1.8倍では通ってしまった・2026-08-14 実測）。 */
       const us=kept.concat(soft).filter(c=>c.men>0&&c.total>0).map(c=>c.total/c.men).sort((a,b)=>a-b);
       const umed=us.length?us[Math.floor(us.length/2)]:0;
       if(umed>0)soft=soft.filter(c=>{
         if(!(c.men>0&&c.total>0))return true;
-        if(c.total/c.men<=umed*1.8)return true;
+        if(c.total/c.men<=umed*1.5)return true;
         window.CMP_EXCLUDED.push({name:c.name,reason:'㎡単価が周辺と大きく異なる（'+Math.round(c.total/c.men).toLocaleString()+'円/㎡）'});
         return false;
       });
