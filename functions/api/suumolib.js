@@ -64,6 +64,25 @@ export async function onRequest(context) {
     if (!html) return json({ found: false, reason: 'page_failed', debug: dbg || undefined });
     const info = readPage(html);
     if (!info) return json({ found: false, reason: 'parse_failed', debug: dbg || undefined });
+    // ★物件ライブラリーの一覧の「価格」は家賃のみで管理費・共益費が入っていない。
+    //   比較物件（/api/chintai）は月額総額（家賃＋管理費）なので、そのままだと
+    //   本物件だけ安く見えて比較にならない（太田指摘 2026-08-14）。
+    //   各部屋の詳細ページ（bc_）に「管理費・共益費」があるので上位3室だけ取りに行く。
+    const bcs = [];
+    { const re = /suumo\.jp\/chintai\/(bc_\d+)\//g; let m2;
+      while ((m2 = re.exec(html))) if (bcs.indexOf(m2[1]) < 0) bcs.push(m2[1]); }
+    for (let i = 0; i < Math.min(3, info.rooms.length); i++) {
+      const r = info.rooms[i];
+      r.admin = null; r.total = r.rent;
+      if (!bcs[i]) continue;
+      const dh = await get('https://suumo.jp/chintai/' + bcs[i] + '/', 'room');
+      if (!dh) continue;
+      const dt = flat(dh);
+      const am = dt.match(/\|\s*管理費[・･]?共益費?\s*\|(?:\s*\|)*\s*([\d,]+)\s*円/) ||
+                 dt.match(/\|\s*管理費\s*\|(?:\s*\|)*\s*([\d,]+)\s*円/);
+      if (am) { r.admin = parseInt(am[1].replace(/,/g, ''), 10) || 0; r.total = r.rent + r.admin; }
+      r.url = 'https://suumo.jp/chintai/' + bcs[i] + '/';
+    }
     const h1 = (flat(html).match(/\|\s*([^|]{2,40}?)の賃貸物件情報\s*\|/) || [])[1] || '';
     const nm = h1.trim() || (/[\/">]/.test(hit.name) ? '' : hit.name);
     if (nm && !sameName(nm, name)) return json({ found: false, reason: 'name_mismatch', got: nm, debug: dbg || undefined });

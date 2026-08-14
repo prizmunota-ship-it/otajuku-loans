@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v13.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v13.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='16'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
+const APIV='17'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -1956,7 +1956,10 @@ async function buildReport(g){
             const md0=String(r0.md||'').replace(/^ワンルーム$/,'1R');
             if(!val('pmadori')&&md0)setByData('pmadori',md0,'suumo');
             if(!num('pmens')&&r0.men>0)setByData('pmens',r0.men,'suumo');
-            if(!num('prentmin')&&r0.rent>0){setByData('prentmin',r0.rent,'suumo');setByData('prentmax',r0.rent,'suumo');}
+            /* ★管理費・共益費込みの月額総額を使う。比較物件は総額なので、
+               家賃だけ入れると本物件だけ安く見えて比較にならない（太田指摘 2026-08-14） */
+            const tot0=r0.total>0?r0.total:r0.rent;
+            if(!num('prentmin')&&tot0>0){setByData('prentmin',tot0,'suumo');setByData('prentmax',tot0,'suumo');}
           }
         }
       }catch(e){}
