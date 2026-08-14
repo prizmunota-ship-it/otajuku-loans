@@ -33,8 +33,13 @@ export async function onRequest(context) {
   const pref = PREF[prefIn] || (/^[a-z]+$/.test(prefIn) ? prefIn : '');
   const city = (u.searchParams.get('city') || '').trim();
   let sc = (u.searchParams.get('sc') || '').trim();
+  // 間取りはカンマ区切りで複数指定できる（?md=1R,1K）。SUUMOは &md=01&md=02 の形。
+  // 1Rだけだと母数が8ページで尽きるが、1R+1Kにすると15ページ以上取れる（東区で実測 2026-08-14）。
+  // 単身向けは1Rと1Kが同じ需要層で競合するので、比較対象として同じグループに入れてよい。
   const mdIn = (u.searchParams.get('md') || '').trim();
-  const md = MD[mdIn] || (/^\d{2}$/.test(mdIn) ? mdIn : '');
+  const mdList = mdIn.split(',').map((x) => x.trim()).filter(Boolean)
+    .map((x) => MD[x] || (/^\d{2}$/.test(x) ? x : '')).filter(Boolean);
+  const md = mdList.join(',');
   const pages = Math.min(Math.max(parseInt(u.searchParams.get('pages') || '8', 10) || 8, 1), 15);
   const detail = Math.min(Math.max(parseInt(u.searchParams.get('detail') || '12', 10) || 12, 0), 15);
   const dbg = u.searchParams.get('debug');
@@ -86,7 +91,7 @@ export async function onRequest(context) {
     // ② 一覧をページ送りで取得
     // pc=50 で1ページ50棟（既定は20棟）。市域が広いと母数が足りず、
     // 半径1.5km内に数件しか残らない事故が起きた（久留米で実測・太田指摘 2026-08-13）。
-    const base = `https://suumo.jp/chintai/${pref}/${sc}/?pc=50` + (md ? `&md=${md}` : '');
+    const base = `https://suumo.jp/chintai/${pref}/${sc}/?pc=50` + mdList.map((x) => `&md=${x}`).join('');
     const items = [];
     let total = 0;
     for (let p = 1; p <= pages; p++) {

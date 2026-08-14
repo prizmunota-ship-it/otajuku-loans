@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v12.8</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='15'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
+const APIV='16'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -393,7 +393,7 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
   try{
     /* 一覧だけ先に取る（駐車場・番地は距離で絞ってから後追いで取りに行く） */
     const j=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
-      +(md?'&md='+encodeURIComponent(md):'')+'&pages=10&detail=0&addr=0');
+      +(md?'&md='+encodeURIComponent(mdGroup(md).join(',')):'')+'&pages=12&detail=0&addr=0');
     if(!j||!j.found||!(j.items||[]).length)return 0;
     window.CMP_FROM_ASSESS=false;
     window.CHINTAI=j;
@@ -417,7 +417,7 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
        行にした分だけ後段でジオコーディングが走るため、母数をそのまま行にすると極端に遅い。 */
     const wantMd=(md||'').trim();
     const ownM=num('pmens')||0;
-    if(wantMd)  { const f=pool.filter(x=>x.md===wantMd); if(f.length>=6)pool=f; }
+    if(wantMd)  { const f=pool.filter(x=>sameMd(x.md,wantMd)); if(f.length>=6)pool=f; }
     if(ownM>0)  { const f=pool.filter(x=>x.men>0&&Math.abs(x.men-ownM)/ownM<=0.25); if(f.length>=6)pool=f; }
     pool.sort((a,b)=>(a._d==null?9e9:a._d)-(b._d==null?9e9:b._d));
     /* ★築年の近い物件を優先して枠に入れる。近い順に20件取るだけだと、
@@ -678,6 +678,21 @@ async function geocodeCmp(cmp){
    標準は±5年で、件数が少ないときに作成者がフォームで±7/±10/指定なしに広げられる（太田指示 2026-08-13）。 */
 /* 類似物件とみなす築年の許容差。既定は±5年で自動。件数が少なかったときだけ、
    レポート下の作成者向けメモから広げられる（入口に選択肢を置かない＝太田指示 2026-08-14）。 */
+/* 間取りのグループ。1Rと1Kは同じ単身需要層で競合するため、比較対象として同一視する。
+   SUUMO側も複数指定できるので母数が大きく増える（1Rだけだと8ページで尽きる）。 */
+const MD_GROUP=[['1R','1K'],['1DK','1LDK'],['2K','2DK'],['2LDK','3K'],['3DK','3LDK']];
+function mdGroup(md){
+  md=String(md||'').replace(/^ワンルーム$/,'1R').trim();
+  if(!md)return [];
+  const g=MD_GROUP.find(a=>a.indexOf(md)>=0);
+  return g?g.slice():[md];
+}
+function sameMd(a,b){
+  a=String(a||'').replace(/^ワンルーム$/,'1R').trim();b=String(b||'').replace(/^ワンルーム$/,'1R').trim();
+  if(!a||!b)return true;
+  if(a===b)return true;
+  return mdGroup(b).indexOf(a)>=0;
+}
 function ageTol(){const v=window.__ageTol;return isFinite(v)?v:5;}
 function widenAge(n){window.__ageTol=n;clearCmpRows();confirmGo();}
 /* 本物件の築年（実データ or 入力があるときだけ。推測はしない） */
@@ -753,7 +768,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
          抽出条件で類似物件を選んでいる。こちらで重ねて絞ると良い事例まで落ちるので、
          同じ建物の別部屋を1件にまとめる処理だけ掛ける（太田指示 2026-08-13）。 */
       if(window.CMP_FROM_ASSESS){kept.push(c);return;}
-      if(opts.md&&c.md&&c.md!==opts.md)ng='間取りが異なる（'+c.md+'）';
+      if(opts.md&&c.md&&!sameMd(c.md,opts.md))ng='間取りが異なる（'+c.md+'）';
       else if(own.men>0&&c.men>0&&Math.abs(c.men-own.men)/own.men>0.25)ng='専有面積が離れている（'+c.men.toFixed(2)+'㎡）';
       /* ★築年数が離れた物件は入居ターゲットが違うので比較にならない（操川さん指摘 2026-08-13）。 */
       else if(ownAge!=null&&c.age!=null&&Math.abs(c.age-ownAge)>AGE_TOL)ng='築年数が離れている（築'+c.age+'年）';
@@ -787,7 +802,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     /* ★件数の方針（太田指示 2026-08-13）＝標準10件、ただし最低5件は確保する。
        厳格な条件（同間取り・面積±25%）で5件に届かないときだけ、範囲内の物件を
        距離順で足して5件まで埋める（範囲外・位置不明は地図に出せないので足さない）。 */
-    const CAP=10, MIN=5;
+    const CAP=10, MIN=10; /* 範囲内・位置特定できた物件は10件まで使う（太田の目標件数） */
     if(uniq.length<MIN&&soft.length){
       soft.sort((a,b)=>a.d-b.d);
       const add=[];dedupe(soft,add);
