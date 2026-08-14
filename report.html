@@ -21,7 +21,7 @@ body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f293
 .bigbtn{width:100%;margin-top:12px;background:#0f766e;color:#fff;border:none;border-radius:10px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;}
 .bigbtn:disabled{background:#9ca3af;}
 .qhint{font-size:11px;color:#6b7280;margin-top:8px;}
-/* 検索履歴（v12.2・太田指示）＝画面には並べず「🕘 検索履歴」ボタンから一覧を開く。端末内(localStorage)のみ保存 */
+/* 検索履歴（v12.3・太田指示）＝画面には並べず「🕘 検索履歴」ボタンから一覧を開く。端末内(localStorage)のみ保存 */
 .histbtn{margin-top:12px;background:#fff;color:#0f766e;border:2px solid #0f766e;border-radius:10px;padding:14px 16px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;}
 .histbtn:hover{background:#f0fdfa;}
 .hrow{display:flex;align-items:center;gap:9px;padding:11px 2px;border-bottom:1px solid #f1f5f9;}
@@ -1579,7 +1579,7 @@ function placesText(q){return new Promise(res=>{
   }catch(e){fin(null);}
 });}
 let PENDING=null,confMap=null,confMarker=null;
-/* ===== 検索履歴（v12.2で作成履歴と統合・太田指示「名前は検索履歴に統一、押したら履歴が出る」）=====
+/* ===== 検索履歴（v12.3で作成履歴と統合・太田指示「名前は検索履歴に統一、押したら履歴が出る」）=====
    ・画面に羅列せず「🕘 検索履歴」ボタン→モーダルで一覧（v12.1までのチップ表示は廃止）。
    ・レポートを作るたびに、位置だけでなく調査範囲・チェック・類似物件の編集行まで丸ごと自動保存。
    ・あとで何のレポートか分かるように、任意で名前（タイトル）を付けられる。
@@ -2289,7 +2289,7 @@ async function buildReport(g){
   document.getElementById('toolbar').style.display='block';
   placeCmpEdit(); /* 類似物件の編集UIを作成者向けメモ内へ（画面のみ・印刷されない） */
   /* ★ここで履歴を上書き保存する＝類似物件の自動取得まで終わった「完成状態」を残すため。
-     confirmGo時点だと比較行がまだ空で、履歴から開いても毎回検索し直しになる（v12.2） */
+     confirmGo時点だと比較行がまだ空で、履歴から開いても毎回検索し直しになる（v12.3） */
   try{const s=histSnap();if(s)histAdd(s);}catch(e){}
   /* 比較対象から外した物件の一覧表示は廃止（太田指示 2026-08-14「いちいち表示しなくていい」）。
      CMP_EXCLUDEDは内部の選定記録としてだけ残す。 */
