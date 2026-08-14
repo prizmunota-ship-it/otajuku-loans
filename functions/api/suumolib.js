@@ -64,7 +64,10 @@ export async function onRequest(context) {
     if (!html) return json({ found: false, reason: 'page_failed', debug: dbg || undefined });
     const info = readPage(html);
     if (!info) return json({ found: false, reason: 'parse_failed', debug: dbg || undefined });
-    return json(Object.assign({ found: true, url: purl, src: 'SUUMO物件ライブラリー（実データ）', name: hit.name, addr: info.addr || hit.addr, station: info.station || hit.station }, info));
+    const h1 = (flat(html).match(/\|\s*([^|]{2,40}?)の賃貸物件情報\s*\|/) || [])[1] || '';
+    const nm = h1.trim() || (/[\/">]/.test(hit.name) ? '' : hit.name);
+    if (nm && !sameName(nm, name)) return json({ found: false, reason: 'name_mismatch', got: nm, debug: dbg || undefined });
+    return json(Object.assign({ found: true, url: purl, src: 'SUUMO物件ライブラリー（実データ）' }, info, { name: nm || name, addr: info.addr || hit.addr, station: info.station || hit.station }));
   } catch (e) {
     return json({ found: false, reason: 'exception: ' + (e && e.message), debug: dbg || undefined });
   }
@@ -81,7 +84,7 @@ function listHits(html) {
     // リンク以降のテキストに「物件名｜住所｜駅」が並ぶ
     const tail = flat(html.slice(m.index, m.index + 1200));
     const cells = tail.split('|').map((s) => s.trim()).filter(Boolean);
-    const nm = cells.find((c) => /[^\s\d]/.test(c) && !/^(https?|tf_|築年月|賃貸|売買)/.test(c) && c.length <= 40 && !/[都道府県]$/.test(c)) || '';
+    const nm = cells.find((c) => /[^\s\d]/.test(c) && !/[\/">]/.test(c) && !/^(https?|tf_|築年月|賃貸|売買|イメージ|間取り)/.test(c) && c.length <= 40 && !/[都道府県]$/.test(c)) || '';
     const ad = cells.find((c) => /(北海道|東京都|京都府|大阪府|.{2,3}県).{2,20}/.test(c)) || '';
     const st = cells.find((c) => /歩\d+分/.test(c)) || '';
     out.push({ path: path, name: nm, addr: ad, station: st });
