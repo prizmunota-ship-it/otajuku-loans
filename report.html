@@ -453,16 +453,18 @@ function bantiAddrs(g){
 async function selfByAddr(g,city){
   const cands=bantiAddrs(g);
   /* ★どこにも番地が無いときは、確定したピンの座標を逆ジオコーディングして番地を作る。
-     ピンは建物の上に置いてある（作成者がドラッグして直している）ので、
-     Googleが返す street_address／premise はその建物の番地そのもの。
-     これで「番地が分からないから逆引きできない」を潰す（2026-08-15）。 */
-  if(!cands.length&&g&&g.lat){
+     ⚠️ただし「ピンが建物の上にある」と言えるときだけ。丁目の代表点のままの座標で
+     逆引きすると、同じ丁目の**隣の建物**の番地が返って別物件を掴む＝最悪の誤情報になる。
+     条件＝作成者がピンをドラッグして直した（moved）／建物として特定できた（Places・ROOFTOP）。 */
+  const precise=!!(g&&(g.moved||g.psrc==='Places'||g.locType==='ROOFTOP'));
+  if(!cands.length&&g&&g.lat&&precise){
     try{
       const rev=await reverseGeocode(g.lat,g.lon);
       const a=addrOnly(rev||'');
       if(a&&RE_BANTI.test(a))cands.push(a);
     }catch(e){}
   }
+  if(!cands.length&&g&&g.lat&&!precise)window.SELF=Object.assign(window.SELF||{},{byaddrSkip:'位置が丁目の代表点のままなので、番地からの逆引きは行いませんでした（隣の建物を掴む恐れがあるため）。ピンを建物の上へドラッグして作り直すか、番地まで入った住所で検索してください。'});
   if(!cands.length)return null;
   for(const addr of cands){
     let off=0;
@@ -472,6 +474,18 @@ async function selfByAddr(g,city){
         +'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(prefOf((g&&g.title)||addr)||'')+'&offset='+off);
       if(!j)break;
       if(j.found){
+        /* ★掴んだ建物が本当に本物件かを、SUUMOで取れている構造・築年月と突き合わせて検算する。
+           番地が一致していても、逆ジオコーディングの番地が隣の建物だった場合はここで弾ける。
+           食い違ったら採用しない＝間違った情報を載せるくらいなら「未取得」のままにする。 */
+        const nz=s=>String(s||'').replace(/[\s　造]/g,'').replace(/ＲＣ/g,'RC');
+        const S0=window.SELF||{};
+        let bad='';
+        if(S0.built&&j.built&&nz(S0.built)!==nz(j.built))bad='築年月が違う（SUUMO '+S0.built+' / 逆引き '+j.built+'）';
+        if(!bad&&S0.struct&&j.struct){const a=nz(S0.struct),b=nz(j.struct);if(a.indexOf(b)<0&&b.indexOf(a)<0)bad='構造が違う（SUUMO '+S0.struct+' / 逆引き '+j.struct+'）';}
+        if(bad){
+          window.SELF=Object.assign(window.SELF||{},{byaddrSkip:'番地「'+addr+'」で見つけた建物（'+(j.name||'')+'）は本物件と'+bad+'ため採用しませんでした。'});
+          break; /* この住所は当てにならない。次の候補へ */
+        }
         window.SELF=window.SELF||{};
         if(!window.SELF.spec)window.SELF.spec=j;
         if(!window.SELF.struct&&j.struct)window.SELF.struct=j.struct;
@@ -1113,6 +1127,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       if(SP&&SP.url)bits.push('<a href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>');
       if(BA&&BA.name)bits.push('番地一致で特定した建物の掲載名は<b>「'+esc(BA.name)+'」</b>（'+esc(BA.addr||'')+'）'
         +(BA.url?' <a href="'+BA.url+'" target="_blank" rel="noopener" style="color:#0f766e">↗</a>':'')+'。改名前の名前と一致しているか確認してください。');
+      if(window.SELF&&window.SELF.byaddrSkip)bits.push('<span style="color:#b45309">'+esc(window.SELF.byaddrSkip)+'</span>');
       if((window.SELFSRC||[]).length)bits.push('本物件の間取り・面積の取得元＝'+esc(window.SELFSRC.join('／')));
       if(missing.length)bits.push('<b style="color:#b45309">'+missing.join('・')+'が自動取得できませんでした。</b>'
         +'原因はたいてい次の2つです：①SUUMOは<b>募集中の部屋がある物件しか</b>間取り・面積を持っていない（満室だと空になる）'
@@ -1974,7 +1989,10 @@ function reverseGeocode(lat,lon){return new Promise(res=>{
   }catch(e){fin('');}
 });}
 function showConfirm(res,query){
-  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:'',moved:false};
+  /* locType/psrc＝位置の精度。番地の逆引き（selfByAddr）で「ピンの位置から番地を作ってよいか」の
+     判定に使う。丁目の代表点のままの座標で逆引きすると、同じ丁目の別の建物を掴む危険がある。 */
+  PENDING={lat:res.lat,lon:res.lon,title:res.title,query:query,name:looksLikeName(query)?query:'',moved:false,
+    locType:res.locType||'',psrc:res.src||''};
   const c=document.getElementById('confirm');c.style.display='block';
   document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
   const w=document.getElementById('confwarn');
