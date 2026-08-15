@@ -18,6 +18,8 @@
 // ⚠️建物ページは cf.cacheTtl で1日キャッシュされるので、2回目以降の同一エリアは速い。
 
 const PREF_SLUG = { '北海道': 'hokkaido', '青森県': 'aomori', '岩手県': 'iwate', '宮城県': 'miyagi', '秋田県': 'akita', '山形県': 'yamagata', '福島県': 'fukushima', '茨城県': 'ibaraki', '栃木県': 'tochigi', '群馬県': 'gumma', '埼玉県': 'saitama', '千葉県': 'chiba', '東京都': 'tokyo', '神奈川県': 'kanagawa', '新潟県': 'niigata', '富山県': 'toyama', '石川県': 'ishikawa', '福井県': 'fukui', '山梨県': 'yamanashi', '長野県': 'nagano', '岐阜県': 'gifu', '静岡県': 'shizuoka', '愛知県': 'aichi', '三重県': 'mie', '滋賀県': 'shiga', '京都府': 'kyoto', '大阪府': 'osaka', '兵庫県': 'hyogo', '奈良県': 'nara', '和歌山県': 'wakayama', '鳥取県': 'tottori', '島根県': 'shimane', '岡山県': 'okayama', '広島県': 'hiroshima', '山口県': 'yamaguchi', '徳島県': 'tokushima', '香川県': 'kagawa', '愛媛県': 'ehime', '高知県': 'kochi', '福岡県': 'fukuoka', '佐賀県': 'saga', '長崎県': 'nagasaki', '熊本県': 'kumamoto', '大分県': 'oita', '宮崎県': 'miyazaki', '鹿児島県': 'kagoshima', '沖縄県': 'okinawa' };
+import { readBuilding } from './spec.js';
+
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const BATCH = 36; // 1回の呼び出しで見る建物ページ数（サブリクエスト上限に収める）
 
@@ -34,7 +36,11 @@ export async function onRequest(context) {
   const offset = Math.max(0, parseInt(u.searchParams.get('offset') || '0', 10) || 0);
   const dbg = u.searchParams.get('debug') ? [] : null;
   const banti = bantiKey(addr);
+  /* ★番地（丁目だけでなく、その先の枝番）まで無いと照合しない。
+     「有田中央2丁目」だけで走らせると同じ丁目の別の建物を掴む＝誤情報になる。 */
+  const segs = ((banti.match(/\d[\d-]*$/) || [''])[0].split('-').filter(Boolean)).length;
   if (!addr || !banti) return json({ found: false, reason: 'no_banti' });
+  if (segs < 2) return json({ found: false, reason: 'need_banti', key: banti });
 
   const slug = PREF_SLUG[pref];
   if (!slug) return json({ found: false, reason: 'no_pref' });
@@ -81,14 +87,15 @@ export async function onRequest(context) {
     if (!list.length) return json({ found: false, reason: 'no_buildings', debug: dbg || undefined });
 
     // ④ 建物ページの所在地が入力の番地と一致するものを探す
+    //    ★1件でも「番地が一致した」だけで確定させる。名前は改名で違って当たり前なので
+    //      照合には使わない（＝旧名の建物を当てるのがこのAPIの目的）。
     const slice = list.slice(offset, offset + BATCH);
     for (const b of slice) {
-      const html = await get('https://www.homes.co.jp/archive/' + b.id + '/', 'building');
-      if (!html) continue;
-      const info = readBuilding(html);
+      const info = await readBuilding('https://www.homes.co.jp/archive/' + b.id + '/');
+      if (dbg) dbg.push({ tag: 'building', id: b.id, addr: (info && info.addr) || '', key: info ? bantiKey(info.addr) : '' });
       if (!info || !info.addr) continue;
-      if (bantiKey(info.addr) !== banti) continue;
-      return json(Object.assign({ found: true, url: 'https://www.homes.co.jp/archive/' + b.id + '/', src: "LIFULL HOME'S 建物情報", via: 'banti' }, info));
+      if (!bantiSame(bantiKey(info.addr), banti)) continue;
+      return json(Object.assign({ found: true, url: 'https://www.homes.co.jp/archive/' + b.id + '/', src: "LIFULL HOME'S 建物情報", via: 'banti', matched: info.addr }, info));
     }
     const next = offset + slice.length;
     return json({ found: false, reason: next < list.length || list.length % 30 === 0 ? 'not_yet' : 'no_match', next: next, scanned: next, debug: dbg || undefined });
@@ -97,15 +104,31 @@ export async function onRequest(context) {
   }
 }
 
-/* 「福岡県久留米市合川町235-1」→「合川町235-1」を比較用に正規化した鍵にする。
-   HOME'Sは「235-1、235-3」と複数を並べることがあるので先頭だけ見る。 */
+/* 「福岡県久留米市合川町235-1」→「合川町235-1」、
+   「福岡県糸島市有田中央2丁目14-64」→「有田中央2-14-64」を比較用の鍵にする。
+   ★以前は「丁目」で数字の並びが切れるため 有田中央2丁目14-64 の鍵が「有田中央2」になり、
+     同じ丁目の**別の建物**に一致してしまう状態だった（2026-08-15 修正）。
+     本物件の情報は1文字も間違えられないので、丁目・番地・号はすべて「-」に統一して比べる。
+   HOME'Sは「14-64、14-65」と複数を並べることがあるので先頭だけ見る。 */
 function bantiKey(a) {
-  const s = norm(String(a || '').replace(/^.*?[都道府県]/, '').replace(/^.{2,6}?[市郡].{0,5}?[区町村]?/, (m) => m));
-  const m = String(norm(a)).replace(/^.*?[都道府県]/, '').match(/([^\d]{1,12}?)(\d+(?:[-−‐]\d+)*)/);
+  let s = norm(a).replace(/^.*?[都道府県]/, '');
+  s = s.replace(/^.{2,6}?[市郡]/, '').replace(/^.{1,5}?区/, '');
+  s = s.split(/[,、･・]/)[0];
+  s = s.replace(/丁目|丁|番地|番|号地|号/g, '-').replace(/[−‐ー―の]/g, '-');
+  const m = s.match(/^([^\d]{1,14}?)(\d[\d-]*)/);
   if (!m) return '';
-  const town = m[1].replace(/^.{2,6}?[市郡]/, '').replace(/^.{1,5}?区/, '');
-  const num = m[2].replace(/[−‐]/g, '-').split(',')[0];
-  return town.replace(/[\s　]/g, '') + num;
+  const num = m[2].replace(/-{2,}/g, '-').replace(/-+$/, '');
+  return m[1].replace(/[\s　-]/g, '') + num;
+}
+/* 番地の一致判定。完全一致が原則。
+   建物ページ側が「有田中央2-14」までしか書いていない場合に限り、
+   区切りの境目で前方一致していて、かつ数字が2区画以上あるときだけ同一と見なす。 */
+function bantiSame(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const seg = (s) => (s.match(/\d[\d-]*$/) || [''])[0].split('-').filter(Boolean).length;
+  const pre = (x, y) => y.indexOf(x) === 0 && y.charAt(x.length) === '-' && seg(x) >= 2;
+  return pre(a, b) || pre(b, a);
 }
 function townKey(addr, city) {
   const rest = norm(addr).replace(/^.*?[都道府県]/, '').replace(city, '');
@@ -134,34 +157,8 @@ function listBuildings(html) {
   return out;
 }
 
-/* 建物ページ→種別・構造・築年月・階建・所在地・部屋情報・掲載履歴（/api/spec と同じ読み方） */
-function readBuilding(html) {
-  const text = html.replace(/<[^>]+>/g, '|').replace(/&nbsp;/g, ' ').replace(/[ \t]+/g, ' ').replace(/\|{2,}/g, '|');
-  const pick = (label, pat) => {
-    const m = text.match(new RegExp('\\|' + label + '\\|(' + pat + ')\\|'));
-    return m ? m[1].trim() : '';
-  };
-  const name = (html.match(/<h1[^>]*>([\s\S]{1,80}?)<\/h1>/) || [])[1] ? (html.match(/<h1[^>]*>([\s\S]{1,80}?)<\/h1>/) || [])[1].replace(/<[^>]+>/g, '').trim() : '';
-  const addr = pick('所在地', '[^|]{4,60}');
-  const struct = pick('建物構造', '[^|]{1,16}');
-  const built = pick('築年月', '[^|]{1,16}') || pick('竣工年月', '[^|]{1,16}');
-  const floors = pick('階建', '[^|]{1,12}');
-  const kind = pick('建物種別', '[^|]{1,12}');
-  const rooms = [];
-  {
-    const re = /\|(\d{1,2})階\|([\d.]{1,6})m²\|([^|]{1,8})\|/g;
-    let m;
-    while ((m = re.exec(text)) && rooms.length < 40) rooms.push({ floor: +m[1], men: parseFloat(m[2]), md: m[3].trim() });
-  }
-  const history = [];
-  {
-    const re = /\|(\d{4})年(\d{1,2})月([^|]{0,20})\|([\d.]{1,5})万円[^|]*\|([^|]*)\|([^|]*)\|([^|]*)\|/g;
-    let m;
-    while ((m = re.exec(text)) && history.length < 40) {
-      history.push({ y: +m[1], mo: +m[2], period: m[1] + '年' + m[2] + '月' + (m[3] || ''), rent: Math.round(parseFloat(m[4]) * 10000), men: parseFloat(String(m[5]).replace(/[^\d.]/g, '')) || null, md: /[0-9]?[SLDK]/.test(m[6]) ? m[6].trim() : '', floor: m[7].trim() });
-    }
-    history.sort((a, b) => b.y * 12 + b.mo - (a.y * 12 + a.mo));
-  }
-  if (!name || (!struct && !built)) return null;
-  return { name: name, addr: addr, kind: kind, struct: struct, built: built, floors: floors, rooms: rooms, history: history.slice(0, 12) };
-}
+/* 建物ページの読み取りは /api/spec の readBuilding を共用する（上部で import）。
+   ⚠️以前はここに自前のパーサーを持っていたが、HTMLの改行を潰していないため
+   「|所在地|\n |福岡県…|」の形を読めず、所在地が必ず空＝どの物件も no_match になっていた
+   （セレストガーデン／糸島市有田中央2丁目14-64 で実測 2026-08-15）。
+   パーサーを2本持つと片方だけ腐るので、以後は spec.js の1本に集約する。 */

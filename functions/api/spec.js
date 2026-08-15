@@ -250,8 +250,10 @@ async function pickLink(pageUrl, urlRe, textOk, dbg, tag) {
   return a[0] || '';
 }
 
-/* 建物ページを読み、物件概要（種別・築年月・構造・階数）と建物名・所在地を取り出す */
-async function readBuilding(u) {
+/* 建物ページを読み、物件概要（種別・築年月・構造・階数）と建物名・所在地を取り出す
+   ★/api/byaddr（番地逆引き）からも使う。パーサーを2本持つと片方だけ壊れる
+     （byaddr側の自前パーサーは改行を潰しておらず所在地が永久に読めなかった＝2026-08-15 実測）。 */
+export async function readBuilding(u) {
   const html = await getText(u, null, 'building');
   if (!html) return null;
 
