@@ -30,8 +30,11 @@ export async function onRequest(context) {
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=86400', 'access-control-allow-origin': '*' },
   });
 
-  const addr = (u.searchParams.get('addr') || '').trim();
-  const pref = (u.searchParams.get('pref') || '').trim() || (addr.match(/(北海道|東京都|京都府|大阪府|.{2,3}県)/) || [])[1] || '';
+  /* ★郵便番号を先に落とす。Googleの逆ジオコーディングは「〒819-1127 福岡県…」の形で返すため、
+     そのままだと都道府県の判定が「 福岡県」（先頭に空白）になり PREF_SLUG に当たらず no_pref で
+     落ちていた＝番地逆引きが一切走らない状態だった（2026-08-15 実測）。 */
+  const addr = (u.searchParams.get('addr') || '').replace(/〒?\s*[0-9０-９]{3}[-−ー－][0-9０-９]{4}/g, ' ').trim();
+  const pref = ((u.searchParams.get('pref') || '').trim() || (addr.match(/(北海道|東京都|京都府|大阪府|[^\s\d]{2,3}県)/) || [])[1] || '').trim();
   let city = (u.searchParams.get('city') || '').trim();
   const offset = Math.max(0, parseInt(u.searchParams.get('offset') || '0', 10) || 0);
   const dbg = u.searchParams.get('debug') ? [] : null;
@@ -45,7 +48,7 @@ export async function onRequest(context) {
   const slug = PREF_SLUG[pref];
   if (!slug) return json({ found: false, reason: 'no_pref' });
   if (!city) {
-    const rest = addr.replace(/^.*?(北海道|東京都|京都府|大阪府|.{2,3}県)/, '');
+    const rest = addr.replace(/^.*?(北海道|東京都|京都府|大阪府|[^\s\d]{2,3}県)/, '');
     const m = rest.match(/^\s*(.{2,6}?[市郡])(.{1,5}?[区町村])?/);
     if (m) city = /郡$/.test(m[1]) ? (m[2] || m[1]) : m[1] + (m[2] && /区$/.test(m[2]) ? m[2] : '');
   }

@@ -89,14 +89,14 @@ export async function onRequest(context) {
 
 /* ===== 取得経路A：住所ナビ ===== */
 async function byAddress(name, addr, city, pref, dbg) {
-  const p = pref || (addr.match(/(北海道|東京都|京都府|大阪府|.{2,3}県)/) || [])[1] || '';
+  const p = pref || (addr.match(/(北海道|東京都|京都府|大阪府|[^\s\d]{2,3}県)/) || [])[1] || '';
   const slug = PREF_SLUG[p];
   if (!slug) { if (dbg) dbg.push({ addrnav: 'no_pref_slug:' + p }); return []; }
 
   // 市区町村（政令市は「福岡市東区」の形で来る）
   let cityName = city;
   if (!cityName && addr) {
-    const rest = addr.replace(/^.*?(北海道|東京都|京都府|大阪府|.{2,3}県)/, '');
+    const rest = addr.replace(/^.*?(北海道|東京都|京都府|大阪府|[^\s\d]{2,3}県)/, '');
     const m = rest.match(/^\s*(.{2,6}?[市郡])(.{1,5}?[区町村])?/);
     if (m) cityName = /郡$/.test(m[1]) ? m[2] || m[1] : m[1] + (m[2] && /区$/.test(m[2]) ? m[2] : '');
   }
@@ -160,7 +160,7 @@ function listBuildings(html) {
 function townKey(addr, cityName) {
   if (!addr) return '';
   let s = addr.replace(/^〒?\s*[0-9０-９]{3}[-−ー－]?[0-9０-９]{4}\s*/, '');
-  s = s.replace(/^.*?(北海道|東京都|京都府|大阪府|.{2,3}県)/, '');
+  s = s.replace(/^.*?(北海道|東京都|京都府|大阪府|[^\s\d]{2,3}県)/, '');
   if (cityName) {
     const i = s.indexOf(cityName);
     if (i >= 0) s = s.slice(i + cityName.length);
