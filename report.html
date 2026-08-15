@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v13.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v14.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='17'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
+const APIV='18'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -365,6 +365,130 @@ async function fetchSpec(name,city,pref,addr){
     const j=await apiJson('/api/spec?name='+encodeURIComponent(name)+'&addr='+encodeURIComponent(addr||'')+'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(pref||''));
     return (j&&j.found)?j:null;
   }catch(e){return null;}
+}
+/* ===== 本物件そのものの情報を「何が何でも」取りにいくチェーン（v14.0・太田指示 2026-08-15）=====
+   本物件の間取り・専有面積はこの資料の土台（類似物件の絞り込みも、賃料の引き直しも
+   ここが基準）。1つの経路が空でも次を必ず試す。実測で分かっている各経路の穴は：
+     ①SUUMO物件ライブラリー … 間取り・面積は「募集中の部屋」にしか無い。
+        建物のスペック表（種別/構造/築年月/階建/敷地面積/総戸数）に間取り・面積の欄は
+        そもそも存在しないので、満室の物件は必ず空になる（ピュア若宮・シャトレ鷹の巣・
+        プライマリー糸島中央で実測 2026-08-15）。
+     ②HOME'S建物情報（物件名）… 満室でも部屋情報を持つ。ただし改名物件は
+        新しい名前では載っていない（プライマリー糸島中央=未掲載／旧名セレストガーデン=1LDK 33.06㎡）。
+     ③SUUMO賃貸の募集一覧 … ライブラリーが未更新でも一覧側に出ていることがある。
+     ④HOME'S建物情報（番地の逆引き）… 改名物件の本命。旧名を知らなくても当たる。
+   それでも取れなければ「—（未取得）」と明示する。推測では絶対に埋めない
+   （[[feedback_no_guessed_data]]）。 */
+window.SELFSRC=[]; /* 実際に本物件の情報を埋められた経路（作成者向けメモに出す） */
+function selfNeed(){return !(val('pmadori')&&num('pmens')>0);}
+function nmBase(n){return String(n||'').replace(/[\s　・･]/g,'')
+  .replace(/[ａ-ｚＡ-Ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0)).toUpperCase();}
+function selfNames(){
+  return [val('palias'),(window.SELF&&window.SELF.name),(looksLikeName(val('paddr'))?val('paddr'):'')]
+    .filter(x=>x&&String(x).trim().length>=3);
+}
+/* 建物ページの部屋情報（間取り・面積）と賃貸掲載履歴（募集賃料の実績）を本物件に反映する。
+   /api/spec（物件名）と /api/byaddr（番地逆引き）の応答は同じ形なので共用する。 */
+function applySelfRooms(sp,src,label){
+  if(!sp)return false;
+  let got=false;
+  const cnt={},rooms=(sp.rooms||[]);
+  rooms.forEach(r=>{const k=r.md+'/'+r.men;cnt[k]=(cnt[k]||0)+1;});
+  let best=null,bn=0;Object.keys(cnt).forEach(k=>{if(cnt[k]>bn){bn=cnt[k];best=k;}});
+  const hist=(sp.history||[]);
+  const h0=hist.find(h=>h.rent>0);
+  if(best){const a=best.split('/');
+    if(!val('pmadori')&&a[0]){setByData('pmadori',a[0],src);got=true;}
+    if(!num('pmens')&&parseFloat(a[1])>0){setByData('pmens',parseFloat(a[1]),src);got=true;}
+  }else if(h0){
+    if(!val('pmadori')&&h0.md){setByData('pmadori',h0.md,src);got=true;}
+    const hm=hist.find(h=>h.men>0);
+    if(!num('pmens')&&hm){setByData('pmens',hm.men,src);got=true;}
+  }
+  if(h0&&!num('prentmin')){
+    const lo=Math.min(...hist.filter(h=>h.rent>0).slice(0,6).map(h=>h.rent));
+    setByData('prentmin',Math.min(lo,h0.rent),'homes-hist');
+    setByData('prentmax',h0.rent,'homes-hist');
+    window.SELF=window.SELF||{};
+    window.SELF.rentPeriod=h0.period;window.SELF.rentN=hist.filter(h=>h.rent>0).length;
+  }
+  if(got&&label&&window.SELFSRC.indexOf(label)<0)window.SELFSRC.push(label);
+  return got;
+}
+/* ③SUUMO賃貸の募集一覧（/api/chintai）に本物件そのものが出ていれば、そこから取る。
+   物件ライブラリーの「募集中の部屋」が空でも一覧側には出ていることがある。 */
+function selfFromChintai(items){
+  if(!selfNeed())return false;
+  const keys=selfNames().map(nmBase);
+  if(!keys.length)return false;
+  const hit=(items||[]).filter(x=>!x.anon&&keys.indexOf(nmBase(x.name))>=0);
+  if(!hit.length)return false;
+  /* 同じ建物の部屋が複数出るので、最も多い間取り・面積の組を代表にする */
+  const cnt={};hit.forEach(r=>{const k=(r.md||'')+'/'+(r.men||0);cnt[k]=(cnt[k]||0)+1;});
+  let best=hit[0],bn=0;
+  hit.forEach(r=>{const c=cnt[(r.md||'')+'/'+(r.men||0)]||0;if(c>bn){bn=c;best=r;}});
+  let got=false;
+  if(!val('pmadori')&&best.md){setByData('pmadori',best.md,'suumo');got=true;}
+  if(!num('pmens')&&best.men>0){setByData('pmens',best.men,'suumo');got=true;}
+  const tot=best.total||best.rent||0;
+  if(!num('prentmin')&&tot>0){setByData('prentmin',tot,'suumo');setByData('prentmax',tot,'suumo');}
+  window.SELF=window.SELF||{};
+  window.SELF.name=window.SELF.name||best.name;
+  /* 番地まで入った住所は④の逆引きで効くので拾っておく */
+  if(best.addr2&&!/\d[-−ー－]\d/.test(String(window.SELF.addr||'')))window.SELF.addr=best.addr2;
+  if(best.bstruct&&!window.SELF.struct)window.SELF.struct=best.bstruct;
+  if(got)window.SELFSRC.push('SUUMOの募集一覧（'+best.name+'）');
+  return got;
+}
+/* ④番地から建物を逆引き（改名物件の本命）。丁目だけでは走らせない＝同じ丁目の別の
+   建物を掴んで誤情報になるため、サーバー側でも番地2区画以上を必須にしている。 */
+const RE_BANTI=/[0-9０-９]\s*[-−ー－‐]\s*[0-9０-９]|[0-9０-９]+\s*丁目\s*[-−ー－‐]?\s*[0-9０-９]|番地?\s*[0-9０-９]/;
+function bantiAddrs(g){
+  const out=[];
+  [(window.SELF&&window.SELF.spec&&window.SELF.spec.addr)||'',(window.SELF&&window.SELF.addr)||'',
+   addrOnly((g&&g.title)||''),(!looksLikeName(val('paddr'))?val('paddr'):'')]
+    .forEach(x=>{x=String(x||'').trim();if(x&&RE_BANTI.test(x)&&out.indexOf(x)<0)out.push(x);});
+  return out;
+}
+async function selfByAddr(g,city){
+  const cands=bantiAddrs(g);
+  /* ★どこにも番地が無いときは、確定したピンの座標を逆ジオコーディングして番地を作る。
+     ピンは建物の上に置いてある（作成者がドラッグして直している）ので、
+     Googleが返す street_address／premise はその建物の番地そのもの。
+     これで「番地が分からないから逆引きできない」を潰す（2026-08-15）。 */
+  if(!cands.length&&g&&g.lat){
+    try{
+      const rev=await reverseGeocode(g.lat,g.lon);
+      const a=addrOnly(rev||'');
+      if(a&&RE_BANTI.test(a))cands.push(a);
+    }catch(e){}
+  }
+  if(!cands.length)return null;
+  for(const addr of cands){
+    let off=0;
+    for(let i=0;i<12;i++){
+      setStatus('🔎 番地から建物情報を照会中…'+(off?'（'+off+'棟目まで確認）':'')+'<br><span style="font-size:12px;color:#64748b">'+esc(addr)+'</span>');
+      const j=await apiJson('/api/byaddr?addr='+encodeURIComponent(addr)
+        +'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(prefOf((g&&g.title)||addr)||'')+'&offset='+off);
+      if(!j)break;
+      if(j.found){
+        window.SELF=window.SELF||{};
+        if(!window.SELF.spec)window.SELF.spec=j;
+        if(!window.SELF.struct&&j.struct)window.SELF.struct=j.struct;
+        if(!window.SELF.built&&j.built)window.SELF.built=j.built;
+        if(!window.SELF.kind&&j.kind)window.SELF.kind=j.kind;
+        if(!window.SELF.floors&&j.floors)window.SELF.floors=j.floors;
+        /* 逆引きで当たった建物名は、ポータルに残る旧名であることが多い。
+           作成者が「別物件を掴んでいないか」を確かめられるように必ず見せる。 */
+        window.SELF.byaddr={name:j.name||'',addr:j.matched||j.addr||'',url:j.url||''};
+        applySelfRooms(j,'homes',"LIFULL HOME'S 建物情報（番地一致"+(j.name?'／掲載名 '+j.name:'')+'）');
+        return j;
+      }
+      if(j.reason!=='not_yet'||!(j.next>off))break;
+      off=j.next;
+    }
+  }
+  return null;
 }
 /* ★SUUMOの募集一覧を自前API経由で取得（/api/chintai）。
    ページ送りで母数を確保し、駐車場代も同時に取る。取れた件数を返す（0＝失敗）。 */
@@ -399,6 +523,11 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
     window.CHINTAI=j;
     /* ★SUUMOは名称非公開の物件に「西鉄天神大牟田線 西鉄久留米駅 2階建」を物件名として出す。
        金融機関に出す比較表にこれが並ぶのは論外なので、行にする前に落とす（太田指摘 2026-08-13）。 */
+    /* ★③本物件がこの一覧に出ていれば、そこから間取り・面積・月額総額・番地を取る。
+       絞り込みの前に呼ぶ＝ここで間取り・面積が埋まれば、そのまま同じ呼び出しの
+       絞り込み条件として効く（本物件の条件が空のまま近い順に並べた「全然類似していない
+       一覧」に戻さないため）。 */
+    if(selfFromChintai(j.items)){md=md||val('pmadori');}
     let pool=j.items.filter(x=>!x.anon);
     /* ★まず「本物件からの距離」で絞る。
        市域の広い地域では一覧の先頭20件が全部遠方になり、範囲内の物件がほとんど残らなかった
@@ -974,7 +1103,24 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':(rentKey==='homes-hist'?'直近の募集賃料（実績）':'想定月額総額（1戸）')}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':(rentKey==='homes-hist'?"LIFULL HOME'S 掲載履歴"+(rentPeriod?'・'+rentPeriod+'時点':''):derivedTxt)}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
     </table>
-    ${((!ageTxt||!structTxt)||(SP&&SP.url))?`<div class="note scronly" style="border:0;margin:0 0 8px;padding:0">${(SP&&SP.url)?'<a href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>　':''}${(!ageTxt||!structTxt)?'<b style="color:#b45309">「—（未取得）」の項目は自動取得できませんでした。</b>下の「条件の変更や追加はこちら🤞」から間取り・専有面積などを入力して更新してください（推測値は載せません）。':''}</div>`:''}`;
+    ${(()=>{
+      /* 作成者向け（画面のみ）：本物件の情報をどこから取ったか／取れなかった時に何をすればよいか。
+         ★本物件のスペックはこの資料の土台なので、出所と欠けを必ず見えるようにする
+           （見えないと「動いていない」と判断される＝v7.2の教訓）。 */
+      const BA=window.SELF&&window.SELF.byaddr;
+      const missing=[!mdTxt?'間取り・専有面積':'',!ageTxt?'築年':'',!structTxt?'種別・構造':''].filter(Boolean);
+      const bits=[];
+      if(SP&&SP.url)bits.push('<a href="'+SP.url+'" target="_blank" rel="noopener" style="color:#0f766e">（建物ページで確認 ↗）</a>');
+      if(BA&&BA.name)bits.push('番地一致で特定した建物の掲載名は<b>「'+esc(BA.name)+'」</b>（'+esc(BA.addr||'')+'）'
+        +(BA.url?' <a href="'+BA.url+'" target="_blank" rel="noopener" style="color:#0f766e">↗</a>':'')+'。改名前の名前と一致しているか確認してください。');
+      if((window.SELFSRC||[]).length)bits.push('本物件の間取り・面積の取得元＝'+esc(window.SELFSRC.join('／')));
+      if(missing.length)bits.push('<b style="color:#b45309">'+missing.join('・')+'が自動取得できませんでした。</b>'
+        +'原因はたいてい次の2つです：①SUUMOは<b>募集中の部屋がある物件しか</b>間取り・面積を持っていない（満室だと空になる）'
+        +'②改名した物件はポータルに<b>旧名</b>で載っている。'
+        +'→ <b>「別名（ポータル掲載名）」欄に旧名</b>を入れる、または番地まで入った住所で検索し直すと取得できます。'
+        +'それでも出ない場合は下の「条件の変更や追加はこちら🤞」から手入力してください（推測値は載せません）。');
+      return bits.length?'<div class="note scronly" style="border:0;margin:0 0 8px;padding:0;line-height:1.7">'+bits.join('<br>')+'</div>':'';
+    })()}`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
   if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})(structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct))}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
   const kpi=specTbl; /* ℹ️の長い案内は廃止（太田指示 2026-08-14「内容よくわからないので不要」） */
@@ -1963,6 +2109,7 @@ async function buildReport(g){
                家賃だけ入れると本物件だけ安く見えて比較にならない（太田指摘 2026-08-14） */
             const tot0=r0.total>0?r0.total:r0.rent;
             if(!num('prentmin')&&tot0>0){setByData('prentmin',tot0,'suumo');setByData('prentmax',tot0,'suumo');}
+            if(val('pmadori')&&num('pmens')>0)window.SELFSRC.push('SUUMO物件ライブラリーの募集中の部屋');
           }
         }
       }catch(e){}
@@ -1987,30 +2134,15 @@ async function buildReport(g){
         /* ★本物件の募集情報を実データで埋める（太田指摘：ここが空だと使えない）
            ①建物ページの部屋情報＝間取り・専有面積 ②賃貸掲載履歴＝直近の募集賃料
            いずれも「過去の募集時点の実績」なので、表示側で必ず出典と時点を明記する。 */
-        const cnt={},rooms=(sp.rooms||[]);
-        rooms.forEach(r=>{const k=r.md+'/'+r.men;cnt[k]=(cnt[k]||0)+1;});
-        let best=null,bn=0;Object.keys(cnt).forEach(k=>{if(cnt[k]>bn){bn=cnt[k];best=k;}});
-        const hist=(sp.history||[]);
-        const h0=hist.find(h=>h.rent>0);
-        if(best){const[md,men]=best.split('/');
-          if(!val('pmadori'))setByData('pmadori',md,'homes');
-          if(!num('pmens'))setByData('pmens',parseFloat(men),'homes');}
-        else if(h0){
-          if(!val('pmadori')&&h0.md)setByData('pmadori',h0.md,'homes');
-          const hm=hist.find(h=>h.men>0);
-          if(!num('pmens')&&hm)setByData('pmens',hm.men,'homes');}
-        if(h0&&!num('prentmin')){
-          const lo=Math.min(...hist.filter(h=>h.rent>0).slice(0,6).map(h=>h.rent));
-          setByData('prentmin',Math.min(lo,h0.rent),'homes-hist');
-          setByData('prentmax',h0.rent,'homes-hist');
-          window.SELF.rentPeriod=h0.period;window.SELF.rentN=hist.filter(h=>h.rent>0).length;
-        }
+        applySelfRooms(sp,'homes',(sp.src||"LIFULL HOME'S 建物情報")+'（'+(sp.name||qn)+'）');
       }
     }
   }
   const radius=parseInt(val('pradius'))||1500;
   /* ★本物件が確定してから類似物件を自動検索する（ゼロタップ）。
-     /api/chintai＝SUUMO一覧をページ送りで取得（母数が桁違い＋駐車場代・番地つき）。 */
+     /api/chintai＝SUUMO一覧をページ送りで取得（母数が桁違い＋駐車場代・番地つき）。
+     この一覧の中に本物件そのものが居れば、③としてそこから間取り・面積を取る
+     （suumoSearchCmp の中で selfFromChintai を呼んでいる）。 */
   if(needAuto&&cityA){
     setStatus('🔎 '+cityA+'の募集中の類似物件を自動検索中…');
     const got=await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori')||'',g.lat,g.lon,radius);
@@ -2018,6 +2150,22 @@ async function buildReport(g){
       let n=await gasSearchCmp(cityA,val('pmadori')||'');
       if(n===0){await gasSearchCmp(cityA,val('pmadori')||'');}
     }
+    /* ★④それでも間取り・面積が空なら、番地からHOME'Sの建物を逆引きする。
+       改名物件（プライマリー◯◯）はポータルに旧名で載っているため、名前ではどうやっても
+       当たらない。番地なら旧名を知らなくても特定できる（2026-08-15 太田指示
+       「該当物件の情報は何が何でも正確に取る」）。
+       ここで基準が確定したら、類似物件は条件付きで取り直す（条件ゼロのまま近い順に
+       並べただけの一覧を出さないため）。 */
+    if(selfNeed()){
+      let ok=false;
+      try{ok=!!(await selfByAddr(g,cityA));}catch(e){}
+      if(ok&&val('pmadori')&&num('pmens')>0){
+        setStatus('🔁 本物件の間取り・面積が確定したので、類似物件を条件付きで取り直しています…');
+        try{clearCmpRows();await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori'),g.lat,g.lon,radius);}catch(e){}
+      }
+    }
+  }else if(selfNeed()){
+    try{await selfByAddr(g,cityA);}catch(e){}
   }
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
   const els=await overpass(g.lat,g.lon,radius);
