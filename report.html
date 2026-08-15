@@ -1114,7 +1114,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
           <td class="k">築年</td><td>${cell(ageTxt,ageSrc)}</td></tr>
       <tr><td class="k">種別・構造</td><td>${cell(structTxt,structSrc)}</td>
           <td class="k">間取り・面積</td><td>${cell(mdTxt,mdSrc)}</td></tr>
-      ${hasOwn?`<tr class="sum"><td>${isSuumo?'募集中の賃料（月額総額）':(rentKey==='homes-hist'?'直近の募集賃料（実績）':'想定月額総額（1戸）')}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${isSuumo?'SUUMO掲載':(rentKey==='homes-hist'?"LIFULL HOME'S 掲載履歴"+(rentPeriod?'・'+rentPeriod+'時点':''):derivedTxt)}）</span></td>
+      ${hasOwn?`<tr class="sum"><td>${/* ★賃料の見出し・出典は「賃料をどこから取ったか（rentKey）」で決める。
+             SUUMO物件ライブラリーで建物が見つかっただけで「SUUMO掲載の募集中賃料」と書くと、
+             実際はHOME'Sの掲載履歴（過去の募集実績）なのに現在の募集賃料に見えてしまう
+             ＝満室物件で必ず起きる誤表示だった（プライマリー糸島中央で実測 2026-08-15）。 */''}${rentKey==='suumo'?'募集中の賃料（月額総額）':(rentKey==='homes-hist'?'直近の募集賃料（実績）':'想定月額総額（1戸）')}</td><td class="r" style="text-align:left">${ownRent}<span style="font-weight:400;color:#64748b;font-size:10.5px">（${rentKey==='suumo'?'SUUMO掲載':(rentKey==='homes-hist'?"LIFULL HOME'S 掲載履歴"+(rentPeriod?'・'+rentPeriod+'時点':''):derivedTxt)}）</span></td>
           <td>㎡単価</td><td class="r" style="text-align:left">${ownUnit>0?ownUnit.toLocaleString()+'円/㎡':'—'}</td></tr>`:''}
     </table>
     ${(()=>{
