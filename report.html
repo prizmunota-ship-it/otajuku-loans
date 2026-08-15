@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='19'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
+const APIV='20'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -464,8 +464,9 @@ async function selfByAddr(g,city){
       if(a&&RE_BANTI.test(a))cands.push(a);
     }catch(e){}
   }
-  if(!cands.length&&g&&g.lat&&!precise)window.SELF=Object.assign(window.SELF||{},{byaddrSkip:'位置が丁目の代表点のままなので、番地からの逆引きは行いませんでした（隣の建物を掴む恐れがあるため）。ピンを建物の上へドラッグして作り直すか、番地まで入った住所で検索してください。'});
-  if(!cands.length)return null;
+  /* 番地が無いときは、同じ丁目の中から「構造・築年月が一致する建物」を探す経路に回す
+     （SUUMOは満室でも構造・築年月は持っているので、それを鍵にできる） */
+  if(!cands.length)return await selfBySpecScan(g,city,precise);
   for(const addr of cands){
     let off=0;
     for(let i=0;i<12;i++){
@@ -502,6 +503,45 @@ async function selfByAddr(g,city){
       off=j.next;
     }
   }
+  /* 番地では当たらなかった（番地が隣の建物だった等）＝丁目＋構造＋築年月の照合に回す */
+  if(selfNeed())return await selfBySpecScan(g,city,precise);
+  return null;
+}
+/* ⑤番地が分からないときの最後の手＝「同じ丁目の中で、構造と築年月がSUUMOの実データと
+   一致する建物」を探す。改名物件は名前では当たらないが、構造＋築年月＋丁目まで一致する
+   建物が1棟しか無ければ、それが本物件だと言い切れる。
+   ⚠️2件以上一致したら採用しない（どちらか分からないものを載せるのは誤情報）。 */
+async function selfBySpecScan(g,city,precise){
+  const S=window.SELF||{};
+  if(!S.built)return null; /* 築年月が無ければ照合の鍵が無い */
+  const addr=[S.addr,addrOnly((g&&g.title)||'')].map(x=>String(x||'').trim())
+    .find(x=>/[都道府県]/.test(x)&&x.length>=8);
+  if(!addr)return null;
+  const seen={},cands=[];
+  let off=0;
+  for(let i=0;i<12;i++){
+    setStatus('🔎 同じ丁目の建物から本物件を特定中…（構造・築年月で照合'+(off?'／'+off+'棟目まで':'')+'）');
+    const j=await apiJson('/api/byaddr?addr='+encodeURIComponent(addr)
+      +'&city='+encodeURIComponent(city||'')+'&pref='+encodeURIComponent(prefOf((g&&g.title)||addr)||'')
+      +'&struct='+encodeURIComponent(S.struct||'')+'&built='+encodeURIComponent(S.built||'')+'&offset='+off);
+    if(!j)break;
+    (j.matches||[]).forEach(m=>{if(m&&m.url&&!seen[m.url]){seen[m.url]=1;cands.push(m);}});
+    if(j.reason!=='not_yet'||!(j.next>off))break;
+    off=j.next;
+    if(cands.length>1)break; /* 曖昧と分かった時点で打ち切る */
+  }
+  if(cands.length===1){
+    const m=cands[0];
+    window.SELF=window.SELF||{};
+    if(!window.SELF.spec)window.SELF.spec=Object.assign({src:"LIFULL HOME'S 建物情報"},m);
+    if(!window.SELF.kind&&m.kind)window.SELF.kind=m.kind;
+    if(!window.SELF.floors&&m.floors)window.SELF.floors=m.floors;
+    window.SELF.byaddr={name:m.name||'',addr:m.addr||'',url:m.url||'',via:'spec'};
+    applySelfRooms(m,'homes',"LIFULL HOME'S 建物情報（同じ丁目で構造・築年月が一致"+(m.name?'／掲載名 '+m.name:'')+'）');
+    return m;
+  }
+  if(cands.length>1)window.SELF=Object.assign(window.SELF||{},{byaddrSkip:'同じ丁目に構造・築年月が一致する建物が'+cands.length+'件あり、本物件を1つに特定できませんでした（'+cands.map(c=>c.name).filter(Boolean).join('・')+'）。「別名」欄に改名前の名前を入れてください。'});
+  else if(!precise)window.SELF=Object.assign(window.SELF||{},{byaddrSkip:'番地が分からず（位置は丁目の代表点）、同じ丁目に構造・築年月が一致する建物も見つかりませんでした。ピンを建物の上へドラッグするか、「別名」欄に改名前の名前を入れてください。'});
   return null;
 }
 /* ★SUUMOの募集一覧を自前API経由で取得（/api/chintai）。

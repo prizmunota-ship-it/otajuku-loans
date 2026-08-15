@@ -42,8 +42,16 @@ export async function onRequest(context) {
   /* ★番地（丁目だけでなく、その先の枝番）まで無いと照合しない。
      「有田中央2丁目」だけで走らせると同じ丁目の別の建物を掴む＝誤情報になる。 */
   const segs = ((banti.match(/\d[\d-]*$/) || [''])[0].split('-').filter(Boolean)).length;
-  if (!addr || !banti) return json({ found: false, reason: 'no_banti' });
-  if (segs < 2) return json({ found: false, reason: 'need_banti', key: banti });
+  /* ★番地が無いとき（物件名で検索して丁目までしか分からない場合）の第2の手＝
+     「同じ丁目の中で、構造と築年月が本物件と一致する建物」を探す。
+     SUUMO物件ライブラリーは満室でも構造・築年月は持っているので、それを鍵にする。
+     ⚠️一致が2件以上あるときは候補を返すだけで確定させない（誤情報を出さないため）。 */
+  const wantStruct = (u.searchParams.get('struct') || '').trim();
+  const wantBuilt = (u.searchParams.get('built') || '').trim();
+  const specMode = segs < 2 && !!wantBuilt;
+  if (!addr) return json({ found: false, reason: 'no_addr' });
+  if (!banti && !specMode) return json({ found: false, reason: 'no_banti' });
+  if (segs < 2 && !specMode) return json({ found: false, reason: 'need_banti', key: banti });
 
   const slug = PREF_SLUG[pref];
   if (!slug) return json({ found: false, reason: 'no_pref' });
@@ -93,15 +101,25 @@ export async function onRequest(context) {
     //    ★1件でも「番地が一致した」だけで確定させる。名前は改名で違って当たり前なので
     //      照合には使わない（＝旧名の建物を当てるのがこのAPIの目的）。
     const slice = list.slice(offset, offset + BATCH);
+    const matches = [];
     for (const b of slice) {
       const info = await readBuilding('https://www.homes.co.jp/archive/' + b.id + '/');
       if (dbg) dbg.push({ tag: 'building', id: b.id, addr: (info && info.addr) || '', key: info ? bantiKey(info.addr) : '' });
       if (!info || !info.addr) continue;
+      if (specMode) {
+        /* 構造・築年月の一致で拾う。築年月は必須、構造は分かっているときだけ見る */
+        if (nzBuilt(info.built) !== nzBuilt(wantBuilt)) continue;
+        if (wantStruct && !structSame(info.struct, wantStruct)) continue;
+        if (matches.length < 3) matches.push(Object.assign({ url: 'https://www.homes.co.jp/archive/' + b.id + '/' }, info));
+        continue;
+      }
       if (!bantiSame(bantiKey(info.addr), banti)) continue;
       return json(Object.assign({ found: true, url: 'https://www.homes.co.jp/archive/' + b.id + '/', src: "LIFULL HOME'S 建物情報", via: 'banti', matched: info.addr }, info));
     }
     const next = offset + slice.length;
-    return json({ found: false, reason: next < list.length || list.length % 30 === 0 ? 'not_yet' : 'no_match', next: next, scanned: next, debug: dbg || undefined });
+    const more = next < list.length || list.length % 30 === 0;
+    if (specMode) return json({ found: false, reason: more ? 'not_yet' : 'scan_done', next: next, scanned: next, total: list.length, matches: matches, debug: dbg || undefined });
+    return json({ found: false, reason: more ? 'not_yet' : 'no_match', next: next, scanned: next, debug: dbg || undefined });
   } catch (e) {
     return json({ found: false, reason: 'exception: ' + (e && e.message), debug: dbg || undefined });
   }
@@ -132,6 +150,18 @@ function bantiSame(a, b) {
   const seg = (s) => (s.match(/\d[\d-]*$/) || [''])[0].split('-').filter(Boolean).length;
   const pre = (x, y) => y.indexOf(x) === 0 && y.charAt(x.length) === '-' && seg(x) >= 2;
   return pre(a, b) || pre(b, a);
+}
+/* 築年月の表記ゆれ（2009年10月／2009年10月築／2009/10）を吸収して比べる */
+function nzBuilt(s) {
+  const m = String(s || '').replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).match(/(\d{4})\D{0,2}(\d{1,2})/);
+  return m ? m[1] + '-' + (+m[2]) : '';
+}
+/* 構造の表記ゆれ（鉄骨／鉄骨造／軽量鉄骨造／ＲＣ／鉄筋コン）を吸収して比べる */
+function structSame(a, b) {
+  const nz = (s) => String(s || '').replace(/[\s　造]/g, '').replace(/ＲＣ/g, 'RC').replace(/鉄筋コン(クリート)?/, 'RC');
+  const x = nz(a), y = nz(b);
+  if (!x || !y) return false;
+  return x === y || x.indexOf(y) >= 0 || y.indexOf(x) >= 0;
 }
 function townKey(addr, city) {
   const rest = norm(addr).replace(/^.*?[都道府県]/, '').replace(city, '');
