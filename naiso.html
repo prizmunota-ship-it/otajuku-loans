@@ -177,6 +177,10 @@ let selectedStatus = '';
 const _params = new URLSearchParams(location.search);
 const _u = _params.get('user');
 if(_u && USERS.some(u=>u.id===_u)) currentUser = _u;
+/* 太田コックピットから「退去精算」の一覧を直接開くための入口（?view=kaishu）。
+   オーナー以外（本村さん=moto）が開いた場合は renderCards 側で all に戻るので出ない。 */
+const _v = _params.get('view') || _params.get('filter');
+if(_v === 'kaishu') currentFilter = 'kaishu';
 
 const d = new Date();
 document.getElementById('today-date').textContent =
