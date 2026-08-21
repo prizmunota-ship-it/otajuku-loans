@@ -41,10 +41,9 @@ export async function onRequest(context) {
   };
 
   try {
-    // ① 物件名で検索 →（ヒットしなければ「A棟」等の枝番を落として再検索）
+    // ① 物件名で検索（枝番の表記ゆれ Ⅱ/II/2/なし を順に試す。→ queryVariants）
     let cands = [];
-    for (const q of [name, name.replace(/\s*[A-ZＡ-Ｚ]?棟$/, '').replace(/\s*[0-9０-９]+号館$/, '')]) {
-      if (!q || (cands.length && q === name)) continue;
+    for (const q of queryVariants(name)) {
       const html = await get('https://suumo.jp/library/search/ichiran.html?qr=' + encodeURIComponent(q), 'search');
       if (!html) continue;
       cands = listHits(html);
@@ -53,7 +52,11 @@ export async function onRequest(context) {
     if (!cands.length) return json({ found: false, reason: 'not_listed', debug: dbg || undefined });
 
     // ② 名前と市区町村で1件に絞る（別物件を掴まないための照合）
-    let hit = cands.find((c) => sameName(c.name, name) && (!city || (c.addr || '').indexOf(city) >= 0))
+    //    ⚠️枝番を落とした検索語で当てたときは候補に「オアシス浅生」と「オアシス浅生II」の
+    //    両方が並ぶ。sameName は枝番違いも通すので、先に完全一致を優先しないと
+    //    別棟を掴む。
+    let hit = cands.find((c) => norm(c.name) === norm(name))
+           || cands.find((c) => sameName(c.name, name) && (!city || (c.addr || '').indexOf(city) >= 0))
            || cands.find((c) => sameName(c.name, name))
            || (cands.length === 1 ? cands[0] : null);
     if (!hit) return json({ found: false, reason: 'name_mismatch', cands: cands.map((c) => c.name).slice(0, 5), debug: dbg || undefined });
@@ -159,12 +162,51 @@ function readPage(html) {
 function flat(h) {
   return h.replace(/<[^>]+>/g, '|').replace(/&nbsp;/g, ' ').replace(/&gt;/g, '>').replace(/[ \t\r\n]+/g, ' ').replace(/\|{2,}/g, '|');
 }
+
+const RO = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ'];
+const LA = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+/* ★検索語の枝番は表記ゆれで必ず外れる。
+   SUUMOの検索（qr=）は文字列一致で、掲載名の表記でしか当たらない：
+   「オアシス浅生Ⅱ」（ローマ数字1文字）は0件、SUUMOの掲載名は「オアシス浅生II」（英字2文字）
+   ＝入力どおりに1回検索して諦めていたため not_listed になっていた（実測 2026-08-21）。
+   Ⅱ / II / 2 / 枝番なし を順に試す。枝番なしは最後（同名の別棟を掴む可能性があるので、
+   採用は呼び出し側の完全一致優先＋sameName の照合に委ねる）。 */
+function queryVariants(name) {
+  const out = [];
+  const push = (s) => { s = String(s || '').trim(); if (s && out.indexOf(s) < 0) out.push(s); };
+  push(name);
+  // 「A棟」「2号館」を落とす（従来からの再検索）
+  push(String(name).replace(/\s*[A-ZＡ-Ｚ]?棟$/, '').replace(/\s*[0-9０-９]+号館$/, ''));
+  // 末尾の枝番を検出して他の表記に展開する。
+  // ⚠️直前が数字のときは切らない（「ハイツ21」を「ハイツ2」+「1」と読むと別物件を掴む）
+  const half = String(name).replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  // 基部は最短一致にする。貪欲だと「オアシス浅生II」を「オアシス浅生I」＋「I」と読んで
+  // 存在しない枝番（IⅠ / I1）を検索してしまう
+  const m = half.match(/^(.*?[^0-9\s])[\s　]*(Ⅰ|Ⅱ|Ⅲ|Ⅳ|Ⅴ|Ⅵ|Ⅶ|Ⅷ|Ⅸ|Ⅹ|VIII|VII|VI|IV|IX|III|II|I|V|X|10|[1-9])$/);
+  if (m) {
+    const base = m[1];
+    let n = RO.indexOf(m[2]) + 1;
+    if (!n) { const i = LA.indexOf(m[2].toUpperCase()); n = i >= 0 ? i + 1 : (parseInt(m[2], 10) || 0); }
+    if (n >= 1 && n <= 10) { push(base + RO[n - 1]); push(base + LA[n - 1]); push(base + n); }
+    push(base);
+  }
+  return out;
+}
+
+/* 全角英数→半角・空白除去＋ローマ数字→英字（Ⅱ→II）。
+   ポータルは同じ建物を Ⅱ でも II でも載せるので、ここを揃えないと照合が全部外れる */
+function norm(s) {
+  return String(s || '').replace(/[\s　・･]/g, '')
+    .replace(/[ａ-ｚＡ-Ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g, (c) => LA[RO.indexOf(c)])
+    .toUpperCase();
+}
 /* 完全一致か「A棟・Ⅱ・2号館」程度の短い枝番違いのみ許容（部分一致だと別物件を掴む） */
 function sameName(a, b) {
-  const n = (s) => String(s || '').replace(/[\s　・･]/g, '').replace(/[ａ-ｚＡ-Ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).toUpperCase();
-  const x = n(a), y = n(b);
+  const x = norm(a), y = norm(b);
   if (!x || !y) return false;
   if (x === y) return true;
-  const strip = (s) => s.replace(/(棟|号館|番館|館)?$/, '').replace(/[A-Z0-9ⅠⅡⅢⅣⅤ]{1,3}$/, '');
+  const strip = (s) => s.replace(/(棟|号館|番館|館)?$/, '').replace(/[A-Z0-9]{1,3}$/, '');
   return strip(x) === strip(y) && Math.abs(x.length - y.length) <= 3;
 }

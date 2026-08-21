@@ -316,10 +316,15 @@ export async function readBuilding(u) {
   return { name, addr, kind, struct, built, floors, rooms, history: history.slice(0, 12), listing };
 }
 
-/* 全角英数→半角・空白除去。過剰に丸めると別物件を誤って一致させるので、ここまでに留める */
+/* 全角英数→半角・空白除去＋ローマ数字→英字。過剰に丸めると別物件を誤って一致させるので、ここまでに留める。
+   ⚠️ローマ数字（Ⅱ）と英字（II）を揃えないと、同じ建物なのに一致せず建物情報が丸ごと取れない
+   （オアシス浅生Ⅱ で実測 2026-08-21。掲載名は「オアシス浅生II」） */
+const RO_ = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ'];
+const LA_ = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 function norm(s) {
   return String(s || '')
     .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g, (c) => LA_[RO_.indexOf(c)])
     .replace(/[\s　]/g, '')
     .toUpperCase();
 }

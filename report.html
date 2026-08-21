@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v14.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v14.1</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='20'; /* v14＝/api/chintai に bstruct（構造）/hist（募集終了事例）を追加。項目を増やしたら必ず上げる */
+const APIV='21'; /* v14.1＝物件名の枝番（Ⅱ/II/2）の表記ゆれ対応。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -381,8 +381,13 @@ async function fetchSpec(name,city,pref,addr){
    （[[feedback_no_guessed_data]]）。 */
 window.SELFSRC=[]; /* 実際に本物件の情報を埋められた経路（作成者向けメモに出す） */
 function selfNeed(){return !(val('pmadori')&&num('pmens')>0);}
+/* ⚠️ローマ数字（Ⅱ）と英字（II）を揃える。ポータルは同じ建物をどちらの表記でも載せるので、
+   ここが揃っていないと「本物件そのものを募集一覧から名寄せする」経路が丸ごと外れる
+   （オアシス浅生Ⅱ／掲載名はオアシス浅生II で実測 2026-08-21） */
+const RO_N=['Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ'],LA_N=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 function nmBase(n){return String(n||'').replace(/[\s　・･]/g,'')
-  .replace(/[ａ-ｚＡ-Ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0)).toUpperCase();}
+  .replace(/[ａ-ｚＡ-Ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0))
+  .replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g,c=>LA_N[RO_N.indexOf(c)]).toUpperCase();}
 function selfNames(){
   return [val('palias'),(window.SELF&&window.SELF.name),(looksLikeName(val('paddr'))?val('paddr'):'')]
     .filter(x=>x&&String(x).trim().length>=3);
@@ -937,7 +942,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
        並んだ・2026-08-14）。名前のベース（末尾の棟・番号を落とした形）で判定する。 */
     const baseName=n=>String(n||'').replace(/[\s　・･]/g,'')
       .replace(/[ａ-ｚＡ-Ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0)).toUpperCase()
-      .replace(/(棟|号館|番館|館)$/,'').replace(/[A-Z0-9ⅠⅡⅢⅣⅤ]{1,3}$/,'');
+      .replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g,c=>LA_N[RO_N.indexOf(c)])
+      .replace(/(棟|号館|番館|館)$/,'').replace(/[A-Z0-9]{1,3}$/,'');
     const ownNames=[val('paddr'),val('palias'),(window.SELF&&window.SELF.name)]
       .filter(x=>x&&looksLikeName(x)).map(baseName).filter(x=>x.length>=3);
     const kept=[];let soft=[];
