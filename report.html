@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v14.1</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.0</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='21'; /* v14.1＝物件名の枝番（Ⅱ/II/2）の表記ゆれ対応。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
+const APIV='22'; /* v15.0＝類似物件を「条件の近さの点数」で母集団100室→10件に絞る方式へ。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -576,7 +576,7 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
   try{
     /* 一覧だけ先に取る（駐車場・番地は距離で絞ってから後追いで取りに行く） */
     const j=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
-      +(md?'&md='+encodeURIComponent(mdGroup(md).join(',')):'')+'&pages=12&detail=0&addr=0');
+      +(md?'&md='+encodeURIComponent(mdGroup(md).join(',')):'')+'&pages=15&detail=0&addr=0');
     if(!j||!j.found||!(j.items||[]).length)return 0;
     window.CMP_FROM_ASSESS=false;
     window.CHINTAI=j;
@@ -601,37 +601,56 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
       const near=pool.filter(x=>x._d!=null&&x._d<=(radius||1500)+600);
       if(near.length)pool=near;
     }
-    /* 続いて座標の要らない条件（間取り・面積）で足切りし、近い順に20件だけ行にする。
-       行にした分だけ後段でジオコーディングが走るため、母数をそのまま行にすると極端に遅い。 */
+    /* ★★2026-08-30 太田指示＝「条件が近いものを（同じ建物でもいいので）100室くらい出して、
+       その中からさらに近いものを10件に絞る」。
+       それまでは「間取り・面積で絞った結果が6件未満なら、その条件を丸ごと捨てる」という
+       作りだったため、条件に合う母数が少ない地域で"間取りも面積も違う一覧"に化けていた。
+       条件は捨てず、エリア（距離）・間取り・面積・築年数の近さを点数にして並べ替える。
+       点数は小さいほど本物件に近い。構造はこの時点では未取得の物件が多いので後段で見る。 */
     const wantMd=(md||'').trim();
     const ownM=num('pmens')||0;
-    if(wantMd)  { const f=pool.filter(x=>sameMd(x.md,wantMd)); if(f.length>=6)pool=f; }
-    if(ownM>0)  { const f=pool.filter(x=>x.men>0&&Math.abs(x.men-ownM)/ownM<=0.25); if(f.length>=6)pool=f; }
-    pool.sort((a,b)=>(a._d==null?9e9:a._d)-(b._d==null?9e9:b._d));
-    /* ★築年の近い物件を優先して枠に入れる。近い順に20件取るだけだと、
-       同年代が1件しか入らず「参考」だらけの表になった（久留米・築28年で実測）。 */
     const oa=ownAgeNow(),tol=ageTol();
-    if(oa>0&&tol<99){
-      const ok=x=>x.age!=null&&isFinite(x.age)&&Math.abs(x.age-oa)<=tol;
-      const hit=pool.filter(ok),rest=pool.filter(x=>!ok(x));
-      if(hit.length)pool=hit.slice(0,20).concat(rest.slice(0,6));
-    }
-    /* 範囲外・位置不明で落ちる分を見込んで多めに行にする（10件掲載の枠を満たすため）。
-       20件だと東区・久留米のような広い市域で掲載が5件前後に沈んでいた（2026-08-14） */
-    const picked=pool.slice(0,26);
+    const cmpScore=x=>{
+      let s=0;
+      /* 間取り＝完全一致0／同じ需要層（1R⇔1K等）1／違う6 */
+      if(wantMd)s+=(x.md===wantMd)?0:(sameMd(x.md,wantMd)?1:6);
+      /* 専有面積＝±10%まで0／±25%まで1／±40%まで4／それ以上8 */
+      if(ownM>0&&x.men>0){const r=Math.abs(x.men-ownM)/ownM;s+=r<=0.10?0:r<=0.25?1:r<=0.40?4:8;}
+      /* 築年数＝±許容差まで0／その2倍まで3／それ以上7 */
+      if(oa>0&&tol<99&&x.age!=null&&isFinite(x.age)){const d=Math.abs(x.age-oa);s+=d<=tol?0:d<=tol*2?3:7;}
+      /* エリア＝1kmごとに1点（最大4点）。同点のときの並べ替えにも効く */
+      s+=Math.min(4,(x._d==null?4:x._d/1000));
+      return s;
+    };
+    pool.forEach(x=>x._sc=cmpScore(x));
+    pool.sort((a,b)=>(a._sc-b._sc)||((a._d==null?9e9:a._d)-(b._d==null?9e9:b._d)));
+    window.CMP_POOL_ALL=pool.length;
+    /* 母集団＝条件の近い順に100室（同じ建物の別部屋もここでは残す）。
+       最終的な掲載は後段で1棟1件に集約したうえで10件に絞る。 */
+    const pool100=pool.slice(0,100);
+    window.CMP_POOL_N=pool100.length;
+    /* このうち上位40室だけを行にする（行にした分だけジオコーディングが走るため）。
+       範囲外・位置不明で落ちる分を見込んで掲載枠10件より多めに取る。 */
+    const picked=pool100.slice(0,40);
     /* ★駐車場代と番地までの住所は、近い順に絞ったこの物件についてだけ取りに行く。
        以前は一覧の先頭から調べていたので「周辺の駐車場相場」が市内ランダムの中央値だった。 */
+    /* ★1回のPOSTで詳細を取れるのは15件まで（SUUMO側の負荷に配慮したAPI側の上限）。
+       構造が取れないと構造の条件が効かないので、上位30件を2回に分けて取りに行く。 */
     if(picked.length){
-      setStatus('🅿️ 近隣'+Math.min(picked.length,15)+'件の駐車場代・所在地を確認中…');
-      try{
-        const r=await fetch('/api/chintai',{method:'POST',headers:{'content-type':'application/json'},
-          body:JSON.stringify({rows:picked.slice(0,15).map(x=>({name:x.name,addr:x.addr,href:x.href,anon:!!x.anon}))})});
-        const e=await r.json();
-        if(e&&e.found){
-          (e.items||[]).forEach((it,i)=>{if(!picked[i])return;picked[i].park=it.park;picked[i].parkFee=it.parkFee;picked[i].addr2=it.addr2;picked[i].bstruct=it.bstruct;picked[i].hist=it.hist;});
-          if(e.park)j.park=e.park;
-        }
-      }catch(err){}
+      setStatus('🅿️ 近隣'+Math.min(picked.length,30)+'件の構造・駐車場代・所在地を確認中…');
+      for(let b=0;b<2;b++){
+        const chunk=picked.slice(b*15,b*15+15);
+        if(!chunk.length)break;
+        try{
+          const r=await fetch('/api/chintai',{method:'POST',headers:{'content-type':'application/json'},
+            body:JSON.stringify({rows:chunk.map(x=>({name:x.name,addr:x.addr,href:x.href,anon:!!x.anon}))})});
+          const e=await r.json();
+          if(e&&e.found){
+            (e.items||[]).forEach((it,i)=>{const t=chunk[i];if(!t)return;t.park=it.park;t.parkFee=it.parkFee;t.addr2=it.addr2;t.bstruct=it.bstruct;t.hist=it.hist;});
+            if(e.park&&b===0)j.park=e.park;
+          }
+        }catch(err){}
+      }
     }
     /* 駐車場・構造・募集終了事例は物件名で引けるようにしておく（表の列と選定条件に使う） */
     window.PARK=new Map();window.CMPSTRUCT=new Map();window.CMPHIST=new Map();
@@ -852,11 +871,21 @@ function manEn(n){return (n/10000).toLocaleString('ja-JP',{maximumFractionDigits
 /* 比較物件の所在地をジオコーディング（町丁目レベルの概算位置・結果はキャッシュ） */
 const _cmpGeo={};
 async function geocodeCmp(cmp){
+  /* 候補を40件まで増やしたので、1件ずつ順番に問い合わせると待ち時間が伸びる。
+     同じ住所は結果を使い回し、残りは6件ずつ並行で引く（2026-08-30）。 */
+  const todo=[];
   for(const c of cmp){
     if(c.lat!=null)continue;
     const key=(c.addr||'').trim();if(!key)continue;
     if(_cmpGeo[key]){c.lat=_cmpGeo[key].lat;c.lon=_cmpGeo[key].lon;continue;}
-    try{const g=await googleGeocode(key);if(g){_cmpGeo[key]={lat:g.lat,lon:g.lon};c.lat=g.lat;c.lon=g.lon;}}catch(e){}
+    todo.push(c);
+  }
+  for(let i=0;i<todo.length;i+=6){
+    await Promise.all(todo.slice(i,i+6).map(async c=>{
+      const key=(c.addr||'').trim();
+      if(_cmpGeo[key]){c.lat=_cmpGeo[key].lat;c.lon=_cmpGeo[key].lon;return;}
+      try{const g=await googleGeocode(key);if(g){_cmpGeo[key]={lat:g.lat,lon:g.lon};c.lat=g.lat;c.lon=g.lon;}}catch(e){}
+    }));
   }
   /* 同一住所（大字・丁目単位）で重なったピンを少しずらして全て見えるように */
   const seen={};
@@ -965,14 +994,25 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       if(ng){c._soft=ng;soft.push(c);return;}
       kept.push(c);
     });
-    /* 並び：①本物件と同等以上の賃料 ②面積の近さ ③距離の近さ */
+    /* ★条件の近さを1つの点数にまとめる（2026-08-30・母集団100室から10件に絞るための物差し）。
+       小さいほど本物件に近い。間取り・面積・築年・構造・距離の5つを同じ尺度で見る。 */
+    const nearScore=c=>{
+      let s=0;
+      if(opts.md&&c.md)s+=(c.md===opts.md)?0:(sameMd(c.md,opts.md)?1:6);
+      if(own.men>0&&c.men>0){const r=Math.abs(c.men-own.men)/own.men;s+=r<=0.10?0:r<=0.25?1:r<=0.40?4:8;}
+      if(ownAge!=null&&c.age!=null){const d=Math.abs(c.age-ownAge);s+=d<=AGE_TOL?0:d<=AGE_TOL*2?3:7;}
+      if(ownCat&&c.struct&&structCat(c.struct))s+=(structCat(c.struct)===ownCat)?0:5;
+      s+=Math.min(4,(c.d==null?4:c.d/1000));
+      return s;
+    };
+    cmp.forEach(c=>{c._sc=nearScore(c);});
     kept.forEach(c=>{
       c._adv=(ownMidR>0&&c.total>=ownMidR*0.98)?0:1;
       c._men=own.men>0&&c.men>0?Math.abs(c.men-own.men):99;
       c._age=(ownAge!=null&&c.age!=null)?Math.abs(c.age-ownAge):99;
     });
-    /* 並び：①本物件と同等以上の賃料 ②築年数の近さ ③面積の近さ ④距離 */
-    kept.sort((a,b)=>(a._adv-b._adv)||(a._age-b._age)||(a._men-b._men)||(a.d-b.d));
+    /* 並び：①本物件と同等以上の賃料（賃料設定の妥当性を示すため）②条件の近さ ③距離 */
+    kept.sort((a,b)=>(a._adv-b._adv)||(a._sc-b._sc)||(a.d-b.d));
     /* ★同じ建物で複数の部屋が募集中だと、その物件だけで表が埋まって他の物件が出ない
        （操川さん指摘 2026-08-13）。1棟につき最も条件の近い1部屋だけ残す。 */
     const seenB=new Set(),uniq=[];
@@ -1005,8 +1045,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         window.CMP_EXCLUDED.push({name:c.name,reason:'㎡単価が周辺と大きく異なる（'+Math.round(c.total/c.men).toLocaleString()+'円/㎡）'});
         return false;
       });
-      /* 補充は築年の近い順→距離順（本物件と条件の近いものから埋める） */
-      soft.sort((a,b)=>((a.age!=null&&ownAge!=null?Math.abs(a.age-ownAge):99)-(b.age!=null&&ownAge!=null?Math.abs(b.age-ownAge):99))||(a.d-b.d));
+      /* 補充も「条件の近さ（間取り・面積・築年・構造・距離）」の点数順に埋める（2026-08-30）。
+         築年の近さだけで埋めると、間取りや面積が大きく外れた物件が先に入っていた。 */
+      soft.sort((a,b)=>(a._sc-b._sc)||(a.d-b.d));
       const add=[];dedupe(soft,add);
       add.forEach(c=>{if(uniq.length<MIN){c._relaxed=c._soft;uniq.push(c);}
         else window.CMP_EXCLUDED.push({name:c.name,reason:c._soft});});
@@ -1081,7 +1122,12 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
      築年の近い事例だけで出せるときはそちらを使う（築年差は賃料に効くため）。 */
   const reset=(()=>{
     if(!(own.men>0))return null;
-    const withU=cmp.filter(c=>c.men>0&&c.total>0);
+    /* ★引き直しの母数は「間取り・面積・築年・構造の条件を満たした行」だけで作る（2026-08-30）。
+       件数を10件に揃えるために条件を緩めて足した行（_relaxed）まで平均に入れると、
+       間取りや面積の違う物件の㎡単価が混ざって金額がぶれる。満たす行が3件未満のときだけ、
+       やむなく全掲載事例で出す（その場合は下の basis で「掲載事例」と明示される）。 */
+    const strictU=cmp.filter(c=>c.men>0&&c.total>0&&!c._relaxed);
+    const withU=strictU.length>=3?strictU:cmp.filter(c=>c.men>0&&c.total>0);
     if(withU.length<3)return null;
     const near=(ownAge!=null)?withU.filter(c=>c.age!=null&&Math.abs(c.age-ownAge)<=ageTol()):[];
     const use=near.length>=3?near:withU;
@@ -1273,6 +1319,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
           +((!window.CMP_FROM_ASSESS&&ownCat)?'／構造系統が同じ（'+(ownCat==='A'?'木造・軽量鉄骨':'鉄骨・RC・SRC')+'）':'')
           +((!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':'');
         return `<div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>${cond}<br>`
+          +(window.CMP_POOL_N>0?`絞り込みの経過：市内の募集 ${(window.CMP_POOL_ALL||0).toLocaleString()}室 → 条件の近い順に ${window.CMP_POOL_N}室 → 調査範囲・1棟1件で掲載 ${cmp.length}件。<br>`:'')
           +(cmp.length<5?`調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内で条件に合う募集が${cmp.length}件しかありませんでした。`:`築年±${ageTol()}年の自動条件で${cmp.length}件です。`)
           +(relaxN>0?`このうち<b>${relaxN}件</b>は、件数を確保するため<b>築年数・面積・間取りの条件を緩めて</b>掲載しています（${cmp.filter(c=>c._relaxed).map(c=>c.name+'＝'+c._relaxed).join('／')}）。`:'')
           +(ageTol()<99?`<br><b>築年の条件を広げて取り直す：</b>`
