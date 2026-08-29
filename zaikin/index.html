@@ -13,19 +13,19 @@
 :root{
   --bg:#EEF1F4; --surface:#FFFFFF; --surface-2:#F6F8FA; --ink:#1B2430; --muted:#6B7683;
   --hair:#DDE3E9; --accent:#0E7C6B; --accent-soft:#0E7C6B18;
-  --accent2:#3557B7; --accent2-soft:#3557B71a;
+  --corp:#9A6224; --corp-soft:#9A62241a; --ind:#3557B7; --ind-soft:#3557B71a;
   --crit:#C7362E; --crit-bg:#C7362E14; --warn:#B4740B; --warn-bg:#B4740B14; --good:#2E7D4F; --good-bg:#2E7D4F12;
   --shadow:0 1px 2px rgba(20,30,45,.06),0 4px 16px rgba(20,30,45,.05);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0D1219; --surface:#151D28; --surface-2:#101822; --ink:#DCE3EC; --muted:#8794A3;
-  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --accent2:#6E8BE8; --accent2-soft:#6E8BE826;
+  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --corp:#D0A25E; --corp-soft:#D0A25E26; --ind:#6E8BE8; --ind-soft:#6E8BE826;
   --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }}
 :root[data-theme="dark"]{
   --bg:#0D1219; --surface:#151D28; --surface-2:#101822; --ink:#DCE3EC; --muted:#8794A3;
-  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --accent2:#6E8BE8; --accent2-soft:#6E8BE826;
+  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --corp:#D0A25E; --corp-soft:#D0A25E26; --ind:#6E8BE8; --ind-soft:#6E8BE826;
   --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }
@@ -45,7 +45,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .asof{font-size:13.5px;color:var(--muted);}
 .editbtn{font-family:inherit;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:20px;padding:7px 15px;cursor:pointer;white-space:nowrap;}
 .editbtn.on{background:var(--accent);color:#fff;}
-.fab{position:fixed;right:16px;bottom:16px;z-index:45;font-family:inherit;font-size:14.5px;font-weight:800;color:#fff;background:var(--accent);border:none;border-radius:26px;padding:13px 22px;cursor:pointer;box-shadow:0 4px 18px rgba(14,124,107,.45);}
+.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:55;font-family:inherit;font-size:15px;font-weight:800;color:#fff;background:var(--accent);border:none;border-radius:28px;padding:15px 24px;cursor:pointer;box-shadow:0 4px 18px rgba(14,124,107,.45);-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .fab.on{background:var(--crit);box-shadow:0 4px 18px rgba(199,54,46,.45);}
 .kpis{display:grid;grid-template-columns:1fr;gap:8px;}
 .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:13px 17px;box-shadow:var(--shadow);}
@@ -54,12 +54,16 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .kpi .sub{font-size:13.5px;color:var(--muted);margin-top:3px;}
 .group{margin-top:10px;}
 .ghead{position:sticky;top:0;z-index:6;width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:15px;padding:13px 16px;box-shadow:var(--shadow);cursor:pointer;font-family:inherit;text-align:left;color:inherit;}
-.g-ind .ghead{border-left-color:var(--accent2);}
-.g-ind .gh-lab{color:var(--accent2);}
-.g-ind .gh-hint{color:var(--accent2);background:var(--accent2-soft);}
-.group>.gbody .row:not(.row-crit){border-left-color:var(--accent);border-left-width:5px;}
-.g-ind>.gbody .row:not(.row-crit){border-left-color:var(--accent2);border-left-width:5px;}
-.g-ind>.gbody .row .stripe.st-good{background:var(--accent2);}
+.g-corp .ghead{border-left-color:var(--corp);}
+.g-corp .gh-lab{color:var(--corp);}
+.g-corp .gh-hint{color:var(--corp);background:var(--corp-soft);}
+.g-corp>.gbody .row:not(.row-crit){border-left-color:var(--corp);border-left-width:5px;}
+.g-corp>.gbody .row .stripe.st-good{background:var(--corp);}
+.g-ind .ghead{border-left-color:var(--ind);}
+.g-ind .gh-lab{color:var(--ind);}
+.g-ind .gh-hint{color:var(--ind);background:var(--ind-soft);}
+.g-ind>.gbody .row:not(.row-crit){border-left-color:var(--ind);border-left-width:5px;}
+.g-ind>.gbody .row .stripe.st-good{background:var(--ind);}
 .ghead.has-crit{border-color:var(--crit);border-left-width:5px;}
 .gh-left{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;}
 .gh-lab{font-size:14px;font-weight:800;color:var(--accent);letter-spacing:.04em;}
@@ -397,6 +401,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   }
   function groupHtml(g){
     const accts=inGrp(g);
+    const ts0=tsumiInGrp(g);
+    if(!editing && accts.length===0 && ts0.length===0) return '';
     const nCrit=accts.filter(a=>judge(a)==='crit').length;
     const ts=tsumiInGrp(g);
     const bal=accts.reduce((s,a)=>s+(+a.bal||0),0)+ts.reduce((s,t)=>s+(+t.bal||0),0);
@@ -417,7 +423,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         rows+='<div class="tsumi">'+ts.map(t=>'<div class="tcard"><div class="tb">'+esc(t.bank||'積立')+'</div><div class="tv num yen">'+yen(t.bal)+'</div><div class="tm num">積立 '+yen(t.mo)+'/月</div></div>').join('')+'</div>';
       }
     }
-    return '<div class="group'+(g==='個人'?' g-ind':'')+'">'
+    return '<div class="group '+(g==='個人'?'g-ind':'g-corp')+'">'
       +'<button class="ghead'+(nCrit?' has-crit':'')+'" data-g="'+g+'" aria-expanded="'+open+'">'
       +'<div class="gh-left"><div class="gh-lab">'+g+' 合計 <span class="gh-cnt">'+accts.length+'口座</span></div>'+badge+'<div class="gh-sub num">毎月返済 ¥'+yen(pay)+'</div></div>'
       +'<div class="gh-right"><span class="gh-bal num yen">'+yen(bal)+'</span><span class="gh-hint"><span class="gh-htxt">'+(open?'閉じる':'口座を表示')+'</span><span class="gh-caret">▾</span></span></div>'
@@ -444,14 +450,14 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function emptyHtml(){
     return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
       +'<p>各口座の<b>残高</b>と<b>毎月の返済額</b>を入れるだけ。<br>「残高が毎月返済を下回る口座」を自動で色分けし、資金ショートを未然に防ぎます。<br>入力内容はあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。</p>'
-      +'<div class="row-btns"><button class="pbtn primary" data-add="法人">＋ 口座を追加する</button><button class="pbtn ghost" id="seedBtn">サンプルを見る</button></div></div>';
+      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button><button class="pbtn ghost" id="seedBtn">サンプルを見る</button></div></div>';
   }
   function render(){
     const eb=$('editBanner');if(eb)eb.hidden=!editing;
     renderHeader();renderKPIs();
     let h='';
     if(state.accounts.length===0 && !editing){ h=emptyHtml(); }
-    else { h=groupHtml('法人')+groupHtml('個人')+cardHtml(); }
+    else { h=groupHtml('個人')+groupHtml('法人')+cardHtml(); }
     if(editing){
       h+='<div class="toolbar"><button class="tbtn" id="exportBtn">⬇︎ バックアップを書き出す</button><button class="tbtn" id="importBtn">⬆︎ バックアップを読み込む</button></div>'
         +'<div class="savehint">入力は自動でクラウドに保存され、ログインすればどの端末でも同じ内容が出ます。</div>';
