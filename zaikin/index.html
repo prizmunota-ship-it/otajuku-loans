@@ -202,6 +202,8 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .gcard input:focus{outline:2px solid var(--accent);border-color:var(--accent);}
 .gbtn{width:100%;font-family:inherit;font-size:15px;font-weight:800;color:#fff;background:var(--accent);border:none;border-radius:11px;padding:13px;cursor:pointer;margin-top:14px;}
 .gbtn:disabled{opacity:.5;cursor:default;}
+.glink{display:block;width:100%;margin-top:12px;background:none;border:none;color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;}
+.glink:hover{color:var(--accent);}
 .gmsg{font-size:13px;margin-top:14px;line-height:1.6;min-height:18px;}
 .gmsg.ok{color:var(--good);font-weight:700;} .gmsg.err{color:var(--crit);font-weight:700;}
 .gnote{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;border-top:1px solid var(--hair);padding-top:14px;text-align:left;}
@@ -223,11 +225,19 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     <div style="font-size:32px">🏦</div>
     <h1>資金繰り帳</h1>
     <p class="gsub">各口座の残高と毎月の返済額を入れるだけ。資金ショートしそうな口座を自動で色分けします。</p>
-    <label for="authEmail">メールアドレス</label>
-    <input type="email" id="authEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
-    <label for="authPass" style="margin-top:12px">パスワード（6文字以上・自分で決めてOK）</label>
-    <input type="password" id="authPass" autocomplete="current-password" placeholder="パスワード">
-    <button class="gbtn" id="authSend">はじめる / ログイン</button>
+    <div id="loginSection">
+      <label for="authEmail">メールアドレス</label>
+      <input type="email" id="authEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
+      <label for="authPass" style="margin-top:12px">パスワード（6文字以上・自分で決めてOK）</label>
+      <input type="password" id="authPass" autocomplete="current-password" placeholder="パスワード">
+      <button class="gbtn" id="authSend">はじめる / ログイン</button>
+      <button class="glink" id="authForgot" type="button">パスワードをお忘れですか？</button>
+    </div>
+    <div id="recoverySection" hidden>
+      <label for="newPass">新しいパスワード（6文字以上）</label>
+      <input type="password" id="newPass" autocomplete="new-password" placeholder="新しいパスワード">
+      <button class="gbtn" id="authSetPass">パスワードを変更する</button>
+    </div>
     <div class="gmsg" id="authMsg"></div>
     <div class="gnote">初めての方は、メールアドレスと好きなパスワードを入れて「はじめる」を押すだけ（メール確認は不要・すぐ使えます）。2回目からは同じ2つでログイン。<br>入力したデータは<b>あなたのアカウントに保存</b>され、<b>スマホでもPCでも同じ内容</b>が見られます（他の人には見えません）。<b>一度ログインすれば、その端末は次回から自動で開きます。</b></div>
   </div>
@@ -274,7 +284,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   const inGrp=g=>state.accounts.filter(a=>a.grp===g);
 
   // ---------- cloud sync ----------
-  let sb=null, CURRENT_UID=null, syncTimer=null;
+  let sb=null, CURRENT_UID=null, syncTimer=null, recoveryMode=false;
   const cacheKey=()=>'zaikin_saas_cache_'+(CURRENT_UID||'anon');
   const readCache=()=>{try{const r=lsGet(cacheKey());return r?JSON.parse(r):null;}catch(e){return null;}};
   function setSync(txt){const el=$('syncStat');if(el)el.textContent=txt;}
@@ -582,6 +592,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     $('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');
     const eb=$('editBanner');if(eb)eb.hidden=true;
     $('authGate').removeAttribute('hidden');
+    $('loginSection').removeAttribute('hidden');$('recoverySection').setAttribute('hidden','');
     const asb=$('authSend');if(asb)asb.disabled=false;const apw=$('authPass');if(apw)apw.value='';
     // 太田塾ハブ（同一ドメイン）でログイン済みのメールを自動入力
     try{const hubEmail=localStorage.getItem('otajuku_email');
@@ -614,6 +625,36 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     }catch(e){msg.className='gmsg err';msg.textContent='エラー：'+((e&&e.message)||'もう一度お試しください');}
     $('authSend').disabled=false;
   }
+  async function forgotPassword(){
+    const email=authEmailVal();const msg=$('authMsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.className='gmsg err';msg.textContent='先にメールアドレスを入力してください。';return;}
+    msg.className='gmsg';msg.textContent='メール送信中…';
+    try{
+      const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+      if(error)throw error;
+      msg.className='gmsg ok';msg.innerHTML='✉️ '+esc(email)+' にパスワード再設定用メールを送りました。<br>メール内のリンクをタップすると、新しいパスワードを決められます（迷惑メールもご確認を）。';
+    }catch(e){msg.className='gmsg err';msg.textContent='送信に失敗しました：'+((e&&e.message)||'もう一度');}
+  }
+  function showRecovery(){
+    $('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');$('authGate').removeAttribute('hidden');
+    $('loginSection').setAttribute('hidden','');$('recoverySection').removeAttribute('hidden');
+    const m=$('authMsg');m.className='gmsg';m.textContent='新しいパスワードを決めて「変更する」を押してください。';
+    const np=$('newPass');if(np){np.value='';np.focus();}
+  }
+  async function setNewPassword(){
+    const pw=$('newPass').value||'';const msg=$('authMsg');
+    if(pw.length<6){msg.className='gmsg err';msg.textContent='パスワードは6文字以上にしてください。';return;}
+    $('authSetPass').disabled=true;msg.className='gmsg';msg.textContent='変更中…';
+    try{
+      const {error}=await sb.auth.updateUser({password:pw});
+      if(error)throw error;
+      recoveryMode=false;try{history.replaceState(null,'',location.pathname);}catch(_){}
+      $('loginSection').removeAttribute('hidden');$('recoverySection').setAttribute('hidden','');
+      msg.className='gmsg ok';msg.textContent='✓ パスワードを変更しました。';
+      const {data}=await sb.auth.getSession();
+      if(data&&data.session)enterApp(data.session);
+    }catch(e){msg.className='gmsg err';msg.textContent='変更に失敗：'+((e&&e.message)||'もう一度');$('authSetPass').disabled=false;}
+  }
   async function doLogout(){try{await sb.auth.signOut();}catch(e){}}
   async function enterApp(session){
     CURRENT_UID=session.user.id;
@@ -632,13 +673,20 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function boot(){
     if(!window.supabase){$('bootScreen').textContent='読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。';return;}
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    if(/type=recovery/.test(location.hash||''))recoveryMode=true;
     $('authSend').addEventListener('click',doAuth);
     $('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('authPass').focus();});
     $('authPass').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
+    $('authForgot').addEventListener('click',forgotPassword);
+    $('authSetPass').addEventListener('click',setNewPassword);
+    $('newPass').addEventListener('keydown',e=>{if(e.key==='Enter')setNewPassword();});
     sb.auth.getSession().then(({data})=>{
+      if(recoveryMode){showRecovery();return;}
       if(data&&data.session){enterApp(data.session);}else{showGate();}
     }).catch(()=>showGate());
     sb.auth.onAuthStateChange((event,session)=>{
+      if(event==='PASSWORD_RECOVERY'){recoveryMode=true;showRecovery();return;}
+      if(recoveryMode)return;
       if((event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')&&session&&CURRENT_UID!==session.user.id){enterApp(session);}
       else if(event==='SIGNED_OUT'){CURRENT_UID=null;state=defaultState();showGate();$('authMsg').textContent='';$('authEmail').value='';}
     });
