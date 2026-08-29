@@ -233,8 +233,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   </header>
   <div id="body"></div>
   <div class="foot" id="foot"></div>
-  <input type="file" id="photoInput" accept="image/*" multiple hidden>
-  <div class="pov" id="pov" hidden></div>
   <div class="modal" id="backupModal" hidden></div>
 </div>
 
@@ -292,35 +290,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     }catch(e){return undefined;}
   }
 
-  // ---------- photos (IndexedDB・端末内) ----------
-  let db=null; const photoURL={};
-  function openDB(){return new Promise(res=>{try{
-    const rq=indexedDB.open('zaikin_photos',1);
-    rq.onupgradeneeded=()=>{const d=rq.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p');};
-    rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(null);
-  }catch(e){res(null);}});}
-  function idbPut(id,blob){return new Promise(res=>{if(!db)return res(false);try{const t=db.transaction('p','readwrite');t.objectStore('p').put(blob,id);t.oncomplete=()=>res(true);t.onerror=()=>res(false);}catch(e){res(false);}});}
-  function idbDel(id){return new Promise(res=>{if(!db)return res();try{const t=db.transaction('p','readwrite');t.objectStore('p').delete(id);t.oncomplete=()=>res();t.onerror=()=>res();}catch(e){res();}});}
-  function idbGet(id){return new Promise(res=>{if(!db)return res(null);try{const t=db.transaction('p','readonly');const rq=t.objectStore('p').get(id);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);}catch(e){res(null);}});}
-  async function loadAllPhotoURLs(){
-    const ids=[];state.accounts.forEach(a=>(a.photos||[]).forEach(id=>ids.push(id)));
-    for(const id of ids){if(photoURL[id])continue;const b=await idbGet(id);if(b){try{photoURL[id]=URL.createObjectURL(b);}catch(e){}}}
-  }
-  async function downscaleBlob(file){
-    const max=1400,q=0.62;let bmp;
-    try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'});}
-    catch(e){bmp=await new Promise((rs,rj)=>{const im=new Image();im.onload=()=>rs(im);im.onerror=rj;im.src=URL.createObjectURL(file);});}
-    const sc=Math.min(1,max/Math.max(bmp.width,bmp.height));
-    const w=Math.round(bmp.width*sc),h=Math.round(bmp.height*sc);
-    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,0,0,w,h);
-    return await new Promise(rs=>c.toBlob(rs,'image/jpeg',q));
-  }
-
   // ---------- runtime flags ----------
   let editing=false;
   const gexp={'法人':true,'個人':true};
-  let pv={ids:[],i:0};
-  let photoTargetId=null;
   let armedDel=null,armedTimer=null;
   let lfOpen=false,calcId=null;
   function armDel(id){armedDel=id;if(armedTimer)clearTimeout(armedTimer);armedTimer=setTimeout(()=>{armedDel=null;if(editing)render();},4000);}
@@ -371,7 +343,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function accRow(a){
     const st=judge(a),diff=(+a.bal)-(+a.pay);
     const t5=a.borrow?Math.round(a.borrow*0.05):0,d5=(+a.bal)-t5;
-    const photos=a.photos||[];
     if(editing){
       return '<div class="row editcard" data-id="'+a.id+'">'
         +'<div class="head-line"><span class="grp-pill">'+a.grp+'</span><button class="del'+(armedDel===a.id?' armed':'')+'" data-del="'+a.id+'">'+(armedDel===a.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
@@ -383,16 +354,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +'<div class="efield"><label>借入残高（円・任意／5%目安の計算に使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.borrow)+'" placeholder="0" style="max-width:none;text-align:right"></div>'
         +'<div class="efield"><label>返済の内訳・メモ（任意）</label><textarea class="txt small f-note" data-id="'+a.id+'" rows="2" placeholder="例）物件A 120,000 / 物件B 80,000">'+esc(a.note||'')+'</textarea></div>'
         +'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>'
-        +'<div class="photorow">'+photos.map((id,i)=>'<div class="thumb"><img src="'+(photoURL[id]||'')+'" data-id="'+a.id+'" data-i="'+i+'"><button class="thx" data-id="'+a.id+'" data-i="'+i+'">✕</button></div>').join('')
-        +'<button class="photobtn" data-photo="'+a.id+'">＋ 通帳写真</button></div>'
         +'</div>';
     }
     const hasDetail=a.note;
-    const pchip=photos.length?'<button class="pchip" data-pchip="'+a.id+'">📷 '+photos.length+'</button>':'';
     const statusPill=a.pay?'<span class="pill '+st+'">'+LAB[st]+'</span>':'';
     let html='<div class="row'+(a.pay?'':' nopay')+(st==='crit'?' row-crit':'')+'" data-id="'+a.id+'">'
       +'<div class="rhead"><div class="stripe st-'+st+'"></div>'
-      +'<div class="bankcell"><div class="bankname">'+esc(a.bank||'（無名口座）')+(hasDetail?'<span class="caret">▶</span>':'')+' '+statusPill+' '+pchip+'</div>'
+      +'<div class="bankcell"><div class="bankname">'+esc(a.bank||'（無名口座）')+(hasDetail?'<span class="caret">▶</span>':'')+' '+statusPill+'</div>'
       +'<div class="acct">'+esc(a.branch||'')+' '+esc(a.acct||'')+'</div>'
       +(a.borrow>0?'<div class="pct">借入 <b class="num yen">'+yen(a.borrow)+'</b>／5%目安 <b class="num yen">'+yen(t5)+'</b>　<span class="'+(d5<0?'neg':'pos')+'">差 '+(d5<0?'▲':'+')+'¥'+yen(Math.abs(d5))+'</span></div>':'')
       +'</div>'
@@ -472,16 +440,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function renderFoot(){
     $('foot').innerHTML='<b>判定</b>：残高＜毎月返済額 → <span style="color:var(--crit)">不足</span>／残高＜返済×1.3 → <span style="color:var(--warn)">薄い</span>／それ以外 → <span style="color:var(--good)">OK</span>。'
       +'借入残高を入れた口座は「借入5%を現預金で持つ」目安も表示します。<br>'
-      +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。'
-      +'通帳写真はお使いの端末内のみの保存です（撮った写真の元データはスマホのカメラロールに残ります）。';
+      +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。';
   }
-
-  // ---------- photo viewer ----------
-  function openPov(ids,i){pv={ids:ids.slice(),i:i||0};renderPov();$('pov').removeAttribute('hidden');}
-  function povNav(d){if(!pv.ids.length)return;pv.i=(pv.i+d+pv.ids.length)%pv.ids.length;renderPov();}
-  function renderPov(){const p=$('pov');if(!pv.ids.length){p.setAttribute('hidden','');return;}
-    const url=photoURL[pv.ids[pv.i]]||'';
-    p.innerHTML='<button class="pov-close">✕</button><img src="'+url+'"><div class="pov-nav">'+(pv.ids.length>1?'<button class="pov-prev">‹ 前</button><span class="pov-cnt">'+(pv.i+1)+' / '+pv.ids.length+'</span><button class="pov-next">次 ›</button>':'<span class="pov-cnt">通帳写真</span>')+'</div>';}
 
   // ---------- backup ----------
   function backupText(){const s=JSON.parse(JSON.stringify(state));s.accounts.forEach(a=>{a.photos=[];});return JSON.stringify({app:'zaikin_otajuku',v:1,state:s});}
@@ -548,7 +508,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.id==='logoutBtn'){doLogout();return;}
     if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id);if(!acc&&!ts)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
-        if(acc){(acc.photos||[]).forEach(pid=>{idbDel(pid);if(photoURL[pid]){try{URL.revokeObjectURL(photoURL[pid]);}catch(_){}delete photoURL[pid];}});state.accounts=state.accounts.filter(x=>x.id!==id);}
+        if(acc){state.accounts=state.accounts.filter(x=>x.id!==id);}
         else{state.tsumi=state.tsumi.filter(x=>x.id!==id);}
         save();render();}
       else{armDel(id);render();}
@@ -560,13 +520,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.id==='cApply'){applyCalc();return;}
     if(e=t.closest('#lfToggle')){lfOpen=!lfOpen;render();return;}
     if(t.id==='seedBtn'){seed();return;}
-    if(e=t.closest('.thx')){const id=e.getAttribute('data-id'),i=+e.getAttribute('data-i');const a=acctById(id);if(a&&a.photos){const pid=a.photos[i];idbDel(pid);if(photoURL[pid]){try{URL.revokeObjectURL(photoURL[pid]);}catch(_){}delete photoURL[pid];}a.photos.splice(i,1);save();render();}return;}
-    if(t.tagName==='IMG'&&t.closest('.thumb')){const a=acctById(t.getAttribute('data-id'));if(a)openPov(a.photos,+t.getAttribute('data-i'));return;}
-    if(e=t.closest('[data-pchip]')){const a=acctById(e.getAttribute('data-pchip'));if(a)openPov(a.photos,0);return;}
-    if(e=t.closest('[data-photo]')){photoTargetId=e.getAttribute('data-photo');$('photoInput').click();return;}
-    if(t.closest('.pov-close')||t.id==='pov'){$('pov').setAttribute('hidden','');return;}
-    if(t.closest('.pov-prev')){povNav(-1);return;}
-    if(t.closest('.pov-next')){povNav(1);return;}
     if(t.id==='exportBtn'){openBackup('export');return;}
     if(t.id==='importBtn'){openBackup('import');return;}
     if(t.id==='mCopy'){const ta=$('mExport');if(ta){ta.focus();ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value);ok=true;}}catch(e){}setMMsg(ok?'✓ コピーしました。':'上の文字を長押し→全選択してコピーしてください。',!ok);}return;}
@@ -649,7 +602,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     normalizeState();
     editing=false;document.body.classList.remove('editing');
     render();
-    openDB().then(d=>{db=d;return loadAllPhotoURLs();}).then(()=>render());
   }
 
   function boot(){
