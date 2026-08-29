@@ -13,19 +13,19 @@
 :root{
   --bg:#EEF1F4; --surface:#FFFFFF; --surface-2:#F6F8FA; --ink:#1B2430; --muted:#6B7683;
   --hair:#DDE3E9; --accent:#0E7C6B; --accent-soft:#0E7C6B18;
-  --corp:#9A6224; --corp-soft:#9A62241a; --ind:#3557B7; --ind-soft:#3557B71a;
+  --corp:#8B47C9; --corp-soft:#8B47C91a; --ind:#2F62E0; --ind-soft:#2F62E01a;
   --crit:#C7362E; --crit-bg:#C7362E14; --warn:#B4740B; --warn-bg:#B4740B14; --good:#2E7D4F; --good-bg:#2E7D4F12;
   --shadow:0 1px 2px rgba(20,30,45,.06),0 4px 16px rgba(20,30,45,.05);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0D1219; --surface:#151D28; --surface-2:#101822; --ink:#DCE3EC; --muted:#8794A3;
-  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --corp:#D0A25E; --corp-soft:#D0A25E26; --ind:#6E8BE8; --ind-soft:#6E8BE826;
+  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --corp:#C48DEE; --corp-soft:#C48DEE26; --ind:#7098F5; --ind-soft:#7098F526;
   --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }}
 :root[data-theme="dark"]{
   --bg:#0D1219; --surface:#151D28; --surface-2:#101822; --ink:#DCE3EC; --muted:#8794A3;
-  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --corp:#D0A25E; --corp-soft:#D0A25E26; --ind:#6E8BE8; --ind-soft:#6E8BE826;
+  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22; --corp:#C48DEE; --corp-soft:#C48DEE26; --ind:#7098F5; --ind-soft:#7098F526;
   --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }
@@ -252,7 +252,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
     <div class="title-row">
       <h1>資金繰り帳</h1>
-      <div class="head-right"><span class="asof" id="asofBox"></span><button class="editbtn" id="editToggle">✏️ 編集</button></div>
+      <div class="head-right"><span class="asof" id="asofBox"></span></div>
     </div>
     <div class="kpis" id="kpis"></div>
   </header>
@@ -342,7 +342,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   }
   function renderHeader(){
     $('asofBox').innerHTML=editing?'<input class="txt small" id="asofInp" placeholder="例）8月25日現在" value="'+esc(state.asof||'')+'" style="max-width:150px">':esc(state.asof||'');
-    const b=$('editToggle');b.textContent=editing?'✓ 完了':'✏️ 編集';b.classList.toggle('on',editing);
     const fb=$('fabEdit');if(fb){fb.textContent=editing?'✓ 完了':'✏️ 編集';fb.classList.toggle('on',editing);}
   }
   function renderKPIs(){
@@ -532,7 +531,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   // ---------- events ----------
   document.addEventListener('click',ev=>{
     const t=ev.target;let e;
-    if(t.id==='editToggle'||t.closest('#fabEdit')){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}document.body.classList.toggle('editing',editing);render();return;}
+    if(t.closest('#fabEdit')){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}document.body.classList.toggle('editing',editing);render();return;}
     if(t.id==='logoutBtn'){doLogout();return;}
     if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id);if(!acc&&!ts)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
