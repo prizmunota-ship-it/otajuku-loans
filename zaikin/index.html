@@ -198,11 +198,16 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .gnote{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;border-top:1px solid var(--hair);padding-top:14px;text-align:left;}
 .gnote b{color:var(--ink);}
 .boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;}
+#editBanner{position:sticky;top:0;z-index:40;background:var(--accent);color:#fff;text-align:center;font-size:13px;font-weight:800;padding:10px 12px;letter-spacing:.02em;box-shadow:0 2px 10px rgba(14,124,107,.28);}
+body.editing{background:var(--accent-soft);}
+body.editing .wrap{outline:2px solid var(--accent);outline-offset:-2px;border-radius:2px;}
+body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 @media(max-width:560px){h1{font-size:18px;} .right.bal .big{font-size:19px;} .inp{max-width:118px;font-size:15px;} .erow{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 <div class="boot" id="bootScreen">読み込み中…</div>
+<div id="editBanner" hidden>✏️ 編集モードです — 数字を入力したら、右上の「✓ 完了」を押してください</div>
 
 <div class="gate" id="authGate" hidden>
   <div class="gcard">
@@ -242,6 +247,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
   const $=id=>document.getElementById(id);
   const yen=n=>Number(n||0).toLocaleString('ja-JP');
   const pnum=s=>{const t=String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[ー－−―]/g,'-').replace(/[^0-9-]/g,'');const n=parseInt(t,10);return isNaN(n)?0:n;};
+  const iv=v=>((+v)?(+v):''); // 0や空は空欄表示（プレースホルダ0）
   const pfloat=s=>{const t=String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[．]/g,'.').replace(/[^0-9.]/g,'');const n=parseFloat(t);return isNaN(n)?0:n;};
   const uid=()=>'a'+Math.random().toString(36).slice(2,9)+(performance.now()|0).toString(36);
   const judge=a=>{if(!a.pay)return 'neu';if((+a.bal)<(+a.pay))return 'crit';if((+a.bal)<(+a.pay)*1.3)return 'warn';return 'good';};
@@ -372,9 +378,9 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
         +'<div class="efield"><label>金融機関・口座名</label><input class="txt f-bank" data-id="'+a.id+'" value="'+esc(a.bank)+'" placeholder="例）〇〇銀行"></div>'
         +'<div class="erow"><div class="efield"><label>支店</label><input class="txt small f-branch" data-id="'+a.id+'" value="'+esc(a.branch||'')+'" placeholder="任意"></div>'
         +'<div class="efield"><label>口座番号</label><input class="txt small f-acct" data-id="'+a.id+'" value="'+esc(a.acct||'')+'" placeholder="任意"></div></div>'
-        +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp f-bal" inputmode="numeric" data-id="'+a.id+'" value="'+(a.bal||0)+'" style="max-width:none"></div>'
-        +'<div class="efield"><label>毎月返済（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+(a.pay||0)+'" style="max-width:none"></div></div>'
-        +'<div class="efield"><label>借入残高（円・任意／5%目安の計算に使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+(a.borrow||0)+'" style="max-width:none;text-align:right"></div>'
+        +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp f-bal" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.bal)+'" placeholder="0" style="max-width:none"></div>'
+        +'<div class="efield"><label>毎月返済（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.pay)+'" placeholder="0" style="max-width:none"></div></div>'
+        +'<div class="efield"><label>借入残高（円・任意／5%目安の計算に使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.borrow)+'" placeholder="0" style="max-width:none;text-align:right"></div>'
         +'<div class="efield"><label>返済の内訳・メモ（任意）</label><textarea class="txt small f-note" data-id="'+a.id+'" rows="2" placeholder="例）物件A 120,000 / 物件B 80,000">'+esc(a.note||'')+'</textarea></div>'
         +'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>'
         +'<div class="photorow">'+photos.map((id,i)=>'<div class="thumb"><img src="'+(photoURL[id]||'')+'" data-id="'+a.id+'" data-i="'+i+'"><button class="thx" data-id="'+a.id+'" data-i="'+i+'">✕</button></div>').join('')
@@ -414,8 +420,8 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
       if(editing){
         rows+=ts.map(t=>'<div class="row editcard" data-tid="'+t.id+'"><div class="head-line"><span class="grp-pill">積立</span><button class="del'+(armedDel===t.id?' armed':'')+'" data-del="'+t.id+'">'+(armedDel===t.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
           +'<div class="efield"><label>金融機関・積立名</label><input class="txt tf-bank" data-tid="'+t.id+'" value="'+esc(t.bank||'')+'" placeholder="例）〇〇積金"></div>'
-          +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp tf-bal" inputmode="numeric" data-tid="'+t.id+'" value="'+(t.bal||0)+'" style="max-width:none"></div>'
-          +'<div class="efield"><label>毎月の積立（円）</label><input class="inp tf-mo" inputmode="numeric" data-tid="'+t.id+'" value="'+(t.mo||0)+'" style="max-width:none"></div></div></div>').join('');
+          +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp tf-bal" inputmode="numeric" data-tid="'+t.id+'" value="'+iv(t.bal)+'" placeholder="0" style="max-width:none"></div>'
+          +'<div class="efield"><label>毎月の積立（円）</label><input class="inp tf-mo" inputmode="numeric" data-tid="'+t.id+'" value="'+iv(t.mo)+'" placeholder="0" style="max-width:none"></div></div></div>').join('');
         rows+='<button class="addbtn" data-addt="'+g+'">＋ '+g+'の積立を追加</button>';
       } else {
         rows+='<div class="tsumi">'+ts.map(t=>'<div class="tcard"><div class="tb">'+esc(t.bank||'積立')+'</div><div class="tv num yen">'+yen(t.bal)+'</div><div class="tm num">積立 '+yen(t.mo)+'/月</div></div>').join('')+'</div>';
@@ -433,7 +439,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
       let opts='<option value="">（口座を選択）</option>'+state.accounts.map(a=>'<option value="'+a.id+'"'+(c.acctId===a.id?' selected':'')+'>'+esc(a.bank||'口座')+'</option>').join('');
       return '<div class="cardframe"><div class="cf-title"><span>💳 クレジットカードの支払い</span>'
         +'<label style="font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px"><input type="checkbox" id="cardOn"'+(c.on?' checked':'')+'> 表示する</label></div>'
-        +(c.on?'<div class="erow"><div class="efield"><label>毎月のカード支払額（円）</label><input class="inp" id="cardPay" inputmode="numeric" value="'+(c.pay||0)+'" style="max-width:none"></div>'
+        +(c.on?'<div class="erow"><div class="efield"><label>毎月のカード支払額（円）</label><input class="inp" id="cardPay" inputmode="numeric" value="'+iv(c.pay)+'" placeholder="0" style="max-width:none"></div>'
         +'<div class="efield"><label>支払口座</label><select class="txt small" id="cardAcct">'+opts+'</select></div></div>':'')
         +'</div>';
     }
@@ -451,6 +457,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
       +'<div class="row-btns"><button class="pbtn primary" data-add="法人">＋ 口座を追加する</button><button class="pbtn ghost" id="seedBtn">サンプルを見る</button></div></div>';
   }
   function render(){
+    const eb=$('editBanner');if(eb)eb.hidden=!editing;
     renderHeader();renderKPIs();
     let h='';
     if(state.accounts.length===0 && !editing){ h=emptyHtml(); }
@@ -606,7 +613,18 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
   }
 
   // ---------- auth ----------
-  function showGate(){$('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');$('authGate').removeAttribute('hidden');}
+  function showGate(){
+    $('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');
+    const eb=$('editBanner');if(eb)eb.hidden=true;
+    $('authGate').removeAttribute('hidden');
+    // 太田塾ハブ（同一ドメイン）でログイン済みのメールを自動入力
+    try{const hubEmail=localStorage.getItem('otajuku_email');
+      if(hubEmail&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(hubEmail)&&!$('authEmail').value){
+        $('authEmail').value=hubEmail;
+        const m=$('authMsg');m.className='gmsg';m.innerHTML='太田塾に登録のメールを入れておきました。<b>「ログインリンクを送る」</b>を押してください。';
+      }
+    }catch(e){}
+  }
   async function sendMagic(){
     const email=($('authEmail').value||'').trim();const msg=$('authMsg');
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.className='gmsg err';msg.textContent='メールアドレスを正しく入力してください。';return;}
