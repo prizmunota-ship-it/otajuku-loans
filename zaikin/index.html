@@ -45,6 +45,8 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .asof{font-size:13.5px;color:var(--muted);}
 .editbtn{font-family:inherit;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:20px;padding:7px 15px;cursor:pointer;white-space:nowrap;}
 .editbtn.on{background:var(--accent);color:#fff;}
+.fab{position:fixed;right:16px;bottom:16px;z-index:45;font-family:inherit;font-size:14.5px;font-weight:800;color:#fff;background:var(--accent);border:none;border-radius:26px;padding:13px 22px;cursor:pointer;box-shadow:0 4px 18px rgba(14,124,107,.45);}
+.fab.on{background:var(--crit);box-shadow:0 4px 18px rgba(199,54,46,.45);}
 .kpis{display:grid;grid-template-columns:1fr;gap:8px;}
 .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:13px 17px;box-shadow:var(--shadow);}
 .kpi .lab{font-size:13.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;margin-bottom:2px;}
@@ -223,8 +225,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     <label for="authEmail">メールアドレス</label>
     <input type="email" id="authEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
     <button class="gbtn" id="authSend">ログインリンクを送る</button>
+    <div id="codeSection" hidden style="margin-top:16px">
+      <label for="authCode">メールに届いた6桁コード</label>
+      <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="text-align:center;letter-spacing:6px;font-family:'Roboto Mono',monospace;font-size:20px;font-weight:700">
+      <button class="gbtn" id="authVerify">ログイン</button>
+    </div>
     <div class="gmsg" id="authMsg"></div>
-    <div class="gnote">入力したデータはあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。他の人には見えません。<br>パスワードは不要——メールに届くリンクをタップするだけでログインできます。</div>
+    <div class="gnote">入力したデータはあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。他の人には見えません。<br>パスワードは不要——メールに届くリンクをタップするだけ。<b>一度ログインすれば、その端末は次回から自動で開きます</b>（毎回の入力は不要）。</div>
   </div>
 </div>
 
@@ -240,6 +247,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   <div id="body"></div>
   <div class="foot" id="foot"></div>
   <div class="modal" id="backupModal" hidden></div>
+  <button class="fab" id="fabEdit">✏️ 編集</button>
 </div>
 
 <script>
@@ -323,6 +331,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function renderHeader(){
     $('asofBox').innerHTML=editing?'<input class="txt small" id="asofInp" placeholder="例）8月25日現在" value="'+esc(state.asof||'')+'" style="max-width:150px">':esc(state.asof||'');
     const b=$('editToggle');b.textContent=editing?'✓ 完了':'✏️ 編集';b.classList.toggle('on',editing);
+    const fb=$('fabEdit');if(fb){fb.textContent=editing?'✓ 完了':'✏️ 編集';fb.classList.toggle('on',editing);}
   }
   function renderKPIs(){
     const T=totals();const t5=Math.round(T.borrow*0.05),d5=T.bal-t5;
@@ -509,7 +518,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   // ---------- events ----------
   document.addEventListener('click',ev=>{
     const t=ev.target;let e;
-    if(t.id==='editToggle'){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}document.body.classList.toggle('editing',editing);render();return;}
+    if(t.id==='editToggle'||t.closest('#fabEdit')){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}document.body.classList.toggle('editing',editing);render();return;}
     if(t.id==='logoutBtn'){doLogout();return;}
     if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id);if(!acc&&!ts)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
@@ -575,6 +584,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     $('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');
     const eb=$('editBanner');if(eb)eb.hidden=true;
     $('authGate').removeAttribute('hidden');
+    $('codeSection').setAttribute('hidden','');const aci=$('authCode');if(aci)aci.value='';const asb=$('authSend');if(asb){asb.disabled=false;asb.textContent='ログインリンクを送る';}
     // 太田塾ハブ（同一ドメイン）でログイン済みのメールを自動入力
     try{const hubEmail=localStorage.getItem('otajuku_email');
       if(hubEmail&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(hubEmail)&&!$('authEmail').value){
@@ -583,16 +593,28 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       }
     }catch(e){}
   }
+  function authEmailVal(){return ($('authEmail').value||'').trim();}
   async function sendMagic(){
-    const email=($('authEmail').value||'').trim();const msg=$('authMsg');
+    const email=authEmailVal();const msg=$('authMsg');
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.className='gmsg err';msg.textContent='メールアドレスを正しく入力してください。';return;}
     $('authSend').disabled=true;msg.className='gmsg';msg.textContent='送信中…';
     try{
       const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
       if(error)throw error;
-      msg.className='gmsg ok';msg.innerHTML='✉️ '+esc(email)+' にログインリンクを送りました。<br>メールを開いてリンクをタップしてください（迷惑メールフォルダもご確認ください）。';
+      $('authSend').textContent='リンクを再送する';
+      msg.className='gmsg ok';msg.innerHTML='✉️ '+esc(email)+' にログイン用メールを送りました。<br><b>メールを開いてリンクをタップ</b>してください（迷惑メールもご確認を）。一度ログインすれば、この端末は次回から自動で開きます。';
     }catch(e){msg.className='gmsg err';msg.textContent='送信に失敗しました：'+((e&&e.message)||'もう一度お試しください');}
     $('authSend').disabled=false;
+  }
+  async function verifyCode(){
+    const email=authEmailVal();const token=($('authCode').value||'').replace(/[^0-9]/g,'');const msg=$('authMsg');
+    if(token.length<6){msg.className='gmsg err';msg.textContent='6桁のコードを入力してください。';return;}
+    $('authVerify').disabled=true;msg.className='gmsg';msg.textContent='確認中…';
+    try{
+      const {error}=await sb.auth.verifyOtp({email,token,type:'email'});
+      if(error)throw error;
+      msg.className='gmsg ok';msg.textContent='✓ ログインしました。';
+    }catch(e){msg.className='gmsg err';msg.textContent='コードが違うか期限切れです。もう一度お試しください。';$('authVerify').disabled=false;}
   }
   async function doLogout(){try{await sb.auth.signOut();}catch(e){}}
   async function enterApp(session){
@@ -614,6 +636,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     $('authSend').addEventListener('click',sendMagic);
     $('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')sendMagic();});
+    $('authVerify').addEventListener('click',verifyCode);
+    $('authCode').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
     sb.auth.getSession().then(({data})=>{
       if(data&&data.session){enterApp(data.session);}else{showGate();}
     }).catch(()=>showGate());
