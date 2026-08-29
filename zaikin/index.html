@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>資金繰り帳</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --surface-2:#F6F8FA; --ink:#1B2430; --muted:#6B7683;
+  --hair:#DDE3E9; --accent:#0E7C6B; --accent-soft:#0E7C6B18;
+  --crit:#C7362E; --crit-bg:#C7362E14; --warn:#B4740B; --warn-bg:#B4740B14; --good:#2E7D4F; --good-bg:#2E7D4F12;
+  --shadow:0 1px 2px rgba(20,30,45,.06),0 4px 16px rgba(20,30,45,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1219; --surface:#151D28; --surface-2:#101822; --ink:#DCE3EC; --muted:#8794A3;
+  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22;
+  --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  --bg:#0D1219; --surface:#151D28; --surface-2:#101822; --ink:#DCE3EC; --muted:#8794A3;
+  --hair:#26313E; --accent:#2FB39C; --accent-soft:#2FB39C22;
+  --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;}
+.num{font-family:"Roboto Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+.wrap{max-width:940px;margin:0 auto;padding:12px 16px 26px;}
+[hidden]{display:none!important;}
+header.top{background:var(--bg);padding-top:8px;margin-bottom:6px;}
+.acctbar{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px;}
+.acctbar .em{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+.syncstat{white-space:nowrap;}
+.logoutbtn{font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
+.title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:9px;}
+h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
+.head-right{display:flex;align-items:center;gap:9px;}
+.asof{font-size:13.5px;color:var(--muted);}
+.editbtn{font-family:inherit;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:20px;padding:7px 15px;cursor:pointer;white-space:nowrap;}
+.editbtn.on{background:var(--accent);color:#fff;}
+.kpis{display:grid;grid-template-columns:1fr;gap:8px;}
+.kpi{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:13px 17px;box-shadow:var(--shadow);}
+.kpi .lab{font-size:13.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;margin-bottom:2px;}
+.kpi .val{font-size:30px;font-weight:800;letter-spacing:-.015em;line-height:1.02;}
+.kpi .sub{font-size:13.5px;color:var(--muted);margin-top:3px;}
+.group{margin-top:10px;}
+.ghead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:15px;padding:13px 16px;box-shadow:var(--shadow);cursor:pointer;font-family:inherit;text-align:left;color:inherit;}
+.ghead.has-crit{border-color:var(--crit);border-left-width:5px;}
+.gh-left{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;}
+.gh-lab{font-size:14px;font-weight:800;color:var(--accent);letter-spacing:.04em;}
+.gh-cnt{color:var(--muted);font-weight:500;font-size:13px;}
+.gh-badge{display:inline-block;font-size:12.5px;font-weight:800;padding:3px 11px;border-radius:20px;}
+.gh-badge.crit{background:var(--crit);color:#fff;}
+.gh-badge.warn{background:var(--warn-bg);color:var(--warn);}
+.gh-sub{font-size:13px;color:var(--muted);}
+.gh-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none;}
+.gh-hint{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:20px;padding:4px 11px;white-space:nowrap;}
+.gh-bal{font-size:22px;font-weight:800;letter-spacing:-.015em;}
+.gh-caret{font-size:11px;color:var(--muted);transition:transform .18s;}
+.ghead[aria-expanded="true"] .gh-caret{transform:rotate(180deg);}
+.gbody{margin-top:8px;}
+.rows{display:flex;flex-direction:column;gap:7px;}
+.row{background:var(--surface);border:1px solid var(--hair);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;}
+.row.row-crit{border:1.5px solid var(--crit);background:var(--crit-bg);}
+.row.row-crit .bankname{color:var(--crit);}
+.rhead{display:grid;grid-template-columns:14px 1fr auto auto;gap:10px;align-items:center;padding:12px 14px 12px 0;cursor:pointer;}
+.row.nopay .rhead,body.editing .rhead{cursor:default;}
+.stripe{width:4px;align-self:stretch;margin:-12px 0;}
+.st-crit{background:var(--crit)} .st-warn{background:var(--warn)} .st-good{background:var(--good)} .st-neu{background:var(--hair)}
+.bankcell{min-width:0;}
+.bankname{font-weight:500;font-size:14.5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.acct{font-size:13px;color:var(--muted);}
+.pct{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.pct b{font-weight:700;color:var(--ink);}
+.pct .pos{color:var(--good);font-weight:700;} .pct .neg{color:var(--crit);font-weight:700;}
+.right{display:flex;flex-direction:column;align-items:flex-end;gap:0;text-align:right;}
+.right .lab{font-size:11px;color:var(--muted);letter-spacing:.03em;}
+.right.pay{justify-content:center;opacity:.9;}
+.right.pay .big{font-size:14.5px;font-weight:500;color:var(--muted);}
+.right.bal .big{font-size:23px;font-weight:800;line-height:1.02;letter-spacing:-.01em;}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+.pill.crit{background:var(--crit-bg);color:var(--crit)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.good{background:var(--good-bg);color:var(--good)}
+.pill.neu{background:var(--surface-2);color:var(--muted)}
+.diff{font-size:13px;margin-top:1px;}
+.diff.pos{color:var(--good)} .diff.neg{color:var(--crit)}
+.caret{transition:transform .18s;color:var(--muted);font-size:11px;}
+.row.open .caret{transform:rotate(90deg);}
+.detail{display:none;border-top:1px solid var(--hair);background:var(--surface-2);padding:8px 14px 12px 18px;}
+.row.open .detail{display:block;}
+.note{font-size:13px;color:var(--ink);white-space:pre-wrap;line-height:1.55;}
+.yen::before{content:"¥";opacity:.55;font-weight:400;margin-right:1px;}
+.inp{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums;font-size:16px;font-weight:700;border:1.5px solid var(--accent);border-radius:9px;padding:7px 9px;background:var(--surface);color:var(--ink);width:100%;max-width:150px;text-align:right;-webkit-appearance:none;}
+.inp:focus{outline:2px solid var(--accent);outline-offset:1px;}
+.inp.small{font-size:13px;max-width:120px;font-weight:500;}
+.right.bal .inp{max-width:130px;}
+.txt{font-family:inherit;font-size:14px;font-weight:600;border:1.5px solid var(--accent);border-radius:9px;padding:7px 9px;background:var(--surface);color:var(--ink);width:100%;}
+.txt.small{font-size:12.5px;font-weight:400;}
+.efield{display:flex;flex-direction:column;gap:3px;margin:6px 0;}
+.efield label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.03em;}
+.erow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.editcard{padding:12px 14px 14px;}
+.editcard .head-line{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px;}
+.grp-pill{font-size:11px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:20px;padding:3px 10px;}
+.del{font-family:inherit;font-size:12px;font-weight:700;color:var(--crit);background:var(--crit-bg);border:1px solid var(--crit);border-radius:9px;padding:6px 11px;cursor:pointer;}
+.del.armed{background:var(--crit);color:#fff;}
+.addbtn{width:100%;font-family:inherit;font-size:14px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1.5px dashed var(--accent);border-radius:12px;padding:13px;cursor:pointer;margin-top:8px;}
+.photorow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;padding:8px 0 2px;border-top:1px dashed var(--hair);margin-top:8px;}
+.thumb{position:relative;width:58px;height:58px;}
+.thumb img{width:58px;height:58px;object-fit:cover;display:block;border-radius:9px;border:1px solid var(--hair);cursor:pointer;background:var(--surface-2);}
+.thx{position:absolute;top:-7px;right:-7px;width:21px;height:21px;border-radius:50%;border:none;background:var(--crit);color:#fff;font-size:11px;cursor:pointer;padding:0;}
+.photobtn{font-family:inherit;font-size:12.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px dashed var(--accent);border-radius:9px;padding:9px 13px;cursor:pointer;}
+.pchip{font-family:inherit;font-size:11.5px;font-weight:700;color:var(--muted);background:var(--surface-2);border:1px solid var(--hair);border-radius:20px;padding:2px 9px;cursor:pointer;display:inline-flex;gap:4px;align-items:center;}
+.cardframe{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:13px 17px;box-shadow:var(--shadow);margin-top:12px;}
+.cf-title{font-size:14px;font-weight:800;margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between;}
+.cf-rows{display:flex;flex-direction:column;gap:8px;}
+.cf-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+.cf-row .cf-lab{font-size:13.5px;color:var(--muted);line-height:1.4;}
+.cf-num{font-size:18px;font-weight:800;white-space:nowrap;}
+.cf-diff{border-top:1.5px solid var(--hair);padding-top:9px;margin-top:1px;}
+.cf-diff .cf-lab{font-weight:700;color:var(--ink);font-size:14px;}
+.cf-num.pos{color:var(--good);} .cf-num.neg{color:var(--crit);}
+.empty{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:26px 20px;box-shadow:var(--shadow);text-align:center;margin-top:12px;}
+.empty h2{font-size:17px;margin:0 0 6px;}
+.empty p{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.6;}
+.empty .row-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.pbtn{font-family:inherit;font-size:14px;font-weight:800;border-radius:11px;padding:11px 18px;cursor:pointer;border:1.5px solid var(--accent);}
+.pbtn.primary{background:var(--accent);color:#fff;} .pbtn.ghost{background:var(--surface);color:var(--accent);}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair);}
+.tbtn{font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:8px 13px;cursor:pointer;}
+.tbtn:hover{color:var(--ink);}
+.savehint{font-size:11.5px;color:var(--muted);margin-top:10px;text-align:center;}
+.foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted);line-height:1.7;}
+.foot b{color:var(--ink);}
+.kpi-link{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:11px;padding:11px 0 0;border:none;border-top:1px solid var(--hair);background:none;font-family:inherit;cursor:pointer;text-align:left;}
+.kl-lab{font-size:13px;font-weight:700;color:var(--ink);}
+.kl-hint{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:20px;padding:4px 11px;white-space:nowrap;flex:none;}
+.kl-hint .tw{font-size:10px;transition:transform .18s;}
+.kpi-link[aria-expanded="true"] .kl-hint .tw{transform:rotate(180deg);}
+.loanframe{background:var(--surface);border:1.5px solid var(--accent);border-radius:14px;padding:12px 15px;box-shadow:var(--shadow);margin-top:8px;}
+.lf-title{font-size:13.5px;font-weight:700;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.lf-title::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);}
+.lf-banks{display:flex;flex-direction:column;}
+.lbank{padding:9px 0;border-top:1px solid var(--hair);}
+.lbank:first-child{border-top:0;padding-top:2px;}
+.lbank .r1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.lbank .bn{font-weight:700;font-size:15px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.btag{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--hair);border-radius:20px;padding:1px 7px;}
+.lbank .df{font-size:15px;font-weight:800;white-space:nowrap;}
+.lbank .df.pos{color:var(--good);} .lbank .df.neg{color:var(--crit);}
+.lbank .r2{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
+.lbank .r2 b{color:var(--ink);font-weight:600;}
+.lf-total{border-top:2px solid var(--accent);margin-top:3px;padding-top:9px;}
+.lf-total .bn{color:var(--accent);}
+.sec-h{display:flex;align-items:center;gap:9px;margin:14px 2px 8px;}
+.sec-h .bar{width:3px;height:16px;border-radius:2px;background:var(--muted);}
+.sec-h h2{font-size:13px;font-weight:700;margin:0;letter-spacing:.04em;color:var(--muted);}
+.tsumi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;}
+.tcard{background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:9px 12px;box-shadow:var(--shadow);position:relative;}
+.tcard .tb{font-size:14px;font-weight:500;}
+.tcard .tv{font-size:16.5px;font-weight:700;margin-top:2px;}
+.tcard .tm{font-size:12.5px;color:var(--muted);}
+.calcbtn{font-family:inherit;font-size:12.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:9px;padding:9px 12px;cursor:pointer;margin-top:6px;width:100%;}
+.calcres{font-size:13px;font-weight:700;margin-top:10px;padding:9px 11px;background:var(--accent-soft);border-radius:8px;line-height:1.7;color:var(--ink);}
+.pov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:22px;}
+.pov img{max-width:100%;max-height:76vh;border-radius:10px;object-fit:contain;}
+.pov-close{position:absolute;top:16px;right:18px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:20px;cursor:pointer;}
+.pov-nav{display:flex;gap:16px;align-items:center;}
+.pov-nav button{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:20px;padding:9px 17px;font-size:14px;cursor:pointer;font-family:inherit;}
+.pov-cnt{color:#fff;font-size:13px;opacity:.85;}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:18px;}
+.mcard{background:var(--surface);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:460px;padding:18px;}
+.mtitle{font-size:16px;font-weight:800;margin-bottom:8px;}
+.mnote{font-size:12.5px;color:var(--muted);line-height:1.6;margin:0 0 12px;}
+.mnote b{color:var(--ink);}
+.mta{width:100%;height:150px;font-family:"Roboto Mono",monospace;font-size:11px;border:1.5px solid var(--hair);border-radius:10px;padding:10px;background:var(--surface-2);color:var(--ink);resize:vertical;}
+.mmsg{font-size:12px;font-weight:700;margin-top:8px;min-height:16px;}
+.mbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;}
+/* login gate */
+.gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;}
+.gcard{background:var(--surface);border:1px solid var(--hair);border-radius:18px;box-shadow:var(--shadow);width:100%;max-width:400px;padding:28px 24px;text-align:center;}
+.gcard h1{font-size:22px;margin:6px 0 4px;}
+.gcard .gsub{font-size:13px;color:var(--muted);margin:0 0 20px;line-height:1.6;}
+.gcard label{display:block;text-align:left;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;}
+.gcard input{width:100%;font-family:inherit;font-size:16px;border:1.5px solid var(--hair);border-radius:11px;padding:12px 13px;background:var(--surface);color:var(--ink);}
+.gcard input:focus{outline:2px solid var(--accent);border-color:var(--accent);}
+.gbtn{width:100%;font-family:inherit;font-size:15px;font-weight:800;color:#fff;background:var(--accent);border:none;border-radius:11px;padding:13px;cursor:pointer;margin-top:14px;}
+.gbtn:disabled{opacity:.5;cursor:default;}
+.gmsg{font-size:13px;margin-top:14px;line-height:1.6;min-height:18px;}
+.gmsg.ok{color:var(--good);font-weight:700;} .gmsg.err{color:var(--crit);font-weight:700;}
+.gnote{font-size:11.5px;color:var(--muted);margin-top:18px;line-height:1.6;border-top:1px solid var(--hair);padding-top:14px;text-align:left;}
+.gnote b{color:var(--ink);}
+.boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;}
+@media(max-width:560px){h1{font-size:18px;} .right.bal .big{font-size:19px;} .inp{max-width:118px;font-size:15px;} .erow{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="boot" id="bootScreen">読み込み中…</div>
+
+<div class="gate" id="authGate" hidden>
+  <div class="gcard">
+    <div style="font-size:32px">🏦</div>
+    <h1>資金繰り帳</h1>
+    <p class="gsub">各口座の残高と毎月の返済額を入れるだけ。資金ショートしそうな口座を自動で色分けします。</p>
+    <label for="authEmail">メールアドレス</label>
+    <input type="email" id="authEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
+    <button class="gbtn" id="authSend">ログインリンクを送る</button>
+    <div class="gmsg" id="authMsg"></div>
+    <div class="gnote">入力したデータはあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。他の人には見えません。<br>パスワードは不要——メールに届くリンクをタップするだけでログインできます。</div>
+  </div>
+</div>
+
+<div class="wrap" id="appWrap" hidden>
+  <header class="top">
+    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
+    <div class="title-row">
+      <h1>資金繰り帳</h1>
+      <div class="head-right"><span class="asof" id="asofBox"></span><button class="editbtn" id="editToggle">✏️ 編集</button></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </header>
+  <div id="body"></div>
+  <div class="foot" id="foot"></div>
+  <input type="file" id="photoInput" accept="image/*" multiple hidden>
+  <div class="pov" id="pov" hidden></div>
+  <div class="modal" id="backupModal" hidden></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const SUPABASE_URL='https://xhbgmnousqkoiqaruprr.supabase.co';
+  const SUPABASE_KEY='sb_publishable_ZhUJDpEF1nCnMYunq27dzg_vcdmjPlc';
+
+  const $=id=>document.getElementById(id);
+  const yen=n=>Number(n||0).toLocaleString('ja-JP');
+  const pnum=s=>{const t=String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[ー－−―]/g,'-').replace(/[^0-9-]/g,'');const n=parseInt(t,10);return isNaN(n)?0:n;};
+  const pfloat=s=>{const t=String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[．]/g,'.').replace(/[^0-9.]/g,'');const n=parseFloat(t);return isNaN(n)?0:n;};
+  const uid=()=>'a'+Math.random().toString(36).slice(2,9)+(performance.now()|0).toString(36);
+  const judge=a=>{if(!a.pay)return 'neu';if((+a.bal)<(+a.pay))return 'crit';if((+a.bal)<(+a.pay)*1.3)return 'warn';return 'good';};
+  const LAB={crit:'不足',warn:'薄い',good:'OK',neu:'—'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+  const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+  const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch(e){return false;}};
+
+  // ---------- state ----------
+  function defaultState(){return {v:1, asof:'', accounts:[], tsumi:[], card:{on:false,pay:0,acctId:null}};}
+  let state=defaultState();
+  function normalizeState(){if(!state||!state.accounts)state=defaultState();if(!state.tsumi)state.tsumi=[];if(!state.card)state.card={on:false,pay:0,acctId:null};state.accounts.forEach(a=>{if(!a.photos)a.photos=[];});}
+  const acctById=id=>state.accounts.find(a=>a.id===id);
+  const inGrp=g=>state.accounts.filter(a=>a.grp===g);
+
+  // ---------- cloud sync ----------
+  let sb=null, CURRENT_UID=null, syncTimer=null;
+  const cacheKey=()=>'zaikin_saas_cache_'+(CURRENT_UID||'anon');
+  const readCache=()=>{try{const r=lsGet(cacheKey());return r?JSON.parse(r):null;}catch(e){return null;}};
+  function setSync(txt){const el=$('syncStat');if(el)el.textContent=txt;}
+  function save(){
+    lsSet(cacheKey(),JSON.stringify(state));
+    if(!CURRENT_UID)return;
+    setSync('保存中…');
+    if(syncTimer)clearTimeout(syncTimer);
+    syncTimer=setTimeout(cloudSaveNow,900);
+  }
+  async function cloudSaveNow(){
+    if(!CURRENT_UID||!sb)return;
+    try{
+      const {error}=await sb.from('ledgers').upsert({user_id:CURRENT_UID,data:state,updated_at:new Date().toISOString()});
+      if(error)throw error;
+      setSync('☁️ 同期済み');
+    }catch(e){setSync('⚠️ 未同期（この端末に保存済み）');}
+  }
+  async function cloudLoad(){
+    if(!sb||!CURRENT_UID)return undefined;
+    try{
+      const {data,error}=await sb.from('ledgers').select('data').eq('user_id',CURRENT_UID).maybeSingle();
+      if(error)throw error;
+      return data?data.data:null;
+    }catch(e){return undefined;}
+  }
+
+  // ---------- photos (IndexedDB・端末内) ----------
+  let db=null; const photoURL={};
+  function openDB(){return new Promise(res=>{try{
+    const rq=indexedDB.open('zaikin_photos',1);
+    rq.onupgradeneeded=()=>{const d=rq.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p');};
+    rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(null);
+  }catch(e){res(null);}});}
+  function idbPut(id,blob){return new Promise(res=>{if(!db)return res(false);try{const t=db.transaction('p','readwrite');t.objectStore('p').put(blob,id);t.oncomplete=()=>res(true);t.onerror=()=>res(false);}catch(e){res(false);}});}
+  function idbDel(id){return new Promise(res=>{if(!db)return res();try{const t=db.transaction('p','readwrite');t.objectStore('p').delete(id);t.oncomplete=()=>res();t.onerror=()=>res();}catch(e){res();}});}
+  function idbGet(id){return new Promise(res=>{if(!db)return res(null);try{const t=db.transaction('p','readonly');const rq=t.objectStore('p').get(id);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);}catch(e){res(null);}});}
+  async function loadAllPhotoURLs(){
+    const ids=[];state.accounts.forEach(a=>(a.photos||[]).forEach(id=>ids.push(id)));
+    for(const id of ids){if(photoURL[id])continue;const b=await idbGet(id);if(b){try{photoURL[id]=URL.createObjectURL(b);}catch(e){}}}
+  }
+  async function downscaleBlob(file){
+    const max=1400,q=0.62;let bmp;
+    try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'});}
+    catch(e){bmp=await new Promise((rs,rj)=>{const im=new Image();im.onload=()=>rs(im);im.onerror=rj;im.src=URL.createObjectURL(file);});}
+    const sc=Math.min(1,max/Math.max(bmp.width,bmp.height));
+    const w=Math.round(bmp.width*sc),h=Math.round(bmp.height*sc);
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(bmp,0,0,w,h);
+    return await new Promise(rs=>c.toBlob(rs,'image/jpeg',q));
+  }
+
+  // ---------- runtime flags ----------
+  let editing=false;
+  const gexp={'法人':true,'個人':true};
+  let pv={ids:[],i:0};
+  let photoTargetId=null;
+  let armedDel=null,armedTimer=null;
+  let lfOpen=false,calcId=null;
+  function armDel(id){armedDel=id;if(armedTimer)clearTimeout(armedTimer);armedTimer=setTimeout(()=>{armedDel=null;if(editing)render();},4000);}
+
+  // ---------- render ----------
+  function totals(){
+    let bal=0,pay=0,borrow=0;
+    state.accounts.forEach(a=>{bal+=+a.bal||0;pay+=+a.pay||0;borrow+=+a.borrow||0;});
+    (state.tsumi||[]).forEach(t=>{bal+=+t.bal||0;});
+    return {bal,pay,borrow};
+  }
+  const tsumiInGrp=g=>(state.tsumi||[]).filter(t=>t.grp===g);
+  const tsumiById=id=>(state.tsumi||[]).find(t=>t.id===id);
+  function calcLoan(P,ratePct,years,elapsed){
+    P=+P;const r=(+ratePct)/100/12;const n=Math.round((+years)*12);
+    if(!(P>0&&n>0))return null;
+    let pay=(r===0)?P/n:P*r/(1-Math.pow(1+r,-n));
+    const k=Math.min(Math.max(0,Math.floor(+elapsed||0)),n);
+    let bal=(r===0)?P-pay*k:P*Math.pow(1+r,k)-pay*(Math.pow(1+r,k)-1)/r;
+    return {pay:Math.round(pay),bal:Math.max(0,Math.round(bal)),n:n,remaining:n-k};
+  }
+  function renderHeader(){
+    $('asofBox').innerHTML=editing?'<input class="txt small" id="asofInp" placeholder="例）8月25日現在" value="'+esc(state.asof||'')+'" style="max-width:150px">':esc(state.asof||'');
+    const b=$('editToggle');b.textContent=editing?'✓ 完了':'✏️ 編集';b.classList.toggle('on',editing);
+  }
+  function renderKPIs(){
+    const T=totals();const t5=Math.round(T.borrow*0.05),d5=T.bal-t5;
+    let h='<div class="kpi"><div class="lab">総預金残高</div><div class="val num yen">'+yen(T.bal)+'</div>'
+      +'<div class="sub num">毎月返済 ¥'+yen(T.pay)+'</div>';
+    if(T.borrow>0) h+='<div class="sub num">借入5%の目安 ¥'+yen(t5)+'　<span style="color:var(--'+(d5<0?'crit':'good')+');font-weight:700">'+(d5<0?'▲':'+')+'¥'+yen(Math.abs(d5))+'</span></div>';
+    if(T.borrow>0) h+='<button class="kpi-link" id="lfToggle" aria-expanded="'+lfOpen+'"><span class="kl-lab">🏦 金融機関ごとの借入まとめ</span><span class="kl-hint"><span class="kl-htxt">'+(lfOpen?'閉じる':'明細を表示')+'</span><span class="tw">▾</span></span></button>';
+    h+='</div>';
+    if(T.borrow>0 && lfOpen) h+=loanframeHtml();
+    $('kpis').innerHTML=h;
+  }
+  function loanframeHtml(){
+    const byBank={};
+    state.accounts.filter(a=>(+a.borrow)>0).forEach(a=>{const key=a.bank||'（無名）';if(!byBank[key])byBank[key]={bank:key,borrow:0,bal:0,grps:[]};const b=byBank[key];b.borrow+=+a.borrow;b.bal+=+a.bal;b.grps.push(a.grp);});
+    const banks=Object.values(byBank).sort((x,y)=>y.borrow-x.borrow);
+    const gSum=banks.reduce((s,b)=>s+b.borrow,0),gDep=banks.reduce((s,b)=>s+b.bal,0);
+    const row=(b,isTotal)=>{const t5=Math.round(b.borrow*0.05),diff=b.bal-t5,ratio=b.borrow?(b.bal/b.borrow*100):0;
+      const tag=isTotal?'':'<span class="btag">'+[...new Set(b.grps)].join('＋')+'</span>';
+      return '<div class="lbank'+(isTotal?' lf-total':'')+'"><div class="r1"><span class="bn">'+esc(b.bank)+tag+'</span><span class="df '+(diff<0?'neg':'pos')+'">差 '+(diff<0?'▲':'+')+'¥'+yen(Math.abs(diff))+'</span></div>'
+        +'<div class="r2">借入 <b class="num yen">'+yen(b.borrow)+'</b> ・ 預金 <b class="num yen">'+yen(b.bal)+'</b>（<span class="num">'+ratio.toFixed(1)+'%</span>） ・ 5%目安 <b class="num yen">'+yen(t5)+'</b></div></div>';};
+    return '<div class="loanframe"><div class="lf-title">金融機関ごとの借入まとめ（法人＋個人 合算）</div><div class="lf-banks">'
+      +banks.map(b=>row(b,false)).join('')+row({bank:'合計',borrow:gSum,bal:gDep,grps:[]},true)+'</div></div>';
+  }
+  function accRow(a){
+    const st=judge(a),diff=(+a.bal)-(+a.pay);
+    const t5=a.borrow?Math.round(a.borrow*0.05):0,d5=(+a.bal)-t5;
+    const photos=a.photos||[];
+    if(editing){
+      return '<div class="row editcard" data-id="'+a.id+'">'
+        +'<div class="head-line"><span class="grp-pill">'+a.grp+'</span><button class="del'+(armedDel===a.id?' armed':'')+'" data-del="'+a.id+'">'+(armedDel===a.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
+        +'<div class="efield"><label>金融機関・口座名</label><input class="txt f-bank" data-id="'+a.id+'" value="'+esc(a.bank)+'" placeholder="例）〇〇銀行"></div>'
+        +'<div class="erow"><div class="efield"><label>支店</label><input class="txt small f-branch" data-id="'+a.id+'" value="'+esc(a.branch||'')+'" placeholder="任意"></div>'
+        +'<div class="efield"><label>口座番号</label><input class="txt small f-acct" data-id="'+a.id+'" value="'+esc(a.acct||'')+'" placeholder="任意"></div></div>'
+        +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp f-bal" inputmode="numeric" data-id="'+a.id+'" value="'+(a.bal||0)+'" style="max-width:none"></div>'
+        +'<div class="efield"><label>毎月返済（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+(a.pay||0)+'" style="max-width:none"></div></div>'
+        +'<div class="efield"><label>借入残高（円・任意／5%目安の計算に使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+(a.borrow||0)+'" style="max-width:none;text-align:right"></div>'
+        +'<div class="efield"><label>返済の内訳・メモ（任意）</label><textarea class="txt small f-note" data-id="'+a.id+'" rows="2" placeholder="例）物件A 120,000 / 物件B 80,000">'+esc(a.note||'')+'</textarea></div>'
+        +'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>'
+        +'<div class="photorow">'+photos.map((id,i)=>'<div class="thumb"><img src="'+(photoURL[id]||'')+'" data-id="'+a.id+'" data-i="'+i+'"><button class="thx" data-id="'+a.id+'" data-i="'+i+'">✕</button></div>').join('')
+        +'<button class="photobtn" data-photo="'+a.id+'">＋ 通帳写真</button></div>'
+        +'</div>';
+    }
+    const hasDetail=a.note;
+    const pchip=photos.length?'<button class="pchip" data-pchip="'+a.id+'">📷 '+photos.length+'</button>':'';
+    const statusPill=a.pay?'<span class="pill '+st+'">'+LAB[st]+'</span>':'';
+    let html='<div class="row'+(a.pay?'':' nopay')+(st==='crit'?' row-crit':'')+'" data-id="'+a.id+'">'
+      +'<div class="rhead"><div class="stripe st-'+st+'"></div>'
+      +'<div class="bankcell"><div class="bankname">'+esc(a.bank||'（無名口座）')+(hasDetail?'<span class="caret">▶</span>':'')+' '+statusPill+' '+pchip+'</div>'
+      +'<div class="acct">'+esc(a.branch||'')+' '+esc(a.acct||'')+'</div>'
+      +(a.borrow>0?'<div class="pct">借入 <b class="num yen">'+yen(a.borrow)+'</b>／5%目安 <b class="num yen">'+yen(t5)+'</b>　<span class="'+(d5<0?'neg':'pos')+'">差 '+(d5<0?'▲':'+')+'¥'+yen(Math.abs(d5))+'</span></div>':'')
+      +'</div>'
+      +'<div class="right pay"><div class="lab">毎月返済</div><div class="big num">'+(a.pay?yen(a.pay):'—')+'</div></div>'
+      +'<div class="right bal"><div class="lab">残高</div><div class="big num yen">'+yen(a.bal)+'</div>'
+      +(a.pay?'<div class="diff num '+(diff<0?'neg':'pos')+'">'+(diff<0?'▲':'+')+yen(Math.abs(diff))+' '+(diff<0?'不足':'余裕')+'</div>':'<span class="pill neu" style="margin-top:3px">'+LAB[st]+'</span>')
+      +'</div></div>';
+    if(hasDetail) html+='<div class="detail"><div class="note">'+esc(a.note)+'</div></div>';
+    html+='</div>';
+    return html;
+  }
+  function groupHtml(g){
+    const accts=inGrp(g);
+    const nCrit=accts.filter(a=>judge(a)==='crit').length;
+    const nWarn=accts.filter(a=>judge(a)==='warn').length;
+    const ts=tsumiInGrp(g);
+    const bal=accts.reduce((s,a)=>s+(+a.bal||0),0)+ts.reduce((s,t)=>s+(+t.bal||0),0);
+    const pay=accts.reduce((s,a)=>s+(+a.pay||0),0);
+    const open=!!gexp[g];
+    const badge=nCrit?'<span class="gh-badge crit">⚠️ 不足 '+nCrit+'</span>':(nWarn?'<span class="gh-badge warn">薄め '+nWarn+'</span>':'');
+    let rows=accts.map(accRow).join('');
+    if(editing) rows+='<button class="addbtn" data-add="'+g+'">＋ '+g+'の口座を追加</button>';
+    if(ts.length||editing){
+      rows+='<div class="sec-h"><span class="bar"></span><h2>'+g+' 積立（積金）</h2></div>';
+      if(editing){
+        rows+=ts.map(t=>'<div class="row editcard" data-tid="'+t.id+'"><div class="head-line"><span class="grp-pill">積立</span><button class="del'+(armedDel===t.id?' armed':'')+'" data-del="'+t.id+'">'+(armedDel===t.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
+          +'<div class="efield"><label>金融機関・積立名</label><input class="txt tf-bank" data-tid="'+t.id+'" value="'+esc(t.bank||'')+'" placeholder="例）〇〇積金"></div>'
+          +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp tf-bal" inputmode="numeric" data-tid="'+t.id+'" value="'+(t.bal||0)+'" style="max-width:none"></div>'
+          +'<div class="efield"><label>毎月の積立（円）</label><input class="inp tf-mo" inputmode="numeric" data-tid="'+t.id+'" value="'+(t.mo||0)+'" style="max-width:none"></div></div></div>').join('');
+        rows+='<button class="addbtn" data-addt="'+g+'">＋ '+g+'の積立を追加</button>';
+      } else {
+        rows+='<div class="tsumi">'+ts.map(t=>'<div class="tcard"><div class="tb">'+esc(t.bank||'積立')+'</div><div class="tv num yen">'+yen(t.bal)+'</div><div class="tm num">積立 '+yen(t.mo)+'/月</div></div>').join('')+'</div>';
+      }
+    }
+    return '<div class="group">'
+      +'<button class="ghead'+(nCrit?' has-crit':'')+'" data-g="'+g+'" aria-expanded="'+open+'">'
+      +'<div class="gh-left"><div class="gh-lab">'+g+' 合計 <span class="gh-cnt">'+accts.length+'口座</span></div>'+badge+'<div class="gh-sub num">毎月返済 ¥'+yen(pay)+'</div></div>'
+      +'<div class="gh-right"><span class="gh-bal num yen">'+yen(bal)+'</span><span class="gh-hint"><span class="gh-htxt">'+(open?'閉じる':'口座を表示')+'</span><span class="gh-caret">▾</span></span></div>'
+      +'</button><div class="gbody"'+(open?'':' hidden')+'><div class="rows">'+rows+'</div></div></div>';
+  }
+  function cardHtml(){
+    const c=state.card;
+    if(editing){
+      let opts='<option value="">（口座を選択）</option>'+state.accounts.map(a=>'<option value="'+a.id+'"'+(c.acctId===a.id?' selected':'')+'>'+esc(a.bank||'口座')+'</option>').join('');
+      return '<div class="cardframe"><div class="cf-title"><span>💳 クレジットカードの支払い</span>'
+        +'<label style="font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px"><input type="checkbox" id="cardOn"'+(c.on?' checked':'')+'> 表示する</label></div>'
+        +(c.on?'<div class="erow"><div class="efield"><label>毎月のカード支払額（円）</label><input class="inp" id="cardPay" inputmode="numeric" value="'+(c.pay||0)+'" style="max-width:none"></div>'
+        +'<div class="efield"><label>支払口座</label><select class="txt small" id="cardAcct">'+opts+'</select></div></div>':'')
+        +'</div>';
+    }
+    if(!c.on) return '';
+    const acc=acctById(c.acctId);const bal=acc?(+acc.bal):0;const diff=bal-(+c.pay);
+    return '<div class="cardframe"><div class="cf-title"><span>💳 クレジットカードの支払い</span></div><div class="cf-rows">'
+      +'<div class="cf-row"><span class="cf-lab">今月のカード支払額</span><span class="cf-num num yen">'+yen(c.pay)+'</span></div>'
+      +'<div class="cf-row"><span class="cf-lab">支払口座の預金<small>'+(acc?esc(acc.bank):'—')+'</small></span><span class="cf-num num yen">'+yen(bal)+'</span></div>'
+      +'<div class="cf-row cf-diff"><span class="cf-lab">差額（預金 − 支払）</span><span class="cf-num num '+(diff<0?'neg':'pos')+'">'+(diff<0?'▲':'+')+'¥'+yen(Math.abs(diff))+'</span></div>'
+      +'</div></div>';
+  }
+  function emptyHtml(){
+    return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
+      +'<p>各口座の<b>残高</b>と<b>毎月の返済額</b>を入れるだけ。<br>「残高が毎月返済を下回る口座」を自動で色分けし、資金ショートを未然に防ぎます。<br>入力内容はあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。</p>'
+      +'<div class="row-btns"><button class="pbtn primary" data-add="法人">＋ 口座を追加する</button><button class="pbtn ghost" id="seedBtn">サンプルを見る</button></div></div>';
+  }
+  function render(){
+    renderHeader();renderKPIs();
+    let h='';
+    if(state.accounts.length===0 && !editing){ h=emptyHtml(); }
+    else { h=groupHtml('法人')+groupHtml('個人')+cardHtml(); }
+    if(editing){
+      h+='<div class="toolbar"><button class="tbtn" id="exportBtn">⬇︎ バックアップを書き出す</button><button class="tbtn" id="importBtn">⬆︎ バックアップを読み込む</button></div>'
+        +'<div class="savehint">入力は自動でクラウドに保存され、ログインすればどの端末でも同じ内容が出ます。</div>';
+    }
+    $('body').innerHTML=h;
+    renderFoot();
+  }
+  function renderFoot(){
+    $('foot').innerHTML='<b>判定</b>：残高＜毎月返済額 → <span style="color:var(--crit)">不足</span>／残高＜返済×1.3 → <span style="color:var(--warn)">薄い</span>／それ以外 → <span style="color:var(--good)">OK</span>。'
+      +'借入残高を入れた口座は「借入5%を現預金で持つ」目安も表示します。<br>'
+      +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。'
+      +'通帳写真はお使いの端末内のみの保存です（撮った写真の元データはスマホのカメラロールに残ります）。';
+  }
+
+  // ---------- photo viewer ----------
+  function openPov(ids,i){pv={ids:ids.slice(),i:i||0};renderPov();$('pov').removeAttribute('hidden');}
+  function povNav(d){if(!pv.ids.length)return;pv.i=(pv.i+d+pv.ids.length)%pv.ids.length;renderPov();}
+  function renderPov(){const p=$('pov');if(!pv.ids.length){p.setAttribute('hidden','');return;}
+    const url=photoURL[pv.ids[pv.i]]||'';
+    p.innerHTML='<button class="pov-close">✕</button><img src="'+url+'"><div class="pov-nav">'+(pv.ids.length>1?'<button class="pov-prev">‹ 前</button><span class="pov-cnt">'+(pv.i+1)+' / '+pv.ids.length+'</span><button class="pov-next">次 ›</button>':'<span class="pov-cnt">通帳写真</span>')+'</div>';}
+
+  // ---------- backup ----------
+  function backupText(){const s=JSON.parse(JSON.stringify(state));s.accounts.forEach(a=>{a.photos=[];});return JSON.stringify({app:'zaikin_otajuku',v:1,state:s});}
+  function openBackup(mode){
+    const m=$('backupModal');
+    if(mode==='export'){
+      m.innerHTML='<div class="mcard"><div class="mtitle">バックアップを書き出す</div>'
+        +'<p class="mnote">数字はクラウドに自動保存されていますが、控えが欲しい時はこの文字を<b>全部コピー</b>して保管できます。<br>※通帳写真は含まれません（端末内保存）。</p>'
+        +'<textarea class="mta" id="mExport" readonly></textarea>'
+        +'<div class="mmsg" id="mMsg"></div>'
+        +'<div class="mbtns"><button class="pbtn primary" id="mCopy">コピー</button><button class="pbtn ghost" data-mclose>閉じる</button></div></div>';
+      m.removeAttribute('hidden');const ta=$('mExport');ta.value=backupText();ta.focus();ta.select();
+    }else{
+      m.innerHTML='<div class="mcard"><div class="mtitle">バックアップを読み込む</div>'
+        +'<p class="mnote">書き出したバックアップの文字を下に貼り付けて「読み込む」を押してください。<br><b>今入っている内容は置き換わります。</b></p>'
+        +'<textarea class="mta" id="mImport" placeholder="ここにバックアップを貼り付け"></textarea>'
+        +'<div class="mmsg" id="mMsg"></div>'
+        +'<div class="mbtns"><button class="pbtn primary" id="mDoImport">読み込む</button><button class="pbtn ghost" data-mclose>閉じる</button></div></div>';
+      m.removeAttribute('hidden');$('mImport').focus();
+    }
+  }
+  function setMMsg(txt,err){const m=$('mMsg');if(m){m.textContent=txt;m.style.color=err?'var(--crit)':'var(--good)';}}
+  function doImport(){
+    const t=$('mImport').value.trim();if(!t){setMMsg('バックアップの文字を貼り付けてください。',true);return;}
+    let obj;try{obj=JSON.parse(t);}catch(e){setMMsg('うまく読み取れませんでした。全文が貼れているか確認してください。',true);return;}
+    const st=(obj&&obj.state&&obj.state.accounts)?obj.state:((obj&&obj.accounts)?obj:null);
+    if(!st){setMMsg('資金繰り帳のバックアップではないようです。',true);return;}
+    state=st;normalizeState();save();$('backupModal').setAttribute('hidden','');render();
+  }
+
+  // ---------- ローン電卓 ----------
+  let calcResult=null;
+  function openCalc(id){
+    const a=acctById(id);if(!a)return;calcId=id;calcResult=null;
+    const L=a.loan||{};const m=$('backupModal');
+    m.innerHTML='<div class="mcard"><div class="mtitle">🧮 返済の自動計算</div>'
+      +'<p class="mnote">返済予定表や契約書を見ながら<b>借入額・年利・返済年数</b>を入れてください。毎月返済額と現在の借入残高を計算して、この口座に反映します。</p>'
+      +'<div class="efield"><label>借入額（円）</label><input class="inp" id="cLoan" inputmode="numeric" value="'+(L.amount||'')+'" style="max-width:none" placeholder="例）50000000"></div>'
+      +'<div class="erow"><div class="efield"><label>年利（％）</label><input class="inp" id="cRate" inputmode="decimal" value="'+(L.rate!=null&&L.rate!==''?L.rate:'')+'" style="max-width:none" placeholder="例）2.5"></div>'
+      +'<div class="efield"><label>返済年数（年）</label><input class="inp" id="cYears" inputmode="numeric" value="'+(L.years||'')+'" style="max-width:none" placeholder="例）30"></div></div>'
+      +'<div class="efield"><label>返済スタートからの経過月数（任意・残高計算用）</label><input class="inp" id="cElapsed" inputmode="numeric" value="'+(L.elapsed||'')+'" style="max-width:none;text-align:right" placeholder="例）12（1年経過）"></div>'
+      +'<div class="calcres" id="cRes">借入額・年利・返済年数を入れると結果が出ます。</div>'
+      +'<div class="mbtns"><button class="pbtn primary" id="cApply">この口座に反映</button><button class="pbtn ghost" data-mclose>閉じる</button></div></div>';
+    m.removeAttribute('hidden');calcPreview();$('cLoan').focus();
+  }
+  function calcPreview(){
+    const P=pnum($('cLoan').value),rate=pfloat($('cRate').value),years=pfloat($('cYears').value),el=pnum($('cElapsed').value);
+    calcResult=calcLoan(P,rate,years,el);const box=$('cRes');if(!box)return;
+    if(!calcResult){box.innerHTML='借入額・年利・返済年数を入れると結果が出ます。';return;}
+    box.innerHTML='毎月返済額 <b class="num yen">'+yen(calcResult.pay)+'</b><br>現在の借入残高 <b class="num yen">'+yen(calcResult.bal)+'</b> '
+      +(el>0?'<span style="font-weight:400;color:var(--muted)">（残り約'+(calcResult.remaining/12).toFixed(1)+'年）</span>':'<span style="font-weight:400;color:var(--muted)">（経過月数を入れると残高が減ります）</span>');
+  }
+  function applyCalc(){
+    const a=acctById(calcId);if(!a||!calcResult)return;
+    a.pay=calcResult.pay;a.borrow=calcResult.bal;
+    a.loan={amount:pnum($('cLoan').value),rate:pfloat($('cRate').value),years:pfloat($('cYears').value),elapsed:pnum($('cElapsed').value)};
+    save();$('backupModal').setAttribute('hidden','');render();
+  }
+
+  // ---------- events ----------
+  document.addEventListener('click',ev=>{
+    const t=ev.target;let e;
+    if(t.id==='editToggle'){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}document.body.classList.toggle('editing',editing);render();return;}
+    if(t.id==='logoutBtn'){doLogout();return;}
+    if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id);if(!acc&&!ts)return;
+      if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
+        if(acc){(acc.photos||[]).forEach(pid=>{idbDel(pid);if(photoURL[pid]){try{URL.revokeObjectURL(photoURL[pid]);}catch(_){}delete photoURL[pid];}});state.accounts=state.accounts.filter(x=>x.id!==id);}
+        else{state.tsumi=state.tsumi.filter(x=>x.id!==id);}
+        save();render();}
+      else{armDel(id);render();}
+      return;}
+    if(armedDel){armedDel=null;if(armedTimer)clearTimeout(armedTimer);if(editing&&document.querySelector('.del.armed'))render();}
+    if(e=t.closest('[data-add]')){const g=e.getAttribute('data-add');const a={grp:g,id:uid(),bank:'',branch:'',acct:'',bal:0,pay:0,borrow:0,note:'',photos:[]};state.accounts.push(a);if(!editing){editing=true;gexp['法人']=true;gexp['個人']=true;document.body.classList.add('editing');}save();render();const inp=document.querySelector('.f-bank[data-id="'+a.id+'"]');if(inp)inp.focus();return;}
+    if(e=t.closest('[data-addt]')){const g=e.getAttribute('data-addt');const t2={grp:g,id:uid(),bank:'',bal:0,mo:0};state.tsumi.push(t2);save();render();const inp=document.querySelector('.tf-bank[data-tid="'+t2.id+'"]');if(inp)inp.focus();return;}
+    if(e=t.closest('[data-calc]')){openCalc(e.getAttribute('data-calc'));return;}
+    if(t.id==='cApply'){applyCalc();return;}
+    if(e=t.closest('#lfToggle')){lfOpen=!lfOpen;render();return;}
+    if(t.id==='seedBtn'){seed();return;}
+    if(e=t.closest('.thx')){const id=e.getAttribute('data-id'),i=+e.getAttribute('data-i');const a=acctById(id);if(a&&a.photos){const pid=a.photos[i];idbDel(pid);if(photoURL[pid]){try{URL.revokeObjectURL(photoURL[pid]);}catch(_){}delete photoURL[pid];}a.photos.splice(i,1);save();render();}return;}
+    if(t.tagName==='IMG'&&t.closest('.thumb')){const a=acctById(t.getAttribute('data-id'));if(a)openPov(a.photos,+t.getAttribute('data-i'));return;}
+    if(e=t.closest('[data-pchip]')){const a=acctById(e.getAttribute('data-pchip'));if(a)openPov(a.photos,0);return;}
+    if(e=t.closest('[data-photo]')){photoTargetId=e.getAttribute('data-photo');$('photoInput').click();return;}
+    if(t.closest('.pov-close')||t.id==='pov'){$('pov').setAttribute('hidden','');return;}
+    if(t.closest('.pov-prev')){povNav(-1);return;}
+    if(t.closest('.pov-next')){povNav(1);return;}
+    if(t.id==='exportBtn'){openBackup('export');return;}
+    if(t.id==='importBtn'){openBackup('import');return;}
+    if(t.id==='mCopy'){const ta=$('mExport');if(ta){ta.focus();ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value);ok=true;}}catch(e){}setMMsg(ok?'✓ コピーしました。':'上の文字を長押し→全選択してコピーしてください。',!ok);}return;}
+    if(t.id==='mDoImport'){doImport();return;}
+    if(t.closest('[data-mclose]')||t.id==='backupModal'){$('backupModal').setAttribute('hidden','');return;}
+    if(e=t.closest('.ghead')){const g=e.getAttribute('data-g');gexp[g]=!gexp[g];render();return;}
+    if(e=t.closest('.rhead')){if(editing)return;if(t.closest('input')||t.closest('button'))return;const row=e.closest('.row');if(row&&row.querySelector('.detail'))row.classList.toggle('open');return;}
+  });
+  document.addEventListener('input',ev=>{
+    const t=ev.target;if(!t.classList)return;const id=t.getAttribute('data-id');const a=id?acctById(id):null;
+    const tid=t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
+    if(t.classList.contains('f-bank')&&a){a.bank=t.value;save();return;}
+    if(t.classList.contains('f-branch')&&a){a.branch=t.value;save();return;}
+    if(t.classList.contains('f-acct')&&a){a.acct=t.value;save();return;}
+    if(t.classList.contains('f-note')&&a){a.note=t.value;save();return;}
+    if(t.classList.contains('tf-bank')&&ts){ts.bank=t.value;save();return;}
+    if(t.id==='asofInp'){state.asof=t.value;save();return;}
+    if(t.id==='cLoan'||t.id==='cRate'||t.id==='cYears'||t.id==='cElapsed'){calcPreview();return;}
+  });
+  document.addEventListener('change',ev=>{
+    const t=ev.target;if(!t.classList&&t.id!=='cardOn')return;const id=t.getAttribute&&t.getAttribute('data-id');const a=id?acctById(id):null;
+    const tid=t.getAttribute&&t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
+    if(t.classList.contains('f-bal')&&a){a.bal=pnum(t.value);save();render();return;}
+    if(t.classList.contains('f-pay')&&a){a.pay=pnum(t.value);save();render();return;}
+    if(t.classList.contains('f-borrow')&&a){a.borrow=pnum(t.value);save();render();return;}
+    if(t.classList.contains('tf-bal')&&ts){ts.bal=pnum(t.value);save();render();return;}
+    if(t.classList.contains('tf-mo')&&ts){ts.mo=pnum(t.value);save();render();return;}
+    if(t.id==='cardOn'){state.card.on=t.checked;save();render();return;}
+    if(t.id==='cardPay'){state.card.pay=pnum(t.value);save();return;}
+    if(t.id==='cardAcct'){state.card.acctId=t.value||null;save();return;}
+  });
+
+  function seed(){
+    state={v:1,asof:'（サンプル）',card:{on:true,pay:180000,acctId:null},tsumi:[
+      {grp:'法人',id:uid(),bank:'A銀行 積金',bal:800000,mo:50000},
+      {grp:'個人',id:uid(),bank:'C銀行 積金',bal:240000,mo:20000}
+    ],accounts:[
+      {grp:'法人',id:uid(),bank:'A銀行',branch:'本店',acct:'1234567',bal:3200000,pay:850000,borrow:96000000,note:'物件① 500,000 / 物件② 350,000',photos:[]},
+      {grp:'法人',id:uid(),bank:'B信用金庫',branch:'〇〇支店',acct:'2345678',bal:180000,pay:250000,borrow:0,note:'',photos:[]},
+      {grp:'個人',id:uid(),bank:'C銀行',branch:'△△支店',acct:'3456789',bal:1500000,pay:300000,borrow:38000000,note:'自宅ローン',photos:[]}
+    ]};
+    state.card.acctId=state.accounts[2].id;
+    save();render();
+  }
+
+  // ---------- auth ----------
+  function showGate(){$('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');$('authGate').removeAttribute('hidden');}
+  async function sendMagic(){
+    const email=($('authEmail').value||'').trim();const msg=$('authMsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.className='gmsg err';msg.textContent='メールアドレスを正しく入力してください。';return;}
+    $('authSend').disabled=true;msg.className='gmsg';msg.textContent='送信中…';
+    try{
+      const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+      if(error)throw error;
+      msg.className='gmsg ok';msg.innerHTML='✉️ '+esc(email)+' にログインリンクを送りました。<br>メールを開いてリンクをタップしてください（迷惑メールフォルダもご確認ください）。';
+    }catch(e){msg.className='gmsg err';msg.textContent='送信に失敗しました：'+((e&&e.message)||'もう一度お試しください');}
+    $('authSend').disabled=false;
+  }
+  async function doLogout(){try{await sb.auth.signOut();}catch(e){}}
+  async function enterApp(session){
+    CURRENT_UID=session.user.id;
+    $('acctEmail').textContent=session.user.email||'';
+    $('authGate').setAttribute('hidden','');$('bootScreen').setAttribute('hidden','');$('appWrap').removeAttribute('hidden');
+    setSync('読み込み中…');
+    const cloud=await cloudLoad();
+    if(cloud===undefined){const c=readCache();state=(c&&c.accounts)?c:defaultState();setSync('⚠️ オフライン（この端末に保存）');}
+    else if(cloud&&cloud.accounts){state=cloud;setSync('☁️ 同期済み');}
+    else{state=defaultState();setSync('☁️ 同期済み');normalizeState();await cloudSaveNow();}
+    normalizeState();
+    editing=false;document.body.classList.remove('editing');
+    render();
+    openDB().then(d=>{db=d;return loadAllPhotoURLs();}).then(()=>render());
+  }
+
+  function boot(){
+    if(!window.supabase){$('bootScreen').textContent='読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。';return;}
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    $('authSend').addEventListener('click',sendMagic);
+    $('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')sendMagic();});
+    sb.auth.getSession().then(({data})=>{
+      if(data&&data.session){enterApp(data.session);}else{showGate();}
+    }).catch(()=>showGate());
+    sb.auth.onAuthStateChange((event,session)=>{
+      if((event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')&&session&&CURRENT_UID!==session.user.id){enterApp(session);}
+      else if(event==='SIGNED_OUT'){CURRENT_UID=null;state=defaultState();showGate();$('authMsg').textContent='';$('authEmail').value='';}
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
+</script>
+</body>
+</html>
