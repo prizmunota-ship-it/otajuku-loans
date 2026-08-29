@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.0</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.1</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='22'; /* v15.0＝類似物件を「条件の近さの点数」で母集団100室→10件に絞る方式へ。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
+const APIV='23'; /* v15.0＝類似物件を「条件の近さの点数」で母集団100室→10件に絞る方式へ。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -1095,6 +1095,32 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       cmp=pick;
     }
   }
+  /* ★★2026-08-30 太田指示＝賃料査定システムと同じ水準にする。
+     募集事例の賃料をそのまま並べると、面積・築年・駅からの距離が違う物件が同列になり、
+     本物件の実力より1割以上低い金額が出ていた（戸畑・実測＝当方31,000円／査定システム36,218円）。
+     査定システムの補正額を実データから逆算＝面積1㎡500円／築年1年500円／駅徒歩1分300円
+     （ほかに階数0.7%/階・向き0.75%/段階・設備500円があるが、募集一覧から取得できないので補正しない）。
+     各事例を「本物件と同じ条件だったらいくらか」に引き直した金額＝補正後賃料。 */
+  const ownWalk=(()=>{const m=String(stationTxt||'').match(/徒歩(\d+)分/);return m?+m[1]:null;})();
+  const stG=opts.station&&opts.station.lat!=null?opts.station:null;
+  const walkOf=c=>{
+    if(!stG||c.lat==null)return null;
+    /* 直線距離を道路距離に換算（×1.3）して80m/分＝本レポートの他の徒歩分数と同じ計算 */
+    return Math.max(1,Math.round(dist(stG.lat,stG.lon,c.lat,c.lon)*1.3/80));
+  };
+  const ADJ={men:500,age:500,walk:300};
+  const adjRent=c=>{
+    if(!(c.total>0))return null;
+    let a=c.total;const used=[];
+    if(own.men>0&&c.men>0){a+=(own.men-c.men)*ADJ.men;used.push('専有面積');}
+    if(ownAge!=null&&c.age!=null){a+=(c.age-ownAge)*ADJ.age;used.push('築年数');}
+    if(ownWalk!=null){const w=walkOf(c);if(w!=null){a+=(w-ownWalk)*ADJ.walk;c._walk=w;used.push('駅からの距離');}}
+    if(!used.length)return null;
+    c._adjUsed=used;
+    return Math.max(0,Math.round(a));
+  };
+  cmp.forEach(c=>{c._adj=adjRent(c);});
+  const hasAdj=cmp.some(c=>c._adj>0);
   let mismatch=0;
   const cut=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n)+'…':s;};
   const stShort=s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'';};
@@ -1102,7 +1128,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     c.no=i+1;
     const off=ownCity&&c.addr&&c.addr.indexOf(ownCity)<0;if(off)mismatch++;
     const dtxt=c.d!=null?(c.d>=1000?(c.d/1000).toFixed(1)+'km':c.d+'m'):'—';
-    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${cut(c.name,16)}</td><td style="font-size:10.5px;color:#475569;white-space:nowrap">${cut((c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'').replace(/^.{2,6}?[市郡].{0,4}?区?/,''),14)}${off?' <span style="color:#d97706">※別</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r">${(c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
+    rows+=`<tr><td class="no"><span style="background:#d97706">${c.no}</span></td><td class="nm">${cut(c.name,16)}</td><td style="font-size:10.5px;color:#475569;white-space:nowrap">${cut((c.addr||'—').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)/,'').replace(/^.{2,6}?[市郡].{0,4}?区?/,''),14)}${off?' <span style="color:#d97706">※別</span>':''}</td><td class="r" style="font-weight:700">${dtxt}</td><td class="r">${c.age!=null?'築'+c.age+'年':'—'}</td><td style="font-size:10.5px">${stShort(c.struct)||'—'}</td><td class="r">${c.men!=null?c.men.toFixed(2)+'㎡':'—'}</td><td class="r">${c.total.toLocaleString()}円</td><td class="r"${c._adj>0?' style="font-weight:700;color:#166534"':''}>${c._adj>0?c._adj.toLocaleString()+'円':((c.men>0)?Math.round(c.total/c.men).toLocaleString()+'円':'—')}</td><td class="r" style="font-size:10.5px">${parkTxt(c.name)}</td></tr>`;});
   /* ★成約事例（太田指示 2026-08-14）＝募集中とは別の建物の、掲載が終了した募集の実績。
      青の行（薄青背景・青バッジ）で募集中と色分けし、番号は募集中の続き＝地図の青ピンと連動。 */
   let histN=0;
@@ -1120,6 +1146,12 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   /* ★賃料引き直しの目安（太田要望 2026-08-14）＝周辺の募集事例の㎡単価を本物件の面積に
      当てはめた金額。推計であることが分かるよう算出根拠（㎡単価の中央値・件数）を必ず併記する。
      築年の近い事例だけで出せるときはそちらを使う（築年差は賃料に効くため）。 */
+  /* ★★2026-08-30 太田指示＝賃料査定システムと同じ水準にする。
+     募集事例の賃料をそのまま平均すると、面積・築年・駅からの距離が違う物件が同列に並び、
+     本物件の実力より1割以上低い金額が出ていた（戸畑・実測＝当方31,000円／査定システム36,218円）。
+     査定システムの補正額を実データから逆算すると 面積1㎡＝500円／築年1年＝500円／駅徒歩1分＝300円
+     （ほかに階数0.7%/階・向き0.75%/段階・設備500円があるが、募集一覧からは取得できないため補正しない）。
+     ここでは各事例の賃料を「本物件と同じ条件だったらいくらか」に引き直す。 */
   const reset=(()=>{
     if(!(own.men>0))return null;
     /* ★引き直しの母数は「間取り・面積・築年・構造の条件を満たした行」だけで作る（2026-08-30）。
@@ -1129,6 +1161,20 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const strictU=cmp.filter(c=>c.men>0&&c.total>0&&!c._relaxed);
     const withU=strictU.length>=3?strictU:cmp.filter(c=>c.men>0&&c.total>0);
     if(withU.length<3)return null;
+    /* ①補正が効く場合＝各事例を本物件の条件に引き直した金額の中央値をそのまま採用する。
+       補正で面積・築年・駅距離の差を吸収しているので、築年の近い事例だけに絞る必要はない
+       （査定システムも築28〜40年と広めに取って補正している）。 */
+    const adjU=withU.filter(c=>c._adj>0);
+    if(adjU.length>=3){
+      const as=adjU.map(c=>c._adj).sort((a,b)=>a-b);
+      const md=as.length%2?as[(as.length-1)/2]:(as[as.length/2-1]+as[as.length/2])/2;
+      const qa=t=>as[Math.min(as.length-1,Math.max(0,Math.round((as.length-1)*t)))];
+      const rr=v=>Math.round(v/1000)*1000;
+      const kinds=[...new Set(adjU.flatMap(c=>c._adjUsed||[]))];
+      return {mode:'adj',med:Math.round(md/own.men),est:rr(md),lo:rr(qa(0.25)),hi:rr(qa(0.75)),
+        n:adjU.length,kinds:kinds.join('・'),basis:'掲載事例'};
+    }
+    /* ②面積しか揃わない場合の従来方式＝㎡単価の中央値×本物件の面積 */
     const near=(ownAge!=null)?withU.filter(c=>c.age!=null&&Math.abs(c.age-ownAge)<=ageTol()):[];
     const use=near.length>=3?near:withU;
     const us=use.map(c=>c.total/c.men).sort((a,b)=>a-b);
@@ -1232,7 +1278,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       return bits.length?'<div class="note scronly" style="border:0;margin:0 0 8px;padding:0;line-height:1.7">'+bits.join('<br>')+'</div>':'';
     })()}`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})(structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct))}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${ownUnit>0?ownUnit.toLocaleString()+'円':'—'}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})(structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct))}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${hasAdj?'<span style="color:#166534;font-weight:700">基準</span>':(ownUnit>0?ownUnit.toLocaleString()+'円':'—')}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
   const kpi=specTbl; /* ℹ️の長い案内は廃止（太田指示 2026-08-14「内容よくわからないので不要」） */
   let note='',tbl='';
   if(cmp.length===0){
@@ -1289,7 +1335,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':'周辺で募集中の類似物件'}</div>${areaWarn}
-      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:60px;text-align:right">本物件から</th><th style="width:52px;text-align:right">築年</th><th style="width:48px">構造</th><th style="width:68px;text-align:right">面積</th><th style="width:90px;text-align:right">月額総額</th><th style="width:70px;text-align:right">㎡単価</th><th style="width:66px;text-align:right">駐車場</th></tr>${rows}</table>`
+      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:60px;text-align:right">本物件から</th><th style="width:52px;text-align:right">築年</th><th style="width:48px">構造</th><th style="width:68px;text-align:right">面積</th><th style="width:90px;text-align:right">月額総額</th><th style="width:70px;text-align:right">${hasAdj?'補正後<div style="font-size:8.5px;font-weight:400;color:#94a3b8">本物件条件</div>':'㎡単価'}</th><th style="width:66px;text-align:right">駐車場</th></tr>${rows}</table>`
+      +(hasAdj?`<div class="note" style="margin:4px 0 0;font-size:9.5px;color:#475569">「補正後」＝各事例の月額総額を、本物件の専有面積・築年数・駅からの距離の差で引き直した金額（専有面積1㎡あたり500円／築年1年あたり500円／駅徒歩1分あたり300円）。条件を本物件に揃えたうえでの比較です。</div>`:'')
       /* ★駐車場の相場（太田要望 2026-08-13）＝周辺の募集情報に書かれた駐車場代の中央値。
          「相場データベース」は公的に存在しないので、実際の募集から集計するのが唯一の実データ。 */
       +(reset?`<div style="display:flex;align-items:center;gap:9px;margin:6px 0 0;padding:6px 11px;background:#f0fdf4;border:1px solid #86efac;border-left:5px solid #16a34a;border-radius:6px;flex-wrap:wrap;row-gap:2px">
@@ -1297,7 +1344,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         <span style="font-size:19px;font-weight:900;color:#15803d;line-height:1">月額 ${reset.est.toLocaleString()}円</span>
         <span style="font-size:11px;color:#166534">（${reset.lo.toLocaleString()}〜${reset.hi.toLocaleString()}円）</span>
         ${hasOwn?`<span style="font-size:11.5px;font-weight:800;color:${reset.est>=own.min?'#15803d':'#9a3412'}">現在 ${own.min.toLocaleString()}円 → ${reset.est>=own.min?'＋':'△'}${Math.abs(reset.est-own.min).toLocaleString()}円/月（年 ${reset.est>=own.min?'＋':'△'}${(Math.abs(reset.est-own.min)*12).toLocaleString()}円）</span>`:''}
-        <span style="font-size:9.5px;color:#166534;flex-basis:100%;line-height:1.4">周辺${reset.basis}${reset.n}件の㎡単価 中央値${reset.med.toLocaleString()}円/㎡ × ${own.men.toFixed(2)}㎡ による試算（募集条件・室内状況により変動）</span>
+        <span style="font-size:9.5px;color:#166534;flex-basis:100%;line-height:1.4">${reset.mode==='adj'
+          ?`周辺${reset.basis}${reset.n}件を、本物件の${reset.kinds}の差で補正した金額の中央値（${reset.med.toLocaleString()}円/㎡相当）。補正額＝専有面積1㎡あたり500円・築年1年あたり500円・駅徒歩1分あたり300円（募集条件・室内状況により変動）`
+          :`周辺${reset.basis}${reset.n}件の㎡単価 中央値${reset.med.toLocaleString()}円/㎡ × ${own.men.toFixed(2)}㎡ による試算（募集条件・室内状況により変動）`}</span>
       </div>`:'')
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div style="display:flex;align-items:center;gap:9px;margin:6px 0 0;padding:6px 11px;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #ea580c;border-radius:6px">
         <span style="font-size:12px;font-weight:800;color:#9a3412;white-space:nowrap">🅿️ 周辺の駐車場相場</span>
@@ -2439,11 +2488,11 @@ async function buildReport(g){
   if(ownMen<=0&&bldg>0&&units>0)ownMen=Math.round(bldg/units*100)/100;
   if(rmin>0){
     compHtml=buildCompPaper(cmp,{min:rmin,max:rmax>0?rmax:rmin,men:ownMen},val('pappeal'),stationTxt,userNum('page'),g.title,
-      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal('pmadori'),name:query,struct:structIn()});
+      {derived:derivedRent,units:units,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal("pmadori"),name:query,struct:structIn(),station:st0});
   }else if(cmp.length>0){
     /* 賃料未入力でも自動検索した募集事例は表で見せる（v3.1） */
     compHtml=buildCompPaper(cmp,null,val('pappeal'),stationTxt,userNum('page'),g.title,
-      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal('pmadori'),name:query,struct:structIn()});
+      {derived:false,units:0,center:[g.lat,g.lon],radius:radius,city:cityOf(g.title),md:userVal("pmadori"),name:query,struct:structIn(),station:st0});
   }else{
     /* 未入力でもページは出す（何を入れれば良いか案内） */
     const city=cityOf(g.title);
