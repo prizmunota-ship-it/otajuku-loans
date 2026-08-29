@@ -225,14 +225,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     <p class="gsub">各口座の残高と毎月の返済額を入れるだけ。資金ショートしそうな口座を自動で色分けします。</p>
     <label for="authEmail">メールアドレス</label>
     <input type="email" id="authEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">
-    <button class="gbtn" id="authSend">ログインリンクを送る</button>
-    <div id="codeSection" hidden style="margin-top:16px">
-      <label for="authCode">メールに届いた6桁コード</label>
-      <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="text-align:center;letter-spacing:6px;font-family:'Roboto Mono',monospace;font-size:20px;font-weight:700">
-      <button class="gbtn" id="authVerify">ログイン</button>
-    </div>
+    <label for="authPass" style="margin-top:12px">パスワード（6文字以上・自分で決めてOK）</label>
+    <input type="password" id="authPass" autocomplete="current-password" placeholder="パスワード">
+    <button class="gbtn" id="authSend">はじめる / ログイン</button>
     <div class="gmsg" id="authMsg"></div>
-    <div class="gnote">入力したデータはあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。他の人には見えません。<br>パスワードは不要——メールに届くリンクをタップするだけ。<b>一度ログインすれば、その端末は次回から自動で開きます</b>（毎回の入力は不要）。</div>
+    <div class="gnote">初めての方は、メールアドレスと好きなパスワードを入れて「はじめる」を押すだけ（メール確認は不要・すぐ使えます）。2回目からは同じ2つでログイン。<br>入力したデータは<b>あなたのアカウントに保存</b>され、<b>スマホでもPCでも同じ内容</b>が見られます（他の人には見えません）。<b>一度ログインすれば、その端末は次回から自動で開きます。</b></div>
   </div>
 </div>
 
@@ -585,37 +582,37 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     $('bootScreen').setAttribute('hidden','');$('appWrap').setAttribute('hidden','');
     const eb=$('editBanner');if(eb)eb.hidden=true;
     $('authGate').removeAttribute('hidden');
-    $('codeSection').setAttribute('hidden','');const aci=$('authCode');if(aci)aci.value='';const asb=$('authSend');if(asb){asb.disabled=false;asb.textContent='ログインリンクを送る';}
+    const asb=$('authSend');if(asb)asb.disabled=false;const apw=$('authPass');if(apw)apw.value='';
     // 太田塾ハブ（同一ドメイン）でログイン済みのメールを自動入力
     try{const hubEmail=localStorage.getItem('otajuku_email');
       if(hubEmail&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(hubEmail)&&!$('authEmail').value){
         $('authEmail').value=hubEmail;
-        const m=$('authMsg');m.className='gmsg';m.innerHTML='太田塾に登録のメールを入れておきました。<b>「ログインリンクを送る」</b>を押してください。';
+        const m=$('authMsg');m.className='gmsg';m.innerHTML='太田塾に登録のメールを入れておきました。<b>パスワードを決めて「はじめる」</b>を押してください。';
       }
     }catch(e){}
   }
   function authEmailVal(){return ($('authEmail').value||'').trim();}
-  async function sendMagic(){
-    const email=authEmailVal();const msg=$('authMsg');
+  async function doAuth(){
+    const email=authEmailVal();const password=$('authPass').value||'';const msg=$('authMsg');
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.className='gmsg err';msg.textContent='メールアドレスを正しく入力してください。';return;}
-    $('authSend').disabled=true;msg.className='gmsg';msg.textContent='送信中…';
+    if(password.length<6){msg.className='gmsg err';msg.textContent='パスワードは6文字以上にしてください。';return;}
+    $('authSend').disabled=true;msg.className='gmsg';msg.textContent='確認中…';
     try{
-      const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-      if(error)throw error;
-      $('authSend').textContent='リンクを再送する';
-      msg.className='gmsg ok';msg.innerHTML='✉️ '+esc(email)+' にログイン用メールを送りました。<br><b>メールを開いてリンクをタップ</b>してください（迷惑メールもご確認を）。一度ログインすれば、この端末は次回から自動で開きます。';
-    }catch(e){msg.className='gmsg err';msg.textContent='送信に失敗しました：'+((e&&e.message)||'もう一度お試しください');}
+      // 既存ユーザーはログイン
+      const si=await sb.auth.signInWithPassword({email,password});
+      if(!si.error){msg.className='gmsg ok';msg.textContent='✓ ログインしました。';return;}
+      // 失敗＝新規の可能性→登録を試す
+      const su=await sb.auth.signUp({email,password});
+      if(su.error){
+        msg.className='gmsg err';
+        msg.textContent=/registered|exist/i.test(su.error.message||'')?'このメールは登録済みです。パスワードが違います。':('エラー：'+(su.error.message||'もう一度お試しください'));
+      } else if(su.data&&su.data.session){
+        msg.className='gmsg ok';msg.textContent='✓ アカウントを作成してログインしました。';
+      } else {
+        msg.className='gmsg ok';msg.innerHTML='✉️ 確認メールを送りました。メール内のリンクをタップすると使えます。';
+      }
+    }catch(e){msg.className='gmsg err';msg.textContent='エラー：'+((e&&e.message)||'もう一度お試しください');}
     $('authSend').disabled=false;
-  }
-  async function verifyCode(){
-    const email=authEmailVal();const token=($('authCode').value||'').replace(/[^0-9]/g,'');const msg=$('authMsg');
-    if(token.length<6){msg.className='gmsg err';msg.textContent='6桁のコードを入力してください。';return;}
-    $('authVerify').disabled=true;msg.className='gmsg';msg.textContent='確認中…';
-    try{
-      const {error}=await sb.auth.verifyOtp({email,token,type:'email'});
-      if(error)throw error;
-      msg.className='gmsg ok';msg.textContent='✓ ログインしました。';
-    }catch(e){msg.className='gmsg err';msg.textContent='コードが違うか期限切れです。もう一度お試しください。';$('authVerify').disabled=false;}
   }
   async function doLogout(){try{await sb.auth.signOut();}catch(e){}}
   async function enterApp(session){
@@ -635,10 +632,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function boot(){
     if(!window.supabase){$('bootScreen').textContent='読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。';return;}
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    $('authSend').addEventListener('click',sendMagic);
-    $('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')sendMagic();});
-    $('authVerify').addEventListener('click',verifyCode);
-    $('authCode').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+    $('authSend').addEventListener('click',doAuth);
+    $('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('authPass').focus();});
+    $('authPass').addEventListener('keydown',e=>{if(e.key==='Enter')doAuth();});
     sb.auth.getSession().then(({data})=>{
       if(data&&data.session){enterApp(data.session);}else{showGate();}
     }).catch(()=>showGate());
