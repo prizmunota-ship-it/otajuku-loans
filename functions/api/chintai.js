@@ -173,7 +173,10 @@ async function enrich(items, get, origin, nPark, nAddr) {
         // 構造（SUUMO詳細で取れなかった物件の補完）と、募集終了事例（掲載履歴）。
         // 履歴は「過去の募集時点の賃料」であって成約賃料ではない——表示側で必ず明記する。
         if (!it.bstruct && j.struct) it.bstruct = j.struct;
-        if (j.history && j.history.length) it.hist = j.history.filter((h) => h.rent > 0).slice(0, 4);
+        // ★掲載履歴は稀に小数点が落ちた値が混ざる（1.98万円→198万円＝実測 2026-08-30
+        //   ホワイトパレス戸畑）。居住用の月額としてありえない値は捨てる。
+        if (j.history && j.history.length)
+          it.hist = j.history.filter((h) => h.rent >= 5000 && h.rent <= 500000).slice(0, 4);
       }
     } catch (e) { /* 取れなければ丁目までの住所のまま使う */ }
   }

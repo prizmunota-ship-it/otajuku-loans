@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.2</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.3</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1064,6 +1064,28 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       soft.forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:c._soft}));
     }
     outCnt=window.CMP_EXCLUDED.length;
+    /* ★★2026-08-30＝賃料引き直しの母数を広げる。
+       表に載る10件だけだと、査定システムの100戸に対してサンプルが少なすぎる
+       （戸畑・実測＝当方8件／査定システム100戸）。補正で距離の差は吸収しているので、
+       地図と表は調査対象範囲のままにして、金額の母数だけ調査範囲の1.5倍まで広げる。
+       条件（間取り・面積・築年・構造・㎡単価の外れ値・自物件除外）は表と同じものを掛け、
+       1棟1件に集約する。 */
+    {
+      const seenW=new Set(),wide=[];
+      allRows.forEach(c=>{
+        if(c.d==null||c.d>R*1.5)return;
+        if(ownNames.length&&ownNames.indexOf(baseName(c.name))>=0)return;
+        if(!(c.men>0&&c.total>0))return;
+        if(uMed>0&&c.total/c.men>uMed*1.5)return;
+        if(opts.md&&c.md&&!sameMd(c.md,opts.md))return;
+        if(own.men>0&&Math.abs(c.men-own.men)/own.men>0.25)return;
+        if(ownAge!=null&&c.age!=null&&Math.abs(c.age-ownAge)>AGE_TOL)return;
+        if(ownCat&&c.struct&&structCat(c.struct)&&structCat(c.struct)!==ownCat)return;
+        const k=bkey(c.name);if(k&&seenW.has(k))return;if(k)seenW.add(k);
+        wide.push(c);
+      });
+      window.CMP_WIDE=wide;window.CMP_WIDE_R=Math.round(R*1.5);
+    }
     const pick=uniq.slice(0,CAP);
     pick.sort((a,b)=>a.d-b.d);
     uniq.slice(CAP).forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:'掲載枠（'+CAP+'件）超過'}));
@@ -1129,6 +1151,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     return Math.max(0,Math.round(a));
   };
   cmp.forEach(c=>{c._adj=adjRent(c);});
+  (window.CMP_WIDE||[]).forEach(c=>{if(c._adj==null)c._adj=adjRent(c);});
   const hasAdj=cmp.some(c=>c._adj>0);
   let mismatch=0;
   const cut=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n)+'…':s;};
@@ -1173,7 +1196,9 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     /* ①補正が効く場合＝各事例を本物件の条件に引き直した金額の中央値をそのまま採用する。
        補正で面積・築年・駅距離の差を吸収しているので、築年の近い事例だけに絞る必要はない
        （査定システムも築28〜40年と広めに取って補正している）。 */
-    const adjU=withU.filter(c=>c._adj>0);
+    /* 母数は「調査範囲の1.5倍まで広げた条件適合物件」を優先。少ないときは掲載分で出す */
+    const wideU=(window.CMP_WIDE||[]).filter(c=>c._adj>0);
+    const adjU=wideU.length>withU.filter(c=>c._adj>0).length?wideU:withU.filter(c=>c._adj>0);
     if(adjU.length>=3){
       const as=adjU.map(c=>c._adj).sort((a,b)=>a-b);
       const md=as.length%2?as[(as.length-1)/2]:(as[as.length/2-1]+as[as.length/2])/2;
@@ -1181,7 +1206,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const rr=v=>Math.round(v/1000)*1000;
       const kinds=[...new Set(adjU.flatMap(c=>c._adjUsed||[]))];
       return {mode:'adj',med:Math.round(md/own.men),est:rr(md),lo:rr(qa(0.25)),hi:rr(qa(0.75)),
-        n:adjU.length,kinds:kinds.join('・'),basis:'掲載事例'};
+        n:adjU.length,kinds:kinds.join('・'),basis:'募集事例',wide:adjU===wideU};
     }
     /* ②面積しか揃わない場合の従来方式＝㎡単価の中央値×本物件の面積 */
     const near=(ownAge!=null)?withU.filter(c=>c.age!=null&&Math.abs(c.age-ownAge)<=ageTol()):[];
@@ -1354,7 +1379,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         <span style="font-size:11px;color:#166534">（${reset.lo.toLocaleString()}〜${reset.hi.toLocaleString()}円）</span>
         ${hasOwn?`<span style="font-size:11.5px;font-weight:800;color:${reset.est>=own.min?'#15803d':'#9a3412'}">現在 ${own.min.toLocaleString()}円 → ${reset.est>=own.min?'＋':'△'}${Math.abs(reset.est-own.min).toLocaleString()}円/月（年 ${reset.est>=own.min?'＋':'△'}${(Math.abs(reset.est-own.min)*12).toLocaleString()}円）</span>`:''}
         <span style="font-size:9.5px;color:#166534;flex-basis:100%;line-height:1.4">${reset.mode==='adj'
-          ?`周辺${reset.basis}${reset.n}件を、本物件の${reset.kinds}の差で補正した金額の中央値（${reset.med.toLocaleString()}円/㎡相当）。補正額＝専有面積1㎡あたり500円・築年1年あたり500円・駅徒歩1分あたり300円（募集条件・室内状況により変動）`
+          ?`周辺${reset.wide?`半径${(window.CMP_WIDE_R||0).toLocaleString()}m以内の`:''}${reset.basis}${reset.n}件を、本物件の${reset.kinds}の差で補正した金額の中央値（${reset.med.toLocaleString()}円/㎡相当）。補正額＝専有面積1㎡あたり500円・築年1年あたり500円・駅徒歩1分あたり300円（募集条件・室内状況により変動）`
           :`周辺${reset.basis}${reset.n}件の㎡単価 中央値${reset.med.toLocaleString()}円/㎡ × ${own.men.toFixed(2)}㎡ による試算（募集条件・室内状況により変動）`}</span>
       </div>`:'')
       +((window.CHINTAI&&window.CHINTAI.park&&window.CHINTAI.park.n>0)?`<div style="display:flex;align-items:center;gap:9px;margin:6px 0 0;padding:6px 11px;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #ea580c;border-radius:6px">
