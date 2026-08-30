@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.6</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.7</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -2194,7 +2194,23 @@ function showConfirm(res,query){
   const c=document.getElementById('confirm');c.style.display='block';
   document.getElementById('confaddr').innerHTML='📍 <b>'+res.title+'</b>　<span style="color:#9ca3af">（特定方法：'+(res.src||'地図検索')+'）</span>';
   const w=document.getElementById('confwarn');
-  if(res.src!=='Places'&&res.locType&&res.locType!=='ROOFTOP'){
+  /* ★Placesは物件名が見つからないと"似た名前の別の建物"を平気で返す（ROOFTOPで返るので
+     精度の警告にも掛からない）。実測＝「プライマリー鷹の巣」→「プレアール鷹の巣」（2026-08-30）。
+     掴んだ建物の名前が入力名と噛み合っていないときは、はっきり警告する。 */
+  const nameMismatch=(()=>{
+    if(res.src!=='Places'||!looksLikeName(query))return false;
+    const nz=x=>String(x||'').replace(/[\s　・･]/g,'').replace(/[ａ-ｚＡ-Ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0)).toUpperCase();
+    const got=nz(String(res.title||'').split(/[　\s]/)[0]),want=nz(query);
+    if(!got||!want)return false;
+    return got.indexOf(want)<0&&want.indexOf(got)<0;
+  })();
+  if(nameMismatch){
+    w.style.display='block';
+    w.innerHTML='⚠️ <b>入力した物件名では見つからず、名前の似た別の建物を表示しています。</b>'
+      +'このまま作成すると、別の建物を本物件として調べてしまいます。'
+      +'<br>購入後に名前を変えた物件は、<b>「別名・旧名」欄に以前の名前</b>を入れると当たります（例：プライマリー鷹の巣→シャトレ鷹の巣Ⅴ）。'
+      +'地図を見てずれていたら、ピンを実際の位置にドラッグしてから作成してください。';
+  }else if(res.src!=='Places'&&res.locType&&res.locType!=='ROOFTOP'){
     w.style.display='block';
     w.innerHTML='⚠️ <b>建物単位まで特定できていない可能性があります。</b>地図を確認し、ずれていたらピンを実際の物件位置にドラッグしてから作成してください。';
   }else{w.style.display='none';}
