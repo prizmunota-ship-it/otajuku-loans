@@ -14,19 +14,19 @@
   --bg:#FAF4E4; --surface:#FFFFFF; --surface-2:#FBF6EA; --ink:#26200F; --muted:#8C7C54;
   --hair:#ECE1C6; --accent:#B07D06; --accent-soft:#B07D0618;
   --corp:#2A4E8F; --corp-soft:#2A4E8F16;
-  --crit:#C7362E; --crit-bg:#C7362E14; --warn:#B4740B; --warn-bg:#B4740B14; --good:#2E7D4F; --good-bg:#2E7D4F12;
+  --crit:#C7362E; --crit-bg:#C7362E14; --warn:#B4740B; --warn-bg:#B4740B14; --good:#0F7A63; --good-bg:#0F7A6314;
   --shadow:0 1px 2px rgba(120,95,20,.06),0 4px 16px rgba(120,95,20,.06);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#17130A; --surface:#221D11; --surface-2:#1B1710; --ink:#EFE7D2; --muted:#A99A76;
   --hair:#37311F; --accent:#E3B647; --accent-soft:#E3B64722; --corp:#7B9CE6; --corp-soft:#7B9CE622;
-  --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
+  --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#43C8A4; --good-bg:#43C8A41c;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }}
 :root[data-theme="dark"]{
   --bg:#17130A; --surface:#221D11; --surface-2:#1B1710; --ink:#EFE7D2; --muted:#A99A76;
   --hair:#37311F; --accent:#E3B647; --accent-soft:#E3B64722; --corp:#7B9CE6; --corp-soft:#7B9CE622;
-  --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#5FC98A; --good-bg:#5FC98A16;
+  --crit:#F0685E; --crit-bg:#F0685E1c; --warn:#E5A63B; --warn-bg:#E5A63B1c; --good:#43C8A4; --good-bg:#43C8A41c;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
@@ -59,6 +59,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .g-corp .gh-hint{color:var(--corp);background:var(--corp-soft);}
 .g-corp>.gbody .row:not(.row-crit){border-left-color:var(--corp);border-left-width:5px;}
 .g-corp>.gbody .row .stripe.st-good{background:var(--corp);}
+.g-ind>.gbody .row .stripe.st-good{background:var(--accent);}
 .g-ind>.gbody .row:not(.row-crit){border-left-color:var(--accent);border-left-width:5px;}
 .ghead.has-crit{border-color:var(--crit);border-left-width:5px;}
 .gh-left{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;}
