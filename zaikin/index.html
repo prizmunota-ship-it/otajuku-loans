@@ -548,7 +548,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(pendingScroll){const sel=pendingScroll==='個人'?'.g-ind':pendingScroll==='法人'?'.g-corp':'.cardframe';const el=document.querySelector(sel);if(el){try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){el.scrollIntoView();}}pendingScroll=null;}
   }
   function renderFoot(){
-    $('foot').innerHTML=(!demoMode&&!editing?'<div class="foot-demo"><button class="demolink" data-demo="1">📋 入力例を見る（数字が入った見本）</button></div>':'')
+    $('foot').innerHTML=(!demoMode&&!editing&&state.accounts.length>0?'<div class="foot-demo"><button class="demolink" data-demo="1">📋 入力例を見る（数字が入った見本）</button></div>':'')
       +'<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。'
       +'借入残高を入れた口座は「借入5%を現預金で持つ」目安も表示します。<br>'
       +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。';
