@@ -571,27 +571,27 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(!events.length){
       var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0);
       if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
-        +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくらになるか（＋か赤字か）」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
+        +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくら不足するか」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
       return '';
     }
     events.sort(function(a,b){return a.date-b.date;});
     var shorts=events.filter(function(e){return e.diff<0;});
-    var totalShort=shorts.reduce(function(s,e){return s+(-e.diff);},0);
-    var h='<div class="forecast'+(shorts.length?' has-short':' all-ok')+'"><div class="fc-head">📅 資金ショート予報<small>（返済日ごとに、引き落とし後いくら＋／−になるか）</small></div>';
-    if(shorts.length){
-      var f=shorts[0];
-      h+='<div class="fc-alert"><span class="fc-a-date">'+md(f.date)+'・'+cd(f.date)+'</span>「'+esc(f.name)+'」が <b class="num">赤字 ▲¥'+yen(-f.diff)+'</b></div>';
-      if(shorts.length>1) h+='<div class="fc-sub">赤字になる引き落とし '+shorts.length+'件・不足合計 <b class="num">▲¥'+yen(totalShort)+'</b></div>';
-    }else{
-      h+='<div class="fc-ok">✓ 直近の引き落としは、すべて残高で足ります</div>';
+    if(!shorts.length){
+      return '<div class="forecast all-ok"><div class="fc-head">📅 資金ショート予報</div>'
+        +'<div class="fc-ok">✓ 直近の引き落としは、すべて残高で足ります（不足はありません）</div></div>';
     }
-    h+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">その日の残高</span></div>';
-    events.forEach(function(e){ var neg=e.diff<0;
-      h+='<div class="fc-row'+(neg?' fc-crit':'')+'">'
+    var totalShort=shorts.reduce(function(s,e){return s+(-e.diff);},0);
+    var f=shorts[0];
+    var h='<div class="forecast has-short"><div class="fc-head">📅 資金ショート予報<small>（返済日に預金が不足するものだけ表示）</small></div>';
+    h+='<div class="fc-alert"><span class="fc-a-date">'+md(f.date)+'・'+cd(f.date)+'</span>「'+esc(f.name)+'」が <b class="num">不足 ▲¥'+yen(-f.diff)+'</b></div>';
+    if(shorts.length>1) h+='<div class="fc-sub">不足する引き落とし '+shorts.length+'件・不足合計 <b class="num">▲¥'+yen(totalShort)+'</b></div>';
+    h+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">不足額</span></div>';
+    shorts.forEach(function(e){
+      h+='<div class="fc-row fc-crit">'
         +'<span class="fc-date">'+md(e.date)+'<small>'+cd(e.date)+'</small></span>'
         +'<span class="fc-name">'+esc(e.name)+'</span>'
         +'<span class="fc-amt num yen">¥'+yen(e.amt)+'</span>'
-        +'<span class="fc-st num '+(neg?'neg':'pos')+'">'+(neg?'▲¥'+yen(-e.diff)+' 赤字':'+¥'+yen(e.diff))+'</span>'
+        +'<span class="fc-st num neg">▲¥'+yen(-e.diff)+' 不足</span>'
         +'</div>';
     });
     h+='</div></div>';
