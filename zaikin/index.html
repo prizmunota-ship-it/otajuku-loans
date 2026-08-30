@@ -764,7 +764,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function authEmailVal(){return ($('authEmail').value||'').trim();}
   // ===== 太田塾メンバー照合（ハブ index.html と同じGASを使用・一覧にないメールは利用不可） =====
   const GAS_URL="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
-  const OWNER_EMAILS=['prizmun.ota@gmail.com','zaikin-fc-test@example.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
+  const OWNER_EMAILS=['prizmun.ota@gmail.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
   function checkMembership(email){
     return new Promise(resolve=>{
       const em=(email||'').toLowerCase();
