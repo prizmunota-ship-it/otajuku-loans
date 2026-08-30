@@ -4,7 +4,7 @@
    ※ LOG_URL がまだ未設定（プレースホルダ）の間は何もしない安全設計。 */
 (function () {
   try {
-    var LOG_URL = "__LOG_GAS_URL__"; // ←GASデプロイ後、このURLに差し替える
+    var LOG_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
     if (LOG_URL.indexOf("script.google.com") < 0) return; // 未設定なら無効
     var email = "";
     try { email = (localStorage.getItem("otajuku_email") || "").trim().toLowerCase(); } catch (e) {}
