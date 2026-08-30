@@ -177,6 +177,9 @@ body.demo .fab{display:none;}
 .fc-alert b{font-size:17px;}
 .fc-sub{font-size:12.5px;color:var(--muted);margin-top:7px;font-weight:600;}
 .fc-ok{background:var(--good-bg);color:var(--good);border-radius:11px;padding:11px 13px;font-size:14px;font-weight:700;}
+.fc-prompt{background:var(--accent-soft);border:1px dashed var(--accent);border-radius:11px;padding:12px 14px;font-size:13px;line-height:1.7;color:var(--ink);}
+.fc-prompt b{color:var(--accent);}
+.fc-prompt .fc-p-cta{display:inline-block;margin-top:6px;font-weight:800;color:var(--accent);}
 .fc-list{margin-top:11px;border-top:1px solid var(--hair);padding-top:8px;display:flex;flex-direction:column;gap:1px;}
 .fc-row{display:grid;grid-template-columns:58px 1fr auto auto;align-items:center;gap:9px;padding:7px 2px;font-size:13px;border-bottom:1px dashed var(--hair);}
 .fc-row:last-child{border-bottom:none;}
@@ -565,7 +568,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     var c=state.card;
     if(c.on){ var tot=cardTotal(), acc=acctById(c.acctId), cbal=acc?(+acc.bal):0, day=+c.payday||0;
       if(tot>0 && day>=1 && day<=31){ var nd2=nextOcc(day); if(nd2) events.push({date:nd2,name:'💳 カード',amt:tot,diff:cbal-tot,card:true}); } }
-    if(!events.length) return '';
+    if(!events.length){
+      var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0);
+      if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
+        +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくらになるか（＋か赤字か）」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
+      return '';
+    }
     events.sort(function(a,b){return a.date-b.date;});
     var shorts=events.filter(function(e){return e.diff<0;});
     var totalShort=shorts.reduce(function(s,e){return s+(-e.diff);},0);
@@ -577,7 +585,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     }else{
       h+='<div class="fc-ok">✓ 直近の引き落としは、すべて残高で足ります</div>';
     }
-    h+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">引落後</span></div>';
+    h+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">その日の残高</span></div>';
     events.forEach(function(e){ var neg=e.diff<0;
       h+='<div class="fc-row'+(neg?' fc-crit':'')+'">'
         +'<span class="fc-date">'+md(e.date)+'<small>'+cd(e.date)+'</small></span>'
@@ -774,7 +782,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function authEmailVal(){return ($('authEmail').value||'').trim();}
   // ===== 太田塾メンバー照合（ハブ index.html と同じGASを使用・一覧にないメールは利用不可） =====
   const GAS_URL="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
-  const OWNER_EMAILS=['prizmun.ota@gmail.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
+  const OWNER_EMAILS=['prizmun.ota@gmail.com','zaikin-fc-test@example.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
   function checkMembership(email){
     return new Promise(resolve=>{
       const em=(email||'').toLowerCase();
