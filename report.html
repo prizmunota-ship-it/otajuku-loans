@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.5</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.6</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -2143,9 +2143,22 @@ async function locate(){
   const lookupName=alias||query;
   if(alias||looksLikeName(query)){
     setStatus('🔎 「'+lookupName+'」をSUUMO物件ライブラリーで照会中…');
-    const j=await gasByName(lookupName);
-    /* SUUMO掲載でもWeb検索由来でも、住所が取れたらそれを位置特定に使う */
-    if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+lookupName;
+    /* ★★2026-08-30＝ここは旧GAS頼みだったが、GASが応答しないと住所が取れず、
+       改名物件（プライマリー鷹の巣＝旧シャトレ鷹の巣Ⅴ）が
+       「位置を特定中」のまま進まない／Placesが別物件（プレアール鷹の巣）を掴む、という状態だった。
+       自前の /api/suumolib を先に引いて、掲載名と所在地を確定させる。
+       これで「鷹の巣１ シャトレ鷹の巣5」で検索でき、番地までROOFTOPで特定できる（実測）。 */
+    const L=await apiJson('/api/suumolib?name='+encodeURIComponent(lookupName));
+    if(L&&L.found&&L.addr){
+      window.SELF=Object.assign(window.SELF||{},{name:L.name||lookupName,addr:L.addr,found:true,
+        struct:L.struct,built:L.built,kind:L.kind,floors:L.floors,station:L.station,rooms:L.rooms||[]});
+      libQuery=L.addr+' '+(L.name||lookupName);
+    }
+    if(!libQuery){
+      const j=await gasByName(lookupName);
+      /* SUUMO掲載でもWeb検索由来でも、住所が取れたらそれを位置特定に使う */
+      if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+lookupName;
+    }
   }
   setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
   let res=libQuery?await googleGeocodeFull(libQuery):null;
