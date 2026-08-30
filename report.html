@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.3</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.4</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -344,7 +344,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='23'; /* v15.0＝類似物件を「条件の近さの点数」で母集団100室→10件に絞る方式へ。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
+const APIV='24'; /* v15.0＝類似物件を「条件の近さの点数」で母集団100室→10件に絞る方式へ。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -2316,7 +2316,9 @@ async function buildReport(g){
   /* ★構造・築年がSUUMOで取れていない物件は、建物情報（LIFULL HOME'S）から実データを補う。
      物件名と市区町村が一致したものだけが返るので、別物件の情報が混ざることはない（/api/spec） */
   {
-    const qn=val('palias')||(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
+    /* ★SUUMOで建物が確定していれば、その掲載名を最優先で使う（2026-08-30）。
+       入力や別名は表記ゆれ（Ⅴ／V／5）を含むため、確定した掲載名で引くほうが当たる。 */
+    const qn=(window.SELF&&window.SELF.found&&window.SELF.name)||val('palias')||(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
     /* ⚠️v12.5と同じ罠：構造・築年が入っただけで「取得済み」と見なすと、
        間取り・面積が空のまま /api/spec を呼ばずに終わる。SUUMOに募集中の部屋が
        無い物件（ピュア若宮＝掲載なし）は HOME'S の部屋情報でしか埋まらない。 */

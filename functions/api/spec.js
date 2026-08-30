@@ -331,6 +331,19 @@ function norm(s) {
 /* 建物名の一致判定。単なる部分一致だと「キャナルシティ博多」で
    「キャナルシティ博多ビジネスセンタービル」を拾ってしまう＝別の建物の構造・築年を載せる事故になる。
    一致とみなすのは「完全一致」か「棟・号・A/B・Ⅰ/Ⅱ 等の短い枝番違いだけ」に限定する。 */
+/* ★枝番（Ⅴ / V / 5）は数値に揃えてから比べる。ポータルは同じ建物を「シャトレ鷹の巣Ⅴ」とも
+   「シャトレ鷹の巣5」とも載せるため、揃えないと建物情報が丸ごと取れない
+   （プライマリー鷹の巣＝旧シャトレ鷹の巣Ⅴ で実測 2026-08-30。HOME'Sの掲載名は
+   「シャトレ鷹の巣5」＝アラビア数字なので、Ⅴ→V の変換だけでは一致しなかった）。
+   ⚠️直前が数字のときは切らない（「ハイツ21」を「ハイツ2」+「1」と読むと別物件を掴む）。 */
+function branchKey(s) {
+  const t = norm(s);
+  const m = t.match(/^(.*?[^0-9])[\s]*(VIII|VII|VI|IV|IX|III|II|I|V|X|10|[1-9])$/);
+  if (!m) return { base: t, n: 0 };
+  const la = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  const i = la.indexOf(m[2]);
+  return { base: m[1], n: i >= 0 ? i + 1 : parseInt(m[2], 10) || 0 };
+}
 function sameName(a, b) {
   const x = norm(a), y = norm(b);
   if (!x || !y) return false;
@@ -338,6 +351,8 @@ function sameName(a, b) {
   const okTail = (s) => s.length <= 4 && /^[A-Z0-9ⅠⅡⅢⅣⅤⅥ棟館号番第・\-－ー]+$/.test(s);
   if (x.startsWith(y)) return okTail(x.slice(y.length));
   if (y.startsWith(x)) return okTail(y.slice(x.length));
+  const bx = branchKey(a), by = branchKey(b);
+  if (bx.base && bx.base === by.base) return bx.n === by.n || bx.n === 0 || by.n === 0;
   return false;
 }
 
