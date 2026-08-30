@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.8</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.9</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -403,7 +403,10 @@ function titleNameCands(){
   const cleaned=t.replace(/〒?\s*[0-9０-９]{3}[-−ー－][0-9０-９]{4}/g,' ').trim();
   const last=(cleaned.split(/[\s　]+/).pop()||'').trim();
   if(!last||last.length<3)return [];
-  if(/丁目|番地|[0-9０-９]$|[-−ー－]/.test(last))return [];
+  /* ⚠️建物名は数字で終わることが多い（シヤトレ鷹の巣５）ので、末尾が数字というだけで捨てない。
+     捨てるのは住所の断片（丁目・番地・字）と、数字と記号だけの塊。 */
+  if(/丁目|番地|[０-９0-9]+[-−ー－][０-９0-9]/.test(last))return [];
+  if(/^[0-9０-９\-−ー－\s]+$/.test(last))return [];
   const half=last.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0));
   const SM={'ヤ':'ャ','ユ':'ュ','ヨ':'ョ','ツ':'ッ','ア':'ァ','イ':'ィ','ウ':'ゥ','エ':'ェ','オ':'ォ'};
   const small=half.replace(/(?<=[ァ-ヴ])[ヤユヨツアイウエオ]/g,c=>SM[c]);
