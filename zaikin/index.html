@@ -315,7 +315,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 
   // ---------- runtime flags ----------
   let editing=false;
-  const gexp={'法人':true,'個人':true};
+  const gexp={'法人':false,'個人':false};
   let armedDel=null,armedTimer=null;
   let lfOpen=false,calcId=null;
   function armDel(id){armedDel=id;if(armedTimer)clearTimeout(armedTimer);armedTimer=setTimeout(()=>{armedDel=null;if(editing)render();},4000);}
