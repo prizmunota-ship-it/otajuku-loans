@@ -131,5 +131,6 @@
   render();
   fetch('/kado.json?_='+Date.now()).then(r=>r.ok?r.json():null).then(d=>{ if(d){KADO=Object.assign(KADO,d);render();} }).catch(()=>{});
 </script>
+<script src="/usage.js"></script>
 </body>
 </html>
