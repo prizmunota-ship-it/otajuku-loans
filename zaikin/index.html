@@ -167,6 +167,27 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 body.demo .fab{display:none;}
 .foot-demo{margin:2px 0 14px;text-align:center;}
 .demolink{font-family:inherit;font-size:13px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:20px;padding:9px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+/* 資金ショート予報 */
+.forecast{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);margin-top:12px;}
+.forecast.has-short{border:1.5px solid var(--crit);}
+.fc-head{font-size:14px;font-weight:800;margin-bottom:10px;}
+.fc-head small{font-size:11px;font-weight:600;color:var(--muted);}
+.fc-alert{background:var(--crit-bg);color:var(--crit);border-radius:11px;padding:11px 13px;font-size:14px;font-weight:700;line-height:1.5;}
+.fc-alert .fc-a-date{display:inline-block;background:var(--crit);color:#fff;border-radius:7px;padding:1px 9px;margin-right:7px;font-size:13px;}
+.fc-alert b{font-size:17px;}
+.fc-sub{font-size:12.5px;color:var(--muted);margin-top:7px;font-weight:600;}
+.fc-ok{background:var(--good-bg);color:var(--good);border-radius:11px;padding:11px 13px;font-size:14px;font-weight:700;}
+.fc-list{margin-top:11px;border-top:1px solid var(--hair);padding-top:8px;display:flex;flex-direction:column;gap:1px;}
+.fc-row{display:grid;grid-template-columns:44px 1fr auto auto;align-items:baseline;gap:9px;padding:6px 2px;font-size:13px;border-bottom:1px dashed var(--hair);}
+.fc-row:last-child{border-bottom:none;}
+.fc-row.fc-crit{background:var(--crit-bg);border-radius:7px;padding:6px 8px;}
+.fc-date{font-weight:800;color:var(--muted);font-size:12.5px;}
+.fc-row.fc-crit .fc-date{color:var(--crit);}
+.fc-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fc-amt{color:var(--muted);}
+.fc-st{font-weight:800;white-space:nowrap;}
+.fc-st.neg{color:var(--crit);} .fc-st.pos{color:var(--good);}
+.right.pay .payday{font-size:11px;color:var(--muted);font-weight:700;margin-top:1px;}
 .empty{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:26px 20px;box-shadow:var(--shadow);text-align:center;margin-top:12px;}
 .empty h2{font-size:17px;margin:0 0 6px;}
 .empty p{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.6;}
@@ -375,12 +396,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   let lfOpen=false,calcId=null,pendingScroll=null;
   let demoMode=false, realStateBackup=null;
   const DEMO={v:1,asof:'（入力例）',accounts:[
-    {grp:'個人',id:'d1',bank:'A銀行',branch:'本店',acct:'1234567',bal:1850000,pay:320000,borrow:42000000,note:'自宅ローン 120,000 / アパートA 200,000',photos:[]},
-    {grp:'個人',id:'d2',bank:'B信用金庫',branch:'〇〇支店',acct:'2345678',bal:280000,pay:350000,borrow:0,note:'車のローン',photos:[]},
-    {grp:'法人',id:'d3',bank:'C信用組合',branch:'△△支店',acct:'3456789',bal:5200000,pay:880000,borrow:96000000,note:'物件① 500,000 / 物件② 380,000',photos:[]},
-    {grp:'法人',id:'d4',bank:'D銀行',branch:'□□支店',acct:'4567890',bal:640000,pay:210000,borrow:28000000,note:'物件③ 210,000',photos:[]}
+    {grp:'個人',id:'d1',bank:'A銀行',branch:'本店',acct:'1234567',bal:1850000,pay:320000,payday:5,borrow:42000000,note:'自宅ローン 120,000 / アパートA 200,000',photos:[]},
+    {grp:'個人',id:'d2',bank:'B信用金庫',branch:'〇〇支店',acct:'2345678',bal:280000,pay:350000,payday:10,borrow:0,note:'車のローン',photos:[]},
+    {grp:'法人',id:'d3',bank:'C信用組合',branch:'△△支店',acct:'3456789',bal:5200000,pay:880000,payday:27,borrow:96000000,note:'物件① 500,000 / 物件② 380,000',photos:[]},
+    {grp:'法人',id:'d4',bank:'D銀行',branch:'□□支店',acct:'4567890',bal:640000,pay:210000,payday:15,borrow:28000000,note:'物件③ 210,000',photos:[]}
   ],tsumi:[{grp:'法人',id:'d5',bank:'C信用組合 積金',bal:600000,mo:50000}],
-  card:{on:true,acctId:'d1',items:[{name:'ANA VISA',pay:180000},{name:'アメックス',pay:70000}]}};
+  card:{on:true,acctId:'d1',payday:10,items:[{name:'ANA VISA',pay:180000},{name:'アメックス',pay:70000}]}};
   function enterDemo(){realStateBackup=state;state=JSON.parse(JSON.stringify(DEMO));demoMode=true;editing=false;gexp['法人']=false;gexp['個人']=false;document.body.classList.remove('editing');document.body.classList.add('demo');render();try{window.scrollTo(0,0);}catch(e){}}
   function exitDemo(){if(realStateBackup)state=realStateBackup;realStateBackup=null;demoMode=false;document.body.classList.remove('demo');render();}
   function armDel(id){armedDel=id;if(armedTimer)clearTimeout(armedTimer);armedTimer=setTimeout(()=>{armedDel=null;if(editing)render();},4000);}
@@ -439,6 +460,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +'<div class="efield"><label>口座番号</label><input class="txt small f-acct" data-id="'+a.id+'" value="'+esc(a.acct||'')+'" placeholder="任意"></div></div>'
         +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp f-bal" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.bal)+'" placeholder="0" style="max-width:none"></div>'
         +'<div class="efield"><label>毎月返済（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.pay)+'" placeholder="0" style="max-width:none"></div></div>'
+        +'<div class="efield"><label>返済日（毎月何日に引き落とし・任意）</label><input class="inp f-payday" inputmode="numeric" data-id="'+a.id+'" value="'+(a.payday||'')+'" placeholder="例）27" style="max-width:140px;text-align:right"></div>'
         +'<div class="efield"><label>借入残高（円・任意／5%目安の計算に使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.borrow)+'" placeholder="0" style="max-width:none;text-align:right"></div>'
         +'<div class="efield"><label>返済の内訳・メモ（任意）</label><textarea class="txt small f-note" data-id="'+a.id+'" rows="2" placeholder="例）物件A 120,000 / 物件B 80,000">'+esc(a.note||'')+'</textarea></div>'
         +'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>'
@@ -452,7 +474,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       +'<div class="acct">'+esc(a.branch||'')+' '+esc(a.acct||'')+'</div>'
       +(a.borrow>0?'<div class="pct">借入 <b class="num yen">'+yen(a.borrow)+'</b>／5%目安 <b class="num yen">'+yen(t5)+'</b>　<span class="'+(d5<0?'neg':'pos')+'">差 '+(d5<0?'▲':'+')+'¥'+yen(Math.abs(d5))+'</span></div>':'')
       +'</div>'
-      +'<div class="right pay"><div class="lab">毎月返済</div><div class="big num">'+(a.pay?yen(a.pay):'—')+'</div></div>'
+      +'<div class="right pay"><div class="lab">毎月返済</div><div class="big num">'+(a.pay?yen(a.pay):'—')+'</div>'+(a.pay&&a.payday?'<div class="payday">毎月'+a.payday+'日</div>':'')+'</div>'
       +'<div class="right bal"><div class="lab">残高</div><div class="big num yen">'+yen(a.bal)+'</div>'
       +(a.pay?'<div class="diff num '+(diff<0?'neg':'pos')+'">'+(diff<0?'▲':'+')+yen(Math.abs(diff))+' '+(diff<0?'不足':'余裕')+'</div>':'<span class="pill neu" style="margin-top:3px">'+LAB[st]+'</span>')
       +'</div></div>';
@@ -504,7 +526,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +(c.on?'<div class="cf-edit">'+rows
         +'<button class="cf-add" data-cardadd="1">＋ カードを追加</button>'
         +(items.length>1?'<div class="cf-total-line">合計（毎月）<b class="num yen">'+yen(cardTotal())+'</b></div>':'')
-        +'<div class="efield" style="margin-top:10px"><label>支払口座</label><select class="txt small" id="cardAcct" style="max-width:none">'+opts+'</select></div>'
+        +'<div class="erow" style="margin-top:10px"><div class="efield"><label>支払口座</label><select class="txt small" id="cardAcct" style="max-width:none">'+opts+'</select></div>'
+        +'<div class="efield"><label>支払日（毎月何日）</label><input class="inp" id="cardPayday" inputmode="numeric" value="'+(c.payday||'')+'" placeholder="例）10" style="max-width:none;text-align:right"></div></div>'
         +'</div>':'')
         +'</div>';
     }
@@ -512,11 +535,49 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const tot=cardTotal();
     const acc=acctById(c.acctId);const bal=acc?(+acc.bal):0;const diff=bal-tot;
     const names=(c.items||[]).filter(i=>(i.name||'').trim()).map(i=>esc(i.name)).join(' ＋ ');
-    return '<div class="cardframe"><div class="cf-title"><span>💳 クレジットカードの支払い</span></div><div class="cf-rows">'
+    return '<div class="cardframe"><div class="cf-title"><span>💳 クレジットカードの支払い'+(c.payday?'<small style="font-weight:600;color:var(--muted)">　毎月'+c.payday+'日払い</small>':'')+'</span></div><div class="cf-rows">'
       +'<div class="cf-row"><span class="cf-lab">今月のカード支払額'+(names?'<small>'+names+'</small>':'')+'</span><span class="cf-num num yen">'+yen(tot)+'</span></div>'
       +'<div class="cf-row"><span class="cf-lab">支払口座の預金<small>'+(acc?esc(acc.bank):'—')+'</small></span><span class="cf-num num yen">'+yen(bal)+'</span></div>'
       +'<div class="cf-row cf-diff"><span class="cf-lab">差額（預金 − 支払）</span><span class="cf-num num '+(diff<0?'neg':'pos')+'">'+(diff<0?'▲':'+')+'¥'+yen(Math.abs(diff))+'</span></div>'
       +'</div></div>';
+  }
+  function forecastHtml(){
+    if(editing) return '';
+    function dim(y,m){return new Date(y,m+1,0).getDate();}
+    var now=new Date(), td=now.getDate(), tm=now.getMonth(), ty=now.getFullYear();
+    function nextOcc(day){
+      if(!day||day<1||day>31)return null;
+      var d=new Date(ty,tm,Math.min(day,dim(ty,tm)));
+      if(day<td) d=new Date(ty,tm+1,Math.min(day,dim(ty,tm+1)));
+      return d;
+    }
+    function md(d){return (d.getMonth()+1)+'/'+d.getDate();}
+    var events=[];
+    state.accounts.forEach(function(a){
+      var pay=+a.pay||0, bal=+a.bal||0, day=+a.payday||0;
+      if(pay>0 && day>=1 && day<=31){ var nd=nextOcc(day); if(nd) events.push({date:nd,name:a.bank||'口座',amt:pay,short:Math.max(0,pay-bal)}); }
+    });
+    var c=state.card;
+    if(c.on){ var tot=cardTotal(), acc=acctById(c.acctId), cbal=acc?(+acc.bal):0, day=+c.payday||0;
+      if(tot>0 && day>=1 && day<=31){ var nd2=nextOcc(day); if(nd2) events.push({date:nd2,name:'💳 カード',amt:tot,short:Math.max(0,tot-cbal),card:true}); } }
+    if(!events.length) return '';
+    events.sort(function(a,b){return a.date-b.date;});
+    var shorts=events.filter(function(e){return e.short>0;});
+    var totalShort=shorts.reduce(function(s,e){return s+e.short;},0);
+    var h='<div class="forecast'+(shorts.length?' has-short':' all-ok')+'"><div class="fc-head">📅 資金ショート予報<small>（返済日と現在の残高を突き合わせ）</small></div>';
+    if(shorts.length){
+      var f=shorts[0];
+      h+='<div class="fc-alert"><span class="fc-a-date">'+md(f.date)+'</span>「'+esc(f.name)+'」に <b class="num">▲¥'+yen(f.short)+'</b> 足りません</div>';
+      if(shorts.length>1) h+='<div class="fc-sub">不足する引き落とし '+shorts.length+'件・不足合計 <b class="num">▲¥'+yen(totalShort)+'</b></div>';
+    }else{
+      h+='<div class="fc-ok">✓ 直近の引き落としはすべて現在の残高で足ります</div>';
+    }
+    h+='<div class="fc-list">';
+    events.forEach(function(e){ var s=e.short>0;
+      h+='<div class="fc-row'+(s?' fc-crit':'')+'"><span class="fc-date">'+md(e.date)+'</span><span class="fc-name">'+esc(e.name)+'</span><span class="fc-amt num yen">¥'+yen(e.amt)+'</span><span class="fc-st num '+(s?'neg':'pos')+'">'+(s?'▲¥'+yen(e.short):'✓')+'</span></div>';
+    });
+    h+='</div></div>';
+    return h;
   }
   function emptyHtml(){
     return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
@@ -538,7 +599,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +'<button class="jb-btn" data-jump="クレカ">💳 クレカ</button></div>';
     }
     if(state.accounts.length===0 && !editing){ h+=emptyHtml(); }
-    else { h+=groupHtml('個人')+groupHtml('法人')+cardHtml(); }
+    else { h+=forecastHtml()+groupHtml('個人')+groupHtml('法人')+cardHtml(); }
     if(editing){
       h+='<div class="toolbar"><button class="tbtn" id="exportBtn">⬇︎ バックアップを書き出す</button><button class="tbtn" id="importBtn">⬆︎ バックアップを読み込む</button></div>'
         +'<div class="savehint">入力は自動でクラウドに保存され、ログインすればどの端末でも同じ内容が出ます。</div>';
@@ -663,11 +724,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.classList.contains('f-bal')&&a){a.bal=pnum(t.value);save();render();return;}
     if(t.classList.contains('f-pay')&&a){a.pay=pnum(t.value);save();render();return;}
     if(t.classList.contains('f-borrow')&&a){a.borrow=pnum(t.value);save();render();return;}
+    if(t.classList.contains('f-payday')&&a){var d=pnum(t.value);a.payday=(d>=1&&d<=31)?d:'';save();render();return;}
     if(t.classList.contains('tf-bal')&&ts){ts.bal=pnum(t.value);save();render();return;}
     if(t.classList.contains('tf-mo')&&ts){ts.mo=pnum(t.value);save();render();return;}
     if(t.classList.contains('cf-amt')){const i=+t.getAttribute('data-cardpay');if(state.card.items&&state.card.items[i]){state.card.items[i].pay=pnum(t.value);save();render();}return;}
     if(t.id==='cardOn'){state.card.on=t.checked;if(state.card.on&&(!state.card.items||!state.card.items.length))state.card.items=[{name:'',pay:0}];save();render();return;}
     if(t.id==='cardAcct'){state.card.acctId=t.value||null;save();return;}
+    if(t.id==='cardPayday'){var cd=pnum(t.value);state.card.payday=(cd>=1&&cd<=31)?cd:'';save();render();return;}
   });
 
   function seed(){
@@ -701,7 +764,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function authEmailVal(){return ($('authEmail').value||'').trim();}
   // ===== 太田塾メンバー照合（ハブ index.html と同じGASを使用・一覧にないメールは利用不可） =====
   const GAS_URL="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
-  const OWNER_EMAILS=['prizmun.ota@gmail.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
+  const OWNER_EMAILS=['prizmun.ota@gmail.com','zaikin-fc-test@example.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
   function checkMembership(email){
     return new Promise(resolve=>{
       const em=(email||'').toLowerCase();
@@ -811,6 +874,5 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
-<script src="/usage.js"></script>
 </body>
 </html>
