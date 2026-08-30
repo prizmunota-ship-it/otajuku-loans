@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.4</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.5</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -335,7 +335,13 @@ window.GASRES=null; /* 直近のGAS応答（物件名検索の結果を位置特
 /* 物件名だけでSUUMO物件ライブラリーを引く（位置特定の前に正式住所を得るため） */
 async function gasByName(name){
   try{
-    const r=await fetch(GAS_SEARCH+'?name='+encodeURIComponent(name));
+    /* ★応答が返らないことがあり、待ち続けると位置特定まで進めず画面が固まって見える
+       （プライマリー鷹の巣＝別名シャトレ鷹の巣Ⅴ で実測 2026-08-30・2分以上「位置を特定中」のまま）。
+       12秒で打ち切って先へ進める。構造・築年・間取り・面積はこの後 /api/suumolib と
+       /api/spec で取り直すので、打ち切っても情報は失われない。 */
+    const ac=new AbortController();const to=setTimeout(()=>{try{ac.abort();}catch(e){}},12000);
+    const r=await fetch(GAS_SEARCH+'?name='+encodeURIComponent(name),{signal:ac.signal});
+    clearTimeout(to);
     const j=await r.json();
     window.GASRES={key:name,json:j};
     window.SELF=(j.self&&j.self.addr)?j.self:null;
