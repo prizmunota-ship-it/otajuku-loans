@@ -161,6 +161,12 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .jb-btn{font-family:inherit;font-size:13.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:20px;padding:7px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .jb-btn:active{background:var(--accent);color:#fff;}
 .group,.cardframe{scroll-margin-top:68px;}
+/* 入力例（デモ） */
+.demobanner{position:sticky;top:0;z-index:41;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--corp);color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;margin-bottom:10px;box-shadow:var(--shadow);}
+.democlose{font-family:inherit;font-size:12.5px;font-weight:800;color:var(--corp);background:#fff;border:none;border-radius:20px;padding:7px 13px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+body.demo .fab{display:none;}
+.foot-demo{margin:2px 0 14px;text-align:center;}
+.demolink{font-family:inherit;font-size:13px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:20px;padding:9px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .empty{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:26px 20px;box-shadow:var(--shadow);text-align:center;margin-top:12px;}
 .empty h2{font-size:17px;margin:0 0 6px;}
 .empty p{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.6;}
@@ -338,6 +344,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   const readCache=()=>{try{const r=lsGet(cacheKey());return r?JSON.parse(r):null;}catch(e){return null;}};
   function setSync(txt){const el=$('syncStat');if(el)el.textContent=txt;}
   function save(){
+    if(demoMode)return;              // 入力例(デモ)中は一切保存しない＝自分のデータに影響なし
     lsSet(cacheKey(),JSON.stringify(state));
     if(!CURRENT_UID)return;
     setSync('保存中…');
@@ -366,6 +373,16 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   const gexp={'法人':false,'個人':false};
   let armedDel=null,armedTimer=null;
   let lfOpen=false,calcId=null,pendingScroll=null;
+  let demoMode=false, realStateBackup=null;
+  const DEMO={v:1,asof:'（入力例）',accounts:[
+    {grp:'個人',id:'d1',bank:'A銀行',branch:'本店',acct:'1234567',bal:1850000,pay:320000,borrow:42000000,note:'自宅ローン 120,000 / アパートA 200,000',photos:[]},
+    {grp:'個人',id:'d2',bank:'B信用金庫',branch:'〇〇支店',acct:'2345678',bal:280000,pay:350000,borrow:0,note:'車のローン',photos:[]},
+    {grp:'法人',id:'d3',bank:'C信用組合',branch:'△△支店',acct:'3456789',bal:5200000,pay:880000,borrow:96000000,note:'物件① 500,000 / 物件② 380,000',photos:[]},
+    {grp:'法人',id:'d4',bank:'D銀行',branch:'□□支店',acct:'4567890',bal:640000,pay:210000,borrow:28000000,note:'物件③ 210,000',photos:[]}
+  ],tsumi:[{grp:'法人',id:'d5',bank:'C信用組合 積金',bal:600000,mo:50000}],
+  card:{on:true,acctId:'d1',items:[{name:'ANA VISA',pay:180000},{name:'アメックス',pay:70000}]}};
+  function enterDemo(){realStateBackup=state;state=JSON.parse(JSON.stringify(DEMO));demoMode=true;editing=false;gexp['法人']=false;gexp['個人']=false;document.body.classList.remove('editing');document.body.classList.add('demo');render();try{window.scrollTo(0,0);}catch(e){}}
+  function exitDemo(){if(realStateBackup)state=realStateBackup;realStateBackup=null;demoMode=false;document.body.classList.remove('demo');render();}
   function armDel(id){armedDel=id;if(armedTimer)clearTimeout(armedTimer);armedTimer=setTimeout(()=>{armedDel=null;if(editing)render();},4000);}
 
   // ---------- render ----------
@@ -504,12 +521,16 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function emptyHtml(){
     return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
       +'<p>各口座の<b>残高</b>と<b>毎月の返済額</b>を入れるだけ。<br>「残高が毎月返済を下回る口座」を自動で色分けし、資金ショートを未然に防ぎます。<br>入力内容はあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。</p>'
-      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button><button class="pbtn ghost" id="seedBtn">サンプルを見る</button></div></div>';
+      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button><button class="pbtn ghost" data-demo="1">📋 入力例を見る</button></div></div>';
   }
   function render(){
-    const eb=$('editBanner');if(eb)eb.hidden=!editing;
+    const eb=$('editBanner');if(eb)eb.hidden=!editing||demoMode;
     renderHeader();renderKPIs();
     let h='';
+    if(demoMode){
+      h+='<div class="demobanner"><span>👀 これは<b>入力例</b>です（あなたのデータではありません・保存されません）</span>'
+        +'<button class="democlose" id="demoClose">✕ 閉じて自分のデータに戻る</button></div>';
+    }
     if(editing){
       h+='<div class="jumpbar"><span class="jb-lab">編集する項目へ移動：</span>'
         +'<button class="jb-btn" data-jump="個人">👤 個人</button>'
@@ -527,7 +548,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(pendingScroll){const sel=pendingScroll==='個人'?'.g-ind':pendingScroll==='法人'?'.g-corp':'.cardframe';const el=document.querySelector(sel);if(el){try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){el.scrollIntoView();}}pendingScroll=null;}
   }
   function renderFoot(){
-    $('foot').innerHTML='<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。'
+    $('foot').innerHTML=(!demoMode&&!editing?'<div class="foot-demo"><button class="demolink" data-demo="1">📋 入力例を見る（数字が入った見本）</button></div>':'')
+      +'<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。'
       +'借入残高を入れた口座は「借入5%を現預金で持つ」目安も表示します。<br>'
       +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。';
   }
@@ -612,6 +634,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-calc]')){openCalc(e.getAttribute('data-calc'));return;}
     if(t.id==='cApply'){applyCalc();return;}
     if(e=t.closest('#lfToggle')){lfOpen=!lfOpen;render();return;}
+    if(t.closest('[data-demo]')){enterDemo();return;}
+    if(t.closest('#demoClose')){exitDemo();return;}
     if(t.id==='seedBtn'){seed();return;}
     if(t.id==='exportBtn'){openBackup('export');return;}
     if(t.id==='importBtn'){openBackup('import');return;}
@@ -675,11 +699,32 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     }catch(e){}
   }
   function authEmailVal(){return ($('authEmail').value||'').trim();}
+  // ===== 太田塾メンバー照合（ハブ index.html と同じGASを使用・一覧にないメールは利用不可） =====
+  const GAS_URL="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
+  const OWNER_EMAILS=['prizmun.ota@gmail.com'];   // 主宰は常に許可（GAS不調でもロックアウトしない）
+  function checkMembership(email){
+    return new Promise(resolve=>{
+      const em=(email||'').toLowerCase();
+      if(OWNER_EMAILS.indexOf(em)>=0){resolve(true);return;}
+      let done=false;const cb='_zkMember'+Math.abs((Date.now()^(performance.now()|0)));
+      const s=document.createElement('script');
+      const to=setTimeout(()=>fin(null),9000);
+      function fin(v){if(done)return;done=true;try{delete window[cb];}catch(e){window[cb]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);clearTimeout(to);resolve(v);}
+      window[cb]=function(result){fin(result==='ok');};
+      s.onerror=function(){fin(null);};
+      s.src=GAS_URL+'?email='+encodeURIComponent(em)+'&callback='+cb;
+      document.body.appendChild(s);
+    });
+  }
   async function doAuth(){
     const email=authEmailVal();const password=$('authPass').value||'';const msg=$('authMsg');
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.className='gmsg err';msg.textContent='メールアドレスを正しく入力してください。';return;}
     if(password.length<6){msg.className='gmsg err';msg.textContent='パスワードは6文字以上にしてください。';return;}
-    $('authSend').disabled=true;msg.className='gmsg';msg.textContent='確認中…';
+    $('authSend').disabled=true;msg.className='gmsg';msg.textContent='会員確認中…';
+    const member=await checkMembership(email);
+    if(member===false){msg.className='gmsg err';msg.textContent='このメールアドレスは太田塾に登録されていません。入会時のGmailで再度お試しください（不明な場合は太田まで）。';$('authSend').disabled=false;return;}
+    if(member===null){msg.className='gmsg err';msg.textContent='会員確認ができませんでした。通信環境を確認して、もう一度お試しください。';$('authSend').disabled=false;return;}
+    msg.className='gmsg';msg.textContent='確認中…';
     try{
       // 既存ユーザーはログイン
       const si=await sb.auth.signInWithPassword({email,password});
