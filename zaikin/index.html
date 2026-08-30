@@ -46,6 +46,8 @@ header.top{background:var(--bg);padding-top:8px;margin-bottom:6px;}
 .acctbar .em{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
 .syncstat{white-space:nowrap;}
 .logoutbtn{font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
+.reloadbtn{font-family:inherit;font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.reloadbtn:active{background:var(--accent);color:#fff;}
 .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:9px;}
 h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .head-right{display:flex;align-items:center;gap:9px;}
@@ -289,7 +291,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 
 <div class="wrap" id="appWrap" hidden>
   <header class="top">
-    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
+    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="reloadbtn" id="reloadBtn" title="最新の状態に更新">🔄 更新</button><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
     <div class="title-row">
       <h1>資金繰り帳</h1>
       <div class="head-right"><span class="asof" id="asofBox"></span></div>
@@ -595,6 +597,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-jump]')){const j=e.getAttribute('data-jump');if(j==='個人'){gexp['個人']=true;}else if(j==='法人'){gexp['法人']=true;}else if(j==='クレカ'){if(!state.card.on){state.card.on=true;if(!state.card.items||!state.card.items.length)state.card.items=[{name:'',pay:0}];save();}}pendingScroll=j;render();return;}
     if(e=t.closest('[data-cardadd]')){state.card.items=state.card.items||[];state.card.items.push({name:'',pay:0});save();render();const inp=document.querySelector('.cf-name[data-cardname="'+(state.card.items.length-1)+'"]');if(inp)inp.focus();return;}
     if(e=t.closest('[data-carddel]')){const i=+e.getAttribute('data-carddel');if(state.card.items&&state.card.items[i]!==undefined){state.card.items.splice(i,1);save();render();}return;}
+    if(e=t.closest('#reloadBtn')){e.textContent='更新中…';try{location.reload();}catch(err){location.href=location.pathname;}return;}
     if(t.id==='logoutBtn'){doLogout();return;}
     if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id);if(!acc&&!ts)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
