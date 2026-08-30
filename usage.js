@@ -12,7 +12,7 @@
     var p = (location.pathname || "").replace(/\/+$/, "").replace(/^\//, "").replace(/\.html$/, "");
     var key = (p.split("/")[0] || "hub").toLowerCase();
     var MAP = {
-      "": "ハブ", "hub": "ハブ", "index": "ハブ",
+      "": "AIアプリ選択画面", "hub": "AIアプリ選択画面", "index": "AIアプリ選択画面",
       "hub-ea215b88d552": "コックピット",
       "loans": "融資情報一覧", "jigyo": "事業計画書", "report": "物件補足レポート",
       "oyaryoku": "大家力ラボ", "baikyaku": "売却事例", "shiryo": "資料格納庫",
