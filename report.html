@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.7</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.8</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -391,6 +391,25 @@ function selfNeed(){return !(val('pmadori')&&num('pmens')>0);}
    ここが揃っていないと「本物件そのものを募集一覧から名寄せする」経路が丸ごと外れる
    （オアシス浅生Ⅱ／掲載名はオアシス浅生II で実測 2026-08-21） */
 const RO_N=['Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ'],LA_N=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+/* ★Googleが返す住所の末尾には、その番地に建っている建物の名前が入っていることが多い
+   （例：「〒806-0047 …鷹の巣１丁目１５−１１ シヤトレ鷹の巣５」）。
+   住所で検索したときや、改名で物件名が当たらないときは、この名前を物件名の候補として使う。
+   ⚠️Googleの表記は小書きカナが大書きになることがある（シヤトレ／シャトレ）ので両方試す。
+   候補が別の建物でも、SUUMO・HOME'S側が名前と市区町村の一致を見て弾くので誤情報にはならない。
+   （プライマリー鷹の巣＝旧シャトレ鷹の巣Ⅴ で実測 2026-08-30。番地まで正しく特定できているのに
+     物件名が無いせいで間取り・面積・築年が全部「未取得」になり、類似物件も築5年59㎡等が並んだ） */
+function titleNameCands(){
+  const t=String((typeof PENDING!=='undefined'&&PENDING&&PENDING.title)||(window._lastTitle||''));
+  const cleaned=t.replace(/〒?\s*[0-9０-９]{3}[-−ー－][0-9０-９]{4}/g,' ').trim();
+  const last=(cleaned.split(/[\s　]+/).pop()||'').trim();
+  if(!last||last.length<3)return [];
+  if(/丁目|番地|[0-9０-９]$|[-−ー－]/.test(last))return [];
+  const half=last.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0));
+  const SM={'ヤ':'ャ','ユ':'ュ','ヨ':'ョ','ツ':'ッ','ア':'ァ','イ':'ィ','ウ':'ゥ','エ':'ェ','オ':'ォ'};
+  const small=half.replace(/(?<=[ァ-ヴ])[ヤユヨツアイウエオ]/g,c=>SM[c]);
+  const out=[];[half,small].forEach(x=>{if(x&&out.indexOf(x)<0)out.push(x);});
+  return out;
+}
 function nmBase(n){return String(n||'').replace(/[\s　・･]/g,'')
   .replace(/[ａ-ｚＡ-Ｚ０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0))
   .replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g,c=>LA_N[RO_N.indexOf(c)]).toUpperCase();}
@@ -2324,10 +2343,16 @@ async function buildReport(g){
     /* ★本命＝/api/suumolib（SUUMO物件ライブラリー）。種別・構造・築年月・階建・
        募集中の部屋（間取り・面積・賃料）まで実データで取れる。
        旧GAS経路はラベル形式の違いで中身が空のまま返っていた（2026-08-14 修正）。 */
-    const qn=val('palias')||(looksLikeName(val('paddr'))?val('paddr'):'');
+    /* 別名（旧名）→入力が物件名ならそれ→Googleが返した建物名、の順に試す */
+    const qnList=[val('palias'),(looksLikeName(val('paddr'))?val('paddr'):'')].concat(titleNameCands()).filter(Boolean);
+    const qn=qnList[0]||'';
     if(qn){
       try{
-        const L=await apiJson('/api/suumolib?name='+encodeURIComponent(qn)+'&city='+encodeURIComponent(cityA)+'&pref='+encodeURIComponent(prefOf(g.title)||''));
+        let L=null;
+        for(const q of qnList){
+          L=await apiJson('/api/suumolib?name='+encodeURIComponent(q)+'&city='+encodeURIComponent(cityA)+'&pref='+encodeURIComponent(prefOf(g.title)||''));
+          if(L&&L.found)break;
+        }
         if(L&&L.found){
           window.SELF=Object.assign(window.SELF||{},{name:L.name,addr:L.addr||(window.SELF&&window.SELF.addr),
             struct:L.struct,built:L.built,floors:L.floors,kind:L.kind,station:L.station,rooms:L.rooms||[],found:true});
@@ -2353,7 +2378,7 @@ async function buildReport(g){
   {
     /* ★SUUMOで建物が確定していれば、その掲載名を最優先で使う（2026-08-30）。
        入力や別名は表記ゆれ（Ⅴ／V／5）を含むため、確定した掲載名で引くほうが当たる。 */
-    const qn=(window.SELF&&window.SELF.found&&window.SELF.name)||val('palias')||(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'');
+    const qn=(window.SELF&&window.SELF.found&&window.SELF.name)||val('palias')||(window.SELF&&window.SELF.name)||((val('paddr')&&looksLikeName(val('paddr')))?val('paddr'):'')||titleNameCands()[0]||'';
     /* ⚠️v12.5と同じ罠：構造・築年が入っただけで「取得済み」と見なすと、
        間取り・面積が空のまま /api/spec を呼ばずに終わる。SUUMOに募集中の部屋が
        無い物件（ピュア若宮＝掲載なし）は HOME'S の部屋情報でしか埋まらない。 */
