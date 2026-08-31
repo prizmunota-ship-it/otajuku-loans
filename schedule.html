@@ -19,6 +19,8 @@
 
     // 太田塾オンライン用 固定ZOOM（定期・固定期間なし・パスコード埋込・待機室なし＝押すだけ入室）
     const ZOOM_ONLINE = "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1";
+    // 個別相談ルーム。ONEチーム限定など少人数・限定企画の入口にも流用する（本人指示 2026-08-19）
+    const ZOOM_KOBETSU = "https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1";
 
     const scheduleData = [
       {
@@ -30,6 +32,7 @@
       {
         month: "9月",
         events: [
+          { date: "8(火)", type: "オンライン", title: "【ONEチーム限定】売買契約書の勉強会(21時〜22時)", location: "", zoom: ZOOM_KOBETSU },
           { date: "15(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE, note: "※今月のみ第3火曜" },
           { date: "17(木)", type: "リアル", title: "第4回 金融機関グループ勉強会", location: "大分銀行" },
           { date: "24(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "天神ワンビルB1", note: "※今月のみ第4木曜" },
