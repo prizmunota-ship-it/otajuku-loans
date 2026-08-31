@@ -589,40 +589,56 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     var c=state.card;
     if(c.on){ var tot=cardTotal(), acc=acctById(c.acctId), cbal=acc?(+acc.bal):0, day=+c.payday||0;
       if(tot>0 && day>=1 && day<=31){ var nd2=nextOcc(day); if(nd2) events.push({date:nd2,name:'💳 カード',amt:tot,diff:cbal-tot,card:true}); } }
+    events.sort(function(a,b){return a.date-b.date;});
+    var shorts=events.filter(function(e){return e.diff<0;});
+    // 特定日の支払い＝支払日の1ヶ月前からお知らせ（支払口座の指定は任意）
+    var spotReminders=[];
     (state.spots||[]).forEach(function(s){
       var amt=+s.amount||0; if(amt<=0)return;
       var sd=spotNext(s); if(!sd)return;
-      var sacc=acctById(s.acctId), sbal=sacc?(+sacc.bal):0;
-      events.push({date:sd,name:'📌 '+(s.name||'特定日の支払い'),amt:amt,diff:sbal-amt,spot:true});
+      var days=Math.round((sd-today0)/86400000);
+      if(days>31)return;
+      var sacc=acctById(s.acctId), sShort=0;
+      if(sacc){var sb=+sacc.bal||0; if(sb<amt)sShort=amt-sb;}
+      spotReminders.push({date:sd,name:(s.name||'特定日の支払い'),amt:amt,acc:sacc,shortAmt:sShort});
     });
-    if(!events.length){
-      var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0)||(state.spots||[]).some(function(s){return (+s.amount)>0&&spotNext(s);});
-      if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
-        +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくら不足するか」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
-      return '';
+    spotReminders.sort(function(a,b){return a.date-b.date;});
+    var out='';
+    if(shorts.length){
+      var totalShort=shorts.reduce(function(s,e){return s+(-e.diff);},0);
+      var f=shorts[0];
+      out+='<div class="forecast has-short"><div class="fc-head">📅 資金ショート予報<small>（返済日に預金が不足するものだけ表示）</small></div>';
+      out+='<div class="fc-alert"><span class="fc-a-date">'+md(f.date)+'・'+cd(f.date)+'</span>「'+esc(f.name)+'」が <b class="num">不足 ▲¥'+yen(-f.diff)+'</b></div>';
+      if(shorts.length>1) out+='<div class="fc-sub">不足する引き落とし '+shorts.length+'件・不足合計 <b class="num">▲¥'+yen(totalShort)+'</b></div>';
+      out+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">不足額</span></div>';
+      shorts.forEach(function(e){
+        out+='<div class="fc-row fc-crit">'
+          +'<span class="fc-date">'+md(e.date)+'<small>'+cd(e.date)+'</small></span>'
+          +'<span class="fc-name">'+esc(e.name)+'</span>'
+          +'<span class="fc-amt num yen">¥'+yen(e.amt)+'</span>'
+          +'<span class="fc-st num neg">▲¥'+yen(-e.diff)+' 不足</span>'
+          +'</div>';
+      });
+      out+='</div></div>';
     }
-    events.sort(function(a,b){return a.date-b.date;});
-    var shorts=events.filter(function(e){return e.diff<0;});
-    if(!shorts.length){
+    if(spotReminders.length){
+      out+='<div class="forecast has-spot"><div class="fc-head">📌 まもなく支払い予定<small>（支払日の1ヶ月前からお知らせ）</small></div>';
+      spotReminders.forEach(function(r){
+        out+='<div class="fc-alert spot"><span class="fc-a-date">'+md(r.date)+'・'+cd(r.date)+'</span>「'+esc(r.name)+'」 <b class="num yen">¥'+yen(r.amt)+'</b> のお支払い予定'
+          +(r.shortAmt>0?'<div class="fc-sub">※支払口座「'+esc(r.acc.bank||'口座')+'」の残高は <b class="num neg">▲¥'+yen(r.shortAmt)+' 不足</b></div>':'')
+          +'</div>';
+      });
+      out+='</div>';
+    }
+    if(out) return out;
+    if(events.length){
       return '<div class="forecast all-ok"><div class="fc-head">📅 資金ショート予報</div>'
         +'<div class="fc-ok">✓ 直近の引き落としは、すべて残高で足ります（不足はありません）</div></div>';
     }
-    var totalShort=shorts.reduce(function(s,e){return s+(-e.diff);},0);
-    var f=shorts[0];
-    var h='<div class="forecast has-short"><div class="fc-head">📅 資金ショート予報<small>（返済日に預金が不足するものだけ表示）</small></div>';
-    h+='<div class="fc-alert"><span class="fc-a-date">'+md(f.date)+'・'+cd(f.date)+'</span>「'+esc(f.name)+'」が <b class="num">不足 ▲¥'+yen(-f.diff)+'</b></div>';
-    if(shorts.length>1) h+='<div class="fc-sub">不足する引き落とし '+shorts.length+'件・不足合計 <b class="num">▲¥'+yen(totalShort)+'</b></div>';
-    h+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">不足額</span></div>';
-    shorts.forEach(function(e){
-      h+='<div class="fc-row fc-crit">'
-        +'<span class="fc-date">'+md(e.date)+'<small>'+cd(e.date)+'</small></span>'
-        +'<span class="fc-name">'+esc(e.name)+'</span>'
-        +'<span class="fc-amt num yen">¥'+yen(e.amt)+'</span>'
-        +'<span class="fc-st num neg">▲¥'+yen(-e.diff)+' 不足</span>'
-        +'</div>';
-    });
-    h+='</div></div>';
-    return h;
+    var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0);
+    if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
+      +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくら不足するか」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
+    return '';
   }
   function spotHtml(){
     const sp=state.spots||[];
@@ -632,13 +648,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +'<div class="head-line"><span class="grp-pill">📌 特定日</span><button class="del'+(armedDel===s.id?' armed':'')+'" data-del="'+s.id+'">'+(armedDel===s.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
         +'<div class="efield"><label>支払いの名前</label><input class="txt sf-name" data-sid="'+s.id+'" value="'+esc(s.name||'')+'" placeholder="例）シャトレ梅満 売主払い"></div>'
         +'<div class="erow"><div class="efield"><label>金額（円）</label><input class="inp sf-amt" inputmode="numeric" data-sid="'+s.id+'" value="'+iv(s.amount)+'" placeholder="0" style="max-width:none"></div>'
-        +'<div class="efield"><label>支払口座</label><select class="txt small sf-acct" data-sid="'+s.id+'" style="max-width:none">'+opts(s.acctId)+'</select></div></div>'
+        +'<div class="efield"><label>支払口座（任意）</label><select class="txt small sf-acct" data-sid="'+s.id+'" style="max-width:none">'+opts(s.acctId)+'</select></div></div>'
         +'<div class="erow"><div class="efield"><label>支払う月（複数可・カンマ区切り）</label><input class="txt sf-months" data-sid="'+s.id+'" value="'+esc((s.months||[]).join(','))+'" placeholder="例）6,12"></div>'
         +'<div class="efield"><label>支払日（何日）</label><input class="inp sf-day" inputmode="numeric" data-sid="'+s.id+'" value="'+(s.day||'')+'" placeholder="例）30" style="max-width:none;text-align:right"></div></div>'
         +'<div class="efield"><label>メモ（任意）</label><input class="txt sf-note" data-sid="'+s.id+'" value="'+esc(s.note||'')+'" placeholder="例）6月末・12月末に売主へ振込"></div>'
         +'</div>').join('');
       return '<div class="cardframe spotframe"><div class="cf-title"><span>📌 特定日の支払い（半年払い・年払い・一時金）</span></div>'
-        +'<div style="font-size:12px;color:var(--muted);padding:0 2px 10px;line-height:1.55">毎月ではない支払い（半年ごと・年1回・一時金など）を登録すると、<b>資金ショート予報</b>に「いつ・いくら」が自動で出ます。</div>'
+        +'<div style="font-size:12px;color:var(--muted);padding:0 2px 10px;line-height:1.55">毎月ではない支払い（半年ごと・年1回・一時金など）を登録すると、<b>支払日の1ヶ月前から</b>「まもなく支払い予定」としてお知らせします。<br>支払口座は任意（決めていなくてOK・入れておくと残高不足も合わせて警告）。</div>'
         +rows
         +'<button class="addbtn" data-addspot="1">＋ 特定日の支払いを追加</button>'
         +'</div>';
@@ -646,9 +662,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const items=sp.map(s=>({s:s,d:spotNext(s)})).filter(x=>x.d&&(+x.s.amount)>0);
     if(!items.length) return '';
     items.sort((a,b)=>a.d-b.d);
-    let rows=items.map(x=>{const s=x.s,acc=acctById(s.acctId),bal=acc?(+acc.bal):0,amt=+s.amount||0,diff=bal-amt;
+    let rows=items.map(x=>{const s=x.s,acc=acctById(s.acctId),bal=acc?(+acc.bal):0,amt=+s.amount||0,diff=acc?(bal-amt):0;
       return '<div class="cf-row"><span class="cf-lab">'+esc(s.name||'支払い')+'<small>'+_fmtMD(x.d)+'・'+_fmtCd(x.d)+(acc?'／'+esc(acc.bank):'')+(s.note?'　'+esc(s.note):'')+'</small></span>'
-        +'<span class="cf-num num yen">¥'+yen(amt)+(diff<0?' <small style="color:var(--crit);font-weight:700">▲'+yen(-diff)+'不足</small>':'')+'</span></div>';}).join('');
+        +'<span class="cf-num num yen">¥'+yen(amt)+(acc&&diff<0?' <small style="color:var(--crit);font-weight:700">▲'+yen(-diff)+'不足</small>':'')+'</span></div>';}).join('');
     return '<div class="cardframe spotframe"><div class="cf-title"><span>📌 特定日の支払い<small style="font-weight:600;color:var(--muted)">　半年払い・年払い・一時金</small></span></div><div class="cf-rows">'+rows+'</div></div>';
   }
   function emptyHtml(){
