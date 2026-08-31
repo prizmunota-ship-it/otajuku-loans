@@ -356,13 +356,33 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch(e){return false;}};
 
   // ---------- state ----------
-  function defaultState(){return {v:1, asof:'', accounts:[], tsumi:[], card:{on:false,acctId:null,items:[]}};}
+  function defaultState(){return {v:1, asof:'', accounts:[], tsumi:[], spots:[], card:{on:false,acctId:null,items:[]}};}
   let state=defaultState();
-  function normalizeState(){if(!state||!state.accounts)state=defaultState();if(!state.tsumi)state.tsumi=[];if(!state.card)state.card={on:false,acctId:null,items:[]};
+  function normalizeState(){if(!state||!state.accounts)state=defaultState();if(!state.tsumi)state.tsumi=[];if(!state.spots)state.spots=[];if(!state.card)state.card={on:false,acctId:null,items:[]};
     if(!Array.isArray(state.card.items)){state.card.items=((+state.card.pay)>0)?[{name:'カード',pay:+state.card.pay}]:[];}
     state.accounts.forEach(a=>{if(!a.photos)a.photos=[];});}
   function cardTotal(){return (state.card.items||[]).reduce((s,i)=>s+(+i.pay||0),0);}
   const acctById=id=>state.accounts.find(a=>a.id===id);
+  const spotById=id=>(state.spots||[]).find(s=>s.id===id);
+  // 特定日（半年払い・年払い等）の直近到来日を計算
+  function _dimYM(y,m){return new Date(y,m+1,0).getDate();}
+  function nextOccMonthDay(month,day){
+    if(!month||month<1||month>12||!day||day<1||day>31)return null;
+    var now=new Date(),ty=now.getFullYear(),mi=month-1;
+    var t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var d=new Date(ty,mi,Math.min(day,_dimYM(ty,mi)));
+    if(d<t0)d=new Date(ty+1,mi,Math.min(day,_dimYM(ty+1,mi)));
+    return d;
+  }
+  function spotNext(s){
+    var months=(s.months||[]).map(Number).filter(function(m){return m>=1&&m<=12;});
+    var day=+s.day||0; if(!day||!months.length)return null;
+    var best=null;
+    months.forEach(function(m){var d=nextOccMonthDay(m,day);if(d&&(!best||d<best))best=d;});
+    return best;
+  }
+  function _fmtMD(d){return (d.getMonth()+1)+'/'+d.getDate();}
+  function _fmtCd(d){var now=new Date();var t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());var n=Math.round((d-t0)/86400000);return n<=0?'今日':(n===1?'明日':'あと'+n+'日');}
   const inGrp=g=>state.accounts.filter(a=>a.grp===g);
 
   // ---------- cloud sync ----------
@@ -407,6 +427,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     {grp:'法人',id:'d3',bank:'C信用組合',branch:'△△支店',acct:'3456789',bal:5200000,pay:880000,payday:27,borrow:96000000,note:'物件① 500,000 / 物件② 380,000',photos:[]},
     {grp:'法人',id:'d4',bank:'D銀行',branch:'□□支店',acct:'4567890',bal:640000,pay:210000,payday:15,borrow:28000000,note:'物件③ 210,000',photos:[]}
   ],tsumi:[{grp:'法人',id:'d5',bank:'C信用組合 積金',bal:600000,mo:50000}],
+  spots:[{id:'ds1',name:'土地の半年払い（売主へ）',amount:500000,acctId:'d3',months:[6,12],day:30,note:'6月末・12月末に振込'}],
   card:{on:true,acctId:'d1',payday:10,items:[{name:'ANA VISA',pay:180000},{name:'アメックス',pay:70000}]}};
   function enterDemo(){realStateBackup=state;state=JSON.parse(JSON.stringify(DEMO));demoMode=true;editing=false;gexp['法人']=false;gexp['個人']=false;document.body.classList.remove('editing');document.body.classList.add('demo');render();try{window.scrollTo(0,0);}catch(e){}}
   function exitDemo(){if(realStateBackup)state=realStateBackup;realStateBackup=null;demoMode=false;document.body.classList.remove('demo');render();}
@@ -568,8 +589,14 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     var c=state.card;
     if(c.on){ var tot=cardTotal(), acc=acctById(c.acctId), cbal=acc?(+acc.bal):0, day=+c.payday||0;
       if(tot>0 && day>=1 && day<=31){ var nd2=nextOcc(day); if(nd2) events.push({date:nd2,name:'💳 カード',amt:tot,diff:cbal-tot,card:true}); } }
+    (state.spots||[]).forEach(function(s){
+      var amt=+s.amount||0; if(amt<=0)return;
+      var sd=spotNext(s); if(!sd)return;
+      var sacc=acctById(s.acctId), sbal=sacc?(+sacc.bal):0;
+      events.push({date:sd,name:'📌 '+(s.name||'特定日の支払い'),amt:amt,diff:sbal-amt,spot:true});
+    });
     if(!events.length){
-      var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0);
+      var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0)||(state.spots||[]).some(function(s){return (+s.amount)>0&&spotNext(s);});
       if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
         +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくら不足するか」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
       return '';
@@ -597,6 +624,33 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     h+='</div></div>';
     return h;
   }
+  function spotHtml(){
+    const sp=state.spots||[];
+    if(editing){
+      const opts=cur=>'<option value="">（口座を選択）</option>'+state.accounts.map(a=>'<option value="'+a.id+'"'+(cur===a.id?' selected':'')+'>'+esc(a.bank||'口座')+'</option>').join('');
+      let rows=sp.map(s=>'<div class="row editcard" data-sid="'+s.id+'">'
+        +'<div class="head-line"><span class="grp-pill">📌 特定日</span><button class="del'+(armedDel===s.id?' armed':'')+'" data-del="'+s.id+'">'+(armedDel===s.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
+        +'<div class="efield"><label>支払いの名前</label><input class="txt sf-name" data-sid="'+s.id+'" value="'+esc(s.name||'')+'" placeholder="例）シャトレ梅満 売主払い"></div>'
+        +'<div class="erow"><div class="efield"><label>金額（円）</label><input class="inp sf-amt" inputmode="numeric" data-sid="'+s.id+'" value="'+iv(s.amount)+'" placeholder="0" style="max-width:none"></div>'
+        +'<div class="efield"><label>支払口座</label><select class="txt small sf-acct" data-sid="'+s.id+'" style="max-width:none">'+opts(s.acctId)+'</select></div></div>'
+        +'<div class="erow"><div class="efield"><label>支払う月（複数可・カンマ区切り）</label><input class="txt sf-months" data-sid="'+s.id+'" value="'+esc((s.months||[]).join(','))+'" placeholder="例）6,12"></div>'
+        +'<div class="efield"><label>支払日（何日）</label><input class="inp sf-day" inputmode="numeric" data-sid="'+s.id+'" value="'+(s.day||'')+'" placeholder="例）30" style="max-width:none;text-align:right"></div></div>'
+        +'<div class="efield"><label>メモ（任意）</label><input class="txt sf-note" data-sid="'+s.id+'" value="'+esc(s.note||'')+'" placeholder="例）6月末・12月末に売主へ振込"></div>'
+        +'</div>').join('');
+      return '<div class="cardframe spotframe"><div class="cf-title"><span>📌 特定日の支払い（半年払い・年払い・一時金）</span></div>'
+        +'<div style="font-size:12px;color:var(--muted);padding:0 2px 10px;line-height:1.55">毎月ではない支払い（半年ごと・年1回・一時金など）を登録すると、<b>資金ショート予報</b>に「いつ・いくら」が自動で出ます。</div>'
+        +rows
+        +'<button class="addbtn" data-addspot="1">＋ 特定日の支払いを追加</button>'
+        +'</div>';
+    }
+    const items=sp.map(s=>({s:s,d:spotNext(s)})).filter(x=>x.d&&(+x.s.amount)>0);
+    if(!items.length) return '';
+    items.sort((a,b)=>a.d-b.d);
+    let rows=items.map(x=>{const s=x.s,acc=acctById(s.acctId),bal=acc?(+acc.bal):0,amt=+s.amount||0,diff=bal-amt;
+      return '<div class="cf-row"><span class="cf-lab">'+esc(s.name||'支払い')+'<small>'+_fmtMD(x.d)+'・'+_fmtCd(x.d)+(acc?'／'+esc(acc.bank):'')+(s.note?'　'+esc(s.note):'')+'</small></span>'
+        +'<span class="cf-num num yen">¥'+yen(amt)+(diff<0?' <small style="color:var(--crit);font-weight:700">▲'+yen(-diff)+'不足</small>':'')+'</span></div>';}).join('');
+    return '<div class="cardframe spotframe"><div class="cf-title"><span>📌 特定日の支払い<small style="font-weight:600;color:var(--muted)">　半年払い・年払い・一時金</small></span></div><div class="cf-rows">'+rows+'</div></div>';
+  }
   function emptyHtml(){
     return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
       +'<p>各口座の<b>残高</b>と<b>毎月の返済額</b>を入れるだけ。<br>「残高が毎月返済を下回る口座」を自動で色分けし、資金ショートを未然に防ぎます。<br>入力内容はあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。</p>'
@@ -614,17 +668,18 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       h+='<div class="jumpbar"><span class="jb-lab">編集する項目へ移動：</span>'
         +'<button class="jb-btn" data-jump="個人">👤 個人</button>'
         +'<button class="jb-btn" data-jump="法人">🏢 法人</button>'
-        +'<button class="jb-btn" data-jump="クレカ">💳 クレカ</button></div>';
+        +'<button class="jb-btn" data-jump="クレカ">💳 クレカ</button>'
+        +'<button class="jb-btn" data-jump="スポット">📌 特定日</button></div>';
     }
     if(state.accounts.length===0 && !editing){ h+=emptyHtml(); }
-    else { h+=forecastHtml()+groupHtml('個人')+groupHtml('法人')+cardHtml(); }
+    else { h+=forecastHtml()+groupHtml('個人')+groupHtml('法人')+cardHtml()+spotHtml(); }
     if(editing){
       h+='<div class="toolbar"><button class="tbtn" id="exportBtn">⬇︎ バックアップを書き出す</button><button class="tbtn" id="importBtn">⬆︎ バックアップを読み込む</button></div>'
         +'<div class="savehint">入力は自動でクラウドに保存され、ログインすればどの端末でも同じ内容が出ます。</div>';
     }
     $('body').innerHTML=h;
     renderFoot();
-    if(pendingScroll){const sel=pendingScroll==='個人'?'.g-ind':pendingScroll==='法人'?'.g-corp':'.cardframe';const el=document.querySelector(sel);if(el){try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){el.scrollIntoView();}}pendingScroll=null;}
+    if(pendingScroll){const sel=pendingScroll==='個人'?'.g-ind':pendingScroll==='法人'?'.g-corp':pendingScroll==='スポット'?'.spotframe':'.cardframe';const el=document.querySelector(sel);if(el){try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){el.scrollIntoView();}}pendingScroll=null;}
   }
   function renderFoot(){
     $('foot').innerHTML=(!demoMode&&!editing&&state.accounts.length>0?'<div class="foot-demo"><button class="demolink" data-demo="1">📋 入力例を見る（数字が入った見本）</button></div>':'')
@@ -695,15 +750,17 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   document.addEventListener('click',ev=>{
     const t=ev.target;let e;
     if(t.closest('#fabEdit')){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}else{gexp['法人']=false;gexp['個人']=false;}document.body.classList.toggle('editing',editing);render();return;}
-    if(e=t.closest('[data-jump]')){const j=e.getAttribute('data-jump');if(j==='個人'){gexp['個人']=true;}else if(j==='法人'){gexp['法人']=true;}else if(j==='クレカ'){if(!state.card.on){state.card.on=true;if(!state.card.items||!state.card.items.length)state.card.items=[{name:'',pay:0}];save();}}pendingScroll=j;render();return;}
+    if(e=t.closest('[data-jump]')){const j=e.getAttribute('data-jump');if(j==='個人'){gexp['個人']=true;}else if(j==='法人'){gexp['法人']=true;}else if(j==='クレカ'){if(!state.card.on){state.card.on=true;if(!state.card.items||!state.card.items.length)state.card.items=[{name:'',pay:0}];save();}}else if(j==='スポット'){state.spots=state.spots||[];if(!state.spots.length){state.spots.push({id:uid(),name:'',amount:0,acctId:null,months:[],day:'',note:''});save();}}pendingScroll=j;render();return;}
+    if(e=t.closest('[data-addspot]')){state.spots=state.spots||[];state.spots.push({id:uid(),name:'',amount:0,acctId:null,months:[],day:'',note:''});save();render();const inp=document.querySelector('.sf-name[data-sid="'+state.spots[state.spots.length-1].id+'"]');if(inp)inp.focus();return;}
     if(e=t.closest('[data-cardadd]')){state.card.items=state.card.items||[];state.card.items.push({name:'',pay:0});save();render();const inp=document.querySelector('.cf-name[data-cardname="'+(state.card.items.length-1)+'"]');if(inp)inp.focus();return;}
     if(e=t.closest('[data-carddel]')){const i=+e.getAttribute('data-carddel');if(state.card.items&&state.card.items[i]!==undefined){state.card.items.splice(i,1);save();render();}return;}
     if(e=t.closest('#reloadBtn')){e.textContent='更新中…';try{location.reload();}catch(err){location.href=location.pathname;}return;}
     if(t.id==='logoutBtn'){doLogout();return;}
-    if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id);if(!acc&&!ts)return;
+    if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id),sp=spotById(id);if(!acc&&!ts&&!sp)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
         if(acc){state.accounts=state.accounts.filter(x=>x.id!==id);}
-        else{state.tsumi=state.tsumi.filter(x=>x.id!==id);}
+        else if(ts){state.tsumi=state.tsumi.filter(x=>x.id!==id);}
+        else{state.spots=state.spots.filter(x=>x.id!==id);}
         save();render();}
       else{armDel(id);render();}
       return;}
@@ -727,6 +784,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   document.addEventListener('input',ev=>{
     const t=ev.target;if(!t.classList)return;const id=t.getAttribute('data-id');const a=id?acctById(id):null;
     const tid=t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
+    const sid=t.getAttribute('data-sid');const sp=sid?spotById(sid):null;
+    if(t.classList.contains('sf-name')&&sp){sp.name=t.value;save();return;}
+    if(t.classList.contains('sf-note')&&sp){sp.note=t.value;save();return;}
     if(t.classList.contains('f-bank')&&a){a.bank=t.value;save();return;}
     if(t.classList.contains('f-branch')&&a){a.branch=t.value;save();return;}
     if(t.classList.contains('f-acct')&&a){a.acct=t.value;save();return;}
@@ -739,6 +799,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   document.addEventListener('change',ev=>{
     const t=ev.target;if(!t.classList&&t.id!=='cardOn')return;const id=t.getAttribute&&t.getAttribute('data-id');const a=id?acctById(id):null;
     const tid=t.getAttribute&&t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
+    const sid=t.getAttribute&&t.getAttribute('data-sid');const sp=sid?spotById(sid):null;
+    if(t.classList.contains('sf-amt')&&sp){sp.amount=pnum(t.value);save();render();return;}
+    if(t.classList.contains('sf-acct')&&sp){sp.acctId=t.value||null;save();render();return;}
+    if(t.classList.contains('sf-day')&&sp){var sd=pnum(t.value);sp.day=(sd>=1&&sd<=31)?sd:'';save();render();return;}
+    if(t.classList.contains('sf-months')&&sp){sp.months=t.value.split(/[^0-9]+/).map(Number).filter(function(n){return n>=1&&n<=12;});save();render();return;}
     if(t.classList.contains('f-bal')&&a){a.bal=pnum(t.value);save();render();return;}
     if(t.classList.contains('f-pay')&&a){a.pay=pnum(t.value);save();render();return;}
     if(t.classList.contains('f-borrow')&&a){a.borrow=pnum(t.value);save();render();return;}
@@ -752,7 +817,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   });
 
   function seed(){
-    state={v:1,asof:'（サンプル）',card:{on:true,acctId:null,items:[{name:'ANA VISA',pay:120000},{name:'アメックス',pay:60000}]},tsumi:[
+    state={v:1,asof:'（サンプル）',spots:[],card:{on:true,acctId:null,items:[{name:'ANA VISA',pay:120000},{name:'アメックス',pay:60000}]},tsumi:[
       {grp:'法人',id:uid(),bank:'A銀行 積金',bal:800000,mo:50000},
       {grp:'個人',id:uid(),bank:'C銀行 積金',bal:240000,mo:20000}
     ],accounts:[
