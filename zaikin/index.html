@@ -225,6 +225,7 @@ body.demo .fab{display:none;}
 .lbank .r2{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
 .lbank .r2 b{color:var(--ink);font-weight:600;}
 .lf-total{border-top:2px solid var(--accent);margin-top:3px;padding-top:9px;}
+.lf-note{margin-top:11px;padding-top:9px;border-top:1px dashed var(--hair);font-size:11.5px;line-height:1.6;color:var(--muted);}
 .lf-total .bn{color:var(--accent);}
 .sec-h{display:flex;align-items:center;gap:9px;margin:14px 2px 8px;}
 .sec-h .bar{width:3px;height:16px;border-radius:2px;background:var(--muted);}
@@ -455,10 +456,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const fb=$('fabEdit');if(fb){fb.textContent=editing?'✓ 完了':'✏️ 編集';fb.classList.toggle('on',editing);}
   }
   function renderKPIs(){
-    const T=totals();const t5=Math.round(T.borrow*0.05),d5=T.bal-t5;
+    const T=totals();
     let h='<div class="kpi"><div class="lab">総預金残高</div><div class="val num yen">'+yen(T.bal)+'</div>'
       +'<div class="sub num">毎月返済 ¥'+yen(T.pay)+'</div>';
-    if(T.borrow>0) h+='<div class="sub num">借入5%の目安 ¥'+yen(t5)+'　<span style="color:var(--'+(d5<0?'crit':'good')+');font-weight:700">'+(d5<0?'▲':'+')+'¥'+yen(Math.abs(d5))+'</span></div>';
     if(T.borrow>0) h+='<button class="kpi-link" id="lfToggle" aria-expanded="'+lfOpen+'"><span class="kl-lab">🏦 金融機関ごとの借入まとめ</span><span class="kl-hint"><span class="kl-htxt">'+(lfOpen?'閉じる':'明細を表示')+'</span><span class="tw">▾</span></span></button>';
     h+='</div>';
     if(T.borrow>0 && lfOpen) h+=loanframeHtml();
@@ -469,16 +469,16 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     state.accounts.filter(a=>(+a.borrow)>0).forEach(a=>{const key=a.bank||'（無名）';if(!byBank[key])byBank[key]={bank:key,borrow:0,bal:0,grps:[]};const b=byBank[key];b.borrow+=+a.borrow;b.bal+=+a.bal;b.grps.push(a.grp);});
     const banks=Object.values(byBank).sort((x,y)=>y.borrow-x.borrow);
     const gSum=banks.reduce((s,b)=>s+b.borrow,0),gDep=banks.reduce((s,b)=>s+b.bal,0);
-    const row=(b,isTotal)=>{const t5=Math.round(b.borrow*0.05),diff=b.bal-t5,ratio=b.borrow?(b.bal/b.borrow*100):0;
+    const row=(b,isTotal)=>{const ratio=b.borrow?(b.bal/b.borrow*100):0;
       const tag=isTotal?'':'<span class="btag">'+[...new Set(b.grps)].join('＋')+'</span>';
-      return '<div class="lbank'+(isTotal?' lf-total':'')+'"><div class="r1"><span class="bn">'+esc(b.bank)+tag+'</span><span class="df '+(diff<0?'neg':'pos')+'">差 '+(diff<0?'▲':'+')+'¥'+yen(Math.abs(diff))+'</span></div>'
-        +'<div class="r2">借入 <b class="num yen">'+yen(b.borrow)+'</b> ・ 預金 <b class="num yen">'+yen(b.bal)+'</b>（<span class="num">'+ratio.toFixed(1)+'%</span>） ・ 5%目安 <b class="num yen">'+yen(t5)+'</b></div></div>';};
+      return '<div class="lbank'+(isTotal?' lf-total':'')+'"><div class="r1"><span class="bn">'+esc(b.bank)+tag+'</span></div>'
+        +'<div class="r2">借入 <b class="num yen">'+yen(b.borrow)+'</b> ・ 預金 <b class="num yen">'+yen(b.bal)+'</b>（預金比率 <span class="num">'+ratio.toFixed(1)+'%</span>）</div></div>';};
     return '<div class="loanframe"><div class="lf-title">金融機関ごとの借入まとめ（法人＋個人 合算）</div><div class="lf-banks">'
-      +banks.map(b=>row(b,false)).join('')+row({bank:'合計',borrow:gSum,bal:gDep,grps:[]},true)+'</div></div>';
+      +banks.map(b=>row(b,false)).join('')+row({bank:'合計',borrow:gSum,bal:gDep,grps:[]},true)+'</div>'
+      +'<div class="lf-note">💡 目安：各金融機関で<b>借入残高の5%以上を預金</b>で持っておくのが望ましいとされます（規模拡大期は下回ることもあります）。</div></div>';
   }
   function accRow(a){
     const st=judge(a),diff=(+a.bal)-(+a.pay);
-    const t5=a.borrow?Math.round(a.borrow*0.05):0,d5=(+a.bal)-t5;
     if(editing){
       return '<div class="row editcard" data-id="'+a.id+'">'
         +'<div class="head-line"><span class="grp-pill">'+a.grp+'</span><button class="del'+(armedDel===a.id?' armed':'')+'" data-del="'+a.id+'">'+(armedDel===a.id?'⚠️ もう一度押すと削除':'🗑 削除')+'</button></div>'
@@ -488,7 +488,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp f-bal" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.bal)+'" placeholder="0" style="max-width:none"></div>'
         +'<div class="efield"><label>毎月返済（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.pay)+'" placeholder="0" style="max-width:none"></div></div>'
         +'<div class="efield"><label>返済日（毎月何日に引き落とし・任意）</label><input class="inp f-payday" inputmode="numeric" data-id="'+a.id+'" value="'+(a.payday||'')+'" placeholder="例）27" style="max-width:140px;text-align:right"></div>'
-        +'<div class="efield"><label>借入残高（円・任意／5%目安の計算に使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.borrow)+'" placeholder="0" style="max-width:none;text-align:right"></div>'
+        +'<div class="efield"><label>借入残高（円・任意／金融機関ごとの借入まとめに使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.borrow)+'" placeholder="0" style="max-width:none;text-align:right"></div>'
         +'<div class="efield"><label>返済の内訳・メモ（任意）</label><textarea class="txt small f-note" data-id="'+a.id+'" rows="2" placeholder="例）物件A 120,000 / 物件B 80,000">'+esc(a.note||'')+'</textarea></div>'
         +'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>'
         +'</div>';
@@ -499,7 +499,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       +'<div class="rhead"><div class="stripe st-'+st+'"></div>'
       +'<div class="bankcell"><div class="bankname">'+esc(a.bank||'（無名口座）')+(hasDetail?'<span class="caret">▶</span>':'')+' '+statusPill+'</div>'
       +'<div class="acct">'+esc(a.branch||'')+' '+esc(a.acct||'')+'</div>'
-      +(a.borrow>0?'<div class="pct">借入 <b class="num yen">'+yen(a.borrow)+'</b>／5%目安 <b class="num yen">'+yen(t5)+'</b>　<span class="'+(d5<0?'neg':'pos')+'">差 '+(d5<0?'▲':'+')+'¥'+yen(Math.abs(d5))+'</span></div>':'')
       +'</div>'
       +'<div class="right pay"><div class="lab">毎月返済</div><div class="big num">'+(a.pay?yen(a.pay):'—')+'</div>'+(a.pay&&a.payday?'<div class="payday">毎月'+a.payday+'日</div>':'')+'</div>'
       +'<div class="right bal"><div class="lab">残高</div><div class="big num yen">'+yen(a.bal)+'</div>'
@@ -699,8 +698,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   }
   function renderFoot(){
     $('foot').innerHTML=(!demoMode&&!editing&&state.accounts.length>0?'<div class="foot-demo"><button class="demolink" data-demo="1">📋 入力例を見る（数字が入った見本）</button></div>':'')
-      +'<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。'
-      +'借入残高を入れた口座は「借入5%を現預金で持つ」目安も表示します。<br>'
+      +'<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。<br>'
       +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。';
   }
 
