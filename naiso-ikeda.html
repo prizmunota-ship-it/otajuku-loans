@@ -157,7 +157,7 @@ textarea.fval{resize:vertical;min-height:80px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL = 'PENDING_EXEC_URL';  // 【池田版】GASデプロイ後に /exec URL へ差し替え
+const GAS_URL = '/api/naiso-ikeda';  // 【池田版】データ接続＝Cloudflare KV（本村版GASの代替・手動デプロイ不要）
 
 const USERS = [
   {id:'owner', name:'圭一さん', label:'オーナー'},
@@ -195,10 +195,6 @@ async function loadData(){
     const c = localStorage.getItem(CACHE_KEY);
     if (c) { const o = JSON.parse(c); if (Array.isArray(o)) { data = o; render(); hadCache = true; } }
   } catch(e){}
-  if (GAS_URL === 'PENDING_EXEC_URL') {
-    document.getElementById('cards').innerHTML = '<div class="empty">🛠️ セットアップ中<br><span style="font-size:12px;color:#999">GAS（データ接続）の設定が完了すると部屋が表示されます</span></div>';
-    return;
-  }
   if (!hadCache) document.getElementById('cards').innerHTML = '<div class="loading"><div class="spin"></div><br>データを読み込み中...</div>';
   loadSetFlags();   // セット設置/回収フラグをクラウドから取得（非同期・取得後に再描画）
   // ② 裏で最新を取得して差し替え＋キャッシュ更新
