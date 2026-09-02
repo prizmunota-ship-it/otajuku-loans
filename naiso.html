@@ -158,7 +158,9 @@ textarea.fval{resize:vertical;min-height:80px;}
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzLIY3vZuxl3YqHK4xYpkuStrdD8bMVC9-kkt62G3xZ78hOWH8ypeWhHg-DQo2DyOk5/exec';
+const APP = 'moto';                                 // 'moto'=本村さん / 'ikeda'=池田さん
+const BASE_URL  = '/naiso-' + APP + '.json';        // 部屋リスト＝空室一覧(build.py)が配信（＝二重登録なし）
+const STATE_URL = '/api/naiso-state?app=' + APP;    // 内装業者の編集状態(KV)
 
 const USERS = [
   {id:'owner', name:'圭一さん', label:'オーナー'},
@@ -188,39 +190,52 @@ document.getElementById('today-date').textContent =
 
 function isOwner(){ return currentUser==='owner'; }
 
-const CACHE_KEY = 'naiso_cache_v1';
+const CACHE_KEY = 'naiso_' + APP + '_cache_v2';
+let baseRooms = [];   // 空室一覧(build.py)由来の部屋リスト。編集状態は setFlags(=STATE) に持つ。
+// 部屋(base) と 編集状態(setFlags) を「物件|号室」でマージして data を作る。
+function rebuild(){
+  data = (baseRooms || []).map(function(r){
+    var key = r.name + '|' + r.room;
+    return Object.assign({}, r, { id: key }, setFlags[key] || {});
+  });
+  render();
+}
 async function loadData(){
-  // ① 前回のキャッシュがあれば即表示（GASを待たない＝体感が速い）
-  let hadCache = false;
+  // ① キャッシュ即表示（base + state）
   try {
-    const c = localStorage.getItem(CACHE_KEY);
-    if (c) { const o = JSON.parse(c); if (Array.isArray(o)) { data = o; render(); hadCache = true; } }
+    var c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (c && Array.isArray(c.base)) { baseRooms = c.base; setFlags = c.state || {}; rebuild(); }
   } catch(e){}
-  if (!hadCache) document.getElementById('cards').innerHTML = '<div class="loading"><div class="spin"></div><br>データを読み込み中...</div>';
-  loadSetFlags();   // セット設置/回収フラグをクラウドから取得（非同期・取得後に再描画）
-  // ② 裏で最新を取得して差し替え＋キャッシュ更新
+  if (!baseRooms.length) document.getElementById('cards').innerHTML = '<div class="loading"><div class="spin"></div><br>データを読み込み中...</div>';
+  // ② 裏で最新を取得（部屋リスト＝空室一覧配信JSON / 編集状態＝KV）
   try {
-    const res = await fetch(GAS_URL + '?action=getAll');
-    const fresh = await res.json();
-    if (Array.isArray(fresh)) {
-      data = fresh; render();
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify(fresh)); } catch(e){}
-    }
+    var res = await Promise.all([
+      fetch(BASE_URL).then(function(r){return r.json();}).catch(function(){return null;}),
+      fetch(STATE_URL).then(function(r){return r.json();}).catch(function(){return null;})
+    ]);
+    if (Array.isArray(res[0])) baseRooms = res[0];
+    if (res[1] && res[1].state) setFlags = res[1].state;
+    rebuild();
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ base: baseRooms, state: setFlags })); } catch(e){}
   } catch(e) {
-    if (!hadCache) document.getElementById('cards').innerHTML = '<div class="empty">データの読み込みに失敗しました。<br>再読み込みしてください。</div>';
-    // キャッシュ表示中なら、そのまま維持（オフラインでも直近データが見える）
+    if (!baseRooms.length) document.getElementById('cards').innerHTML = '<div class="empty">データの読み込みに失敗しました。<br>再読み込みしてください。</div>';
   }
 }
 
 async function saveUpdate(params){
+  var id = params.id;
+  var fields = Object.assign({}, params); delete fields.id; delete fields.action;
   try {
-    await fetch(GAS_URL + '?' + new URLSearchParams({action:'update',...params}));
+    await fetch(STATE_URL, { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ key:id, fields:fields }) });
+    setFlags[id] = Object.assign({}, setFlags[id], fields);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ base: baseRooms, state: setFlags })); } catch(e){}
     return true;
   } catch(e){ return false; }
 }
 
 // ===== セット設置／セット回収の完了フラグ（Cloudflare KV: /api/naiso-set）=====
-const SET_KEY = 'naiso_setflags_v1';
+const SET_KEY = 'naiso_' + APP + '_setflags_v1';
 let setFlags = {};
 try { const c = localStorage.getItem(SET_KEY); if (c) setFlags = JSON.parse(c) || {}; } catch(e){}
 function setFlag(id, key){ const f = setFlags[String(id)]; return !!(f && f[key]); }
@@ -266,16 +281,15 @@ function kaishuPanel(p){
         <span class="knum-zan">残 <b>${yen(st.zan)}</b></span>
       </div>
       ${month?`<div class="kaishu-meta">回収確認月: ${month}${p.kanri?`　／　${p.kanri}送金明細`:''}</div>`:''}
-      <button class="kbtn" onclick="openKaishu(${p.id})">内訳・回収を記録</button>
+      <button class="kbtn" onclick="openKaishu('${p.id}')">内訳・回収を記録</button>
     </div>`;
 }
 async function loadSetFlags(){
   try {
-    const r = await fetch('/api/naiso-set');
-    const j = await r.json();
-    if (j && j.configured && j.data && j.data.flags){
-      setFlags = j.data.flags; render();
-      try { localStorage.setItem(SET_KEY, JSON.stringify(setFlags)); } catch(e){}
+    const j = await fetch(STATE_URL).then(function(r){return r.json();});
+    if (j && j.state){
+      setFlags = j.state; rebuild();
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ base: baseRooms, state: setFlags })); } catch(e){}
     }
   } catch(e){}
 }
@@ -289,8 +303,8 @@ async function toggleSet(id, key, ev){
   const label = key==='install' ? 'セット設置' : 'セット回収';
   showToast(setFlags[sid][key] ? `${label}を完了にしました ✓` : `${label}を未に戻しました`);
   try {
-    await fetch('/api/naiso-set', { method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ action:'setRoom', id:sid, fields:{ [key]: setFlags[sid][key] } }) });
+    await fetch(STATE_URL, { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ key:sid, fields:{ [key]: setFlags[sid][key] } }) });
   } catch(e){}
 }
 window.addEventListener('focus', loadSetFlags);
@@ -340,8 +354,8 @@ function renderCards(){
 
   document.getElementById('cards').innerHTML = list.map(p=>{
     // 権限区別なし＝オーナー・本村さんとも全項目を入力可
-    const statusBtn = `<button class="abtn primary" onclick="openStatus(${p.id})">状況を更新</button>`;
-    const editBtn = `<button class="abtn" onclick="openEdit(${p.id})">詳細編集</button>`;
+    const statusBtn = `<button class="abtn primary" onclick="openStatus('${p.id}')">状況を更新</button>`;
+    const editBtn = `<button class="abtn" onclick="openEdit('${p.id}')">詳細編集</button>`;
     return `
     <div class="card">
       <div class="card-head">
@@ -464,8 +478,8 @@ async function saveKaishu(){
   try{ localStorage.setItem(SET_KEY, JSON.stringify(setFlags)); }catch(e){}
   showToast('保存中...');
   try{
-    await fetch('/api/naiso-set', { method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ action:'setRoom', id, fields:{ seiIyaku:iyaku, seiSeiso:seiso, seiGenjo:genjo, kaishuGaku:gaku, kaishuMonth:month } }) });
+    await fetch(STATE_URL, { method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ key:id, fields:{ seiIyaku:iyaku, seiSeiso:seiso, seiGenjo:genjo, kaishuGaku:gaku, kaishuMonth:month } }) });
     showToast('退去精算を保存しました ✓');
   }catch(e){ showToast('保存に失敗しました'); }
 }
