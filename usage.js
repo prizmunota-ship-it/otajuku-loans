@@ -20,6 +20,9 @@
       "naiso": "内装状況", "kakunin": "確認"
     };
     var app = MAP[key] || key;
+    // 記録しないページ（トップの選択画面＝旧「ハブ」、および太田専用のコックピット）
+    var SKIP = { "AIアプリ選択画面": 1, "コックピット": 1 };
+    if (SKIP[app]) return;
     var img = new Image();
     img.src = LOG_URL + "?app=" + encodeURIComponent(app) + "&email=" + encodeURIComponent(email) + "&t=" + Date.now();
   } catch (e) {}
