@@ -488,7 +488,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     let h='<div class="cb-lab">💰 いま使える現金'+(neg?'（返済・経営分が不足）':'（返済・経営を確保した後）')+'</div>'
       +'<div class="cb-val num yen" id="cbUsable">'+yen(c.usable)+'</div>'
       +'<div class="cb-formula">口座残高 <b class="num yen">'+yen(c.acctBal)+'</b> − 確保 <b class="num yen" id="cbReserve">'+yen(c.reserve)+'</b>（毎月の固定支出 <b class="num yen">'+yen(c.monthly)+'</b> × '+c.nM+'ヶ月）</div>'
-      +'<div class="cb-sub">固定支出＝返済 ¥'+yen(c.pay)+' ＋ カード ¥'+yen(c.card)+(c.tsumiMo?' ＋ 積立 ¥'+yen(c.tsumiMo):'')+'　／　積立残高 ¥'+yen(c.tsumiBal)+' は別枠（拘束）';
+      +'<div class="cb-sub">固定支出＝返済〔物件＋無担保〕 ¥'+yen(c.pay)+' ＋ カード ¥'+yen(c.card)+(c.tsumiMo?' ＋ 積立 ¥'+yen(c.tsumiMo):'')+'　／　積立残高 ¥'+yen(c.tsumiBal)+' は別枠（拘束）';
     if(!editing) h+='　・確保月数は「✏️ 編集」で変更可';
     h+='</div>';
     if(editing){
