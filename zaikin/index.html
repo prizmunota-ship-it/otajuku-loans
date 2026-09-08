@@ -400,6 +400,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .paste-foot{font-size:11px;color:var(--muted);font-weight:700;margin:6px 2px}
 .tbtn-paste{border-style:dashed!important;border-color:var(--accent)!important;color:var(--accent)!important;font-weight:800}
 .empty-or{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 8px}
+.paste-way{margin-bottom:12px;padding:11px 12px;border:1px solid var(--hair);border-radius:10px;background:var(--surface-2)}
+.paste-way-t{font-size:12px;font-weight:800;color:var(--ink);margin-bottom:9px}
+.pf-file{width:100%}
+.paste-way .pastebox{margin-bottom:8px}
+.paste-way #pasteParse{width:100%}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .msrc-b.on{color:#17130A}}
 .welcome{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:18px 16px;box-shadow:var(--shadow)}
 .welcome h2{font-size:19px;margin:0 0 8px}
@@ -1037,11 +1042,23 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function parseTable(text){var lines=String(text).replace(/\r/g,'').split('\n').filter(function(l){return l.trim()!=='';});if(lines.length<2)return null;var delim=lines[0].indexOf('\t')>=0?'\t':',';var rows=lines.map(function(l){return splitLine(l,delim).map(function(x){return x.trim();});});return {headers:rows[0],rows:rows.slice(1)};}
   function autoMap(headers,syn){syn=syn||_SYN;var used={},map={};headers.forEach(function(h,idx){var hn=Z2H(String(h)).replace(/[\s　]/g,'').toLowerCase();var best='';Object.keys(syn).forEach(function(f){if(best||used[f])return;syn[f].forEach(function(kw){if(best)return;var k=Z2H(kw).replace(/[\s　]/g,'').toLowerCase();if(hn.indexOf(k)>=0)best=f;});});if(best){map[idx]=best;used[best]=1;}});return map;}
   let pasteMode=null,_pasteParsed=null;
+  function _decodeText(buf){try{var u=new TextDecoder('utf-8',{fatal:false}).decode(buf);if(u.indexOf('�')<0)return u;}catch(e){}try{return new TextDecoder('shift_jis').decode(buf);}catch(e2){try{return new TextDecoder('utf-8').decode(buf);}catch(e3){return '';}}}
+  function _xlsxToTable(buf){return new Promise(function(res,rej){var wb=new ExcelJS.Workbook();wb.xlsx.load(buf).then(function(){var ws=wb.worksheets&&wb.worksheets[0];if(!ws){res(null);return;}var rows=[];ws.eachRow({includeEmpty:false},function(row){var vals=row.values||[],arr=[];for(var i=1;i<vals.length;i++){var v=vals[i];if(v==null)arr.push('');else if(v instanceof Date)arr.push(v.toLocaleDateString('ja-JP'));else if(typeof v==='object')arr.push(String(v.result!=null?v.result:(v.text!=null?v.text:(v.hyperlink!=null?v.hyperlink:''))));else arr.push(String(v));}rows.push(arr);});if(rows.length<2){res(null);return;}var w=Math.max.apply(null,rows.map(function(r){return r.length;}));rows.forEach(function(r){while(r.length<w)r.push('');});res({headers:rows[0].map(function(x){return String(x).trim();}),rows:rows.slice(1).map(function(r){return r.map(function(x){return String(x).trim();});})});}).catch(rej);});}
+  function _finishParsed(P){if(!P){alert('見出し行＋1行以上のデータが見つかりませんでした。1行目に列名（物件名・残債…）がある表を選んでください。');return;}P.map=autoMap(P.headers,pasteSyn(pasteMode));_pasteParsed=P;render();}
+  function readFileToTable(f){var name=(f.name||'').toLowerCase();
+    if(/\.(xlsx|xls)$/.test(name)){var run=function(){var rd=new FileReader();rd.onload=function(){_xlsxToTable(rd.result).then(_finishParsed).catch(function(e){alert('Excelの読み込みに失敗：'+((e&&e.message)||e));});};rd.onerror=function(){alert('ファイルを読み込めませんでした。');};rd.readAsArrayBuffer(f);};
+      if(window.ExcelJS)run();else{var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';s.onload=run;s.onerror=function(){alert('Excel読み込み用ライブラリの取得に失敗しました。オンライン環境でお試しください（CSVなら不要です）。');};document.head.appendChild(s);}
+    }else{var rd=new FileReader();rd.onload=function(){_finishParsed(parseTable(_decodeText(rd.result)));};rd.onerror=function(){alert('ファイルを読み込めませんでした。');};rd.readAsArrayBuffer(f);}}
   function pasteImportHtml(kind){var P=_pasteParsed;var acc=kind==='accounts';var FL=pasteFields(kind);
    var h='<div class="pform"><div class="pf-h">📋 表を貼り付けて一括取込（'+(acc?'口座':'物件')+'）</div>';
-   if(!P){h+='<div class="pf-actnote">Excel／Googleスプレッドシートで<b>見出し行を含む範囲</b>をコピーし、下に貼り付け→「解析する」。列は自動で判定し、確認してから取り込みます（既存の'+(acc?'口座':'物件')+'はそのまま・追加されます）。</div>';
+   if(!P){h+='<div class="pf-actnote">今ある'+(acc?'口座':'物件')+'の一覧表（Excel/CSV）から取り込めます。1行目に列名（'+(acc?'銀行名・残高…':'物件名・残債…')+'）がある表を用意してください。既存の'+(acc?'口座':'物件')+'はそのまま・追加されます。</div>';
+     h+='<div class="paste-way"><div class="paste-way-t">方法① ファイルを添付（おすすめ・Excelそのままでも可）</div>';
+     h+='<button class="pf-save pf-file" id="pasteFileBtn">📎 Excel / CSV ファイルを選ぶ</button>';
+     h+='<input type="file" id="pasteFile" accept=".csv,.tsv,.txt,.xlsx,.xls" style="display:none"></div>';
+     h+='<div class="paste-way"><div class="paste-way-t">方法② 表をコピーして貼り付け</div>';
      h+='<textarea id="pasteBox" class="pastebox" placeholder="'+(acc?'1行目に見出し（例：銀行名  支店  残高  毎月返済  名義）。以降にデータ。':'1行目に見出し（例：物件名  住所  戸数  残債  満室家賃(年)  年間返済 …）。以降にデータ。')+'タブ区切り／CSV対応。"></textarea>';
-     h+='<div class="pf-btns"><button class="pf-save" id="pasteParse">解析する</button><button class="pf-cancel" id="pasteCancel">キャンセル</button></div>';}
+     h+='<button class="pf-save" id="pasteParse">貼り付けた表を解析する</button></div>';
+     h+='<div class="pf-btns"><button class="pf-cancel" id="pasteCancel">キャンセル</button></div>';}
    else{var fo=function(sel){return FL.map(function(o){return '<option value="'+o[1]+'"'+(sel===o[1]?' selected':'')+'>'+o[0]+'</option>';}).join('');};
      h+='<div class="pf-actnote">列の対応を確認・修正してください（自動判定済み）。使わない列は「(取り込まない)」に。金額は「万・億」やカンマ付きもOK。</div>';
      h+='<div class="pd-tw"><table class="pd-tbl paste-tbl"><thead><tr>';
@@ -1386,6 +1403,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.closest('#mudFlat')){delete state.mudanSchedule;save();render();return;}
     if(t.closest('#pasteOpen')){pasteMode='props';_pasteParsed=null;render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pasteOpenAcc')){pasteMode='accounts';_pasteParsed=null;if(activeTab!=='cash'){activeTab='cash';lsSet('zaikin_tab','cash');}render();try{window.scrollTo(0,0);}catch(_){}return;}
+    if(t.closest('#pasteFileBtn')){const fi=$('pasteFile');if(fi)fi.click();return;}
     if(t.closest('#pasteParse')){const box=$('pasteBox');const P=parseTable(box?box.value:'');if(!P){alert('見出し行＋1行以上のデータを貼り付けてください。');return;}P.map=autoMap(P.headers,pasteSyn(pasteMode));_pasteParsed=P;render();return;}
     if(t.closest('#pasteImport')){doPasteImport(pasteMode);return;}
     if(t.closest('#pasteRedo')){_pasteParsed=null;render();return;}
@@ -1480,6 +1498,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.classList.contains('inc-m')){const i=+t.getAttribute('data-inci'),m=+t.getAttribute('data-incm');if(state.incRows&&state.incRows[i]){if(!state.incRows[i].v||state.incRows[i].v.length!==12)state.incRows[i].v=Array(12).fill(0);state.incRows[i].v[m]=pnum(t.value);save();render();}return;}
     if(t.id==='cmSel'){state.completeMonths=Math.max(0,Math.min(12,pnum(t.value)));save();render();return;}
     if(t.classList.contains('paste-map')&&_pasteParsed){const ci=t.getAttribute('data-col');const v=t.value;if(v){for(var kk in _pasteParsed.map){if(_pasteParsed.map[kk]===v&&kk!==ci)delete _pasteParsed.map[kk];}_pasteParsed.map[ci]=v;}else{delete _pasteParsed.map[ci];}render();return;}
+    if(t.id==='pasteFile'){const f=t.files&&t.files[0];if(f)readFileToTable(f);return;}
     if(t.classList.contains('cf-amt')){const i=+t.getAttribute('data-cardpay');if(state.card.items&&state.card.items[i]){state.card.items[i].pay=pnum(t.value);save();render();}return;}
     if(t.id==='cardOn'){state.card.on=t.checked;if(state.card.on&&(!state.card.items||!state.card.items.length))state.card.items=[{name:'',pay:0}];save();render();return;}
     if(t.id==='cardAcct'){state.card.acctId=t.value||null;save();return;}
