@@ -379,6 +379,18 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .l2k{font-size:10px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
 .l2m{color:var(--muted);font-size:11.5px;text-align:right;white-space:nowrap}.l2z{font-weight:600;text-align:right;white-space:nowrap}
 .loan2.tot{background:var(--accent-soft);color:var(--accent);font-weight:800}.loan2.tot .l2m,.loan2.tot .l2z{color:var(--accent)}
+.cb-mbtn{margin-left:8px;font-family:inherit;font-size:11px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:99px;padding:2px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.cb-method{margin-top:8px;padding-top:8px;border-top:1px dashed var(--hair);font-size:11.5px;color:var(--muted);line-height:1.7}
+.cb-method b{color:var(--ink)}
+.cbm-edit{margin-top:6px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cbm-edit input{width:52px;text-align:right;font-size:15px;padding:5px 8px;border:1px solid var(--hair);border-radius:8px;background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700}
+.cbm-note{margin-top:5px;font-size:11px;color:var(--muted)}
+.sec-hbtn{width:100%;text-align:left;background:transparent;border:none;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mbook{margin:2px 0 10px}
+.mbook-cap{font-size:11px;color:var(--muted);margin-bottom:6px}
+.mbook-tbl .it{min-width:132px}
+.pd-tbl td.neg{color:var(--crit)}
+.pd-tbl tr.roth td{background:var(--surface-2);font-weight:600}
 </style>
 </head>
 <body>
@@ -570,9 +582,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     el.className='cashbar'+(neg?' neg':'');
     let h='<div class="cb-lab">💰 いま使える現金'+(neg?'（返済・経営分が不足）':'（返済・経営を確保した後）')+'</div>'
       +'<div class="cb-val num yen" id="cbUsable">'+yen(c.usable)+'</div>'
-      +'<div class="cb-formula">口座残高 <b class="num yen">'+yen(c.acctBal)+'</b> − 確保 <b class="num yen" id="cbReserve">'+yen(c.reserve)+'</b>（固定支出×'+c.nM+'ヶ月）</div>';
-    if(editing){
-      h+='<div class="cb-edit">🛡 残しておく：<input id="bufMon" inputmode="numeric" value="'+c.nM+'"> ヶ月分の固定支出（返済＋カード＋積立）</div>';
+      +'<div class="cb-formula">口座残高 <b class="num yen">'+yen(c.acctBal)+'</b> − 確保 <b class="num yen" id="cbReserve">'+yen(c.reserve)+'</b> <button class="cb-mbtn" id="cbMethodBtn">算出方法 '+(methodOpen?'▲':'▼')+'</button></div>';
+    if(methodOpen){
+      h+='<div class="cb-method"><div class="cbm-l">固定支出＝返済〔物件＋無担保〕 <b class="num">¥'+yen(c.pay)+'</b> ＋ カード <b class="num">¥'+yen(c.card)+'</b>'+(c.tsumiMo?' ＋ 積立 <b class="num">¥'+yen(c.tsumiMo)+'</b>':'')+'　＝ 合計 <b class="num">¥'+yen(c.monthly)+'</b>/月</div>'
+        +'<div class="cbm-l">積立残高 ¥'+yen(c.tsumiBal)+' は別枠（拘束）</div>'
+        +'<div class="cbm-edit">🛡 残しておく：<input id="bufMon" inputmode="numeric" value="'+c.nM+'"> ヶ月分（返済＋カード＋積立）</div>'
+        +'<div class="cbm-note">いま使える現金 ＝ 口座残高 −（固定支出 ¥'+yen(c.monthly)+' × '+c.nM+'ヶ月）</div></div>';
     }
     el.innerHTML=h;
   }
@@ -865,7 +880,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function assetMonthlyHtml(){if(!ASSETS||!ASSETS.monthlyTotals)return '';const tot=ASSETS.monthlyTotals['総収支合計']||[];const cm=ASSETS.completeMonths||0;const done=tot.slice(0,cm);const sum=done.reduce((a,b)=>a+b,0);
    return '<div class="mc2"><div class="mc2-h"><span>総収支合計（毎月・全物件＋その他借入）<small>単位：万円</small></span><span class="mc2-s">1〜'+cm+'月 累計 <b class="num">¥'+yen(sum)+'</b></span></div>'+achart(tot,cm)+'</div>';}
   function remYMa(ly){if(!ly)return null;const z=Z2H(ly);const m=z.match(/R(\d+)\.(\d+)/);if(!m)return null;const y=2018+(+m[1]),mo=+m[2],end=new Date(y,mo,0),now=new Date();let dd=Math.round((end-now)/86400000);if(dd<0)dd=0;const yy=Math.floor(dd/365);return yy+'年'+(dd-yy*365)+'日';}
-  let gexpA={}, pexpA={};
+  let gexpA={}, pexpA={}, methodOpen=false, mbookOpen=false, loanOpen=false;
+  function monthlyBookHtml(){
+   if(!ASSETS||!ASSETS.monthlyBook||!ASSETS.monthlyBook.length)return '';const cm=ASSETS.completeMonths||0;
+   const head='<tr><th class="it">物件</th>'+[1,2,3,4,5,6,7,8,9,10,11,12].map((mm,i)=>'<th class="'+(i>=cm?'fut':'')+'">'+mm+'月</th>').join('')+'<th class="yr">年計</th></tr>';
+   const rows=ASSETS.monthlyBook.map(r=>{const cls=r.t==='total'?'rtot':(r.t==='other'?'roth':'');const yr=r.v.reduce((a,b)=>a+(b||0),0);
+     return '<tr class="'+cls+'"><td class="it">'+esc(r.l)+'</td>'+r.v.map((x,i)=>'<td class="'+(i>=cm?'fut ':'')+((x||0)<0?'neg':'')+'">'+(x?yen(x):'')+'</td>').join('')+'<td class="yr">'+yen(yr)+'</td></tr>';}).join('');
+   return '<div class="mbook"><div class="mbook-cap">月間収支（物件ごと）／各月の差引収支・単位：円　※9月以降(薄字)は翌月反映前</div><div class="pd-tw"><table class="pd-tbl mbook-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';}
   function pMonthlyBlock(p){if(!p.months)return '';const m=p.months,cm=ASSETS.completeMonths||0;const net=m.net.slice(0,cm).reduce((a,b)=>a+b,0);
    return '<div class="mc2"><div class="mc2-h"><span>月次 収支差額<small>単位：万円</small></span><span class="mc2-s">1〜'+cm+'月 差引 <b class="num">¥'+yen(net)+'</b></span></div>'+achart(m.net,cm)+'</div>';}
   function pDetailTable(p){if(!p.detail||!p.detail.length)return '';const cm=ASSETS.completeMonths||0;
@@ -887,10 +908,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(open)h+='<div class="agbody">'+arr.map(pcardMini).join('')+'</div>';
     h+='</div>';}
    return h;}
-  function assetLoansHtml(){if(!ASSETS||!ASSETS.loans||!ASSETS.loans.length)return '';const kconst=l=>{const q=l.qk;if(q!=null)return Math.abs(q);return l.zan?l.monthly*12/l.zan*100:0;};const loans=ASSETS.loans.slice().sort((a,b)=>kconst(b)-kconst(a));const tM=loans.reduce((a,l)=>a+(+l.monthly||0),0),tZ=loans.reduce((a,l)=>a+(+l.zan||0),0);
-   return '<div class="sec-h2">その他借入（無担保・設備・車両等）<small>'+loans.length+'件</small></div><div class="loans2">'
-    +loans.map(l=>'<div class="loan2"><span class="l2n">'+esc(l.name)+' <span class="l2k">K '+kconst(l).toFixed(0)+'%</span></span><span class="l2m num">¥'+yen(l.monthly)+'/月</span><span class="l2z num">¥'+yen(l.zan)+'</span></div>').join('')
-    +'<div class="loan2 tot"><span class="l2n">合計 '+loans.length+'件</span><span class="l2m num">¥'+yen(tM)+'/月</span><span class="l2z num">¥'+yen(tZ)+'</span></div></div>';}
+  function assetLoansHtml(){if(!ASSETS||!ASSETS.loans||!ASSETS.loans.length)return '';const kconst=l=>{const q=l.qk;if(q!=null)return Math.abs(q);return l.zan?l.monthly*12/l.zan*100:0;};const loans=ASSETS.loans.slice().sort((a,b)=>kconst(b)-kconst(a));const tM=loans.reduce((a,l)=>a+(+l.monthly||0),0),tZ=loans.reduce((a,l)=>a+(+l.zan||0),0);const avgK=loans.length?loans.reduce((a,l)=>a+kconst(l),0)/loans.length:0;const avgZ=loans.length?Math.round(tZ/loans.length):0;const open=loanOpen;
+   let h='<div class="agrp"><button class="aghead'+(open?' on':'')+'" data-loans="1"><span class="agh-l">その他借入（無担保）<small>'+loans.length+'件</small></span><span class="agh-r">残債計 <b class="num">¥'+yen(tZ)+'</b>・月計 <b class="num">¥'+yen(tM)+'</b>・平均K <b>'+avgK.toFixed(1)+'%</b> <span class="agh-c">'+(open?'▲':'▼')+'</span></span></button>';
+   if(open){h+='<div class="agbody"><div class="loans2">'
+     +loans.map(l=>'<div class="loan2"><span class="l2n">'+esc(l.name)+' <span class="l2k">K '+kconst(l).toFixed(0)+'%</span></span><span class="l2m num">¥'+yen(l.monthly)+'/月</span><span class="l2z num">¥'+yen(l.zan)+'</span></div>').join('')
+     +'<div class="loan2 tot"><span class="l2n">合計 '+loans.length+'件／平均 残債¥'+yen(avgZ)+'・K '+avgK.toFixed(1)+'%</span><span class="l2m num">¥'+yen(tM)+'/月</span><span class="l2z num">¥'+yen(tZ)+'</span></div></div></div>';}
+   h+='</div>';return h;}
   function renderTabs(){const el=$('tabbar');if(!el)return;const tabs=[['home','🏠 ホーム'],['cash','💰 資金'],['assets','🏢 資産']];el.innerHTML=tabs.map(t=>'<button class="tabbtn'+(activeTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');}
   function render(){
     const eb=$('editBanner');if(eb)eb.hidden=!editing||demoMode;
@@ -899,14 +922,21 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     let h='';
     if(demoMode){h+='<div class="demobanner"><span>👀 これは<b>入力例</b>です（あなたのデータではありません・保存されません）</span><button class="democlose" id="demoClose">✕ 閉じて自分のデータに戻る</button></div>';}
     if(activeTab==='home'){
-      h+=assetSummaryHtml();
-      h+='<div class="sec-h">全体の月次収支<span style="font-weight:600;color:var(--muted)">　月間収支シート</span></div>'+assetMonthlyHtml();
+      if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データ（実際の物件情報）は表示されません</div></div>';}
+      else{
+        h+=assetSummaryHtml();
+        h+='<button class="sec-h sec-hbtn" id="mbookBtn">全体の月次収支<span style="font-weight:600;color:var(--muted)">　物件ごとの明細を'+(mbookOpen?'閉じる ▲':'見る ▼')+'</span></button>'+assetMonthlyHtml();
+        if(mbookOpen)h+=monthlyBookHtml();
+      }
       h+='<div class="tabhint">💰 口座別の資金は「資金」タブ／🏢 物件ごとの詳細は「資産」タブへ</div>';
     } else if(activeTab==='assets'){
-      h+=assetSummaryHtml();
-      h+='<div class="asset-tools"><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button></div>';
-      h+=assetGroupsHtml();
-      h+=assetLoansHtml();
+      if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データは表示されません</div></div>';}
+      else{
+        h+=assetSummaryHtml();
+        h+='<div class="asset-tools"><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button></div>';
+        h+=assetGroupsHtml();
+        h+=assetLoansHtml();
+      }
     } else {
       h+='<div class="kpis" id="kpis"></div>';
       if(editing){h+='<div class="jumpbar"><span class="jb-lab">編集する項目へ移動：</span><button class="jb-btn" data-jump="個人">👤 個人</button><button class="jb-btn" data-jump="法人">🏢 法人</button><button class="jb-btn" data-jump="クレカ">💳 クレカ</button><button class="jb-btn" data-jump="スポット">📌 特定日</button></div>';}
@@ -988,6 +1018,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const t=ev.target;let e;
     if(e=t.closest('[data-tab]')){activeTab=e.getAttribute('data-tab');lsSet('zaikin_tab',activeTab);if(activeTab!=='cash'&&editing){editing=false;document.body.classList.remove('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pfXlsBtn')){downloadExcel();return;}
+    if(t.closest('#cbMethodBtn')){methodOpen=!methodOpen;renderCash();return;}
+    if(t.closest('#mbookBtn')){mbookOpen=!mbookOpen;render();return;}
+    if(t.closest('[data-loans]')){loanOpen=!loanOpen;render();return;}
     if(e=t.closest('[data-agrp]')){const g=e.getAttribute('data-agrp');gexpA[g]=!gexpA[g];render();return;}
     if(e=t.closest('[data-pexp]')){const n=e.getAttribute('data-pexp');pexpA[n]=!pexpA[n];render();return;}
     if(t.closest('#fabEdit')){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}else{gexp['法人']=false;gexp['個人']=false;}document.body.classList.toggle('editing',editing);render();return;}
