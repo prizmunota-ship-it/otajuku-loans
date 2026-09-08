@@ -809,7 +809,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function emptyHtml(){
     return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
       +'<p>各口座の<b>残高</b>と<b>毎月の返済額</b>を入れるだけ。<br>「残高が毎月返済を下回る口座」を自動で色分けし、資金ショートを未然に防ぎます。<br>入力内容はあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。</p>'
-      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button><button class="pbtn ghost" data-demo="1">📋 入力例を見る</button></div></div>';
+      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button></div></div>';
   }
   // ===== 資産（総合収支アプリ）：Excel由来のASSETSを描画 =====
   let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home');
@@ -954,8 +954,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(pendingScroll){const sel=pendingScroll==='個人'?'.g-ind':pendingScroll==='法人'?'.g-corp':pendingScroll==='スポット'?'.spotframe':'.cardframe';const el=document.querySelector(sel);if(el){try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){el.scrollIntoView();}}pendingScroll=null;}
   }
   function renderFoot(){
-    $('foot').innerHTML=(!demoMode&&!editing&&state.accounts.length>0?'<div class="foot-demo"><button class="demolink" data-demo="1">📋 入力例を見る（数字が入った見本）</button></div>':'')
-      +'<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。<br>'
+    $('foot').innerHTML='<b>判定</b>：残高が毎月返済額を下回る口座 → <span style="color:var(--crit);font-weight:700">NG</span>／それ以外 → <span style="color:var(--good);font-weight:700">OK</span>。<br>'
       +'データは<b>あなたのアカウントに安全に保存</b>され、ログインした端末すべてで同じ内容が見られます（他の人からは見えません）。';
   }
 
