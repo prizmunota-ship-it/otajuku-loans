@@ -1028,7 +1028,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    alert('会費・雑収入 '+rows.length+'件と実績月（'+(a.completeMonths||'—')+'月）を取り込み、月次を「アプリの入力」に切り替えました。');}
   // ===== 表を貼り付けて一括取込（物件） =====
   const FIELDS_MAP=[['(取り込まない)',''],['名義','grp'],['物件名','name'],['住所','addr'],['構造','struct'],['戸数','units'],['入居戸数','nyukyo'],['当初借入','loan'],['残債','zan'],['金利(%)','rate'],['満室家賃(月)','rentM'],['満室家賃(年)','rentY'],['毎月返済(→年換算)','payM'],['年間返済','payY'],['管理費(年)','mgmt'],['固都税(年)','kotoze'],['減価償却(年)','genka'],['融資先','fin'],['評価額','hyoka'],['駐車','park'],['最終返済','lastYM'],['購入価格','kounyu']];
-  const _SYN={name:['物件名','物件名称','建物名','名称','物件'],addr:['住所','所在地','所在'],struct:['構造'],units:['戸数','部屋数','総戸数'],nyukyo:['入居戸数','入居数','入居'],loan:['当初借入','借入額','融資額','当初融資','借入金額'],zan:['借入残高','ローン残高','残債務','残債','残高','借入残'],rate:['金利','利率'],rentY:['満室家賃(年)','満室家賃（年）','年間家賃','年家賃','家賃(年)','家賃（年）','年間賃料','満室想定','年間収入','年収'],rentM:['満室家賃(月)','満室家賃（月）','月額家賃','月家賃','家賃(月)','家賃（月）','月額賃料','家賃','賃料'],payM:['毎月返済','月返済','返済(月)','月額返済'],payY:['年間返済','返済(年)','年返済','返済額'],mgmt:['管理費','管理料'],kotoze:['固都税','固定資産税','固都'],genka:['減価償却'],fin:['融資先','金融機関','借入先','銀行'],grp:['名義','所有区分','区分','所有'],hyoka:['評価額','評価'],park:['駐車'],lastYM:['最終返済','完済'],kounyu:['購入価格','購入額','取得価格','購入金額']};
+  const _SYN={name:['物件名','物件名称','建物名','名称','物件'],addr:['住所','所在地','所在'],struct:['構造'],units:['戸数','部屋数','総戸数'],nyukyo:['入居戸数','入居数','入居状況','入居'],loan:['当初借入','借入額','融資額','当初融資','借入金額'],zan:['残債','借入残高','ローン残高','残債務','残高','借入残'],rate:['金利','利率'],hyoka:['固定資産税評価額','評価額','評価'],rentY:['満室家賃(年)','満室家賃（年）','年間家賃','年家賃','家賃(年)','家賃（年）','年間賃料','満室想定','年間収入','年収'],rentM:['満室家賃(月)','満室家賃（月）','月額家賃','月家賃','家賃(月)','家賃（月）','月額賃料','家賃','賃料'],payM:['毎月返済','月返済','返済(月)','月額返済'],payY:['年間返済額','年間返済','年返済'],mgmt:['管理費','管理料'],kotoze:['固定資産税','固都税','固都'],genka:['減価償却'],fin:['融資先','金融機関','借入先','銀行'],grp:['名義'],park:['駐車'],lastYM:['最終返済','完済'],kounyu:['購入価格','購入額','取得価格','購入金額']};
   const FIELDS_ACC=[['(取り込まない)',''],['名義','grp'],['銀行名','bank'],['支店','branch'],['口座番号','acct'],['残高','bal'],['毎月返済','pay'],['借入残高','borrow'],['引落日','payday'],['メモ','note']];
   const _SYN_ACC={grp:['名義','区分','所有'],bank:['銀行名','金融機関','銀行'],branch:['支店'],acct:['口座番号','口座','番号'],pay:['毎月返済','月返済','毎月の返済','返済額','毎月','返済'],borrow:['借入残高','ローン残高','借入残','借入','残債'],bal:['預金残高','現在残高','残高','預金'],payday:['引落日','返済日','引き落とし','引落'],note:['メモ','備考']};
   function pasteFields(kind){return kind==='accounts'?FIELDS_ACC:FIELDS_MAP;}
@@ -1039,12 +1039,39 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     var m=s.match(/-?[0-9.]+/);return m?Math.round(parseFloat(m[0])):0;}
   function normGrp(v){v=String(v||'');if(/法人|株|会社|(有)|(株)/.test(v))return '法人';if(/自宅|自用|居住|自己/.test(v))return '自宅';return '個人';}
   function splitLine(line,delim){if(delim==='\t')return line.split('\t');var out=[],cur='',q=false;for(var i=0;i<line.length;i++){var c=line[i];if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}else{if(c==='"')q=true;else if(c===','){out.push(cur);cur='';}else cur+=c;}}out.push(cur);return out;}
-  function parseTable(text){var lines=String(text).replace(/\r/g,'').split('\n').filter(function(l){return l.trim()!=='';});if(lines.length<2)return null;var delim=lines[0].indexOf('\t')>=0?'\t':',';var rows=lines.map(function(l){return splitLine(l,delim).map(function(x){return x.trim();});});return {headers:rows[0],rows:rows.slice(1)};}
-  function autoMap(headers,syn){syn=syn||_SYN;var used={},map={};headers.forEach(function(h,idx){var hn=Z2H(String(h)).replace(/[\s　]/g,'').toLowerCase();var best='';Object.keys(syn).forEach(function(f){if(best||used[f])return;syn[f].forEach(function(kw){if(best)return;var k=Z2H(kw).replace(/[\s　]/g,'').toLowerCase();if(hn.indexOf(k)>=0)best=f;});});if(best){map[idx]=best;used[best]=1;}});return map;}
+  function parseTable(text){var lines=String(text).replace(/\r/g,'').split('\n').filter(function(l){return l.trim()!=='';});if(!lines.length)return null;var delim=(lines[0].indexOf('\t')>=0)?'\t':',';return lines.map(function(l){return splitLine(l,delim).map(function(x){return x.trim();});});}
+  function _norm(s){return Z2H(String(s==null?'':s)).replace(/[\s　()（）]/g,'').toLowerCase();}
+  function _scoreRow(row,syn){var sc=0;(row||[]).forEach(function(cell){var hn=_norm(cell);if(!hn)return;for(var f in syn){if(!syn.hasOwnProperty(f))continue;for(var i=0;i<syn[f].length;i++){if(hn.indexOf(_norm(syn[f][i]))>=0){sc++;return;}}}});return sc;}
+  // 複雑な表(タイトル行/見出しが1行目でない/小計・空行)にも対応：見出し行を自動検出し、データ行だけ抽出
+  function detectTable(grid,kind){if(!grid||!grid.length)return null;var syn=pasteSyn(kind);
+    var best=-1,bi=0,lim=Math.min(grid.length,30);for(var r=0;r<lim;r++){var s=_scoreRow(grid[r],syn);if(s>best){best=s;bi=r;}}
+    if(best<2)return null;
+    var headers=(grid[bi]||[]).map(function(x){return String(x==null?'':x).trim();});
+    var map=autoMap(headers,syn);
+    var hasGrp=false;for(var gc in map){if(map[gc]==='grp')hasGrp=true;}
+    if(!hasGrp){for(var col=0;col<headers.length;col++){if(map[col])continue;var hit=0,tot=0;for(var rr=bi+1;rr<Math.min(grid.length,bi+40);rr++){var cv=String((grid[rr]||[])[col]||'').trim();if(!cv)continue;tot++;if(/個人|法人|自宅/.test(cv))hit++;}if(tot>=2&&hit>=tot*0.6){map[col]='grp';break;}}}
+    var keyField=(kind==='accounts')?'bank':'name';var keyCol=null;for(var c in map){if(map[c]===keyField){keyCol=+c;break;}}
+    var rows=[];for(var r2=bi+1;r2<grid.length;r2++){var row=grid[r2]||[];
+      var ne=row.filter(function(x){return String(x==null?'':x).trim()!=='';}).length;if(ne<2)continue;
+      if(_scoreRow(row,syn)>=3)continue;   // 繰り返しの見出し行（法人セクション等）をスキップ
+      if(keyCol!=null){var kv=String(row[keyCol]==null?'':row[keyCol]).trim();if(!kv)continue;if(/(計|合計|小計|総合|平均|合算)/.test(kv))continue;}
+      rows.push(row.map(function(x){return String(x==null?'':x).trim();}));}
+    if(!rows.length)return null;return {headers:headers,rows:rows,map:map};}
+  function autoMap(headers,syn){syn=syn||_SYN;var used={},map={};headers.forEach(function(h,idx){var hn=Z2H(String(h)).replace(/[\s　]/g,'').toLowerCase();var best='';Object.keys(syn).forEach(function(f){if(best||used[f])return;syn[f].forEach(function(kw){if(best)return;var k=Z2H(kw).replace(/[\s　]/g,'').toLowerCase();if(hn.indexOf(k)>=0)best=f;});});
+    if(best==='kotoze'&&hn.indexOf('評価')>=0)best='';       // 「固定資産税評価額」は固都税でなく評価額
+    if(best==='payY'&&/元本|金利|うち/.test(hn))best='';       // 「年間返済元本/金利」は年間返済額ではない
+    if(best==='zan'&&/利回|比率/.test(hn))best='';             // 「残債利回り」等は残債ではない
+    if(best){map[idx]=best;used[best]=1;}});return map;}
   let pasteMode=null,_pasteParsed=null;
   function _decodeText(buf){try{var u=new TextDecoder('utf-8',{fatal:false}).decode(buf);if(u.indexOf('�')<0)return u;}catch(e){}try{return new TextDecoder('shift_jis').decode(buf);}catch(e2){try{return new TextDecoder('utf-8').decode(buf);}catch(e3){return '';}}}
-  function _xlsxToTable(buf){return new Promise(function(res,rej){var wb=new ExcelJS.Workbook();wb.xlsx.load(buf).then(function(){var ws=wb.worksheets&&wb.worksheets[0];if(!ws){res(null);return;}var rows=[];ws.eachRow({includeEmpty:false},function(row){var vals=row.values||[],arr=[];for(var i=1;i<vals.length;i++){var v=vals[i];if(v==null)arr.push('');else if(v instanceof Date)arr.push(v.toLocaleDateString('ja-JP'));else if(typeof v==='object')arr.push(String(v.result!=null?v.result:(v.text!=null?v.text:(v.hyperlink!=null?v.hyperlink:''))));else arr.push(String(v));}rows.push(arr);});if(rows.length<2){res(null);return;}var w=Math.max.apply(null,rows.map(function(r){return r.length;}));rows.forEach(function(r){while(r.length<w)r.push('');});res({headers:rows[0].map(function(x){return String(x).trim();}),rows:rows.slice(1).map(function(r){return r.map(function(x){return String(x).trim();});})});}).catch(rej);});}
-  function _finishParsed(P){if(!P){alert('見出し行＋1行以上のデータが見つかりませんでした。1行目に列名（物件名・残債…）がある表を選んでください。');return;}P.map=autoMap(P.headers,pasteSyn(pasteMode));_pasteParsed=P;render();}
+  function _sheetGrid(ws){var rows=[];ws.eachRow({includeEmpty:false},function(row){var vals=row.values||[],arr=[];for(var i=1;i<vals.length;i++){var v=vals[i];if(v==null)arr.push('');else if(v instanceof Date)arr.push(v.toLocaleDateString('ja-JP'));else if(typeof v==='object')arr.push(String(v.result!=null?v.result:(v.text!=null?v.text:(v.hyperlink!=null?v.hyperlink:''))));else arr.push(String(v));}rows.push(arr);});var w=rows.length?Math.max.apply(null,rows.map(function(r){return r.length;})):0;rows.forEach(function(r){while(r.length<w)r.push('');});return rows;}
+  function _xlsxToTable(buf){return new Promise(function(res,rej){var wb=new ExcelJS.Workbook();wb.xlsx.load(buf).then(function(){
+    var syn=pasteSyn(pasteMode),bestGrid=null,bestScore=-1;
+    (wb.worksheets||[]).forEach(function(ws){var g=_sheetGrid(ws);if(g.length<2)return;var s=-1,lim=Math.min(g.length,30);for(var r=0;r<lim;r++){var sc=_scoreRow(g[r],syn);if(sc>s)s=sc;}if(s>bestScore){bestScore=s;bestGrid=g;}});
+    res(bestGrid);}).catch(rej);});}
+  function _finishParsed(grid){var P=grid?detectTable(grid,pasteMode):null;
+    if(!P){alert('表として読み取れませんでした。1行目付近に列名（'+(pasteMode==='accounts'?'銀行名・残高':'物件名・残債')+'…）が並んだ表をお選びください。総合収支表のように複数シートが入ったファイルは、必要な一覧の部分だけを別シートやCSVにすると確実です。');return;}
+    _pasteParsed=P;render();}
   function readFileToTable(f){var name=(f.name||'').toLowerCase();
     if(/\.(xlsx|xls)$/.test(name)){var run=function(){var rd=new FileReader();rd.onload=function(){_xlsxToTable(rd.result).then(_finishParsed).catch(function(e){alert('Excelの読み込みに失敗：'+((e&&e.message)||e));});};rd.onerror=function(){alert('ファイルを読み込めませんでした。');};rd.readAsArrayBuffer(f);};
       if(window.ExcelJS)run();else{var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';s.onload=run;s.onerror=function(){alert('Excel読み込み用ライブラリの取得に失敗しました。オンライン環境でお試しください（CSVなら不要です）。');};document.head.appendChild(s);}
@@ -1404,7 +1431,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.closest('#pasteOpen')){pasteMode='props';_pasteParsed=null;render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pasteOpenAcc')){pasteMode='accounts';_pasteParsed=null;if(activeTab!=='cash'){activeTab='cash';lsSet('zaikin_tab','cash');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pasteFileBtn')){const fi=$('pasteFile');if(fi)fi.click();return;}
-    if(t.closest('#pasteParse')){const box=$('pasteBox');const P=parseTable(box?box.value:'');if(!P){alert('見出し行＋1行以上のデータを貼り付けてください。');return;}P.map=autoMap(P.headers,pasteSyn(pasteMode));_pasteParsed=P;render();return;}
+    if(t.closest('#pasteParse')){const box=$('pasteBox');if(!box||!box.value.trim()){alert('表を貼り付けてから「解析する」を押してください。');return;}_finishParsed(parseTable(box.value));return;}
     if(t.closest('#pasteImport')){doPasteImport(pasteMode);return;}
     if(t.closest('#pasteRedo')){_pasteParsed=null;render();return;}
     if(t.closest('#pasteCancel')){pasteMode=null;_pasteParsed=null;render();return;}
