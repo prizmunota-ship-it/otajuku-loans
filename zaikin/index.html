@@ -337,10 +337,10 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .asxls{color:#17130A}}
 /* 資産：グループ折りたたみ */
 .agrp{margin-bottom:9px}
-.aghead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:13px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;font-family:inherit;text-align:left;color:inherit;-webkit-tap-highlight-color:transparent}
+.aghead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:13px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;font-family:inherit;text-align:left;color:inherit;-webkit-tap-highlight-color:transparent}
 .aghead.on{border-bottom-left-radius:0;border-bottom-right-radius:0}
-.agh-l{font-size:15px;font-weight:900;color:var(--accent)}.agh-l small{font-size:11.5px;color:var(--muted);font-weight:700;margin-left:6px}
-.agh-r{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}.agh-r b{color:var(--ink);font-weight:800}
+.agh-l{font-size:15px;font-weight:900;color:var(--accent);white-space:nowrap}.agh-l small{font-size:11.5px;color:var(--muted);font-weight:700;margin-left:6px}
+.agh-r{font-size:12px;color:var(--muted);font-weight:600;margin-left:auto}.agh-r b{color:var(--ink);font-weight:800}
 .agh-c{margin-left:6px;color:var(--accent);font-weight:800}
 .agbody{border:1px solid var(--hair);border-top:none;border-radius:0 0 13px 13px;padding:9px;background:var(--surface-2)}
 /* 物件カード（展開式） */
@@ -386,7 +386,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .cbm-edit input{width:52px;text-align:right;font-size:15px;padding:5px 8px;border:1px solid var(--hair);border-radius:8px;background:var(--surface);color:var(--ink);font-family:inherit;font-weight:700}
 .cbm-note{margin-top:5px;font-size:11px;color:var(--muted)}
 .sec-hbtn{width:100%;text-align:left;background:transparent;border:none;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.mbook{margin:2px 0 10px}
+.mbook-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:16px 2px 8px}
+.mbook-t{font-size:13px;font-weight:900;letter-spacing:.03em;color:var(--muted)}
+.mbook-tog{font-family:inherit;font-size:12px;font-weight:800;color:#fff;background:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:6px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:var(--shadow)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .mbook-tog{color:#17130A}}
+.mbook{margin:8px 0 10px}
 .mbook-cap{font-size:11px;color:var(--muted);margin-bottom:6px}
 .mbook-tbl .it{min-width:132px}
 .pd-tbl td.neg{color:var(--crit)}
@@ -580,7 +584,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     el.hidden=false;
     const c=usableCash();const neg=c.usable<0;
     el.className='cashbar'+(neg?' neg':'');
-    let h='<div class="cb-lab">💰 いま使える現金'+(neg?'（返済・経営分が不足）':'（返済・経営を確保した後）')+'</div>'
+    let h='<div class="cb-lab">💰 いま使える現金'+(neg?'（返済分が不足）':'（返済を確保した後）')+'</div>'
       +'<div class="cb-val num yen" id="cbUsable">'+yen(c.usable)+'</div>'
       +'<div class="cb-formula">口座残高 <b class="num yen">'+yen(c.acctBal)+'</b> − 確保 <b class="num yen" id="cbReserve">'+yen(c.reserve)+'</b> <button class="cb-mbtn" id="cbMethodBtn">算出方法 '+(methodOpen?'▲':'▼')+'</button></div>';
     if(methodOpen){
@@ -909,7 +913,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     h+='</div>';}
    return h;}
   function assetLoansHtml(){if(!ASSETS||!ASSETS.loans||!ASSETS.loans.length)return '';const kconst=l=>{const q=l.qk;if(q!=null)return Math.abs(q);return l.zan?l.monthly*12/l.zan*100:0;};const loans=ASSETS.loans.slice().sort((a,b)=>kconst(b)-kconst(a));const tM=loans.reduce((a,l)=>a+(+l.monthly||0),0),tZ=loans.reduce((a,l)=>a+(+l.zan||0),0);const avgK=loans.length?loans.reduce((a,l)=>a+kconst(l),0)/loans.length:0;const avgZ=loans.length?Math.round(tZ/loans.length):0;const open=loanOpen;
-   let h='<div class="agrp"><button class="aghead'+(open?' on':'')+'" data-loans="1"><span class="agh-l">その他借入（無担保）<small>'+loans.length+'件</small></span><span class="agh-r">残債計 <b class="num">¥'+yen(tZ)+'</b>・月計 <b class="num">¥'+yen(tM)+'</b>・平均K <b>'+avgK.toFixed(1)+'%</b> <span class="agh-c">'+(open?'▲':'▼')+'</span></span></button>';
+   let h='<div class="agrp"><button class="aghead'+(open?' on':'')+'" data-loans="1"><span class="agh-l">無担保借入<small>'+loans.length+'件</small></span><span class="agh-r">残債計 <b class="num">¥'+yen(tZ)+'</b>・月 <b class="num">¥'+yen(tM)+'</b>・平均K <b>'+avgK.toFixed(1)+'%</b> <span class="agh-c">'+(open?'▲':'▼')+'</span></span></button>';
    if(open){h+='<div class="agbody"><div class="loans2">'
      +loans.map(l=>'<div class="loan2"><span class="l2n">'+esc(l.name)+' <span class="l2k">K '+kconst(l).toFixed(0)+'%</span></span><span class="l2m num">¥'+yen(l.monthly)+'/月</span><span class="l2z num">¥'+yen(l.zan)+'</span></div>').join('')
      +'<div class="loan2 tot"><span class="l2n">合計 '+loans.length+'件／平均 残債¥'+yen(avgZ)+'・K '+avgK.toFixed(1)+'%</span><span class="l2m num">¥'+yen(tM)+'/月</span><span class="l2z num">¥'+yen(tZ)+'</span></div></div></div>';}
@@ -925,7 +929,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データ（実際の物件情報）は表示されません</div></div>';}
       else{
         h+=assetSummaryHtml();
-        h+='<button class="sec-h sec-hbtn" id="mbookBtn">全体の月次収支<span style="font-weight:600;color:var(--muted)">　物件ごとの明細を'+(mbookOpen?'閉じる ▲':'見る ▼')+'</span></button>'+assetMonthlyHtml();
+        h+='<div class="mbook-h"><span class="mbook-t">全体の月次収支</span><button class="mbook-tog" id="mbookBtn">'+(mbookOpen?'▲ 物件ごとの明細を閉じる':'📋 物件ごとの明細を見る')+'</button></div>'+assetMonthlyHtml();
         if(mbookOpen)h+=monthlyBookHtml();
       }
       h+='<div class="tabhint">💰 口座別の資金は「資金」タブ／🏢 物件ごとの詳細は「資産」タブへ</div>';
