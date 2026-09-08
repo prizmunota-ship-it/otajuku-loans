@@ -526,7 +526,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   <header class="top">
     <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="reloadbtn" id="reloadBtn" title="最新の状態に更新">🔄 更新</button><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
     <div class="title-row">
-      <h1>総合収支アプリ</h1>
+      <h1 id="appTitle">総合収支アプリ</h1>
       <div class="head-right"><span class="asof" id="asofBox"></span></div>
     </div>
     <div class="cashbar" id="cashbar" hidden></div>
@@ -663,6 +663,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   }
   function renderHeader(){
     $('asofBox').innerHTML=editing?'<input class="txt small" id="asofInp" placeholder="例）8月25日現在" value="'+esc(state.asof||'')+'" style="max-width:150px">':esc(state.asof||'');
+    const at=$('appTitle');if(at)at.textContent=memberView()?'資金繰り帳':'総合収支アプリ';
     const fb=$('fabEdit');if(fb){fb.textContent=editing?'✓ 完了':'✏️ 編集';fb.classList.toggle('on',editing);}
   }
   function usableCash(){
