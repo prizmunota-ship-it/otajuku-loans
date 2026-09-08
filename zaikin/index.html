@@ -332,8 +332,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .pc-bar>i{display:block;height:100%;background:var(--accent);border-radius:3px}
 .pc-m{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
 .pc-m b{color:var(--ink);font-weight:700}
-.asset-tools{margin:4px 0 12px}
-.asxls{width:100%;border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:14px;padding:12px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow)}
+.asset-tools{margin:4px 0 12px;display:flex;gap:8px;flex-wrap:wrap}
+.asxls{flex:1;min-width:180px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:14px;padding:12px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow)}
+.asreimport{border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-family:inherit;font-weight:700;font-size:12px;padding:12px 14px;border-radius:12px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .asxls{color:#17130A}}
 /* 資産：グループ折りたたみ */
 .agrp{margin-bottom:9px}
@@ -813,7 +814,19 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   }
   // ===== 資産（総合収支アプリ）：Excel由来のASSETSを描画 =====
   let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home');
-  async function loadAssets(){try{const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok)return;const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});if(r.ok)ASSETS=await r.json();}catch(e){}}
+  // 資産データはSupabase(state.assets)に保存。無ければExcel由来(pfd)から初回取込→Supabaseへ移行。
+  async function loadAssets(){
+    if(state.assets){ASSETS=state.assets;return;}
+    try{const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok)return;
+      const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});
+      if(r.ok){ASSETS=await r.json();state.assets=ASSETS;save();}   // 初回：Excel由来をSupabaseへ移行
+    }catch(e){}}
+  async function reimportAssets(){   // Excel更新時の手動再取込
+    try{setSync&&setSync('資産を取込中…');const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok){alert('ログインが必要です');return;}
+      const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});
+      if(r.ok){ASSETS=await r.json();state.assets=ASSETS;save();render();alert('Excelから資産データを再取込しました');}
+      else if(r.status===403){alert('この機能は本人のみです');}else{alert('取込に失敗しました（'+r.status+'）');}
+    }catch(e){alert('取込エラー: '+e.message);}}
   const aoku=n=>{n=n||0;return n>=1e8?(n/1e8).toFixed(2)+'<small>億</small>':n>=1e4?Math.round(n/1e4).toLocaleString()+'<small>万</small>':yen(n)+'<small>円</small>';};
   const PCOLS=[["物件名","name","t"],["住所","addr","t"],["構造","struct","t"],["法定耐用","houtei","i"],["経過","keika","i"],["建築年月","built","t"],["取得年月","shutoku","t"],["最終年月","lastYM","t"],["評価額","hyoka","n"],["建物評価","tatemono","n"],["土地評価","tochi","n"],["延床㎡","nobe","f"],["土地㎡","tochiAr","f"],["戸数","units","i"],["入居","nyukyo","i"],["駐車","park","i"],["部屋型","roomtype","t"],["融資先","fin","t"],["金利%","rate","f"],["担保","tanpo","t"],["当初借入","loan","n"],["残債","zan","n"],["延べ返済","nobebe","n"],["減価償却","genka","n"],["返済元本","pElem","n"],["返済金利","pInt","n"],["家賃(月)","rentM","n"],["家賃(年)","rentY","n"],["管理費","mgmt","n"],["固都税","kotoze","n"],["年間返済","payY","n"],["年間収入","incomeY","n"],["残債利回り%","rimawari","f"],["返済比率%","hensaihi","f"]];
   const _AL={name:'al',addr:'al',fin:'al',struct:'ac',built:'ac',shutoku:'ac',lastYM:'ac',roomtype:'ac',tanpo:'ac'};
@@ -921,6 +934,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function renderTabs(){const el=$('tabbar');if(!el)return;const tabs=[['home','🏠 ホーム'],['cash','💰 資金'],['assets','🏢 資産']];el.innerHTML=tabs.map(t=>'<button class="tabbtn'+(activeTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');}
   function render(){
     const eb=$('editBanner');if(eb)eb.hidden=!editing||demoMode;
+    if(state.assets)ASSETS=state.assets;
     renderHeader();renderCash();renderTabs();
     const fb=$('fabEdit');if(fb)fb.style.display=(activeTab==='cash')?'':'none';
     let h='';
@@ -937,7 +951,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データは表示されません</div></div>';}
       else{
         h+=assetSummaryHtml();
-        h+='<div class="asset-tools"><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button></div>';
+        h+='<div class="asset-tools"><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button><button class="asreimport" id="reimportBtn">🔄 Excelから再取込</button></div>';
         h+=assetGroupsHtml();
         h+=assetLoansHtml();
       }
@@ -1021,6 +1035,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const t=ev.target;let e;
     if(e=t.closest('[data-tab]')){activeTab=e.getAttribute('data-tab');lsSet('zaikin_tab',activeTab);if(activeTab!=='cash'&&editing){editing=false;document.body.classList.remove('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pfXlsBtn')){downloadExcel();return;}
+    if(t.closest('#reimportBtn')){reimportAssets();return;}
     if(t.closest('#cbMethodBtn')){methodOpen=!methodOpen;renderCash();return;}
     if(t.closest('#mbookBtn')){mbookOpen=!mbookOpen;render();return;}
     if(t.closest('[data-loans]')){loanOpen=!loanOpen;render();return;}
