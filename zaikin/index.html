@@ -48,6 +48,8 @@ header.top{background:var(--bg);padding-top:8px;margin-bottom:6px;}
 .logoutbtn{font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--hair);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;}
 .reloadbtn{font-family:inherit;font-size:12px;font-weight:800;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .reloadbtn:active{background:var(--accent);color:#fff;}
+.pvbtn{font-family:inherit;font-size:12px;font-weight:700;color:var(--corp);background:var(--surface);border:1px solid var(--corp);border-radius:20px;padding:6px 11px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.pvbtn:active{background:var(--corp);color:#fff;}
 .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:9px;}
 h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .head-right{display:flex;align-items:center;gap:9px;}
@@ -163,6 +165,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .group,.cardframe{scroll-margin-top:68px;}
 /* 入力例（デモ） */
 .demobanner{position:sticky;top:0;z-index:41;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--corp);color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;margin-bottom:10px;box-shadow:var(--shadow);}
+.pvbanner{background:var(--accent);}
 .democlose{font-family:inherit;font-size:12.5px;font-weight:800;color:var(--corp);background:#fff;border:none;border-radius:20px;padding:7px 13px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 body.demo .fab{display:none;}
 .foot-demo{margin:2px 0 14px;text-align:center;}
@@ -492,7 +495,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 
 <div class="wrap" id="appWrap" hidden>
   <header class="top">
-    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="reloadbtn" id="reloadBtn" title="最新の状態に更新">🔄 更新</button><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
+    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="pvbtn" id="previewBtn" hidden>👀 会員プレビュー</button><button class="reloadbtn" id="reloadBtn" title="最新の状態に更新">🔄 更新</button><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
     <div class="title-row">
       <h1>総合収支アプリ</h1>
       <div class="head-right"><span class="asof" id="asofBox"></span></div>
@@ -556,12 +559,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   const inGrp=g=>state.accounts.filter(a=>a.grp===g);
 
   // ---------- cloud sync ----------
-  let sb=null, CURRENT_UID=null, syncTimer=null, recoveryMode=false;
+  let sb=null, CURRENT_UID=null, syncTimer=null, recoveryMode=false, IS_OWNER=false;
   const cacheKey=()=>'zaikin_saas_cache_'+(CURRENT_UID||'anon');
   const readCache=()=>{try{const r=lsGet(cacheKey());return r?JSON.parse(r):null;}catch(e){return null;}};
   function setSync(txt){const el=$('syncStat');if(el)el.textContent=txt;}
   function save(){
-    if(demoMode)return;              // 入力例(デモ)中は一切保存しない＝自分のデータに影響なし
+    if(demoMode||previewMode)return; // 入力例・会員プレビュー中は一切保存しない＝自分のデータに影響なし
     lsSet(cacheKey(),JSON.stringify(state));
     if(!CURRENT_UID)return;
     setSync('保存中…');
@@ -590,7 +593,16 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   const gexp={'法人':false,'個人':false};
   let armedDel=null,armedTimer=null;
   let lfOpen=false,calcId=null,pendingScroll=null;
-  let demoMode=false, realStateBackup=null;
+  let demoMode=false, realStateBackup=null, previewMode=false, previewBackup=null, previewAssetsBackup=null;
+  function enterMemberPreview(){   // 主宰が「新規会員として見た画面」を確認（保存されない）
+    previewBackup=state;previewAssetsBackup=state.assets;
+    state=defaultState();state.assets=undefined;state.props=undefined;state.jihanki=undefined;state.muY=undefined;state.oloans=undefined;
+    previewMode=true;editing=false;assetEditing=false;editPropId=null;_pdraft=null;assetsTried=true;ASSETS=null;
+    activeTab='home';document.body.classList.remove('editing');render();try{window.scrollTo(0,0);}catch(e){}}
+  function exitMemberPreview(){
+    if(previewBackup)state=previewBackup;if(previewAssetsBackup!==undefined)state.assets=previewAssetsBackup;
+    previewBackup=null;previewAssetsBackup=null;previewMode=false;
+    migrateProps();ASSETS=buildASSETS();activeTab='home';render();try{window.scrollTo(0,0);}catch(e){}}
   const DEMO={v:1,asof:'（入力例）',accounts:[
     {grp:'個人',id:'d1',bank:'A銀行',branch:'本店',acct:'1234567',bal:1850000,pay:320000,payday:5,borrow:42000000,note:'自宅ローン 120,000 / アパートA 200,000',photos:[]},
     {grp:'個人',id:'d2',bank:'B信用金庫',branch:'〇〇支店',acct:'2345678',bal:280000,pay:350000,payday:10,borrow:0,note:'車のローン',photos:[]},
@@ -1116,6 +1128,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const fb=$('fabEdit');if(fb)fb.style.display=(activeTab==='cash')?'':'none';
     let h='';
     if(demoMode){h+='<div class="demobanner"><span>👀 これは<b>入力例</b>です（あなたのデータではありません・保存されません）</span><button class="democlose" id="demoClose">✕ 閉じて自分のデータに戻る</button></div>';}
+    if(previewMode){h+='<div class="demobanner pvbanner"><span>👀 <b>会員プレビュー</b>：新規会員が最初に見る画面です（入力しても保存されません）</span><button class="democlose" id="pvClose">✕ 自分のデータに戻る</button></div>';}
     const isNewUser=!ASSETS && assetsTried && (!state.props||!state.props.length) && (!state.accounts||!state.accounts.length);
     if(activeTab==='home'){
       if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データ（実際の物件情報）は表示されません</div></div>';}
@@ -1238,6 +1251,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-carddel]')){const i=+e.getAttribute('data-carddel');if(state.card.items&&state.card.items[i]!==undefined){state.card.items.splice(i,1);save();render();}return;}
     if(e=t.closest('#reloadBtn')){e.textContent='更新中…';try{location.reload();}catch(err){location.href=location.pathname;}return;}
     if(t.id==='logoutBtn'){doLogout();return;}
+    if(t.id==='previewBtn'){enterMemberPreview();return;}
+    if(t.closest('#pvClose')){exitMemberPreview();return;}
     if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id),sp=spotById(id);if(!acc&&!ts&&!sp)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
         if(acc){state.accounts=state.accounts.filter(x=>x.id!==id);}
@@ -1414,6 +1429,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   async function enterApp(session){
     CURRENT_UID=session.user.id;
     $('acctEmail').textContent=session.user.email||'';
+    IS_OWNER=OWNER_EMAILS.indexOf((session.user.email||'').toLowerCase())>=0;
+    const pvb=$('previewBtn');if(pvb)pvb.hidden=!IS_OWNER;
     $('authGate').setAttribute('hidden','');$('bootScreen').setAttribute('hidden','');$('appWrap').removeAttribute('hidden');
     setSync('読み込み中…');
     const cloud=await cloudLoad();
