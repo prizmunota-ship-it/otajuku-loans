@@ -335,6 +335,27 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .asset-tools{margin:4px 0 12px;display:flex;gap:8px;flex-wrap:wrap}
 .asxls{flex:1;min-width:180px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:14px;padding:12px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow)}
 .asreimport{border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-family:inherit;font-weight:700;font-size:12px;padding:12px 14px;border-radius:12px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.asedit{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;padding:12px 14px;border-radius:12px;cursor:pointer;white-space:nowrap}
+.ae-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 12px;font-weight:900;color:var(--accent);font-size:15px}
+.ae-done{border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:13px;padding:9px 16px;border-radius:20px;cursor:pointer}
+.ae-hint{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6}
+.ae-row{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--hair);border-radius:11px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:6px;font-family:inherit;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;text-align:left}
+.ae-row .ae-zan{font-size:12.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+.ae-add{width:100%;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);font-family:inherit;font-weight:800;font-size:13px;padding:11px;border-radius:11px;cursor:pointer;margin:2px 0 14px}
+.pform{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:14px 15px;box-shadow:var(--shadow)}
+.pf-h{font-size:17px;font-weight:900;margin-bottom:8px}
+.pf-sec{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.04em;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--hair)}
+.pf-f{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+.pf-f label{font-size:11.5px;color:var(--muted);font-weight:700}
+.pf-in{font-family:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--hair);border-radius:9px;background:var(--surface-2);color:var(--ink);width:100%;box-sizing:border-box}
+.pf-num{text-align:right;font-variant-numeric:tabular-nums}
+.pf-calc{margin-top:12px;padding:10px 12px;background:var(--accent-soft);border-radius:10px;font-size:13px;color:var(--muted)}
+.pf-calc b{color:var(--accent);font-weight:800}
+.pf-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.pf-save{flex:1;min-width:110px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:15px;padding:13px;border-radius:12px;cursor:pointer}
+.pf-del{border:1px solid var(--crit);background:var(--surface);color:var(--crit);font-family:inherit;font-weight:700;font-size:13px;padding:13px 16px;border-radius:12px;cursor:pointer}
+.pf-cancel{border:1px solid var(--hair);background:var(--surface);color:var(--muted);font-family:inherit;font-weight:700;font-size:13px;padding:13px 16px;border-radius:12px;cursor:pointer}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .pf-save,:root:not([data-theme="light"]) .ae-done{color:#17130A}}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .asxls{color:#17130A}}
 /* 資産：グループ折りたたみ */
 .agrp{margin-bottom:9px}
@@ -815,16 +836,48 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   // ===== 資産（総合収支アプリ）：Excel由来のASSETSを描画 =====
   let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home');
   // 資産データはSupabase(state.assets)に保存。無ければExcel由来(pfd)から初回取込→Supabaseへ移行。
+  function migrateProps(){   // state.assets → 編集可能な state.props に初期化(初回のみ)
+    if(state.assets && state.props===undefined){
+      state.props=JSON.parse(JSON.stringify(state.assets.props||[])).map(function(p){if(!p.id)p.id=uid();return p;});
+      if(state.jihanki===undefined)state.jihanki=state.assets.jihanki||null;
+      if(state.muY===undefined)state.muY=(state.assets.muY!=null)?state.assets.muY:null;
+      if(state.oloans===undefined)state.oloans=JSON.parse(JSON.stringify(state.assets.loans||[]));
+    }}
   async function loadAssets(){
-    if(state.assets){ASSETS=state.assets;return;}
+    if(state.assets){migrateProps();ASSETS=buildASSETS();return;}
     try{const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok)return;
       const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});
-      if(r.ok){ASSETS=await r.json();state.assets=ASSETS;save();}   // 初回：Excel由来をSupabaseへ移行
+      if(r.ok){state.assets=await r.json();migrateProps();ASSETS=buildASSETS();save();}   // 初回：Excel由来→Supabase移行
     }catch(e){}}
+  // ===== 入力(state.props)から集計・KPIを計算するエンジン（脱エクセル） =====
+  const _ASKEYS=['loan','zan','rentM','rentY','mgmt','kotoze','genka','pElem','pInt','payY','incomeY','hyoka','tatemono','tochi','nobe','tochiAr','units','park','nobebe','kounyu'];
+  function computeXltot(props){const g={};['個人','法人','自宅','総合'].forEach(grp=>{const arr=props.filter(p=>grp==='総合'||p.grp===grp);const o={n:arr.length};_ASKEYS.forEach(k=>o[k]=arr.reduce((a,p)=>a+(+p[k]||0),0));g[grp]=o;});return g;}
+  function computeTotal(props,jihanki,muY,loans){
+    const shu=p=>p.grp==='個人'||p.grp==='法人';const sum=(arr,k)=>arr.reduce((a,p)=>a+(+p[k]||0),0);
+    const sp=props.filter(shu);const jY=jihanki?(+jihanki.rentY||0):0,jM=jihanki?(+jihanki.rentM||0):0;
+    const zanShu=sum(sp,'zan'),rentY=sum(sp,'rentY')+jY,rentM=sum(sp,'rentM')+jM,payShu=sum(sp,'payY');
+    const mud=(muY!=null&&muY!=='')?+muY:(loans||[]).reduce((a,l)=>a+(+l.monthly||0),0)*12;
+    return {zentaiZan:sum(props,'zan'),zanShu:zanShu,loan:sum(props,'loan'),kounyuAll:sum(props,'kounyu'),
+      rentY:rentY,rentM:rentM,tou:props.length,units:sum(props,'units'),payYshu:payShu,
+      rimawari:zanShu?+(rentY/zanShu*100).toFixed(2):0,
+      ratio2:rentY?+(payShu/rentY*100).toFixed(2):0,
+      ratio1:rentY?+((payShu+mud)/rentY*100).toFixed(2):0};
+  }
+  function buildASSETS(){
+    const a=state.assets||{};
+    const props=(state.props&&state.props.length!=null)?state.props:(a.props||[]);
+    if(!props.length && !(a.props&&a.props.length)) return null;
+    const jihanki=state.jihanki!==undefined?state.jihanki:(a.jihanki||null);
+    const muY=(state.muY!=null)?state.muY:((a.muY!=null)?a.muY:null);
+    const loans=(state.oloans&&state.oloans.length!=null)?state.oloans:(a.loans||[]);
+    return {props:props,jihanki:jihanki,loans:loans,total:computeTotal(props,jihanki,muY,loans),
+      xltot:computeXltot(props),monthlyTotals:a.monthlyTotals||{},monthlyBook:a.monthlyBook||[],
+      completeMonths:a.completeMonths||0,asof:a.asof||state.asof||''};
+  }
   async function reimportAssets(){   // Excel更新時の手動再取込
     try{setSync&&setSync('資産を取込中…');const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok){alert('ログインが必要です');return;}
       const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});
-      if(r.ok){ASSETS=await r.json();state.assets=ASSETS;save();render();alert('Excelから資産データを再取込しました');}
+      if(r.ok){state.assets=await r.json();state.props=undefined;state.jihanki=undefined;state.muY=undefined;state.oloans=undefined;migrateProps();ASSETS=buildASSETS();save();render();alert('Excelから資産データを再取込しました');}
       else if(r.status===403){alert('この機能は本人のみです');}else{alert('取込に失敗しました（'+r.status+'）');}
     }catch(e){alert('取込エラー: '+e.message);}}
   const aoku=n=>{n=n||0;return n>=1e8?(n/1e8).toFixed(2)+'<small>億</small>':n>=1e4?Math.round(n/1e4).toLocaleString()+'<small>万</small>':yen(n)+'<small>円</small>';};
@@ -890,7 +943,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    if(!ASSETS){return '<div class="asum"><div class="asum-load">🏢 資産データを読み込み中…</div></div>';}
    const T=ASSETS.total;const R=(l,v)=>'<div class="asum-c"><span class="asl">'+l+'</span><span class="asv num">'+v+'</span></div>';
    return '<div class="asum"><div class="asum-h">🏢 資産サマリー<small>'+esc(ASSETS.asof)+'</small></div><div class="asum-g">'
-    +R('購入額(売却含)',aoku(T.kounyuAll))+R('当初借入',aoku(T.loan))+R('現在の残債',aoku(T.zentaiZan))
+    +R('購入額（保有）',aoku(T.kounyuAll))+R('当初借入',aoku(T.loan))+R('現在の残債',aoku(T.zentaiZan))
     +R('満室家賃(年)',aoku(T.rentY))+R('満室家賃(月)','¥'+yen(T.rentM))+R('棟数/戸数',T.tou+'<small>棟</small> '+yen(T.units)+'<small>戸</small>')
     +R('残債利回り',T.rimawari+'<small>%</small>')+R('返済比率(収益)',T.ratio2+'<small>%</small>')+R('返済比率(無担保含)',T.ratio1+'<small>%</small>')
     +'</div></div>';}
@@ -898,6 +951,29 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    return '<div class="mc2"><div class="mc2-h"><span>総収支合計（毎月・全物件＋その他借入）<small>単位：万円</small></span><span class="mc2-s">1〜'+cm+'月 累計 <b class="num">¥'+yen(sum)+'</b></span></div>'+achart(tot,cm)+'</div>';}
   function remYMa(ly){if(!ly)return null;const z=Z2H(ly);const m=z.match(/R(\d+)\.(\d+)/);if(!m)return null;const y=2018+(+m[1]),mo=+m[2],end=new Date(y,mo,0),now=new Date();let dd=Math.round((end-now)/86400000);if(dd<0)dd=0;const yy=Math.floor(dd/365);return yy+'年'+(dd-yy*365)+'日';}
   let gexpA={}, pexpA={}, methodOpen=false, mbookOpen=false, loanOpen=false;
+  let assetEditing=false, editPropId=null, _pdraft=null;
+  const PFIELDS=[
+   ['section','基本情報'],['grp','名義','select'],['name','物件名','t'],['addr','住所','t'],['struct','構造(例:RC/木/S)','t'],['built','建築年月(例:H2.8)','t'],['shutoku','取得年月(例:R2.4)','t'],['houtei','法定耐用年数','i'],
+   ['section','融資'],['fin','融資先','t'],['loan','当初借入額','n'],['rate','金利(%)','f'],['lastYM','最終返済(例:R25.4)','t'],['zan','現在の残債','n'],['payY','年間返済(元利計)','n'],['pElem','うち年間元本','n'],['pInt','うち年間金利','n'],['tanpo','担保(有/無)','t'],
+   ['section','評価・購入'],['kounyu','購入価格','n'],['hyoka','評価額','n'],['tatemono','建物評価','n'],['tochi','土地評価','n'],['nobe','延床(㎡)','f'],['tochiAr','土地(㎡)','f'],
+   ['section','規模'],['units','戸数','i'],['nyukyo','入居戸数','i'],['park','駐車台数','i'],['roomtype','部屋型','t'],
+   ['section','収支'],['rentM','満室家賃(月)','n'],['rentY','満室家賃(年)','n'],['mgmt','管理費(年)','n'],['kotoze','固都税(年)','n'],['genka','減価償却(年)','n']
+  ];
+  function pfCalc(p){const rim=(+p.zan)?(p.rentY/p.zan*100).toFixed(1):'—';const hen=(+p.rentY)?(p.payY/p.rentY*100).toFixed(1):'—';const kpc=(+p.zan)?(p.payY/p.zan*100).toFixed(1):'—';return '自動計算：利回り <b>'+rim+'%</b>／返済比率 <b>'+hen+'%</b>／K% <b>'+kpc+'</b>';}
+  function propFormHtml(p){
+   let h='<div class="pform"><div class="pf-h">'+(p._new?'＋ 物件を追加':esc(p.name||'物件を編集'))+'</div>';
+   PFIELDS.forEach(f=>{if(f[0]==='section'){h+='<div class="pf-sec">'+f[1]+'</div>';return;}
+     const k=f[0],lab=f[1],ty=f[2],v=(p[k]==null?'':p[k]);
+     if(ty==='select'){h+='<div class="pf-f"><label>'+lab+'</label><select class="pf-in" data-pf="'+k+'">'+['個人','法人','自宅'].map(o=>'<option'+(v===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div>';}
+     else{const numc=(ty==='n'||ty==='i'||ty==='f');h+='<div class="pf-f"><label>'+lab+'</label><input class="pf-in'+(numc?' pf-num':'')+'"'+(numc?' inputmode="'+(ty==='f'?'decimal':'numeric')+'"':'')+' data-pf="'+k+'" value="'+esc(v)+'"></div>';}});
+   h+='<div class="pf-calc" id="pfCalc">'+pfCalc(p)+'</div>';
+   h+='<div class="pf-btns"><button class="pf-save" id="pfSave">✓ 保存</button>'+(p._new?'':'<button class="pf-del" id="pfDel">🗑 削除</button>')+'<button class="pf-cancel" id="pfCancel">キャンセル</button></div></div>';
+   return h;}
+  function assetEditListHtml(){const props=state.props||[];let h='<div class="ae-hint">物件をタップして編集／下のボタンで追加できます。数値は税抜・年額など普段の入力どおりで。</div>';
+   for(const g of ['個人','法人','自宅']){const arr=props.filter(p=>p.grp===g);h+='<div class="sec-h2">'+g+'<small>'+arr.length+'棟</small></div>';
+     h+=arr.map(p=>'<button class="ae-row" data-pedit="'+esc(p.id||p.name)+'"><span>'+esc(p.name||'(無名)')+'</span><span class="ae-zan num">¥'+yen(p.zan)+' ✏️</span></button>').join('');
+     h+='<button class="ae-add" data-padd="'+g+'">＋ '+g+'の物件を追加</button>';}
+   return h;}
   function monthlyBookHtml(){
    if(!ASSETS||!ASSETS.monthlyBook||!ASSETS.monthlyBook.length)return '';const cm=ASSETS.completeMonths||0;
    const head='<tr><th class="it">物件</th>'+[1,2,3,4,5,6,7,8,9,10,11,12].map((mm,i)=>'<th class="'+(i>=cm?'fut':'')+'">'+mm+'月</th>').join('')+'<th class="yr">年計</th></tr>';
@@ -934,7 +1010,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function renderTabs(){const el=$('tabbar');if(!el)return;const tabs=[['home','🏠 ホーム'],['cash','💰 資金'],['assets','🏢 資産']];el.innerHTML=tabs.map(t=>'<button class="tabbtn'+(activeTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');}
   function render(){
     const eb=$('editBanner');if(eb)eb.hidden=!editing||demoMode;
-    if(state.assets)ASSETS=state.assets;
+    ASSETS=buildASSETS();
     renderHeader();renderCash();renderTabs();
     const fb=$('fabEdit');if(fb)fb.style.display=(activeTab==='cash')?'':'none';
     let h='';
@@ -948,10 +1024,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       }
       h+='<div class="tabhint">💰 口座別の資金は「資金」タブ／🏢 物件ごとの詳細は「資産」タブへ</div>';
     } else if(activeTab==='assets'){
-      if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データは表示されません</div></div>';}
+      if(editPropId!=null){h+=propFormHtml(_pdraft||{});}
+      else if(assetEditing){h+='<div class="ae-top"><span>🏢 物件の編集・追加</span><button class="ae-done" id="aeDone">✓ 編集を終える</button></div>'+assetEditListHtml();}
       else{
         h+=assetSummaryHtml();
-        h+='<div class="asset-tools"><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button><button class="asreimport" id="reimportBtn">🔄 Excelから再取込</button></div>';
+        h+='<div class="asset-tools"><button class="asedit" id="aeStart">✏️ 物件を編集・追加</button><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button><button class="asreimport" id="reimportBtn">🔄 Excel再取込</button></div>';
         h+=assetGroupsHtml();
         h+=assetLoansHtml();
       }
@@ -1036,6 +1113,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-tab]')){activeTab=e.getAttribute('data-tab');lsSet('zaikin_tab',activeTab);if(activeTab!=='cash'&&editing){editing=false;document.body.classList.remove('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pfXlsBtn')){downloadExcel();return;}
     if(t.closest('#reimportBtn')){reimportAssets();return;}
+    if(t.closest('#aeStart')){assetEditing=true;render();try{window.scrollTo(0,0);}catch(_){}return;}
+    if(t.closest('#aeDone')){assetEditing=false;render();return;}
+    if(e=t.closest('[data-pedit]')){const key=e.getAttribute('data-pedit');const p=(state.props||[]).find(x=>(x.id||x.name)===key);if(p){_pdraft=JSON.parse(JSON.stringify(p));if(!_pdraft.id)_pdraft.id=uid();editPropId=key;}render();try{window.scrollTo(0,0);}catch(_){}return;}
+    if(e=t.closest('[data-padd]')){const g=e.getAttribute('data-padd');_pdraft={id:uid(),_new:true,grp:g,name:'',zan:0,loan:0,rentY:0,rentM:0,payY:0,units:0};editPropId='_new';render();try{window.scrollTo(0,0);}catch(_){}return;}
+    if(t.closest('#pfCancel')){editPropId=null;_pdraft=null;render();return;}
+    if(t.closest('#pfSave')){if(!_pdraft){editPropId=null;render();return;}if(!(_pdraft.name&&String(_pdraft.name).trim())){alert('物件名を入力してください');return;}delete _pdraft._new;state.props=state.props||[];const i=state.props.findIndex(x=>(x.id||x.name)===(_pdraft.id||_pdraft.name));if(i>=0)state.props[i]=_pdraft;else state.props.push(_pdraft);save();editPropId=null;_pdraft=null;render();return;}
+    if(t.closest('#pfDel')){if(_pdraft&&state.props){state.props=state.props.filter(x=>(x.id||x.name)!==(_pdraft.id||_pdraft.name));save();}editPropId=null;_pdraft=null;render();return;}
     if(t.closest('#cbMethodBtn')){methodOpen=!methodOpen;renderCash();return;}
     if(t.closest('#mbookBtn')){mbookOpen=!mbookOpen;render();return;}
     if(t.closest('[data-loans]')){loanOpen=!loanOpen;render();return;}
@@ -1074,7 +1158,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('.rhead')){if(editing)return;if(t.closest('input')||t.closest('button'))return;const row=e.closest('.row');if(row&&row.querySelector('.detail'))row.classList.toggle('open');return;}
   });
   document.addEventListener('input',ev=>{
-    const t=ev.target;if(!t.classList)return;const id=t.getAttribute('data-id');const a=id?acctById(id):null;
+    const t=ev.target;if(!t.classList)return;
+    if(t.classList.contains('pf-in')&&_pdraft){const k=t.getAttribute('data-pf');_pdraft[k]=t.classList.contains('pf-num')?pnum(t.value):t.value;const cc=$('pfCalc');if(cc)cc.innerHTML=pfCalc(_pdraft);return;}
+    const id=t.getAttribute('data-id');const a=id?acctById(id):null;
     const tid=t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
     const sid=t.getAttribute('data-sid');const sp=sid?spotById(sid):null;
     if(t.classList.contains('sf-name')&&sp){sp.name=t.value;save();return;}
