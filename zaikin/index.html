@@ -627,7 +627,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     previewBackup=state;previewAssetsBackup=state.assets;
     state=defaultState();state.assets=undefined;state.props=undefined;state.jihanki=undefined;state.muY=undefined;state.oloans=undefined;
     previewMode=true;editing=false;assetEditing=false;editPropId=null;_pdraft=null;assetsTried=true;ASSETS=null;
-    activeTab='home';document.body.classList.remove('editing');render();try{window.scrollTo(0,0);}catch(e){}}
+    activeTab='cash';document.body.classList.remove('editing');render();try{window.scrollTo(0,0);}catch(e){}}
   function exitMemberPreview(){
     if(previewBackup)state=previewBackup;if(previewAssetsBackup!==undefined)state.assets=previewAssetsBackup;
     previewBackup=null;previewAssetsBackup=null;previewMode=false;
@@ -1306,9 +1306,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
      +loans.map(l=>'<div class="loan2"><span class="l2n">'+esc(l.name)+' <span class="l2k">K '+kconst(l).toFixed(0)+'%</span></span><span class="l2m num">¥'+yen(l.monthly)+'/月</span><span class="l2z num">¥'+yen(l.zan)+'</span></div>').join('')
      +'<div class="loan2 tot"><span class="l2n">合計 '+loans.length+'件／平均 残債¥'+yen(avgZ)+'・K '+avgK.toFixed(1)+'%</span><span class="l2m num">¥'+yen(tM)+'/月</span><span class="l2z num">¥'+yen(tZ)+'</span></div></div></div>';}
    h+='</div>';return h;}
-  function renderTabs(){const el=$('tabbar');if(!el)return;const tabs=[['home','🏠 ホーム'],['cash','💰 資金'],['assets','🏢 資産']];el.innerHTML=tabs.map(t=>'<button class="tabbtn'+(activeTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');}
+  function memberView(){return !IS_OWNER||previewMode;}   // メンバー(または会員プレビュー)は資金繰り帳のみ／資産は主宰専用
+  function renderTabs(){const el=$('tabbar');if(!el)return;if(memberView()){el.innerHTML='';return;}const tabs=[['home','🏠 ホーム'],['cash','💰 資金'],['assets','🏢 資産']];el.innerHTML=tabs.map(t=>'<button class="tabbtn'+(activeTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');}
   function render(){
     const eb=$('editBanner');if(eb)eb.hidden=!editing||demoMode;
+    if(memberView())activeTab='cash';   // メンバーは資金繰り帳のみ
     ASSETS=buildASSETS();
     renderHeader();renderCash();renderTabs();
     const fb=$('fabEdit');if(fb)fb.style.display=(activeTab==='cash')?'':'none';
