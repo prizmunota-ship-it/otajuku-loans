@@ -351,6 +351,16 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .pf-num{text-align:right;font-variant-numeric:tabular-nums}
 .pf-calc{margin-top:12px;padding:10px 12px;background:var(--accent-soft);border-radius:10px;font-size:13px;color:var(--muted)}
 .pf-calc b{color:var(--accent);font-weight:800}
+.pf-madj{margin-bottom:9px}
+.pf-madj-h{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:5px}
+.pf-madj-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.madj{display:flex;flex-direction:column;gap:2px}
+.madj span{font-size:10px;color:var(--muted);font-weight:700}
+.madj input{font-family:inherit;font-size:14px;padding:6px 7px;border:1px solid var(--hair);border-radius:7px;background:var(--surface-2);color:var(--ink);width:100%;box-sizing:border-box;text-align:right;font-variant-numeric:tabular-nums}
+.pf-months{margin-top:10px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--hair);border-radius:10px}
+.pf-mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:8px}
+.pf-my{color:var(--ink)}
+.pd-note{padding:6px 8px;font-size:10.5px;color:var(--muted);line-height:1.45;background:var(--surface-2);border-bottom:1px solid var(--hair)}
 .pf-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .pf-save{flex:1;min-width:110px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:15px;padding:13px;border-radius:12px;cursor:pointer}
 .pf-del{border:1px solid var(--crit);background:var(--surface);color:var(--crit);font-family:inherit;font-weight:700;font-size:13px;padding:13px 16px;border-radius:12px;cursor:pointer}
@@ -863,6 +873,35 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       ratio2:rentY?+(payShu/rentY*100).toFixed(2):0,
       ratio1:rentY?+((payShu+mud)/rentY*100).toFixed(2):0};
   }
+  // ---- 月次収支の自動試算（脱エクセル：年間入力→各月へ展開） ----
+  const _TAXM=[4,7,12,2];   // 福岡の固都税 納期(4/7/12/翌2月)を既定
+  function taxMonthsOf(p){const a=(p.taxMonths&&p.taxMonths.length)?p.taxMonths:_TAXM;return a.filter(m=>m>=1&&m<=12);}
+  function taxSplit(p){const k=+p.kotoze||0;const a=Array(12).fill(0);if(!k)return a;const ms=taxMonthsOf(p);if(!ms.length)return a;const per=k/ms.length;ms.forEach(m=>a[m-1]+=per);return a;}
+  function madjOf(p){const s=(p.mAdj&&p.mAdj.length===12)?p.mAdj:[];const o=[];for(let i=0;i<12;i++)o.push(+(s[i]||0)||0);return o;}
+  function deriveMonths(p){const rentM=+p.rentM||0,payM=(+p.payY||0)/12,mgmtM=(+p.mgmt||0)/12,tax=taxSplit(p),adj=madjOf(p);
+    const inc=[],exp=[],net=[];for(let i=0;i<12;i++){const inM=rentM+Math.max(0,adj[i]);const outM=payM+mgmtM+tax[i]+Math.max(0,-adj[i]);inc.push(Math.round(inM));exp.push(Math.round(outM));net.push(Math.round(inM-outM));}
+    return {inc:inc,exp:exp,net:net,derived:true};}
+  function pMonths(p){return (p.months&&p.months.net&&p.months.net.length)?{inc:p.months.inc,exp:p.months.exp,net:p.months.net,derived:false}:deriveMonths(p);}
+  function deriveDetail(p){const rentM=+p.rentM||0,payM=(+p.payY||0)/12,mgmtM=(+p.mgmt||0)/12,tax=taxSplit(p),adj=madjOf(p);
+    const R=(l,fn,t)=>{const v=[];for(let i=0;i<12;i++)v.push(Math.round(fn(i)));return {l:l,v:v,o:v.reduce((a,b)=>a+b,0),t:t};};
+    const posA=adj.some(x=>x>0),negA=adj.some(x=>x<0),d=[];
+    d.push(R('家賃',()=>rentM,'in'));
+    if(posA)d.push(R('その他収入(売電等)',i=>Math.max(0,adj[i]),'in'));
+    d.push(R('収入合計',i=>rentM+Math.max(0,adj[i]),'total'));
+    d.push(R('年間返済(元利)',()=>payM,'out'));
+    if(mgmtM)d.push(R('管理費',()=>mgmtM,'out'));
+    if(+p.kotoze)d.push(R('固都税',i=>tax[i],'out'));
+    if(negA)d.push(R('その他支出(修繕等)',i=>Math.max(0,-adj[i]),'out'));
+    d.push(R('支出合計',i=>payM+mgmtM+tax[i]+Math.max(0,-adj[i]),'total'));
+    d.push(R('差引収支',i=>rentM+Math.max(0,adj[i])-(payM+mgmtM+tax[i]+Math.max(0,-adj[i])),'net'));
+    return d;}
+  function computeMonthly(props,jihanki,loans){const T=Array(12).fill(0),book=[];
+    props.forEach(p=>{const m=pMonths(p);book.push({l:p.name||'(無名)',v:m.net,t:'prop'});for(let i=0;i<12;i++)T[i]+=m.net[i]||0;});
+    if(jihanki&&(+jihanki.rentM)){const jv=Array(12).fill(Math.round(+jihanki.rentM||0));book.push({l:jihanki.name||'自販機等',v:jv,t:'other'});for(let i=0;i<12;i++)T[i]+=jv[i];}
+    if(loans&&loans.length){const lm=loans.reduce((a,l)=>a+(+l.monthly||0),0);if(lm){const lv=Array(12).fill(-Math.round(lm));book.push({l:'無担保借入 返済（計）',v:lv,t:'other'});for(let i=0;i<12;i++)T[i]+=lv[i];}}
+    book.push({l:'総収支合計',v:T.slice(),t:'total'});
+    return {monthlyTotals:{'総収支合計':T},monthlyBook:book,completeMonths:12,derived:true};}
+  function pfMonthsPreview(p){const m=deriveMonths(p);const yr=m.net.reduce((a,b)=>a+b,0);return '<div class="pf-mh"><span>この入力での月次（自動試算）</span><span class="pf-my num">年間 差引 ¥'+yen(yr)+'</span></div>'+achart(m.net,12);}
   function buildASSETS(){
     const a=state.assets||{};
     const props=(state.props&&state.props.length!=null)?state.props:(a.props||[]);
@@ -870,9 +909,14 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const jihanki=state.jihanki!==undefined?state.jihanki:(a.jihanki||null);
     const muY=(state.muY!=null)?state.muY:((a.muY!=null)?a.muY:null);
     const loans=(state.oloans&&state.oloans.length!=null)?state.oloans:(a.loans||[]);
+    // 月次：Excel実績(state.assets)があればそれを正とし、無ければ入力から自動試算
+    const excelMT=a.monthlyTotals&&a.monthlyTotals['総収支合計']&&a.monthlyTotals['総収支合計'].length;
+    let mt,mb,cm,mDerived;
+    if(excelMT){mt=a.monthlyTotals;mb=a.monthlyBook||[];cm=a.completeMonths||0;mDerived=false;}
+    else{const cmv=computeMonthly(props,jihanki,loans);mt=cmv.monthlyTotals;mb=cmv.monthlyBook;cm=cmv.completeMonths;mDerived=true;}
     return {props:props,jihanki:jihanki,loans:loans,total:computeTotal(props,jihanki,muY,loans),
-      xltot:computeXltot(props),monthlyTotals:a.monthlyTotals||{},monthlyBook:a.monthlyBook||[],
-      completeMonths:a.completeMonths||0,asof:a.asof||state.asof||''};
+      xltot:computeXltot(props),monthlyTotals:mt,monthlyBook:mb,
+      completeMonths:cm,mDerived:mDerived,asof:a.asof||state.asof||''};
   }
   async function reimportAssets(){   // Excel更新時の手動再取込
     try{setSync&&setSync('資産を取込中…');const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok){alert('ログインが必要です');return;}
@@ -947,8 +991,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     +R('満室家賃(年)',aoku(T.rentY))+R('満室家賃(月)','¥'+yen(T.rentM))+R('棟数/戸数',T.tou+'<small>棟</small> '+yen(T.units)+'<small>戸</small>')
     +R('残債利回り',T.rimawari+'<small>%</small>')+R('返済比率(収益)',T.ratio2+'<small>%</small>')+R('返済比率(無担保含)',T.ratio1+'<small>%</small>')
     +'</div></div>';}
-  function assetMonthlyHtml(){if(!ASSETS||!ASSETS.monthlyTotals)return '';const tot=ASSETS.monthlyTotals['総収支合計']||[];const cm=ASSETS.completeMonths||0;const done=tot.slice(0,cm);const sum=done.reduce((a,b)=>a+b,0);
-   return '<div class="mc2"><div class="mc2-h"><span>総収支合計（毎月・全物件＋その他借入）<small>単位：万円</small></span><span class="mc2-s">1〜'+cm+'月 累計 <b class="num">¥'+yen(sum)+'</b></span></div>'+achart(tot,cm)+'</div>';}
+  function assetMonthlyHtml(){if(!ASSETS||!ASSETS.monthlyTotals)return '';const tot=ASSETS.monthlyTotals['総収支合計']||[];const cm=ASSETS.completeMonths||0;const done=tot.slice(0,cm);const sum=done.reduce((a,b)=>a+b,0);const der=ASSETS.mDerived;
+   return '<div class="mc2"><div class="mc2-h"><span>総収支合計（毎月・全物件＋その他借入）<small>単位：万円'+(der?'・入力から自動試算':'')+'</small></span><span class="mc2-s">'+(der?'年間 累計':('1〜'+cm+'月 累計'))+' <b class="num">¥'+yen(sum)+'</b></span></div>'+achart(tot,cm)+'</div>';}
   function remYMa(ly){if(!ly)return null;const z=Z2H(ly);const m=z.match(/R(\d+)\.(\d+)/);if(!m)return null;const y=2018+(+m[1]),mo=+m[2],end=new Date(y,mo,0),now=new Date();let dd=Math.round((end-now)/86400000);if(dd<0)dd=0;const yy=Math.floor(dd/365);return yy+'年'+(dd-yy*365)+'日';}
   let gexpA={}, pexpA={}, methodOpen=false, mbookOpen=false, loanOpen=false;
   let assetEditing=false, editPropId=null, _pdraft=null;
@@ -967,6 +1011,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
      if(ty==='select'){h+='<div class="pf-f"><label>'+lab+'</label><select class="pf-in" data-pf="'+k+'">'+['個人','法人','自宅'].map(o=>'<option'+(v===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div>';}
      else{const numc=(ty==='n'||ty==='i'||ty==='f');h+='<div class="pf-f"><label>'+lab+'</label><input class="pf-in'+(numc?' pf-num':'')+'"'+(numc?' inputmode="'+(ty==='f'?'decimal':'numeric')+'"':'')+' data-pf="'+k+'" value="'+esc(v)+'"></div>';}});
    h+='<div class="pf-calc" id="pfCalc">'+pfCalc(p)+'</div>';
+   h+='<div class="pf-sec">月次収支（自動試算）</div>';
+   h+='<div class="pf-f"><label>固都税の納付月（カンマ区切り・年額を等分）</label><input class="pf-in" data-pf="taxMonths" inputmode="numeric" value="'+esc(taxMonthsOf(p).join(','))+'"></div>';
+   h+='<div class="pf-madj"><div class="pf-madj-h">月ごとの調整（＋売電など収入／−修繕など支出・円）</div><div class="pf-madj-g">';
+   const _adj=madjOf(p);for(let i=0;i<12;i++){h+='<label class="madj"><span>'+(i+1)+'月</span><input class="pf-madj-i" data-madj="'+i+'" inputmode="numeric" value="'+(_adj[i]?_adj[i]:'')+'"></label>';}
+   h+='</div></div>';
+   h+='<div class="pf-months" id="pfMonths">'+pfMonthsPreview(p)+'</div>';
    h+='<div class="pf-btns"><button class="pf-save" id="pfSave">✓ 保存</button>'+(p._new?'':'<button class="pf-del" id="pfDel">🗑 削除</button>')+'<button class="pf-cancel" id="pfCancel">キャンセル</button></div></div>';
    return h;}
   function assetEditListHtml(){const props=state.props||[];let h='<div class="ae-hint">物件をタップして編集／下のボタンで追加できます。数値は税抜・年額など普段の入力どおりで。</div>';
@@ -980,12 +1030,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    const rows=ASSETS.monthlyBook.map(r=>{const cls=r.t==='total'?'rtot':(r.t==='other'?'roth':'');const yr=r.v.reduce((a,b)=>a+(b||0),0);
      return '<tr class="'+cls+'"><td class="it">'+esc(r.l)+'</td>'+r.v.map((x,i)=>'<td class="'+(i>=cm?'fut ':'')+((x||0)<0?'neg':'')+'">'+(x?yen(x):'')+'</td>').join('')+'<td class="yr">'+yen(yr)+'</td></tr>';}).join('');
    return '<div class="mbook"><div class="mbook-cap">月間収支（物件ごと）／各月の差引収支・単位：円　※9月以降(薄字)は翌月反映前</div><div class="pd-tw"><table class="pd-tbl mbook-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';}
-  function pMonthlyBlock(p){if(!p.months)return '';const m=p.months,cm=ASSETS.completeMonths||0;const net=m.net.slice(0,cm).reduce((a,b)=>a+b,0);
-   return '<div class="mc2"><div class="mc2-h"><span>月次 収支差額<small>単位：万円</small></span><span class="mc2-s">1〜'+cm+'月 差引 <b class="num">¥'+yen(net)+'</b></span></div>'+achart(m.net,cm)+'</div>';}
-  function pDetailTable(p){if(!p.detail||!p.detail.length)return '';const cm=ASSETS.completeMonths||0;
+  function pMonthlyBlock(p){const m=pMonths(p);const der=m.derived;const cm=der?12:(ASSETS.completeMonths||12);const net=m.net.slice(0,cm).reduce((a,b)=>a+b,0);
+   const cap=der?'月次 収支（自動試算）':'月次 収支差額';
+   return '<div class="mc2"><div class="mc2-h"><span>'+cap+'<small>単位：万円'+(der?'・入力から自動計算':'')+'</small></span><span class="mc2-s">'+(der?'年間 差引':('1〜'+cm+'月 差引'))+' <b class="num">¥'+yen(net)+'</b></span></div>'+achart(m.net,cm)+'</div>';}
+  function pDetailTable(p){const det=(p.detail&&p.detail.length)?p.detail:deriveDetail(p);if(!det.length)return '';const der=!(p.detail&&p.detail.length);const cm=der?12:(ASSETS.completeMonths||12);
    const head='<tr><th class="it">項目</th>'+[1,2,3,4,5,6,7,8,9,10,11,12].map((mm,i)=>'<th class="'+(i>=cm?'fut':'')+'">'+mm+'月</th>').join('')+'<th class="yr">年計</th></tr>';
-   const rows=p.detail.map(r=>{const cls=r.t==='total'?'rtot':(r.t==='net'?'rnet':'');return '<tr class="'+cls+'"><td class="it">'+esc(r.l)+'</td>'+r.v.map((x,i)=>'<td class="'+(i>=cm?'fut':'')+'">'+(x?yen(x):'')+'</td>').join('')+'<td class="yr">'+(r.o?yen(r.o):'')+'</td></tr>';}).join('');
-   return '<div class="pd-tw"><table class="pd-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';}
+   const rows=det.map(r=>{const cls=r.t==='total'?'rtot':(r.t==='net'?'rnet':'');return '<tr class="'+cls+'"><td class="it">'+esc(r.l)+'</td>'+r.v.map((x,i)=>'<td class="'+(i>=cm?'fut':'')+'">'+(x?yen(x):'')+'</td>').join('')+'<td class="yr">'+(r.o?yen(r.o):'')+'</td></tr>';}).join('');
+   return '<div class="pd-tw">'+(der?'<div class="pd-note">※ 入力値から自動試算：家賃・管理費は毎月、固都税は納付月に等分、返済は年額÷12。売電や修繕などの実額は「月ごとの調整」で。</div>':'')+'<table class="pd-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';}
   function pDetailBlock(p){const d=[['融資先',p.fin||'—'],['金利',p.rate!=null?p.rate+'%':'—'],['当初借入','¥'+yen(p.loan)],['残債','¥'+yen(p.zan)],['家賃(月)','¥'+yen(p.rentM)],['家賃(年)','¥'+yen(p.rentY)],['年間返済','¥'+yen(p.payY)],['K%',(p.zan?(p.payY/p.zan*100).toFixed(1)+'%':'—')],['固都税','¥'+yen(p.kotoze)],['減価償却','¥'+yen(p.genka)],['最終返済',Z2H(p.lastYM||'')||'—'],['評価額',p.hyoka?'¥'+yen(p.hyoka):'—'],['構造',p.struct||'—'],['戸数',p.units?yen(p.units)+'戸':'—']];
    return '<div class="pd-grid">'+d.map(x=>'<div class="pd-c"><span>'+x[0]+'</span><b class="num">'+x[1]+'</b></div>').join('')+'</div>'+pMonthlyBlock(p)+pDetailTable(p);}
   function pcardMini(p){const paid=p.loan?Math.max(0,Math.min(100,(1-p.zan/p.loan)*100)):0;const rim=p.rimawari!=null?p.rimawari.toFixed(1):(p.zan?(p.rentY/p.zan*100).toFixed(1):'—');const kpc=p.zan?(p.payY/p.zan*100).toFixed(1):'—';const rem=remYMa(p.lastYM);const hen=p.hensaihi!=null?p.hensaihi.toFixed(1):(p.rentY?(p.payY/p.rentY*100).toFixed(1):'—');const open=!!pexpA[p.name];
@@ -1159,7 +1210,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   });
   document.addEventListener('input',ev=>{
     const t=ev.target;if(!t.classList)return;
-    if(t.classList.contains('pf-in')&&_pdraft){const k=t.getAttribute('data-pf');_pdraft[k]=t.classList.contains('pf-num')?pnum(t.value):t.value;const cc=$('pfCalc');if(cc)cc.innerHTML=pfCalc(_pdraft);return;}
+    if(t.classList.contains('pf-madj-i')&&_pdraft){const i=+t.getAttribute('data-madj');if(!_pdraft.mAdj||_pdraft.mAdj.length!==12)_pdraft.mAdj=madjOf(_pdraft);_pdraft.mAdj[i]=pnum(t.value);const pm=$('pfMonths');if(pm)pm.innerHTML=pfMonthsPreview(_pdraft);return;}
+    if(t.classList.contains('pf-in')&&_pdraft){const k=t.getAttribute('data-pf');if(k==='taxMonths'){_pdraft.taxMonths=t.value.split(/[^0-9]+/).map(Number).filter(function(n){return n>=1&&n<=12;});}else{_pdraft[k]=t.classList.contains('pf-num')?pnum(t.value):t.value;}const cc=$('pfCalc');if(cc)cc.innerHTML=pfCalc(_pdraft);const pm=$('pfMonths');if(pm)pm.innerHTML=pfMonthsPreview(_pdraft);return;}
     const id=t.getAttribute('data-id');const a=id?acctById(id):null;
     const tid=t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
     const sid=t.getAttribute('data-sid');const sp=sid?spotById(sid):null;
