@@ -794,7 +794,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   }
   // ===== 資産（総合収支アプリ）：Excel由来のASSETSを描画 =====
   let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home');
-  async function loadAssets(){try{const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now());if(r.ok)ASSETS=await r.json();}catch(e){}}
+  async function loadAssets(){try{const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok)return;const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});if(r.ok)ASSETS=await r.json();}catch(e){}}
   const aoku=n=>{n=n||0;return n>=1e8?(n/1e8).toFixed(2)+'<small>億</small>':n>=1e4?Math.round(n/1e4).toLocaleString()+'<small>万</small>':yen(n)+'<small>円</small>';};
   const PCOLS=[["物件名","name","t"],["住所","addr","t"],["構造","struct","t"],["法定耐用","houtei","i"],["経過","keika","i"],["建築年月","built","t"],["取得年月","shutoku","t"],["最終年月","lastYM","t"],["評価額","hyoka","n"],["建物評価","tatemono","n"],["土地評価","tochi","n"],["延床㎡","nobe","f"],["土地㎡","tochiAr","f"],["戸数","units","i"],["入居","nyukyo","i"],["駐車","park","i"],["部屋型","roomtype","t"],["融資先","fin","t"],["金利%","rate","f"],["担保","tanpo","t"],["当初借入","loan","n"],["残債","zan","n"],["延べ返済","nobebe","n"],["減価償却","genka","n"],["返済元本","pElem","n"],["返済金利","pInt","n"],["家賃(月)","rentM","n"],["家賃(年)","rentY","n"],["管理費","mgmt","n"],["固都税","kotoze","n"],["年間返済","payY","n"],["年間収入","incomeY","n"],["残債利回り%","rimawari","f"],["返済比率%","hensaihi","f"]];
   const _AL={name:'al',addr:'al',fin:'al',struct:'ac',built:'ac',shutoku:'ac',lastYM:'ac',roomtype:'ac',tanpo:'ac'};
