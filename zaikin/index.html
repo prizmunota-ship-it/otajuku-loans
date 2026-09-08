@@ -398,6 +398,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .paste-tbl .paste-map{margin-top:3px;font-family:inherit;font-size:11px;padding:3px 4px;border:1px solid var(--hair);border-radius:6px;background:var(--surface);color:var(--ink);max-width:120px}
 .paste-tbl td{max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .paste-foot{font-size:11px;color:var(--muted);font-weight:700;margin:6px 2px}
+.tbtn-paste{border-style:dashed!important;border-color:var(--accent)!important;color:var(--accent)!important;font-weight:800}
+.empty-or{font-size:12px;color:var(--muted);text-align:center;margin:14px 0 8px}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .msrc-b.on{color:#17130A}}
 .welcome{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:18px 16px;box-shadow:var(--shadow)}
 .welcome h2{font-size:19px;margin:0 0 8px}
@@ -687,6 +689,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     el.innerHTML=h;
   }
   function renderKPIs(){
+    if(!$('kpis'))return;   // 貼り付け取込などで#kpisが無い時は何もしない
     const T=totals();
     let h='<div class="kpi"><div class="lab">総預金残高</div><div class="val num yen">'+yen(T.bal)+'</div>'
       +'<div class="sub num">毎月返済 ¥'+yen(T.pay)+'</div>';
@@ -900,7 +903,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function emptyHtml(){
     return '<div class="empty"><h2>🏦 自分の口座を登録して始めましょう</h2>'
       +'<p>各口座の<b>残高</b>と<b>毎月の返済額</b>を入れるだけ。<br>「残高が毎月返済を下回る口座」を自動で色分けし、資金ショートを未然に防ぎます。<br>入力内容はあなたのアカウントに保存され、<b>スマホでもPCでも同じ内容</b>が見られます。</p>'
-      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button></div></div>';
+      +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button></div>'
+      +'<div class="empty-or">または、今ある一覧表があれば</div>'
+      +'<div class="row-btns"><button class="pbtn" id="pasteOpenAcc">📋 表を貼り付けて一括取込</button></div></div>';
   }
   // ===== 資産（総合収支アプリ）：Excel由来のASSETSを描画 =====
   let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home'), assetsTried=false;
@@ -1019,19 +1024,25 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   // ===== 表を貼り付けて一括取込（物件） =====
   const FIELDS_MAP=[['(取り込まない)',''],['名義','grp'],['物件名','name'],['住所','addr'],['構造','struct'],['戸数','units'],['入居戸数','nyukyo'],['当初借入','loan'],['残債','zan'],['金利(%)','rate'],['満室家賃(月)','rentM'],['満室家賃(年)','rentY'],['毎月返済(→年換算)','payM'],['年間返済','payY'],['管理費(年)','mgmt'],['固都税(年)','kotoze'],['減価償却(年)','genka'],['融資先','fin'],['評価額','hyoka'],['駐車','park'],['最終返済','lastYM'],['購入価格','kounyu']];
   const _SYN={name:['物件名','物件名称','建物名','名称','物件'],addr:['住所','所在地','所在'],struct:['構造'],units:['戸数','部屋数','総戸数'],nyukyo:['入居戸数','入居数','入居'],loan:['当初借入','借入額','融資額','当初融資','借入金額'],zan:['借入残高','ローン残高','残債務','残債','残高','借入残'],rate:['金利','利率'],rentY:['満室家賃(年)','満室家賃（年）','年間家賃','年家賃','家賃(年)','家賃（年）','年間賃料','満室想定','年間収入','年収'],rentM:['満室家賃(月)','満室家賃（月）','月額家賃','月家賃','家賃(月)','家賃（月）','月額賃料','家賃','賃料'],payM:['毎月返済','月返済','返済(月)','月額返済'],payY:['年間返済','返済(年)','年返済','返済額'],mgmt:['管理費','管理料'],kotoze:['固都税','固定資産税','固都'],genka:['減価償却'],fin:['融資先','金融機関','借入先','銀行'],grp:['名義','所有区分','区分','所有'],hyoka:['評価額','評価'],park:['駐車'],lastYM:['最終返済','完済'],kounyu:['購入価格','購入額','取得価格','購入金額']};
+  const FIELDS_ACC=[['(取り込まない)',''],['名義','grp'],['銀行名','bank'],['支店','branch'],['口座番号','acct'],['残高','bal'],['毎月返済','pay'],['借入残高','borrow'],['引落日','payday'],['メモ','note']];
+  const _SYN_ACC={grp:['名義','区分','所有'],bank:['銀行名','金融機関','銀行'],branch:['支店'],acct:['口座番号','口座','番号'],pay:['毎月返済','月返済','毎月の返済','返済額','毎月','返済'],borrow:['借入残高','ローン残高','借入残','借入','残債'],bal:['預金残高','現在残高','残高','預金'],payday:['引落日','返済日','引き落とし','引落'],note:['メモ','備考']};
+  function pasteFields(kind){return kind==='accounts'?FIELDS_ACC:FIELDS_MAP;}
+  function pasteSyn(kind){return kind==='accounts'?_SYN_ACC:_SYN;}
+  function normGrpAcc(v){v=String(v||'');return /法人|株|会社|(有)|(株)/.test(v)?'法人':'個人';}
   function pnumJP(s){if(s==null)return 0;s=Z2H(String(s)).replace(/[,\s　¥￥円]/g,'');if(!s)return 0;
     if(s.indexOf('億')>=0||s.indexOf('万')>=0){var v=0,m2=s.match(/(-?[0-9.]+)\s*億/);if(m2)v+=parseFloat(m2[1])*1e8;var m3=s.match(/(-?[0-9.]+)\s*万/);if(m3)v+=parseFloat(m3[1])*1e4;var rest=s.replace(/-?[0-9.]+\s*億/,'').replace(/-?[0-9.]+\s*万/,'').replace(/[億万]/g,'');var m4=rest.match(/-?[0-9.]+/);if(m4)v+=parseFloat(m4[0]);return Math.round(v);}
     var m=s.match(/-?[0-9.]+/);return m?Math.round(parseFloat(m[0])):0;}
   function normGrp(v){v=String(v||'');if(/法人|株|会社|(有)|(株)/.test(v))return '法人';if(/自宅|自用|居住|自己/.test(v))return '自宅';return '個人';}
   function splitLine(line,delim){if(delim==='\t')return line.split('\t');var out=[],cur='',q=false;for(var i=0;i<line.length;i++){var c=line[i];if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}else{if(c==='"')q=true;else if(c===','){out.push(cur);cur='';}else cur+=c;}}out.push(cur);return out;}
   function parseTable(text){var lines=String(text).replace(/\r/g,'').split('\n').filter(function(l){return l.trim()!=='';});if(lines.length<2)return null;var delim=lines[0].indexOf('\t')>=0?'\t':',';var rows=lines.map(function(l){return splitLine(l,delim).map(function(x){return x.trim();});});return {headers:rows[0],rows:rows.slice(1)};}
-  function autoMap(headers){var used={},map={};headers.forEach(function(h,idx){var hn=Z2H(String(h)).replace(/[\s　]/g,'').toLowerCase();var best='';Object.keys(_SYN).forEach(function(f){if(best||used[f])return;_SYN[f].forEach(function(kw){if(best)return;var k=Z2H(kw).replace(/[\s　]/g,'').toLowerCase();if(hn.indexOf(k)>=0)best=f;});});if(best){map[idx]=best;used[best]=1;}});return map;}
+  function autoMap(headers,syn){syn=syn||_SYN;var used={},map={};headers.forEach(function(h,idx){var hn=Z2H(String(h)).replace(/[\s　]/g,'').toLowerCase();var best='';Object.keys(syn).forEach(function(f){if(best||used[f])return;syn[f].forEach(function(kw){if(best)return;var k=Z2H(kw).replace(/[\s　]/g,'').toLowerCase();if(hn.indexOf(k)>=0)best=f;});});if(best){map[idx]=best;used[best]=1;}});return map;}
   let pasteMode=null,_pasteParsed=null;
-  function pastePropsHtml(){var P=_pasteParsed;var h='<div class="pform"><div class="pf-h">📋 表を貼り付けて一括取込（物件）</div>';
-   if(!P){h+='<div class="pf-actnote">Excel／Googleスプレッドシートで<b>見出し行を含む範囲</b>をコピーし、下に貼り付け→「解析する」。列は自動で判定し、確認してから取り込みます（既存の物件はそのまま・追加されます）。</div>';
-     h+='<textarea id="pasteBox" class="pastebox" placeholder="1行目に見出し（例：物件名  住所  戸数  残債  満室家賃(年)  年間返済 …）。以降にデータ。タブ区切り／CSV対応。"></textarea>';
+  function pasteImportHtml(kind){var P=_pasteParsed;var acc=kind==='accounts';var FL=pasteFields(kind);
+   var h='<div class="pform"><div class="pf-h">📋 表を貼り付けて一括取込（'+(acc?'口座':'物件')+'）</div>';
+   if(!P){h+='<div class="pf-actnote">Excel／Googleスプレッドシートで<b>見出し行を含む範囲</b>をコピーし、下に貼り付け→「解析する」。列は自動で判定し、確認してから取り込みます（既存の'+(acc?'口座':'物件')+'はそのまま・追加されます）。</div>';
+     h+='<textarea id="pasteBox" class="pastebox" placeholder="'+(acc?'1行目に見出し（例：銀行名  支店  残高  毎月返済  名義）。以降にデータ。':'1行目に見出し（例：物件名  住所  戸数  残債  満室家賃(年)  年間返済 …）。以降にデータ。')+'タブ区切り／CSV対応。"></textarea>';
      h+='<div class="pf-btns"><button class="pf-save" id="pasteParse">解析する</button><button class="pf-cancel" id="pasteCancel">キャンセル</button></div>';}
-   else{var fo=function(sel){return FIELDS_MAP.map(function(o){return '<option value="'+o[1]+'"'+(sel===o[1]?' selected':'')+'>'+o[0]+'</option>';}).join('');};
+   else{var fo=function(sel){return FL.map(function(o){return '<option value="'+o[1]+'"'+(sel===o[1]?' selected':'')+'>'+o[0]+'</option>';}).join('');};
      h+='<div class="pf-actnote">列の対応を確認・修正してください（自動判定済み）。使わない列は「(取り込まない)」に。金額は「万・億」やカンマ付きもOK。</div>';
      h+='<div class="pd-tw"><table class="pd-tbl paste-tbl"><thead><tr>';
      P.headers.forEach(function(hd,i){h+='<th>'+esc(hd||('列'+(i+1)))+'<br><select class="paste-map" data-col="'+i+'">'+fo(P.map[i]||'')+'</select></th>';});
@@ -1039,10 +1050,21 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
      P.rows.slice(0,6).forEach(function(r){h+='<tr>'+P.headers.map(function(_,i){return '<td>'+esc(r[i]||'')+'</td>';}).join('')+'</tr>';});
      h+='</tbody></table></div><div class="paste-foot">全 '+P.rows.length+' 行'+(P.rows.length>6?'（先頭6行を表示）':'')+'</div>';
      var vals=[];for(var k in P.map){if(P.map.hasOwnProperty(k))vals.push(P.map[k]);}
-     if(vals.indexOf('grp')<0){h+='<div class="pf-f"><label>名義（列に無い場合の既定）</label><select id="pasteGrp" class="pf-in"><option value="個人">個人</option><option value="法人">法人</option><option value="自宅">自宅</option></select></div>';}
+     if(vals.indexOf('grp')<0){h+='<div class="pf-f"><label>名義（列に無い場合の既定）</label><select id="pasteGrp" class="pf-in"><option value="個人">個人</option><option value="法人">法人</option>'+(acc?'':'<option value="自宅">自宅</option>')+'</select></div>';}
      h+='<div class="pf-btns"><button class="pf-save" id="pasteImport">✓ '+P.rows.length+'件を取り込む</button><button class="pf-cancel" id="pasteRedo">やり直す</button><button class="pf-cancel" id="pasteCancel">キャンセル</button></div>';}
    return h+'</div>';}
-  function doPasteImport(){var P=_pasteParsed;if(!P)return;var defGrp=($('pasteGrp')&&$('pasteGrp').value)||'個人';var added=0;state.props=state.props||[];
+  function doPasteImport(kind){var P=_pasteParsed;if(!P)return;var acc=kind==='accounts';var defGrp=($('pasteGrp')&&$('pasteGrp').value)||'個人';var added=0;
+   if(acc){state.accounts=state.accounts||[];
+     P.rows.forEach(function(r){var o={id:uid(),grp:defGrp,bank:'',branch:'',acct:'',bal:0,pay:0,borrow:0,note:'',photos:[]},any=false;
+       for(var ci in P.map){if(!P.map.hasOwnProperty(ci))continue;var f=P.map[ci];if(!f)continue;var raw=r[ci];if(raw==null||raw==='')continue;
+         if(f==='grp'){o.grp=normGrpAcc(raw);any=true;}
+         else if(f==='bank'||f==='branch'||f==='acct'||f==='note'){o[f]=String(raw).trim();if(o[f])any=true;}
+         else if(f==='payday'){var d=pnumJP(raw);o.payday=(d>=1&&d<=31)?d:'';if(o.payday)any=true;}
+         else {var nv=pnumJP(raw);if(nv){o[f]=nv;any=true;}}}
+       if(any){state.accounts.push(o);added++;}});
+     _pasteParsed=null;pasteMode=null;editing=true;document.body.classList.add('editing');save();render();
+     alert(added+'件の口座を取り込みました。残高・毎月返済などをご確認ください。');return;}
+   state.props=state.props||[];
    P.rows.forEach(function(r){var o={id:uid()},any=false;
      for(var ci in P.map){if(!P.map.hasOwnProperty(ci))continue;var f=P.map[ci];if(!f)continue;var raw=r[ci];if(raw==null||raw==='')continue;
        if(f==='grp'){o.grp=normGrp(raw);any=true;}
@@ -1260,7 +1282,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       }
       if(!isNewUser)h+='<div class="tabhint">💰 口座別の資金は「資金」タブ／🏢 物件ごとの詳細は「資産」タブへ</div>';
     } else if(activeTab==='assets'){
-      if(pasteMode==='props'){h+=pastePropsHtml();}
+      if(pasteMode==='props'){h+=pasteImportHtml('props');}
       else if(editPropId!=null){h+=propFormHtml(_pdraft||{});}
       else if(assetEditing){h+='<div class="ae-top"><span>🏢 物件の編集・追加</span><button class="ae-done" id="aeDone">✓ 編集を終える</button></div>'+assetEditListHtml();}
       else{
@@ -1269,12 +1291,14 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         h+=assetGroupsHtml();
         h+=assetLoansHtml();
       }
+    } else if(pasteMode==='accounts'){
+      h+=pasteImportHtml('accounts');
     } else {
       h+='<div class="kpis" id="kpis"></div>';
       if(editing){h+='<div class="jumpbar"><span class="jb-lab">編集する項目へ移動：</span><button class="jb-btn" data-jump="個人">👤 個人</button><button class="jb-btn" data-jump="法人">🏢 法人</button><button class="jb-btn" data-jump="クレカ">💳 クレカ</button><button class="jb-btn" data-jump="スポット">📌 特定日</button></div>';}
       if(state.accounts.length===0 && !editing){ h+=emptyHtml(); }
       else { h+=forecastHtml()+groupHtml('個人')+groupHtml('法人')+cardHtml()+spotHtml(); }
-      if(editing){h+='<div class="toolbar"><button class="tbtn" id="exportBtn">⬇︎ バックアップを書き出す</button><button class="tbtn" id="importBtn">⬆︎ バックアップを読み込む</button></div><div class="savehint">入力は自動でクラウドに保存され、ログインすればどの端末でも同じ内容が出ます。</div>';}
+      if(editing){h+='<div class="toolbar"><button class="tbtn tbtn-paste" id="pasteOpenAcc">📋 表を貼り付けて口座を一括取込</button><button class="tbtn" id="exportBtn">⬇︎ バックアップを書き出す</button><button class="tbtn" id="importBtn">⬆︎ バックアップを読み込む</button></div><div class="savehint">入力は自動でクラウドに保存され、ログインすればどの端末でも同じ内容が出ます。</div>';}
     }
     $('body').innerHTML=h;
     if(activeTab==='cash')renderKPIs();
@@ -1361,8 +1385,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.closest('#incSeed')){seedIncFromExcel();return;}
     if(t.closest('#mudFlat')){delete state.mudanSchedule;save();render();return;}
     if(t.closest('#pasteOpen')){pasteMode='props';_pasteParsed=null;render();try{window.scrollTo(0,0);}catch(_){}return;}
-    if(t.closest('#pasteParse')){const box=$('pasteBox');const P=parseTable(box?box.value:'');if(!P){alert('見出し行＋1行以上のデータを貼り付けてください。');return;}P.map=autoMap(P.headers);_pasteParsed=P;render();return;}
-    if(t.closest('#pasteImport')){doPasteImport();return;}
+    if(t.closest('#pasteOpenAcc')){pasteMode='accounts';_pasteParsed=null;if(activeTab!=='cash'){activeTab='cash';lsSet('zaikin_tab','cash');}render();try{window.scrollTo(0,0);}catch(_){}return;}
+    if(t.closest('#pasteParse')){const box=$('pasteBox');const P=parseTable(box?box.value:'');if(!P){alert('見出し行＋1行以上のデータを貼り付けてください。');return;}P.map=autoMap(P.headers,pasteSyn(pasteMode));_pasteParsed=P;render();return;}
+    if(t.closest('#pasteImport')){doPasteImport(pasteMode);return;}
     if(t.closest('#pasteRedo')){_pasteParsed=null;render();return;}
     if(t.closest('#pasteCancel')){pasteMode=null;_pasteParsed=null;render();return;}
     if(t.closest('#mnetOn')&&_pdraft){_pdraft.mNet=effNet(_pdraft).slice();render();return;}
