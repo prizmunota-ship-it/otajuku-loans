@@ -524,7 +524,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 
 <div class="wrap" id="appWrap" hidden>
   <header class="top">
-    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="pvbtn" id="previewBtn" hidden>👀 会員プレビュー</button><button class="reloadbtn" id="reloadBtn" title="最新の状態に更新">🔄 更新</button><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
+    <div class="acctbar"><span class="em" id="acctEmail"></span><span class="syncstat" id="syncStat"></span><button class="reloadbtn" id="reloadBtn" title="最新の状態に更新">🔄 更新</button><button class="logoutbtn" id="logoutBtn">ログアウト</button></div>
     <div class="title-row">
       <h1>総合収支アプリ</h1>
       <div class="head-right"><span class="asof" id="asofBox"></span></div>
@@ -1316,7 +1316,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const fb=$('fabEdit');if(fb)fb.style.display=(activeTab==='cash')?'':'none';
     let h='';
     if(demoMode){h+='<div class="demobanner"><span>👀 これは<b>入力例</b>です（あなたのデータではありません・保存されません）</span><button class="democlose" id="demoClose">✕ 閉じて自分のデータに戻る</button></div>';}
-    if(previewMode){h+='<div class="demobanner pvbanner"><span>👀 <b>会員プレビュー</b>：新規会員が最初に見る画面です（入力しても保存されません）</span><button class="democlose" id="pvClose">✕ 自分のデータに戻る</button></div>';}
     const isNewUser=!ASSETS && assetsTried && (!state.props||!state.props.length) && (!state.accounts||!state.accounts.length);
     if(activeTab==='home'){
       if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データ（実際の物件情報）は表示されません</div></div>';}
@@ -1333,7 +1332,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       else if(assetEditing){h+='<div class="ae-top"><span>🏢 物件の編集・追加</span><button class="ae-done" id="aeDone">✓ 編集を終える</button></div>'+assetEditListHtml();}
       else{
         h+=assetSummaryHtml();
-        h+='<div class="asset-tools"><button class="asedit" id="aeStart">✏️ 物件を編集・追加</button><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button><button class="asreimport" id="reimportBtn">🔄 Excel再取込</button></div>';
+        h+='<div class="asset-tools"><button class="asedit" id="aeStart">✏️ 物件を編集・追加</button><button class="asxls" id="pfXlsBtn">⬇ 所有物件一覧表（Excel）</button></div>';
         h+=assetGroupsHtml();
         h+=assetLoansHtml();
       }
@@ -1419,7 +1418,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const t=ev.target;let e;
     if(e=t.closest('[data-tab]')){activeTab=e.getAttribute('data-tab');lsSet('zaikin_tab',activeTab);if(activeTab!=='cash'&&editing){editing=false;document.body.classList.remove('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pfXlsBtn')){downloadExcel();return;}
-    if(t.closest('#reimportBtn')){reimportAssets();return;}
     if(e=t.closest('[data-gostart]')){const g=e.getAttribute('data-gostart');activeTab=g;lsSet('zaikin_tab',g);if(g==='assets'){assetEditing=true;}else if(g==='cash'){editing=true;document.body.classList.add('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#aeStart')){assetEditing=true;render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#aeDone')){assetEditing=false;render();return;}
@@ -1456,8 +1454,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-carddel]')){const i=+e.getAttribute('data-carddel');if(state.card.items&&state.card.items[i]!==undefined){state.card.items.splice(i,1);save();render();}return;}
     if(e=t.closest('#reloadBtn')){e.textContent='更新中…';try{location.reload();}catch(err){location.href=location.pathname;}return;}
     if(t.id==='logoutBtn'){doLogout();return;}
-    if(t.id==='previewBtn'){enterMemberPreview();return;}
-    if(t.closest('#pvClose')){exitMemberPreview();return;}
     if(e=t.closest('[data-del]')){const id=e.getAttribute('data-del');const acc=acctById(id),ts=tsumiById(id),sp=spotById(id);if(!acc&&!ts&&!sp)return;
       if(armedDel===id){if(armedTimer)clearTimeout(armedTimer);armedDel=null;
         if(acc){state.accounts=state.accounts.filter(x=>x.id!==id);}
@@ -1641,7 +1637,6 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     CURRENT_UID=session.user.id;
     $('acctEmail').textContent=session.user.email||'';
     IS_OWNER=OWNER_EMAILS.indexOf((session.user.email||'').toLowerCase())>=0;
-    const pvb=$('previewBtn');if(pvb)pvb.hidden=!IS_OWNER;
     $('authGate').setAttribute('hidden','');$('bootScreen').setAttribute('hidden','');$('appWrap').removeAttribute('hidden');
     setSync('読み込み中…');
     const cloud=await cloudLoad();
