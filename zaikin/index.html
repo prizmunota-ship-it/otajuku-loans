@@ -361,6 +361,31 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .pf-mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:8px}
 .pf-my{color:var(--ink)}
 .pd-note{padding:6px 8px;font-size:10.5px;color:var(--muted);line-height:1.45;background:var(--surface-2);border-bottom:1px solid var(--hair)}
+.ol-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.ol-erow{background:var(--surface);border:1px solid var(--hair);border-radius:11px;padding:10px 11px;box-shadow:var(--shadow)}
+.ol-name{width:100%;font-family:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--hair);border-radius:8px;background:var(--surface-2);color:var(--ink);box-sizing:border-box;margin-bottom:7px}
+.ol-nums{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ol-nums label{display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(--muted);font-weight:700;flex:1;min-width:96px}
+.ol-nums input{font-family:inherit;font-size:15px;padding:7px 9px;border:1px solid var(--hair);border-radius:8px;background:var(--surface-2);color:var(--ink);width:100%;box-sizing:border-box;text-align:right;font-variant-numeric:tabular-nums}
+.ol-k{font-size:11.5px;font-weight:700;color:var(--accent);white-space:nowrap}
+.ol-del{border:1px solid var(--hair);background:var(--surface);color:var(--crit);font-size:14px;padding:8px 11px;border-radius:8px;cursor:pointer;align-self:flex-end}
+.ol-tot{font-size:12px;color:var(--muted);font-weight:700;margin:2px 2px 8px;text-align:right}.ol-tot b{color:var(--ink)}
+.ol-muy{margin-top:12px;padding:11px 12px;background:var(--surface-2);border:1px solid var(--hair);border-radius:10px}
+.ol-muy label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);font-weight:700}
+.ol-muy input{font-family:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--hair);border-radius:8px;background:var(--surface);color:var(--ink);box-sizing:border-box;text-align:right;font-variant-numeric:tabular-nums}
+.ol-muy-note{font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:6px;font-weight:500}
+.welcome{background:var(--surface);border:1px solid var(--hair);border-radius:15px;padding:18px 16px;box-shadow:var(--shadow)}
+.welcome h2{font-size:19px;margin:0 0 8px}
+.welcome>p{font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 14px}
+.wc-steps{display:flex;flex-direction:column;gap:10px}
+.wc-step{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface-2);border:1px solid var(--hair);border-radius:12px;padding:13px 14px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.wc-step:active{transform:scale(.99)}
+.wc-n{flex:none;width:26px;height:26px;border-radius:99px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.wc-t{display:flex;flex-direction:column;gap:3px;font-size:15px;font-weight:800;flex:1}
+.wc-t small{font-size:11.5px;color:var(--muted);font-weight:500;line-height:1.45}
+.wc-go{flex:none;font-size:12px;font-weight:700;color:var(--accent)}
+.wc-tip{font-size:11.5px;color:var(--muted);margin:12px 2px 0;text-align:center}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .wc-n{color:#17130A}}
 .pf-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .pf-save{flex:1;min-width:110px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:15px;padding:13px;border-radius:12px;cursor:pointer}
 .pf-del{border:1px solid var(--crit);background:var(--surface);color:var(--crit);font-family:inherit;font-weight:700;font-size:13px;padding:13px 16px;border-radius:12px;cursor:pointer}
@@ -844,21 +869,22 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       +'<div class="row-btns"><button class="pbtn primary" data-add="個人">＋ 口座を追加する</button></div></div>';
   }
   // ===== 資産（総合収支アプリ）：Excel由来のASSETSを描画 =====
-  let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home');
+  let ASSETS=null, activeTab=(lsGet('zaikin_tab')||'home'), assetsTried=false;
   // 資産データはSupabase(state.assets)に保存。無ければExcel由来(pfd)から初回取込→Supabaseへ移行。
   function migrateProps(){   // state.assets → 編集可能な state.props に初期化(初回のみ)
     if(state.assets && state.props===undefined){
       state.props=JSON.parse(JSON.stringify(state.assets.props||[])).map(function(p){if(!p.id)p.id=uid();return p;});
       if(state.jihanki===undefined)state.jihanki=state.assets.jihanki||null;
       if(state.muY===undefined)state.muY=(state.assets.muY!=null)?state.assets.muY:null;
-      if(state.oloans===undefined)state.oloans=JSON.parse(JSON.stringify(state.assets.loans||[]));
+      if(state.oloans===undefined)state.oloans=JSON.parse(JSON.stringify(state.assets.loans||[])).map(function(l){if(!l.id)l.id=uid();return l;});
     }}
   async function loadAssets(){
-    if(state.assets){migrateProps();ASSETS=buildASSETS();return;}
-    try{const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok)return;
+    if(state.assets){migrateProps();ASSETS=buildASSETS();assetsTried=true;return;}
+    try{const {data}=await sb.auth.getSession();const tok=data&&data.session?data.session.access_token:null;if(!tok){assetsTried=true;return;}
       const r=await fetch('/pfd-9Kd3Rm7Qx2Vn?_='+Date.now(),{headers:{'Authorization':'Bearer '+tok}});
-      if(r.ok){state.assets=await r.json();migrateProps();ASSETS=buildASSETS();save();}   // 初回：Excel由来→Supabase移行
-    }catch(e){}}
+      if(r.ok){state.assets=await r.json();migrateProps();ASSETS=buildASSETS();save();}   // 初回：Excel由来→Supabase移行（会員は403でここを通らず入力ベース）
+    }catch(e){}
+    assetsTried=true;}
   // ===== 入力(state.props)から集計・KPIを計算するエンジン（脱エクセル） =====
   const _ASKEYS=['loan','zan','rentM','rentY','mgmt','kotoze','genka','pElem','pInt','payY','incomeY','hyoka','tatemono','tochi','nobe','tochiAr','units','park','nobebe','kounyu'];
   function computeXltot(props){const g={};['個人','法人','自宅','総合'].forEach(grp=>{const arr=props.filter(p=>grp==='総合'||p.grp===grp);const o={n:arr.length};_ASKEYS.forEach(k=>o[k]=arr.reduce((a,p)=>a+(+p[k]||0),0));g[grp]=o;});return g;}
@@ -1023,7 +1049,31 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    for(const g of ['個人','法人','自宅']){const arr=props.filter(p=>p.grp===g);h+='<div class="sec-h2">'+g+'<small>'+arr.length+'棟</small></div>';
      h+=arr.map(p=>'<button class="ae-row" data-pedit="'+esc(p.id||p.name)+'"><span>'+esc(p.name||'(無名)')+'</span><span class="ae-zan num">¥'+yen(p.zan)+' ✏️</span></button>').join('');
      h+='<button class="ae-add" data-padd="'+g+'">＋ '+g+'の物件を追加</button>';}
+   h+=oloanEditHtml();
    return h;}
+  function oloanEditHtml(){const loans=state.oloans||[];const tM=loans.reduce((a,l)=>a+(+l.monthly||0),0),tZ=loans.reduce((a,l)=>a+(+l.zan||0),0);
+   let h='<div class="sec-h2">無担保借入（その他借入）<small>'+loans.length+'件</small></div>';
+   h+='<div class="ae-hint">物件に紐づかない借入（無担保・カードローン等）。月額返済と残債を入れると、返済比率(無担保含)に反映されます。</div>';
+   h+='<div class="ol-list">';
+   h+=loans.map(function(l,i){const kc=l.zan?((+l.monthly||0)*12/l.zan*100).toFixed(1):'—';return '<div class="ol-erow" data-oli="'+i+'">'
+     +'<input class="ol-name txt" data-oli="'+i+'" placeholder="借入名（例：◯◯ローン）" value="'+esc(l.name||'')+'">'
+     +'<div class="ol-nums"><label>月額返済<input class="ol-mo num" inputmode="numeric" data-oli="'+i+'" value="'+((+l.monthly)||'')+'"></label>'
+     +'<label>残債<input class="ol-zan num" inputmode="numeric" data-oli="'+i+'" value="'+((+l.zan)||'')+'"></label>'
+     +'<span class="ol-k">K '+kc+'%</span>'
+     +'<button class="ol-del" data-oldel="'+i+'">🗑</button></div></div>';}).join('');
+   h+='</div>';
+   h+='<div class="ol-tot">合計 '+loans.length+'件　月 <b class="num">¥'+yen(tM)+'</b>／残債 <b class="num">¥'+yen(tZ)+'</b></div>';
+   h+='<button class="ae-add" id="olAdd">＋ 無担保借入を追加</button>';
+   var muv=(state.muY!=null&&state.muY!=='')?state.muY:'';
+   h+='<div class="ol-muy"><label>実際の年間返済額（分かる場合・任意）<input id="muyInp" class="num" inputmode="numeric" placeholder="空欄なら月額×12で自動計算" value="'+(muv||'')+'"></label><div class="ol-muy-note">年途中の開始や半年払いなどで「月額×12」と実額がズレる場合に入力してください（返済比率(無担保含)の分子に使います）。</div></div>';
+   return h;}
+  function welcomeHtml(){
+   return '<div class="welcome"><h2>👋 ようこそ「総合収支アプリ」へ</h2>'
+    +'<p>物件と口座を登録すると、<b>いま使える現金</b>・<b>残債や利回り</b>・<b>毎月の収支</b>を1つの画面で見られます。データはあなたのアカウントに安全に保存され、<b>他の人からは見えません</b>。</p>'
+    +'<div class="wc-steps">'
+    +'<button class="wc-step" data-gostart="assets"><span class="wc-n">1</span><span class="wc-t">🏢 物件を登録<small>残債・家賃・返済などを入れると、利回り・返済比率・月次収支を自動計算</small></span><span class="wc-go">はじめる ›</span></button>'
+    +'<button class="wc-step" data-gostart="cash"><span class="wc-n">2</span><span class="wc-t">💰 口座を登録<small>残高と毎月返済を入れると、資金ショートを事前に検知</small></span><span class="wc-go">はじめる ›</span></button>'
+    +'</div><p class="wc-tip">まずは1件だけでもOK。あとから増やせます。</p></div>';}
   function monthlyBookHtml(){
    if(!ASSETS||!ASSETS.monthlyBook||!ASSETS.monthlyBook.length)return '';const cm=ASSETS.completeMonths||0;
    const head='<tr><th class="it">物件</th>'+[1,2,3,4,5,6,7,8,9,10,11,12].map((mm,i)=>'<th class="'+(i>=cm?'fut':'')+'">'+mm+'月</th>').join('')+'<th class="yr">年計</th></tr>';
@@ -1066,14 +1116,16 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const fb=$('fabEdit');if(fb)fb.style.display=(activeTab==='cash')?'':'none';
     let h='';
     if(demoMode){h+='<div class="demobanner"><span>👀 これは<b>入力例</b>です（あなたのデータではありません・保存されません）</span><button class="democlose" id="demoClose">✕ 閉じて自分のデータに戻る</button></div>';}
+    const isNewUser=!ASSETS && assetsTried && (!state.props||!state.props.length) && (!state.accounts||!state.accounts.length);
     if(activeTab==='home'){
       if(demoMode){h+='<div class="asum"><div class="asum-load">👀 入力例では資産データ（実際の物件情報）は表示されません</div></div>';}
+      else if(isNewUser){h+=welcomeHtml();}
       else{
         h+=assetSummaryHtml();
         h+='<div class="mbook-h"><span class="mbook-t">全体の月次収支</span><button class="mbook-tog" id="mbookBtn">'+(mbookOpen?'▲ 物件ごとの明細を閉じる':'📋 物件ごとの明細を見る')+'</button></div>'+assetMonthlyHtml();
         if(mbookOpen)h+=monthlyBookHtml();
       }
-      h+='<div class="tabhint">💰 口座別の資金は「資金」タブ／🏢 物件ごとの詳細は「資産」タブへ</div>';
+      if(!isNewUser)h+='<div class="tabhint">💰 口座別の資金は「資金」タブ／🏢 物件ごとの詳細は「資産」タブへ</div>';
     } else if(activeTab==='assets'){
       if(editPropId!=null){h+=propFormHtml(_pdraft||{});}
       else if(assetEditing){h+='<div class="ae-top"><span>🏢 物件の編集・追加</span><button class="ae-done" id="aeDone">✓ 編集を終える</button></div>'+assetEditListHtml();}
@@ -1164,8 +1216,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-tab]')){activeTab=e.getAttribute('data-tab');lsSet('zaikin_tab',activeTab);if(activeTab!=='cash'&&editing){editing=false;document.body.classList.remove('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pfXlsBtn')){downloadExcel();return;}
     if(t.closest('#reimportBtn')){reimportAssets();return;}
+    if(e=t.closest('[data-gostart]')){const g=e.getAttribute('data-gostart');activeTab=g;lsSet('zaikin_tab',g);if(g==='assets'){assetEditing=true;}else if(g==='cash'){editing=true;document.body.classList.add('editing');}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#aeStart')){assetEditing=true;render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#aeDone')){assetEditing=false;render();return;}
+    if(t.closest('#olAdd')){state.oloans=state.oloans||[];state.oloans.push({id:uid(),name:'',monthly:0,zan:0});save();render();const inp=document.querySelector('.ol-name[data-oli="'+(state.oloans.length-1)+'"]');if(inp)inp.focus();return;}
+    if(e=t.closest('[data-oldel]')){const i=+e.getAttribute('data-oldel');if(state.oloans&&state.oloans[i]!=null){state.oloans.splice(i,1);save();render();}return;}
     if(e=t.closest('[data-pedit]')){const key=e.getAttribute('data-pedit');const p=(state.props||[]).find(x=>(x.id||x.name)===key);if(p){_pdraft=JSON.parse(JSON.stringify(p));if(!_pdraft.id)_pdraft.id=uid();editPropId=key;}render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(e=t.closest('[data-padd]')){const g=e.getAttribute('data-padd');_pdraft={id:uid(),_new:true,grp:g,name:'',zan:0,loan:0,rentY:0,rentM:0,payY:0,units:0};editPropId='_new';render();try{window.scrollTo(0,0);}catch(_){}return;}
     if(t.closest('#pfCancel')){editPropId=null;_pdraft=null;render();return;}
@@ -1222,6 +1277,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.classList.contains('f-acct')&&a){a.acct=t.value;save();return;}
     if(t.classList.contains('f-note')&&a){a.note=t.value;save();return;}
     if(t.classList.contains('tf-bank')&&ts){ts.bank=t.value;save();return;}
+    if(t.classList.contains('ol-name')){const i=+t.getAttribute('data-oli');if(state.oloans&&state.oloans[i]){state.oloans[i].name=t.value;save();}return;}
     if(t.classList.contains('cf-name')){const i=+t.getAttribute('data-cardname');if(state.card.items&&state.card.items[i]){state.card.items[i].name=t.value;save();}return;}
     if(t.id==='asofInp'){state.asof=t.value;save();return;}
     if(t.id==='bufMon'){let v=parseInt((t.value||'').replace(/[^0-9]/g,''),10);if(isNaN(v)||v<0)v=0;state.bufferMonths=v;save();
@@ -1243,6 +1299,9 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(t.classList.contains('f-payday')&&a){var d=pnum(t.value);a.payday=(d>=1&&d<=31)?d:'';save();render();return;}
     if(t.classList.contains('tf-bal')&&ts){ts.bal=pnum(t.value);save();render();return;}
     if(t.classList.contains('tf-mo')&&ts){ts.mo=pnum(t.value);save();render();return;}
+    if(t.classList.contains('ol-mo')){const i=+t.getAttribute('data-oli');if(state.oloans&&state.oloans[i]){state.oloans[i].monthly=pnum(t.value);delete state.oloans[i].qk;save();render();}return;}
+    if(t.classList.contains('ol-zan')){const i=+t.getAttribute('data-oli');if(state.oloans&&state.oloans[i]){state.oloans[i].zan=pnum(t.value);delete state.oloans[i].qk;save();render();}return;}
+    if(t.id==='muyInp'){state.muY=(String(t.value).trim()===''?null:pnum(t.value));save();render();return;}
     if(t.classList.contains('cf-amt')){const i=+t.getAttribute('data-cardpay');if(state.card.items&&state.card.items[i]){state.card.items[i].pay=pnum(t.value);save();render();}return;}
     if(t.id==='cardOn'){state.card.on=t.checked;if(state.card.on&&(!state.card.items||!state.card.items.length))state.card.items=[{name:'',pay:0}];save();render();return;}
     if(t.id==='cardAcct'){state.card.acctId=t.value||null;save();return;}
