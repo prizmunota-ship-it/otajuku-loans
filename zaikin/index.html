@@ -148,6 +148,7 @@ h1{font-size:22px;font-weight:800;margin:0;letter-spacing:.01em;}
 .cf-diff{border-top:1.5px solid var(--hair);padding-top:9px;margin-top:1px;}
 .cf-diff .cf-lab{font-weight:700;color:var(--ink);font-size:14px;}
 .cf-num.pos{color:var(--good);} .cf-num.neg{color:var(--crit);}
+.cf-note{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:9px;padding-top:8px;border-top:1px solid var(--hair);}
 /* 複数カード編集 */
 .cf-edit{display:flex;flex-direction:column;gap:8px;}
 .cf-erow{display:grid;grid-template-columns:1fr 120px 40px;gap:8px;align-items:center;}
@@ -805,7 +806,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       +'<div class="cf-row"><span class="cf-lab">今月のカード支払額'+(names?'<small>'+names+'</small>':'')+'</span><span class="cf-num num yen">'+yen(tot)+'</span></div>'
       +'<div class="cf-row"><span class="cf-lab">支払口座の預金<small>'+(acc?esc(acc.bank):'—')+'</small></span><span class="cf-num num yen">'+yen(bal)+'</span></div>'
       +'<div class="cf-row cf-diff"><span class="cf-lab">差額（預金 − 支払）</span><span class="cf-num num '+(diff<0?'neg':'pos')+'">'+(diff<0?'▲':'+')+'¥'+yen(Math.abs(diff))+'</span></div>'
-      +'</div></div>';
+      +'</div><div class="cf-note">※カードは支払日の直前に入金して用意するため、<b>資金ショート予報には含めていません</b>。</div></div>';
   }
   function forecastHtml(){
     if(editing) return '';
@@ -826,8 +827,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       if(pay>0 && day>=1 && day<=31){ var nd=nextOcc(day); if(nd) events.push({date:nd,name:a.bank||'口座',amt:pay,diff:bal-pay}); }
     });
     var c=state.card;
-    if(c.on){ var tot=cardTotal(), acc=acctById(c.acctId), cbal=acc?(+acc.bal):0, day=+c.payday||0;
-      if(tot>0 && day>=1 && day<=31){ var nd2=nextOcc(day); if(nd2) events.push({date:nd2,name:'💳 カード',amt:tot,diff:cbal-tot,card:true}); } }
+    // ⚠️カードは資金ショート予報に含めない（支払日の直前に入金して用意する運用のため、
+    // 常時「不足」判定になり予報が埋もれる）。金額と差額は💳カード枠に表示する。
     events.sort(function(a,b){return a.date-b.date;});
     var shorts=events.filter(function(e){return e.diff<0;});
     // 特定日の支払い＝支払日の1ヶ月前からお知らせ（支払口座の指定は任意）
@@ -874,7 +875,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       return '<div class="forecast all-ok"><div class="fc-head">📅 資金ショート予報</div>'
         +'<div class="fc-ok">✓ 直近の引き落としは、すべて残高で足ります（不足はありません）</div></div>';
     }
-    var hasPay=state.accounts.some(function(a){return (+a.pay)>0;})||(c.on&&cardTotal()>0);
+    var hasPay=state.accounts.some(function(a){return (+a.pay)>0;});
     if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
       +'<div class="fc-prompt">各口座の<b>返済日（毎月何日に引き落とされるか）</b>を入れると、<br><b>「いつ・その日に預金がいくら不足するか」</b>が自動で出ます。<br><span class="fc-p-cta">「✏️ 編集」→ 各口座の「返済日」を入力してください。</span></div></div>';
     return '';
