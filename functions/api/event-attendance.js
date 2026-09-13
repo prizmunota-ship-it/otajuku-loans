@@ -75,6 +75,8 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
     if (!body || typeof body !== 'object') return json({ok: false, error: 'bad_json'}, 400);
     const event = EVENTS.get(body.eventId);
     if (!event) return json({ok: false, error: 'event_not_found'}, 404);
+    // attendance:false (empower time except Tokyo) takes no replies at all; nothing is read or written.
+    if (event.attendance === false) return json({ok: false, error: 'no_attendance'}, 409);
     if (event.attendanceUrl) return json({ok: false, error: 'external_attendance'}, 409);
     const kv = env.ZAIKO_KV;
     if (!kv) return json({ok: false, error: 'storage_unavailable'}, 503);

@@ -63,10 +63,21 @@ test('clear persists even if a replica has not seen the preceding write',async()
  await send({action:'clear'});kv.get=original;
  assert.equal((await send({})).replies.length,0);
 });
+test('events without attendance reject read, save and clear, and store nothing',async()=>{
+ const {send,kv}=setup();const empower='2026-09-15-event';
+ for(const body of [{eventId:empower},{eventId:empower,...reply,answers:{main:'yes'}},{eventId:empower,action:'clear'}]) assert.equal((await send(body)).status,409);
+ assert.equal(kv.data.size,0);
+});
 test('event data is unique with separate viewing/dinner and complete existing schedule',()=>{
  const all=events.flatMap(m=>m.events);assert.equal(new Set(all.map(e=>e.id)).size,all.length);
  assert.equal(all.filter(e=>e.id===eventId).length,1);assert.equal(all.find(e=>e.id===eventId).sessions.length,2);
  assert.equal(all.find(e=>e.id==='2026-10-22-festival').fee,'8,000円（税込） ※飲食含む');
  assert.equal(all.find(e=>e.id==='2026-10-22-festival').attendanceUrl,undefined);
- assert.ok(all.every(e=>e.endAt && e.sessions.length && !e.chousei));
+ assert.ok(all.every(e=>e.endAt && !e.chousei && (e.attendance===false ? !e.sessions : e.sessions.length)));
+ // エンパワータイムは東京のリアル開催だけ出欠を取る。オンライン回はZoom入室リンクのみ。
+ const empower=all.filter(e=>e.title.includes('エンパワータイム'));
+ assert.ok(empower.length>=7);
+ for(const e of empower) assert.equal(e.attendance===false, e.location!=='東京', e.id);
+ assert.ok(empower.filter(e=>e.type==='オンライン').every(e=>e.zoom));
+ assert.equal(all.find(e=>e.id==='2026-11-12-event').sessions.length,1);
 });

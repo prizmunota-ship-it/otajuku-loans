@@ -8,6 +8,7 @@
         "title": "エンパワータイム",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
+        "attendance": false,
         "id": "2026-08-04-event",
         "startDate": "2026-08-04",
         "endDate": "2026-08-04",
@@ -17,13 +18,6 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       }
     ]
@@ -62,6 +56,7 @@
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
         "note": "※今月のみ第3火曜",
+        "attendance": false,
         "id": "2026-09-15-event",
         "startDate": "2026-09-15",
         "endDate": "2026-09-15",
@@ -71,13 +66,6 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       },
       {
@@ -109,6 +97,7 @@
         "title": "エンパワータイム(16時〜18時)",
         "location": "天神ワンビルB1",
         "note": "※今月のみ第4木曜",
+        "attendance": false,
         "id": "2026-09-24-event",
         "startDate": "2026-09-24",
         "endDate": "2026-09-24",
@@ -118,13 +107,6 @@
         "venue": "天神ワンビルB1",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       },
       {
@@ -184,6 +166,7 @@
         "title": "エンパワータイム(16時〜18時)",
         "location": "天神ワンビルB1",
         "note": "※今月のみ第1木曜",
+        "attendance": false,
         "id": "2026-10-01-event",
         "startDate": "2026-10-01",
         "endDate": "2026-10-01",
@@ -193,13 +176,6 @@
         "venue": "天神ワンビルB1",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       },
       {
@@ -258,6 +234,7 @@
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
+        "attendance": false,
         "id": "2026-10-27-event",
         "startDate": "2026-10-27",
         "endDate": "2026-10-27",
@@ -267,13 +244,6 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       }
     ]
@@ -311,6 +281,7 @@
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
+        "attendance": false,
         "id": "2026-11-24-event",
         "startDate": "2026-11-24",
         "endDate": "2026-11-24",
@@ -320,13 +291,6 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       }
     ]
@@ -363,6 +327,7 @@
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
+        "attendance": false,
         "id": "2026-12-22-event",
         "startDate": "2026-12-22",
         "endDate": "2026-12-22",
@@ -372,13 +337,6 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
-        ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "イベントへの参加",
-            "time": ""
-          }
         ]
       }
     ]
