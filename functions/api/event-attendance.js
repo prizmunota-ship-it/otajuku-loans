@@ -5,13 +5,10 @@ import schedule from '../../events.json';
 const MEMBER_URL = 'https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec';
 const EVENTS = new Map(schedule.flatMap(month => month.events).map(event => [event.id, event]));
 const PREFIX = 'event-rsvp:v1:';
-const LEGACY = 'event-rsvp-legacy:v1:';
-const MIGRATION_HASH = '478581fbe411ae9cd7fc362174d3c52935305bd27229ae93166eb96060569193';
 const json = (data, status = 200) => new Response(JSON.stringify(data), {status, headers: {
   'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff', 'Vary': 'Origin'
 }});
-const normalizeName = value => value.normalize('NFKC').replace(/\s+/g, '').toLowerCase();
 const hash = async value => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))).map(n => n.toString(16).padStart(2, '0')).join('');
 
 async function verifyMember(email, fetcher) {
@@ -51,9 +48,7 @@ async function loadReplies(kv, eventId) {
     cursor = page.cursor;
     if (!cursor || all.length > 2000) throw new Error('list_failed');
   } while (true);
-  const legacy = await kv.get(LEGACY + eventId, 'json') || [];
-  const claimed = new Set(all.map(reply => normalizeName(reply.name)));
-  return [...all.filter(reply => !reply.withdrawn), ...legacy.filter(reply => !claimed.has(normalizeName(reply.name)))];
+  return all.filter(reply => !reply.withdrawn);
 }
 
 function summarize(replies, event) {
@@ -80,20 +75,10 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
     if (!body || typeof body !== 'object') return json({ok: false, error: 'bad_json'}, 400);
     const event = EVENTS.get(body.eventId);
     if (!event) return json({ok: false, error: 'event_not_found'}, 404);
+    if (event.attendanceUrl) return json({ok: false, error: 'external_attendance'}, 409);
     const kv = env.ZAIKO_KV;
     if (!kv) return json({ok: false, error: 'storage_unavailable'}, 503);
     try {
-      // Temporary one-time migration capability; secret is never included in public assets.
-      if (body.action === 'import') {
-        if (event.id !== '2026-10-22-festival' || now() >= new Date('2026-09-15T00:00:00+09:00') ||
-            typeof body.token !== 'string' || await hash(body.token) !== MIGRATION_HASH) return json({ok: false, error: 'forbidden'}, 403);
-        if (await kv.get(LEGACY + event.id)) return json({ok: false, error: 'already_imported'}, 409);
-        if (!Array.isArray(body.replies) || body.replies.length !== 8) return json({ok: false, error: 'bad_import'}, 400);
-        const replies = body.replies.map((value, i) => ({...validateReply(value, event), id: 'legacy-' + i, updatedAt: now().toISOString(), legacy: true}));
-        if (replies.some(reply => !reply.name)) return json({ok: false, error: 'bad_import'}, 400);
-        await kv.put(LEGACY + event.id, JSON.stringify(replies));
-        return json({ok: true, imported: replies.length});
-      }
       if (!['read', 'save', 'clear'].includes(body.action)) return json({ok: false, error: 'bad_action'}, 400);
       const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ok: false, error: 'membership_required'}, 401);
@@ -103,8 +88,8 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
       const closed = now() >= new Date(event.endAt);
       if (body.action === 'clear') {
         if (closed) return json({ok: false, error: 'closed'}, 409);
-        const previous = await kv.get(key, 'json');
-        if (previous) await kv.put(key, JSON.stringify({...previous, withdrawn: true, updatedAt: now().toISOString()}));
+        // Write a tombstone even when a replica still caches a missing/old reply.
+        await kv.put(key, JSON.stringify({id, withdrawn: true, updatedAt: now().toISOString()}));
         return json({ok: true});
       }
       if (body.action === 'save') {

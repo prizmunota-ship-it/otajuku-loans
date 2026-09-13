@@ -9,60 +9,33 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
-  <style> body { background: #fefce8; } </style>
+  <style> body { background: #fefce8; }
+.event-overlay{position:fixed;inset:0;z-index:1000;background:rgba(40,32,14,.46);overflow-y:auto;overscroll-behavior:contain;padding:24px 12px;color:#282b32;font-size:14px;line-height:1.7}
+.event-panel{max-width:680px;margin:auto;background:#fffdf7;border-radius:22px;box-shadow:0 24px 80px #0003;outline:none}
+.event-topbar{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;background:#fffdf7f5;border-bottom:1px solid #f0e6c8;padding:6px 20px;z-index:2;color:#9d7636;font-size:12px}
+.event-back{min-height:44px;font-weight:700;color:#785519;text-align:left}.event-back:disabled{opacity:.5}
+.event-content{padding:24px 28px 36px}.event-eyebrow{font-size:12px;color:#977024;font-weight:700;letter-spacing:.03em}
+.event-content h2{font-size:25px;line-height:1.5;font-weight:900;margin:8px 0 14px}.event-date{font-size:18px;font-weight:800}.event-time{color:#946212;font-weight:700;margin-bottom:18px}
+.event-facts{background:white;border:1px solid #eee3c7;border-radius:14px;padding:12px 16px;margin:18px 0}.event-facts>div{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:5px 0}.event-facts dt{color:#8a7857;font-size:12px;font-weight:700}.event-facts dd{white-space:pre-line;font-weight:600}
+.event-description p{margin:0 0 12px}.event-content h3{font-size:17px;font-weight:800;margin:0 0 12px}.event-agenda{margin:22px 0}.event-agenda>div{display:grid;grid-template-columns:145px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-agenda strong{font-size:13px;color:#885d18}.event-notice{padding:12px 14px;border-left:3px solid #dfab2e;background:#fff4d5;margin:16px 0;font-size:13px}
+.event-zoom{display:block;text-align:center;padding:12px;border:1px solid #bdd6f5;border-radius:12px;background:#eaf3ff;color:#1e5094;font-weight:800;margin:18px 0}.event-answer-card{background:#fff;border:1px solid #e8d69f;border-radius:18px;padding:20px;margin-top:26px;box-shadow:0 4px 16px #87620006}
+.event-jump{min-height:44px;border-radius:10px;background:#fff0ba;padding:9px 16px;font-weight:700;color:#654810;margin-bottom:6px}.event-answer-card{scroll-margin-top:64px}
+.event-small{font-size:12px;color:#6f716c;line-height:1.65;margin:7px 0 12px}.event-label{display:block;font-weight:700;font-size:13px;margin:18px 0 6px}.event-input{display:block;width:100%;border:1px solid #c9c9be;border-radius:10px;background:#fff;padding:11px 12px;font-family:inherit;font-size:16px;box-sizing:border-box}.event-input:focus{outline:2px solid #d6a426;outline-offset:2px}
+.event-session{margin:20px 0;border:0;padding:0}.event-session legend{font-weight:800;font-size:14px;padding:0}.event-session legend span{display:block;font-size:12px;font-weight:500;color:#767468;margin:1px 0 8px}.event-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.event-choice{display:flex;align-items:center;justify-content:center;gap:7px;border:2px solid #e0e1d9;border-radius:12px;min-height:52px;cursor:pointer;font-weight:700;background:#fff}.event-choice input{accent-color:#147e52;width:17px;height:17px}.event-choice.is-yes{background:#e8f6ed;border-color:#28875a;color:#176340}.event-choice.is-no{background:#f0f1f3;border-color:#646b78;color:#343b46}.event-choice.is-no input{accent-color:#626b78}.event-choice:focus-within{outline:2px solid #97712e;outline-offset:2px}
+.event-save{width:100%;min-height:50px;border-radius:12px;background:#edc14b;color:#372707;font-weight:800;font-size:15px;margin-top:8px}.event-save:hover{background:#dfae2d}.event-save:disabled{background:#e7dfca;color:#978b6d;cursor:not-allowed}.event-saved{font-size:12px;color:#4f6c59;margin-top:10px}.event-success{margin-top:14px;background:#e8f6ee;padding:12px;border-radius:10px;color:#17613f;font-size:13px;font-weight:700}.event-error{margin:14px 0;padding:12px;background:#fff0eb;border-radius:10px;color:#a63921;font-size:13px}.event-loading{color:#856a30;padding:18px 0}.event-retry{display:block;min-height:44px;text-decoration:underline;font-weight:700}
+.event-attendees{margin-top:28px}.event-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.event-section-head h3{margin:0}.event-section-head small{font-size:12px;font-weight:600;color:#827a64}.event-refresh{font-size:12px;color:#83601b;min-height:44px;text-decoration:underline}.event-counts{display:grid;gap:8px;margin:12px 0}.event-counts>div{background:#fff;border:1px solid #e6e4d7;border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px}.event-counts strong{width:100%;font-size:13px}.event-counts .count-yes{font-size:17px;font-weight:800;color:#197443}.event-counts span{align-self:center;color:#71756b}
+.event-filters{display:flex;gap:7px;margin:14px 0}.event-filters button{border:1px solid #e2dac6;border-radius:22px;padding:6px 18px;min-height:42px;color:#7b6e51;background:#fff;font-size:12px}.event-filters button[aria-pressed=true]{background:#6e571f;color:#fff;border-color:#6e571f}.event-table-wrap{overflow-x:auto;border:1px solid #e4e1d4;border-radius:12px;background:#fff}.event-table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed}.event-table th,.event-table td{padding:12px 8px;text-align:center;border-bottom:1px solid #eee9dc;overflow-wrap:anywhere}.event-table th:first-child{width:38%;text-align:left}.event-table thead{background:#f8f1de;color:#827047}.event-table tbody th{font-weight:700}.event-table small{display:block;font-size:10px;font-weight:400;color:#938567}.rsvp-badge{display:inline-block;padding:3px 7px;border-radius:5px;white-space:nowrap}.rsvp-badge.yes{color:#197443;background:#eaf5ee}.rsvp-badge.no{color:#5f6670;background:#f0f1f3}.event-comment td{text-align:left;color:#77715d;font-size:11px;padding-top:0;white-space:pre-line}.event-comment td:before{content:'ひとこと：'}.event-sync-note{margin-top:12px}
+@media(max-width:600px){.event-overlay{padding:0}.event-panel{min-height:100%;border-radius:0}.event-content{padding:20px 18px 36px}.event-content h2{font-size:21px}.event-topbar{padding:6px 18px}.event-agenda>div{grid-template-columns:120px 1fr;gap:8px}.event-agenda strong{font-size:12px}.event-answer-card{padding:18px 14px}.event-section-head{align-items:flex-start}.event-section-head h3{padding-top:8px}.event-section-head small{display:block}.event-table th,.event-table td{padding:10px 5px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root"><p style="text-align:center;padding:24px;color:#785b2c">年間スケジュールを読み込んでいます…</p></div>
 
   <script type="text/babel">
     const { useState } = React;
 
-    // 太田塾オンライン用 固定ZOOM（定期・固定期間なし・パスコード埋込・待機室なし＝押すだけ入室）
-    const ZOOM_ONLINE = "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1";
-    // 個別相談ルーム。ONEチーム限定など少人数・限定企画の入口にも流用する（本人指示 2026-08-19）
-    const ZOOM_KOBETSU = "https://us06web.zoom.us/j/89108270464?pwd=bBUz4J7PrpYOG9DLka53kGzihBZlsa.1";
-
-    const scheduleData = [
-      {
-        month: "8月",
-        events: [
-          { date: "4(火)", type: "オンライン", title: "エンパワータイム", location: "", zoom: ZOOM_ONLINE },
-        ]
-      },
-      {
-        month: "9月",
-        events: [
-          { date: "8(火)", type: "オンライン", title: "【ONEチーム限定】売買契約書の勉強会(21時〜22時)", location: "", zoom: ZOOM_KOBETSU },
-          { date: "15(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE, note: "※今月のみ第3火曜" },
-          { date: "17(木)", type: "リアル", title: "第4回 金融機関グループ勉強会", location: "大分銀行" },
-          { date: "24(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "天神ワンビルB1", note: "※今月のみ第4木曜" },
-          { date: "26(土)", type: "リアル", title: "【仮】檜原新築見学会・打ち上げ", location: "見学：南区檜原／打ち上げ：天神（調整中）", note: "15時ごろ見学・18時打ち上げ（時間は仮）", chousei: "https://chouseisan.com/s?h=d2dafff7846545fc905f04c719f333eb" },
-        ]
-      },
-      {
-        month: "10月",
-        events: [
-          { date: "1(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "天神ワンビルB1", note: "※今月のみ第1木曜" },
-          { date: "22(木)", type: "リアル", title: "金融機関祭りVol.3", location: "ナインドアーズ（博多）", chousei: "https://chouseisan.com/s?h=9cc0ded5b7674541b40c076259aba4a5" },
-          { date: "27(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE },
-        ]
-      },
-      {
-        month: "11月",
-        events: [
-          { date: "12(木)", type: "リアル", title: "エンパワータイム(16時〜18時)", location: "東京", highlight: true },
-          { date: "24(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE },
-        ]
-      },
-      {
-        month: "12月",
-        events: [
-          { date: "10(木)〜11(金)", type: "リアル", title: "忘年会", location: "福岡" },
-          { date: "22(火)", type: "オンライン", title: "エンパワータイム(21時〜22時)", location: "", zoom: ZOOM_ONLINE },
-        ]
-      }
-    ];
-
+    function startSchedule(scheduleData) {
     /* ===== カレンダー表示用のデータ変換 =====
        scheduleDataは編集しやすさ優先で date:"15(火)" / "10(木)〜11(金)" という文字列。
        ここで日付を数値に起こしてカレンダーに置く（複数日イベントは期間中の全日に出す）。 */
@@ -107,8 +80,155 @@
       return 'bg-emerald-500';
     };
 
+    const OpenEventContext = React.createContext(() => {});
+    const mergeReply = (rows, mine) => [...rows.filter(row => row.id !== mine.id), mine].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    const countReplies = (rows, sessions) => Object.fromEntries(sessions.map(s => [s.id, {
+      yes: rows.filter(row => row.answers[s.id] === 'yes').length,
+      no: rows.filter(row => row.answers[s.id] === 'no').length
+    }]));
+    const errorMessage = code => ({
+      membership_required: 'メンバー登録を確認できませんでした。メニューからログインし直してください。',
+      membership_unavailable: 'メンバー確認に時間がかかっています。少し待って、もう一度お試しください。',
+      closed: 'このイベントの回答受付は終了しました。',
+      invalid_reply: 'お名前と各項目の参加・不参加を確認してください。',
+      event_not_found: 'イベント情報が更新されています。ページを再読み込みしてください。'
+    }[code] || '通信に失敗しました。もう一度お試しください。');
+
+    async function attendanceRequest(eventId, action, extra = {}) {
+      const email = (localStorage.getItem('otajuku_email') || '').trim().toLowerCase();
+      if (!email) throw new Error('membership_required');
+      const response = await fetch('/api/event-attendance', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action, eventId, email, ...extra}), signal: AbortSignal.timeout(25000)
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'network');
+      return data;
+    }
+
+    function EventDetail({event, onClose}) {
+      const [data, setData] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
+      const [error, setError] = useState('');
+      const [success, setSuccess] = useState('');
+      const [name, setName] = useState(localStorage.getItem('otajuku_name') || '');
+      const [answers, setAnswers] = useState({});
+      const [comment, setComment] = useState('');
+      const [filter, setFilter] = useState('all');
+      const panel = React.useRef(null), focusBefore = React.useRef(null), alive = React.useRef(true);
+      const savedReply = React.useRef(null);
+      const closed = data ? data.closed : Date.now() >= Date.parse(event.endAt);
+      const receiptKey = 'otajuku_rsvp_receipt:' + (localStorage.getItem('otajuku_email') || '').toLowerCase() + ':' + event.id;
+      async function load(initial = false) {
+        setLoading(true); setError('');
+        try {
+          const result = await attendanceRequest(event.id, 'read');
+          if (!alive.current) return;
+          let recent = savedReply.current;
+          if(recent && Date.now()-Date.parse(recent.updatedAt)>=90000) recent=null;
+          if (!recent) { try { const r = JSON.parse(sessionStorage.getItem(receiptKey)); if(r && Date.now()-Date.parse(r.updatedAt)<90000) recent=r; } catch {} }
+          if (recent && (!result.mine || recent.updatedAt > result.mine.updatedAt)) {
+            result.mine = recent; result.replies = mergeReply(result.replies, recent);
+            result.totals = countReplies(result.replies, event.sessions);
+          }
+          setData(result);
+          if (initial && result.mine) {setName(result.mine.name); setAnswers(result.mine.answers); setComment(result.mine.comment || '');}
+        } catch (e) { if(alive.current) setError(errorMessage(e.message)); }
+        finally { if(alive.current) setLoading(false); }
+      }
+      React.useEffect(() => {
+        alive.current = true; focusBefore.current = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        panel.current.focus(); if(event.attendanceUrl) setLoading(false); else load(true);
+        return () => {alive.current = false; document.body.style.overflow = previousOverflow; focusBefore.current?.focus();};
+      }, []);
+      function handleKeys(e) {
+        if (e.key === 'Escape' && !saving) {e.preventDefault(); onClose();}
+        if (e.key === 'Tab') {
+          const nodes = [...panel.current.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),a[href],select')].filter(el => el.offsetParent !== null);
+          const first = nodes[0], last = nodes[nodes.length-1];
+          if(e.shiftKey && (document.activeElement===first || document.activeElement===panel.current)) {e.preventDefault();last?.focus();}
+          else if(!e.shiftKey && document.activeElement===last) {e.preventDefault();first?.focus();}
+        }
+      }
+      function changed() {setSuccess(''); setError('');}
+      async function save(e) {
+        e.preventDefault();
+        if (saving || !data || closed) return;
+        setSaving(true); setError(''); setSuccess('');
+        try {
+          const result = await attendanceRequest(event.id, 'save', {name:name.trim(), answers, comment:comment.trim()});
+          if(!alive.current) return;
+          savedReply.current = result.mine;
+          try {localStorage.setItem('otajuku_name', result.mine.name);sessionStorage.setItem(receiptKey, JSON.stringify(result.mine));} catch {}
+          setData(previous => {const replies=mergeReply(previous.replies, result.mine); return {...previous,mine:result.mine,replies,totals:countReplies(replies,event.sessions)};});
+          setSuccess('回答を保存しました。変更するときは選び直して保存できます。');
+        } catch (e) {if(alive.current) setError('保存できませんでした。'+errorMessage(e.message));}
+        finally {if(alive.current) {setSaving(false);requestAnimationFrame(()=>panel.current?.querySelector('.event-save')?.focus());}}
+      }
+      const dayLabel = new Date(event.startDate + 'T00:00:00+09:00').toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+      const valid = name.trim() && event.sessions.every(s => answers[s.id] === 'yes' || answers[s.id] === 'no');
+      const visibleRows = (data?.replies || []).filter(row => filter==='all' || event.sessions.some(s=>row.answers[s.id]===filter));
+      return (
+        <div className="event-overlay" onKeyDown={handleKeys}>
+          <section className="event-panel" role="dialog" aria-modal="true" aria-labelledby="event-heading" ref={panel} tabIndex="-1">
+            <div className="event-topbar"><button type="button" onClick={onClose} disabled={saving} className="event-back">‹ 年間スケジュールに戻る</button><span>太田塾</span></div>
+            <div className="event-content">
+              <div className="event-eyebrow">{event.type} · {event.audience}</div>
+              <h2 id="event-heading">{event.title}</h2>
+              <p className="event-date">{dayLabel}</p>
+              <p className="event-time">{event.time}</p>
+              {!closed && <button type="button" className="event-jump" onClick={()=>panel.current?.querySelector('#event-answer-section')?.scrollIntoView({behavior:'smooth',block:'start'})}>出欠を回答・変更する ↓</button>}
+              <dl className="event-facts">
+                <div><dt>会場</dt><dd>{event.venue}</dd></div>
+                {event.fee && <div><dt>会費</dt><dd>{event.fee}</dd></div>}
+                {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
+              </dl>
+              <div className="event-description">{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
+              {event.agenda && <div className="event-agenda"><h3>当日の流れ</h3>{event.agenda.map(([time,label],i)=><div key={i}><strong>{time}</strong><span>{label}</span></div>)}</div>}
+              {event.notice && <p className="event-notice">{event.notice}</p>}
+              {event.zoom && <a className="event-zoom" href={event.zoom} target="_blank" rel="noopener noreferrer">Zoomに入室する ↗</a>}
+              {event.attendanceUrl ? <div id="event-answer-section" className="event-answer-card"><h3>出欠の確認・変更</h3><p className="event-small">このイベントは、すでにいただいている回答を引き継ぐため、従来の回答ページで受け付けています。</p><a className="event-zoom" href={event.attendanceUrl} target="_blank" rel="noopener noreferrer">これまでの出欠を確認・変更する ↗</a></div> : <div id="event-answer-section" className="event-answer-card">
+                <h3>{closed ? '回答受付は終了しました' : 'あなたの出欠'}</h3>
+                {!closed && <p className="event-small">参加・不参加を選んで保存してください。回答はあとから変更できます。</p>}
+                {loading && !data && <p className="event-loading" role="status">出欠を読み込んでいます…</p>}
+                {!closed && data && <form onSubmit={save}>
+                  <label className="event-label" htmlFor="rsvp-name">お名前（フルネーム）</label>
+                  <input id="rsvp-name" className="event-input" value={name} maxLength={60} required autoComplete="name" disabled={saving} placeholder="例：太田 圭一" onChange={e=>{setName(e.target.value);changed();}} />
+                  {event.sessions.map(s=><fieldset className="event-session" key={s.id} disabled={saving}>
+                    <legend>{s.label}<span>{s.time}</span></legend>
+                    <div className="event-choices">{[['yes','○ 参加'],['no','× 不参加']].map(([value,label])=><label className={`event-choice ${answers[s.id]===value?'is-'+value:''}`} key={value}>
+                      <input type="radio" name={'rsvp-'+s.id} value={value} checked={answers[s.id]===value} required onChange={()=>{setAnswers({...answers,[s.id]:value});changed();}} /><span>{label}</span>
+                    </label>)}</div>
+                  </fieldset>)}
+                  <label className="event-label" htmlFor="rsvp-comment">ひとこと（任意）</label>
+                  <textarea id="rsvp-comment" className="event-input" rows={2} maxLength={300} value={comment} disabled={saving} onChange={e=>{setComment(e.target.value);changed();}} placeholder="途中参加など、伝えておきたいことがあればどうぞ" />
+                  <p className="event-small">お名前・出欠・ひとことは、このイベントを見るメンバーに表示されます。</p>
+                  <button className="event-save" type="submit" disabled={!valid || saving || loading}>{saving?'保存しています…':data.mine?'回答を更新する':'回答を保存する'}</button>
+                  {data.mine && !success && <p className="event-saved">保存済み：{event.sessions.map(s=>s.label+' '+(data.mine.answers[s.id]==='yes'?'○ 参加':'× 不参加')).join(' ／ ')}</p>}
+                </form>}
+                {error && <div role="alert" className="event-error">{error}{!data && <button className="event-retry" onClick={()=>load(true)} disabled={loading}>もう一度読み込む</button>}</div>}
+                {success && <p className="event-success" role="status">✓ {success}</p>}
+              </div>
+              }
+              {data && <section className="event-attendees" aria-labelledby="attendance-heading">
+                <div className="event-section-head"><h3 id="attendance-heading">みんなの出欠 <small>{data.replies.length}名回答</small></h3><button type="button" onClick={()=>load(false)} disabled={loading || saving} className="event-refresh">{loading?'更新中…':'最新の回答に更新'}</button></div>
+                <div className="event-counts">{event.sessions.map(s=><div key={s.id}><strong>{s.label}</strong><span className="count-yes">参加 {data.totals[s.id].yes}名</span><span>不参加 {data.totals[s.id].no}名</span></div>)}</div>
+                <div className="event-filters" aria-label="回答の絞り込み">{[['all','すべて'],['yes','参加'],['no','不参加']].map(([value,label])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}</button>)}</div>
+                {!visibleRows.length ? <p className="event-small">{data.replies.length?'該当する回答はありません。':'まだ回答はありません。'}</p> : <div className="event-table-wrap"><table className="event-table"><thead><tr><th scope="col">お名前</th>{event.sessions.map(s=><th scope="col" key={s.id}>{s.label}</th>)}</tr></thead><tbody>{visibleRows.map(row=><React.Fragment key={row.id}><tr><th scope="row">{row.name}{row.id===data.mine?.id && <small>あなた</small>}</th>{event.sessions.map(s=><td key={s.id}><span className={'rsvp-badge '+(row.answers[s.id]==='yes'?'yes':'no')}>{row.answers[s.id]==='yes'?'○ 参加':'× 不参加'}</span></td>)}</tr>{row.comment && <tr className="event-comment"><td colSpan={1+event.sessions.length}>{row.comment}</td></tr>}</React.Fragment>)}</tbody></table></div>}
+                <p className="event-small event-sync-note">ほかの方の回答の反映には、少し時間がかかる場合があります。</p>
+              </section>}
+            </div>
+          </section>
+        </div>
+      );
+    }
+
     /* 1件分の表示（一覧・カレンダー共通）。タイトルは調整さん→ZOOMの順にリンク化する。 */
     function EventLine({ event, showDate }) {
+      const openEvent = React.useContext(OpenEventContext);
       return (
         <div className="flex items-start gap-1.5">
           <div className="flex-shrink-0 pt-[3px]">
@@ -118,19 +238,9 @@
             {showDate && (
               <div className="text-[10px] sm:text-[11px] font-bold text-slate-500">{event.date}</div>
             )}
-            {event.chousei ? (
-              <a href={event.chousei} target="_blank" rel="noopener"
-                className="block text-[11px] font-bold text-orange-600 underline decoration-orange-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
-                {event.title} 📋
-              </a>
-            ) : event.zoom ? (
-              <a href={event.zoom} target="_blank" rel="noopener"
-                className="block text-[11px] font-bold text-blue-600 underline decoration-blue-400 decoration-1 underline-offset-2 break-words mt-0.5 tracking-tight">
-                {event.title} 🎥
-              </a>
-            ) : (
-              <div className="text-[11px] font-bold text-slate-800 break-words mt-0.5 tracking-tight">{event.title}</div>
-            )}
+            <button type="button" onClick={() => openEvent(event)} className="block text-left text-[11px] font-bold text-orange-700 underline decoration-orange-300 underline-offset-2 break-words mt-0.5 tracking-tight py-1">
+              {event.title} <span aria-hidden="true">›</span>
+            </button>
             {event.location && (
               <div className={`mt-0.5 ${event.highlight ? 'text-red-600 font-extrabold text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px] text-slate-400 font-semibold'}`}>
                 @{event.location}
@@ -186,6 +296,7 @@
     /* カレンダー表示。スマホ1画面に収めるため「月の格子＋その月の予定リスト」の縦2段。
        日付をタップするとその日だけに絞り込み、もう一度タップで解除。 */
     function CalendarView() {
+      const openEvent = React.useContext(OpenEventContext);
       const now = new Date();
       /* 初期表示は「これから予定がある一番近い月」。今月の予定が全て終わっていれば翌月以降を開く。 */
       const initM = (() => {
@@ -238,7 +349,7 @@
               const numColor = fill ? 'text-white'
                 : (hol || dow === 0) ? 'text-red-500' : dow === 6 ? 'text-blue-500' : 'text-slate-700';
               return (
-                <button key={i} title={hol || ''} onClick={() => setSel(on ? null : (evs.length ? d : null))}
+                <button key={i} title={hol || ''} onClick={() => { if(evs.length===1) openEvent(evs[0]); else setSel(on ? null : (evs.length ? d : null)); }}
                   style={fill ? { background: fill } : undefined}
                   className={`h-10 flex items-center justify-center ${fill ? '' : 'bg-white'} ${on ? 'ring-2 ring-amber-900 ring-inset' : ''} ${isToday(d) ? 'ring-2 ring-amber-500 ring-inset' : ''} ${evs.length ? 'cursor-pointer' : 'cursor-default'}`}>
                   <span className={`text-[12px] font-black leading-none ${numColor}`}>{d}</span>
@@ -266,15 +377,19 @@
     }
 
     function ScheduleRoadmap() {
-      const hasChousei = scheduleData.some(m => m.events.some(e => e.chousei));
-      const hasZoom = scheduleData.some(m => m.events.some(e => e.zoom));
+      const findSelected = () => ALL_EVENTS.find(event => '#event=' + event.id === location.hash) || null;
+      const [selected, setSelected] = useState(findSelected);
+      React.useEffect(() => { const update=()=>setSelected(findSelected()); window.addEventListener('hashchange',update); return ()=>window.removeEventListener('hashchange',update); }, []);
+      const openEvent = event => {location.hash = 'event=' + event.id;};
+      const closeEvent = () => {history.replaceState(null,'',location.pathname + location.search);setSelected(null);};
       /* 表示モード（カレンダー／一覧）。選んだ方を次回も開くよう端末に覚えさせる。 */
       const [view, setView] = useState(localStorage.getItem('otajuku_sched_view') || 'calendar');
       const [help, setHelp] = useState(false);
       const pick = (v) => { setView(v); try { localStorage.setItem('otajuku_sched_view', v); } catch (e) {} };
       const tab = (v) => `flex-1 py-1.5 rounded-full text-[12px] font-black transition-colors ${view === v ? 'bg-amber-500 text-white shadow-sm' : 'text-amber-800'}`;
       return (
-        <div className="min-h-screen bg-amber-50/50 p-2 sm:p-4 font-sans text-slate-800 flex flex-col items-center">
+        <OpenEventContext.Provider value={openEvent}>
+        <div aria-hidden={!!selected} inert={selected ? "" : undefined} className="min-h-screen bg-amber-50/50 p-2 sm:p-4 font-sans text-slate-800 flex flex-col items-center">
           <div className="w-full max-w-lg mb-3">
             <a href="/" className="text-amber-800 text-xs font-bold no-underline">‹ メニューに戻る</a>
           </div>
@@ -307,13 +422,9 @@
               </div>
               {/* ヒントと「エンパワータイムとは？」は横1行に並べて、スマホ1画面の高さを崩さない */}
               <div className="mt-2 flex flex-wrap justify-center items-center gap-1.5">
-                {(hasChousei || hasZoom) && (
-                  <div className="bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full leading-snug">
-                    {hasChousei && <span>📋 は<span className="underline decoration-orange-400">タイトルをタップ</span>で参加表明（調整さん）</span>}
-                    {hasChousei && hasZoom && <span> / </span>}
-                    {hasZoom && <span>🎥 は<span className="underline decoration-blue-400">タップ</span>でZOOM入室</span>}
-                  </div>
-                )}
+                <div className="bg-orange-50 border border-orange-200 text-orange-700 text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full leading-snug">
+                  イベントをタップ → 詳細・出欠（参加／不参加）
+                </div>
                 <button onClick={() => setHelp(!help)}
                   className="bg-amber-500 text-white text-[10px] sm:text-[11px] font-black px-3 py-1 rounded-full shadow-sm hover:bg-amber-600 transition-colors">
                   ❓ エンパワータイムとは？ {help ? '▲' : '▼'}
@@ -363,10 +474,16 @@
             </div>
           </div>
         </div>
+        {selected && <EventDetail key={selected.id} event={selected} onClose={closeEvent} />}
+        </OpenEventContext.Provider>
       );
     }
 
     ReactDOM.createRoot(document.getElementById('root')).render(<ScheduleRoadmap />);
+    }
+    fetch('/events.json').then(response => {if(!response.ok) throw new Error('events'); return response.json();}).then(startSchedule).catch(() => {
+      ReactDOM.createRoot(document.getElementById('root')).render(<div style={{padding:24,textAlign:'center'}}>予定を読み込めませんでした。通信環境をご確認ください。<br/><button style={{padding:16,textDecoration:'underline'}} onClick={()=>location.reload()}>再読み込み</button></div>);
+    });
   </script>
 <script src="/usage.js"></script>
 </body>

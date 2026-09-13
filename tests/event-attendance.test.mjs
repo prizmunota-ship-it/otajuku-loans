@@ -42,15 +42,18 @@ test('membership and storage errors never report success',async()=>{
  assert.equal((await setup().send(reply,{noKV:true})).status,503);
  const {send,kv}=setup();kv.put=async()=>{throw new Error('write failed');};assert.equal((await send(reply)).ok,false);
 });
-test('migration rows survive and a matching name is counted only once',async()=>{
- const {send,kv}=setup();const legacy=[{id:'legacy-0',name:'確認　メンバー',answers:{viewing:'yes',dinner:'yes'},comment:'旧回答',legacy:true}];
- await kv.put('event-rsvp-legacy:v1:'+eventId,JSON.stringify(legacy));
- assert.equal((await send({})).replies.length,1);
- await send(reply);const r=await send({});assert.equal(r.replies.length,1);assert.equal(r.totals.dinner.no,1);
- await send({action:'clear'});assert.equal((await send({})).replies.length,0);
+test('clearing a reply does not erase another member response',async()=>{
+ const {send}=setup();await send(reply);await send({...reply,email:'other@example.test',name:'別のメンバー'});
+ await send({action:'clear'});const r=await send({});assert.equal(r.mine,null);assert.equal(r.replies.length,1);
 });
-test('unapproved migration cannot change existing replies',async()=>{
- const {send,kv}=setup();assert.equal((await send({action:'import',eventId:'2026-10-22-festival',token:'wrong',replies:[]})).status,403);assert.equal(kv.data.size,0);
+test('existing festival attendance remains external and is not overwritten',async()=>{
+ const {send,kv}=setup();assert.equal((await send({...reply,eventId:'2026-10-22-festival'})).status,409);assert.equal(kv.data.size,0);
+});
+test('clear persists even if a replica has not seen the preceding write',async()=>{
+ const {send,kv}=setup();await send(reply);
+ const original=kv.get.bind(kv);kv.get=async()=>null;
+ await send({action:'clear'});kv.get=original;
+ assert.equal((await send({})).replies.length,0);
 });
 test('event data is unique with separate viewing/dinner and complete existing schedule',()=>{
  const all=events.flatMap(m=>m.events);assert.equal(new Set(all.map(e=>e.id)).size,all.length);
