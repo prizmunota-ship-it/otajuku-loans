@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 const events = JSON.parse(fs.readFileSync(new URL('../events.json', import.meta.url)));
 const source = fs.readFileSync(new URL('../functions/api/event-attendance.js', import.meta.url), 'utf8').replace("import schedule from '../../events.json';", 'const schedule = '+JSON.stringify(events)+';');
 const {createHandler} = await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
@@ -46,8 +47,15 @@ test('clearing a reply does not erase another member response',async()=>{
  const {send}=setup();await send(reply);await send({...reply,email:'other@example.test',name:'別のメンバー'});
  await send({action:'clear'});const r=await send({});assert.equal(r.mine,null);assert.equal(r.replies.length,1);
 });
-test('existing festival attendance remains external and is not overwritten',async()=>{
- const {send,kv}=setup();assert.equal((await send({...reply,eventId:'2026-10-22-festival'})).status,409);assert.equal(kv.data.size,0);
+test('imported festival reply is recognized as mine; edits and withdrawal never duplicate it',async()=>{
+ const {send,kv}=setup();const festival='2026-10-22-festival';
+ const id=createHash('sha256').update('member@example.test').digest('hex');
+ await kv.put('event-rsvp:v1:'+festival+':'+id,JSON.stringify({id,name:'移行前の名前',answers:{main:'yes'},comment:'以前のコメント',updatedAt:'2026-09-12T00:00:00Z'}));
+ let r=await send({eventId:festival});assert.equal(r.mine.comment,'以前のコメント');assert.equal(r.totals.main.yes,1);
+ await send({eventId:festival,action:'save',email:' MEMBER@EXAMPLE.TEST ',name:'変更後のフルネーム',answers:{main:'no'},comment:'変更しました'});
+ r=await send({eventId:festival});assert.equal(r.replies.length,1);assert.equal(r.totals.main.yes,0);assert.equal(r.totals.main.no,1);assert.equal(r.mine.name,'変更後のフルネーム');
+ assert.equal(JSON.stringify(r).includes('@'),false);
+ await send({eventId:festival,action:'clear'});r=await send({eventId:festival});assert.equal(r.replies.length,0);
 });
 test('clear persists even if a replica has not seen the preceding write',async()=>{
  const {send,kv}=setup();await send(reply);
@@ -59,5 +67,6 @@ test('event data is unique with separate viewing/dinner and complete existing sc
  const all=events.flatMap(m=>m.events);assert.equal(new Set(all.map(e=>e.id)).size,all.length);
  assert.equal(all.filter(e=>e.id===eventId).length,1);assert.equal(all.find(e=>e.id===eventId).sessions.length,2);
  assert.equal(all.find(e=>e.id==='2026-10-22-festival').fee,'8,000円（税込） ※飲食含む');
+ assert.equal(all.find(e=>e.id==='2026-10-22-festival').attendanceUrl,undefined);
  assert.ok(all.every(e=>e.endAt && e.sessions.length && !e.chousei));
 });
