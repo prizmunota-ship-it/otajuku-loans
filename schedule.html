@@ -190,7 +190,7 @@
               {event.agenda && <div className="event-agenda"><h3>当日の流れ</h3>{event.agenda.map(([time,label],i)=><div key={i}><strong>{time}</strong><span>{label}</span></div>)}</div>}
               {event.notice && <p className="event-notice">{event.notice}</p>}
               {event.zoom && <a className="event-zoom" href={event.zoom} target="_blank" rel="noopener noreferrer">Zoomに入室する ↗</a>}
-              {event.attendanceUrl ? <div id="event-answer-section" className="event-answer-card"><h3>出欠の確認・変更</h3><p className="event-small">このイベントは、すでにいただいている回答を引き継ぐため、従来の回答ページで受け付けています。</p><a className="event-zoom" href={event.attendanceUrl} target="_blank" rel="noopener noreferrer">これまでの出欠を確認・変更する ↗</a></div> : <div id="event-answer-section" className="event-answer-card">
+              {event.attendanceUrl ? <div id="event-answer-section" className="event-answer-card"><h3>出欠の確認・変更</h3><p className="event-small">このイベントは、これまでの回答をそのまま残すため、従来の回答ページで受け付けています。</p><a className="event-zoom" href={event.attendanceUrl} target="_blank" rel="noopener noreferrer">これまでの出欠を確認・変更する ↗</a></div> : <div id="event-answer-section" className="event-answer-card">
                 <h3>{closed ? '回答受付は終了しました' : 'あなたの出欠'}</h3>
                 {!closed && <p className="event-small">参加・不参加を選んで保存してください。回答はあとから変更できます。</p>}
                 {loading && !data && <p className="event-loading" role="status">出欠を読み込んでいます…</p>}
