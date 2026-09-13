@@ -168,7 +168,7 @@
         } catch (e) {if(alive.current) setError('保存できませんでした。'+errorMessage(e.message));}
         finally {if(alive.current) {setSaving(false);requestAnimationFrame(()=>panel.current?.querySelector('.event-save')?.focus());}}
       }
-      const dayLabel = new Date(event.startDate + 'T00:00:00+09:00').toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+      const dayLabel = new Date(event.startDate + 'T00:00:00+09:00').toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short',timeZone:'Asia/Tokyo'});
       const valid = name.trim() && event.sessions.every(s => answers[s.id] === 'yes' || answers[s.id] === 'no');
       const visibleRows = (data?.replies || []).filter(row => filter==='all' || event.sessions.some(s=>row.answers[s.id]===filter));
       return (
