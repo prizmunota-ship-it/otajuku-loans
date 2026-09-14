@@ -32,7 +32,7 @@ input,textarea,select{width:100%;font-family:inherit;font-size:16px;padding:11px
 input:focus,textarea:focus{outline:2px solid #E8A000;outline-offset:1px;border-color:#E8A000}
 textarea{min-height:88px;resize:vertical}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row3{display:grid;grid-template-columns:2fr 2fr 1fr;gap:8px}
+.row3p{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
 .btn{display:block;width:100%;border:0;border-radius:14px;padding:15px 12px;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;text-align:center;text-decoration:none}
 .btn.main{background:#E8A000;color:#1C1400;box-shadow:0 6px 16px rgba(232,160,0,.35)}
 .btn.main:disabled{background:#E7DCB0;color:#9a8a5a;box-shadow:none;cursor:not-allowed}
@@ -92,15 +92,20 @@ textarea{min-height:88px;resize:vertical}
         <input id="line" name="line" placeholder="https://line.me/ti/p/xxxxxxxx" required>
         <div class="hint">太田塾専用のオープンチャットにご招待します。<a href="https://www.youtube.com/watch?v=kxXedqK6z3o" target="_blank" rel="noopener">LINEのURL確認方法 ↗</a></div>
         <label>ご紹介者（いる場合はフルネーム）<span class="opt">任意</span></label>
-        <input id="referrer" name="referrer" placeholder="例：田中 基裕">
+        <input id="referrer" name="referrer">
       </div>
 
       <div class="card">
         <h2>② あなたのこと</h2>
         <label>普段どんなことをして生計をたてていますか？<span class="req">必須</span></label>
         <input id="job" name="job" placeholder="例：会社員 ／ 不動産賃貸業 ／ 自営業" required>
-        <label>不動産をお持ちであれば、①エリア ②○棟 ③○室<span class="req">必須</span></label>
-        <input id="property" name="property" placeholder="例：福岡県内 3棟 20室 ／ まだ持っていません" required>
+        <label>不動産をお持ちの方は、①エリア ②棟数 ③室数<span class="opt">任意</span></label>
+        <div class="row3p">
+          <input id="propArea" name="propArea" placeholder="①エリア">
+          <input id="propBldg" name="propBldg" placeholder="②棟" inputmode="numeric">
+          <input id="propRooms" name="propRooms" placeholder="③室" inputmode="numeric">
+        </div>
+        <div class="hint">まだお持ちでない方は空欄のままで大丈夫です。</div>
         <label>家族構成<span class="req">必須</span></label>
         <textarea id="family" name="family" placeholder="例：妻：◯子（◯◯歳）　長男：◯男（◯歳）　次男：◯二（◯歳）" required></textarea>
         <label>趣味や好きなこと、休日の過ごし方<span class="req">必須</span></label>
@@ -149,7 +154,8 @@ textarea{min-height:88px;resize:vertical}
   const err=document.getElementById('err');
   const btn=document.getElementById('submitBtn');
   const KEY='otajuku_join_draft';
-  const ids=['nameKanji','kana','age','phone','zip','address','email','line','referrer','job','property','family','hobby','expect'];
+  const ids=['nameKanji','kana','age','phone','zip','address','email','line','referrer','job','propArea','propBldg','propRooms','family','hobby','expect'];
+  const optional=['referrer','propArea','propBldg','propRooms'];
   // 入力途中の内容を端末に残す（うっかり閉じても消えない）
   try{const d=JSON.parse(localStorage.getItem(KEY)||'{}');ids.forEach(k=>{if(d[k]&&document.getElementById(k))document.getElementById(k).value=d[k];});}catch(e){}
   F.addEventListener('input',()=>{try{const d={};ids.forEach(k=>d[k]=document.getElementById(k).value);localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}});
@@ -157,11 +163,14 @@ textarea{min-height:88px;resize:vertical}
   function val(k){return (document.getElementById(k).value||'').trim();}
   F.addEventListener('submit',async e=>{
     e.preventDefault();err.classList.remove('show');
-    const missing=ids.filter(k=>k!=='referrer'&&!val(k));
+    const missing=ids.filter(k=>!optional.includes(k)&&!val(k));
     if(missing.length){const first=document.getElementById(missing[0]);first.focus();showErr('未入力の項目があります（'+missing.length+'件）。赤い「必須」の項目をご確認ください。');return;}
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('email'))){document.getElementById('email').focus();showErr('メールアドレスの形式をご確認ください。');return;}
     const body={action:'apply',website:F.website.value||''};
     ids.forEach(k=>body[k]=val(k));
+    // 不動産は名簿（Googleフォーム）と同じ1つの文にまとめて送る
+    const pa=val('propArea'),pb=val('propBldg'),pr=val('propRooms');
+    body.property=(pa||pb||pr)?`①${pa||'-'} ②${pb?pb.replace(/棟$/,'')+'棟':'-'} ③${pr?pr.replace(/室$/,'')+'室':'-'}`:'なし（まだ持っていません）';
     btn.disabled=true;btn.textContent='送信しています…';
     try{
       const r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
