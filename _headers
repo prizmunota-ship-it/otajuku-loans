@@ -8,3 +8,9 @@
 
 /hub-ea215b88d552*
   X-Robots-Tag: noindex, nofollow
+
+/member-admin*
+  X-Robots-Tag: noindex, nofollow
+
+/join*
+  X-Robots-Tag: noindex, nofollow
