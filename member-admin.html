@@ -11,7 +11,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FFFBEA 0%,#FFF3B0 55%,#FFE566 100%);min-height:100vh;color:#1C1400;font-size:14px;line-height:1.6}
-.wrap{max-width:640px;margin:0 auto;padding:12px 12px 80px}
+.wrap{max-width:1500px;margin:0 auto;padding:12px 12px 80px}
+.wrap>.top,.wrap>.stats,.wrap>.tools,.wrap>.search,.wrap>.chips,.wrap>.tokenbox,.cards{max-width:680px;margin-left:auto;margin-right:auto}
+.tablewrap{overflow-x:auto;background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:12px;max-height:78vh;overflow-y:auto}
+table.tb{border-collapse:collapse;width:100%;min-width:1240px;font-size:12px}
+.tb th,.tb td{padding:6px 8px;border-bottom:1px solid #f0ead6;white-space:nowrap;text-align:left;vertical-align:middle}
+.tb th{position:sticky;top:0;background:#FFF3B0;color:#6b5312;font-weight:800;cursor:pointer;z-index:1;user-select:none}
+.tb tbody tr:hover td{background:#FFFBEA}
+.tb td.nm{font-weight:800;cursor:pointer;color:#1C1400;text-decoration:underline;text-decoration-color:#E8A000}
+.tb td.ellip{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.tb .sc{border:1px solid #D9CFA6;border-radius:6px;background:#fff;padding:2px 6px;font-family:inherit;font-size:11px;cursor:pointer;color:#8a8570;min-width:56px}
+.tb .sc.ok{background:#e8f6ed;border-color:#28875a;color:#176340;font-weight:700}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .top a{color:#8A6D1F;font-size:12px;font-weight:700;text-decoration:none}
 h1{font-size:18px;font-weight:900}
@@ -81,6 +91,7 @@ textarea{min-height:70px}
     <button onclick="openCreate()">＋ 手入力で追加</button>
     <button onclick="copyText('https://otajuku-loans.pages.dev/join','申込フォームのURL')">🔗 申込フォームURLをコピー</button>
     <button onclick="exportCsv()">⬇︎ CSV書き出し</button>
+    <button id="viewBtn" onclick="toggleView()">📋 表で見る（Excel風）</button>
   </div>
   <input class="search" id="q" placeholder="名前・メール・電話・紹介者で検索" oninput="render()">
   <div class="chips" id="chips"></div>
@@ -95,6 +106,7 @@ const STEPS=[['card','💳','会費ペイ'],['oc','💬','OC招待'],['drive','�
 const STATUS={applied:'申込中',active:'会員',left:'退会',unknown:'要確認'};
 const FILTERS=[['all','すべて'],['applied','申込中'],['todo','手続き未完'],['active','会員'],['left','退会'],['unknown','要確認']];
 let members=[], filter='all';
+let view=localStorage.getItem('otajuku_member_admin_view')||'cards', sortKey='createdAt', sortDir=-1;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function token(){return localStorage.getItem(TOKEN_KEY)||'';}
@@ -129,7 +141,10 @@ function render(){
     if(!q)return true;
     return [m.name,m.email,m.phone,m.referrer,m.no].some(v=>String(v||'').toLowerCase().includes(q));
   });
+  $('viewBtn').textContent=view==='table'?'🗂 カードで見る':'📋 表で見る（Excel風）';
+  $('list').className=view==='table'?'':'cards';
   if(!rows.length){$('list').innerHTML='<div class="empty">該当なし</div>';return;}
+  if(view==='table'){renderTable(sortRows(rows));return;}
   $('list').innerHTML=rows.map(m=>`<div class="card" onclick="openDetail('${esc(m.id)}')">
     <div class="nm"><span>${m.no?'<span style="color:#b09a5a;font-size:12px">'+esc(m.no)+' </span>':''}${esc(m.name)}</span><span class="st ${esc(m.status)}">${STATUS[m.status]||m.status}</span></div>
     <div class="meta">${esc(m.email||'')}${m.phone?' ／ '+esc(m.phone):''}${m.referrer?' ／ 紹介：'+esc(m.referrer):''}</div>
@@ -138,6 +153,18 @@ function render(){
   </div>`).join('');
 }
 function today(){const d=new Date();return (d.getMonth()+1)+'/'+d.getDate();}
+/* 表（Excel風）モード：横に広い一覧。見出しで並べ替え、手続きセルはタップで即保存 */
+function toggleView(){view=view==='table'?'cards':'table';try{localStorage.setItem('otajuku_member_admin_view',view);}catch(e){}render();}
+const hw=s=>String(s||'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+function sortRows(rows){return rows.slice().sort((a,b)=>{let va,vb;if(sortKey==='no'){va=parseInt(hw(a.no))||0;vb=parseInt(hw(b.no))||0;}else if(STEPS.some(([k])=>k===sortKey)){va=(a.steps||{})[sortKey]||'';vb=(b.steps||{})[sortKey]||'';}else{va=a[sortKey]??'';vb=b[sortKey]??'';}return (va>vb?1:va<vb?-1:0)*sortDir;});}
+function setSort(k){if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=k==='createdAt'?-1:1;}render();}
+const COLS=[['no','No'],['name','氏名'],['status','状態'],['card','💳会費ペイ'],['oc','💬OC招待'],['drive','📁Drive'],['calendar','📅カレンダー'],['referral','🎁紹介料'],['email','メール'],['phone','電話'],['line','LINE'],['referrer','紹介者'],['property','不動産'],['job','生計'],['createdAt','登録日'],['sheet','転記'],['memo','メモ']];
+function renderTable(rows){
+  const th=COLS.map(([k,l])=>`<th onclick="setSort('${k}')">${l}${sortKey===k?(sortDir>0?' ▲':' ▼'):''}</th>`).join('');
+  const tr=rows.map(m=>{const s=m.steps||{};return `<tr><td>${esc(m.no||'')}</td><td class="nm" onclick="openDetail('${esc(m.id)}')">${esc(m.name)}</td><td><span class="st ${esc(m.status)}">${STATUS[m.status]||m.status}</span></td>${STEPS.map(([k])=>`<td><button class="sc ${s[k]?'ok':''}" onclick="quickStep('${esc(m.id)}','${k}')">${esc(s[k]||'—')}</button></td>`).join('')}<td>${esc(m.email||'')}</td><td>${esc(m.phone||'')}</td><td class="ellip">${m.line?`<a href="${esc(m.line)}" target="_blank" rel="noopener">${esc(m.line)}</a>`:''}</td><td class="ellip">${esc(m.referrer||'')}</td><td class="ellip">${esc(m.property||'')}</td><td class="ellip">${esc(m.job||'')}</td><td>${esc((m.createdAt||'').slice(0,10))}</td><td>${m.source==='form'?`<span class="sheet ${esc(m.sheet)}">${m.sheet==='ok'?'済':m.sheet==='failed'?'⚠︎未':''}</span>`:''}</td><td class="ellip" title="${esc(m.memo||'')}">${esc(m.memo||'')}</td></tr>`;}).join('');
+  $('list').innerHTML=`<div class="tablewrap"><table class="tb"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div><p style="font-size:11px;color:#8A6D1F;margin-top:6px">${rows.length}名 ／ 見出しをタップで並べ替え、手続きのセルをタップで今日の日付（もう一度で解除）、氏名をタップで詳細。横にスクロールできます。</p>`;
+}
+async function quickStep(id,k){const m=members.find(x=>x.id===id);if(!m)return;const v=(m.steps||{})[k]?'':today();const patch={steps:{[k]:v}};if(k==='card'&&v&&m.status==='applied')patch.status='active';try{const j=await api('update',{id,patch});const i=members.findIndex(x=>x.id===id);if(i>=0)members[i]=j.member;render();}catch(e){alert('保存できませんでした：'+e.message);}}
 function openDetail(id){
   const m=members.find(x=>x.id===id); if(!m)return;
   const F=(lb,v,copy)=>`<div class="field"><div class="lb">${lb}${copy&&v?`<button class="cp" onclick="copyText(${JSON.stringify(v)},'${lb}')">コピー</button>`:''}</div><div class="vl">${v?(/^https?:\/\//.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v)):'<span style="color:#aaa">—</span>'}</div></div>`;

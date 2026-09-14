@@ -99,13 +99,13 @@ textarea{min-height:88px;resize:vertical}
         <h2>② あなたのこと</h2>
         <label>普段どんなことをして生計をたてていますか？<span class="req">必須</span></label>
         <input id="job" name="job" placeholder="例：会社員 ／ 不動産賃貸業 ／ 自営業" required>
-        <label>不動産をお持ちの方は、①エリア ②棟数 ③室数<span class="opt">任意</span></label>
+        <label>不動産をお持ちの方は、①エリア ②棟数 ③室数<span class="req">必須</span></label>
         <div class="row3p">
-          <input id="propArea" name="propArea" placeholder="①エリア">
-          <input id="propBldg" name="propBldg" placeholder="②棟" inputmode="numeric">
-          <input id="propRooms" name="propRooms" placeholder="③室" inputmode="numeric">
+          <input id="propArea" name="propArea" placeholder="①エリア" required>
+          <input id="propBldg" name="propBldg" placeholder="②棟数" inputmode="numeric" required>
+          <input id="propRooms" name="propRooms" placeholder="③室数" inputmode="numeric" required>
         </div>
-        <div class="hint">まだお持ちでない方は空欄のままで大丈夫です。</div>
+        <div class="hint">まだお持ちでない方は、3つとも「0」を入力してください。</div>
         <label>家族構成<span class="req">必須</span></label>
         <textarea id="family" name="family" placeholder="例：妻：◯子（◯◯歳）　長男：◯男（◯歳）　次男：◯二（◯歳）" required></textarea>
         <label>趣味や好きなこと、休日の過ごし方<span class="req">必須</span></label>
@@ -155,7 +155,7 @@ textarea{min-height:88px;resize:vertical}
   const btn=document.getElementById('submitBtn');
   const KEY='otajuku_join_draft';
   const ids=['nameKanji','kana','age','phone','zip','address','email','line','referrer','job','propArea','propBldg','propRooms','family','hobby','expect'];
-  const optional=['referrer','propArea','propBldg','propRooms'];
+  const optional=['referrer'];
   // 入力途中の内容を端末に残す（うっかり閉じても消えない）
   try{const d=JSON.parse(localStorage.getItem(KEY)||'{}');ids.forEach(k=>{if(d[k]&&document.getElementById(k))document.getElementById(k).value=d[k];});}catch(e){}
   F.addEventListener('input',()=>{try{const d={};ids.forEach(k=>d[k]=document.getElementById(k).value);localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}});
@@ -169,8 +169,9 @@ textarea{min-height:88px;resize:vertical}
     const body={action:'apply',website:F.website.value||''};
     ids.forEach(k=>body[k]=val(k));
     // 不動産は名簿（Googleフォーム）と同じ1つの文にまとめて送る
-    const pa=val('propArea'),pb=val('propBldg'),pr=val('propRooms');
-    body.property=(pa||pb||pr)?`①${pa||'-'} ②${pb?pb.replace(/棟$/,'')+'棟':'-'} ③${pr?pr.replace(/室$/,'')+'室':'-'}`:'なし（まだ持っていません）';
+    const pa=val('propArea'),pb=val('propBldg').replace(/棟$/,''),pr=val('propRooms').replace(/室$/,'');
+    const none=/^(0|０|なし|無し|ー|-)$/.test(pa)&&/^(0|０)$/.test(pb)&&/^(0|０)$/.test(pr);
+    body.property=none?'なし（0棟0室）':`①${/^(0|０)$/.test(pa)?'なし':pa} ②${pb}棟 ③${pr}室`;
     btn.disabled=true;btn.textContent='送信しています…';
     try{
       const r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(25000)});
