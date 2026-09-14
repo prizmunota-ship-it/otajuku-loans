@@ -24,7 +24,7 @@ test('apply stores the record, mirrors to the Google Form, and never exposes adm
   const {send, kv, posted} = setup();
   const r = await send(apply); assert.equal(r.ok, true); assert.equal(r.sheet, 'ok');
   const rec = await kv.get('member:v1:' + r.id, 'json');
-  assert.equal(rec.name, '確認 太郎（かくにん たろう）　40歳'); assert.equal(rec.email, 'member@example.test'); assert.equal(rec.status, 'applied'); assert.equal(rec.address, '〒819-0000　福岡県糸島市1-1');
+  assert.equal(rec.name, '確認 太郎（かくにん たろう）　40歳'); assert.equal(rec.email, 'member@example.test'); assert.equal(rec.status, 'active'); assert.equal(rec.steps.card, ''); assert.equal(rec.address, '〒819-0000　福岡県糸島市1-1');
   assert.equal(posted.length, 1); assert.equal(posted[0].get('entry.2097584207'), 'member@example.test'); assert.equal(posted[0].get('entry.262646661'), 'なし');
   assert.equal((await send({action: 'list'})).status, 403);
 });
@@ -48,8 +48,9 @@ test('admin update, create, import and delete work only with the token', async (
   const {send} = setup();
   const r = await send(apply);
   assert.equal((await send({action: 'update', token: 'wrong', id: r.id, patch: {status: 'active'}})).status, 403);
-  const u = await send({action: 'update', token: TOKEN, id: r.id, patch: {status: 'active', steps: {card: '9/14', oc: '9/15'}, memo: 'OK', source: 'hacked'}});
-  assert.equal(u.member.status, 'active'); assert.equal(u.member.steps.card, '9/14'); assert.equal(u.member.steps.drive, ''); assert.equal(u.member.source, 'form');
+  const u = await send({action: 'update', token: TOKEN, id: r.id, patch: {status: 'left', steps: {card: '9/14', oc: '9/15'}, memo: 'OK', source: 'hacked'}});
+  assert.equal(u.member.status, 'left'); assert.equal(u.member.steps.card, '9/14'); assert.equal(u.member.steps.drive, ''); assert.equal(u.member.source, 'form');
+  assert.equal((await send({action: 'update', token: TOKEN, id: r.id, patch: {status: 'applied'}})).member.status, 'left');
   const c = await send({action: 'create', token: TOKEN, record: {name: '手入力 花子', email: 'HANA@example.test'}}); assert.equal(c.member.status, 'active'); assert.equal(c.member.email, 'hana@example.test');
   const imp = await send({action: 'import', token: TOKEN, records: [{id: 'imp1', name: '取込 一郎', status: 'active', steps: {oc: '4/21'}}, {id: 'imp1', name: '重複'}, {name: ''}]});
   assert.equal(imp.written, 1); assert.equal(imp.skipped, 2);

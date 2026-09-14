@@ -13,26 +13,18 @@
 body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FFFBEA 0%,#FFF3B0 55%,#FFE566 100%);min-height:100vh;color:#1C1400;font-size:14px;line-height:1.6}
 .wrap{max-width:1500px;margin:0 auto;padding:12px 12px 80px}
 .wrap>.top,.wrap>.stats,.wrap>.tools,.wrap>.search,.wrap>.chips,.wrap>.tokenbox,.cards{max-width:680px;margin-left:auto;margin-right:auto}
-.tablewrap{overflow-x:auto;background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:12px;max-height:78vh;overflow-y:auto}
-table.tb{border-collapse:collapse;width:100%;min-width:1240px;font-size:12px}
-.tb th,.tb td{padding:6px 8px;border-bottom:1px solid #f0ead6;white-space:nowrap;text-align:left;vertical-align:middle}
-.tb th{position:sticky;top:0;background:#FFF3B0;color:#6b5312;font-weight:800;cursor:pointer;z-index:1;user-select:none}
-.tb tbody tr:hover td{background:#FFFBEA}
-.tb td.nm{font-weight:800;cursor:pointer;color:#1C1400;text-decoration:underline;text-decoration-color:#E8A000}
-.tb td.ellip{max-width:200px;overflow:hidden;text-overflow:ellipsis}
-.tb .sc{border:1px solid #D9CFA6;border-radius:6px;background:#fff;padding:2px 6px;font-family:inherit;font-size:11px;cursor:pointer;color:#8a8570;min-width:56px}
-.tb .sc.ok{background:#e8f6ed;border-color:#28875a;color:#176340;font-weight:700}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .top a{color:#8A6D1F;font-size:12px;font-weight:700;text-decoration:none}
 h1{font-size:18px;font-weight:900}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
-.stat{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:12px;padding:8px 4px;text-align:center}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px auto}
+.stat{background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer}
+.stat.on{border-color:#E8A000;box-shadow:0 0 0 2px #FFE58A inset}
 .stat b{display:block;font-size:20px;line-height:1.1;color:#E8A000}
 .stat span{font-size:10.5px;color:#8A6D1F;font-weight:700}
-.tools{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.tools button,.tools a{flex:1;min-width:46%;border:1.5px solid rgba(245,196,0,.6);background:#fff;color:#6b5312;border-radius:10px;padding:9px 6px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none}
+.tools{display:flex;gap:6px;flex-wrap:wrap;margin:8px auto}
+.tools button{flex:1;min-width:46%;border:1.5px solid rgba(245,196,0,.6);background:#fff;color:#6b5312;border-radius:10px;padding:9px 6px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
 .tools button.pri{background:#1C1400;color:#FFD84D;border-color:#1C1400}
-input.search{width:100%;font-family:inherit;font-size:16px;padding:10px 12px;border:1.5px solid #D9CFA6;border-radius:10px;margin:6px 0}
+input.search{display:block;width:100%;font-family:inherit;font-size:16px;padding:10px 12px;border:1.5px solid #D9CFA6;border-radius:10px;margin:6px auto}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}
 .chip{flex:none;border:1.5px solid rgba(245,196,0,.6);background:#fff;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:#7b6320;cursor:pointer;white-space:nowrap}
 .chip.on{background:#E8A000;color:#1C1400;border-color:#E8A000}
@@ -42,9 +34,21 @@ input.search{width:100%;font-family:inherit;font-size:16px;padding:10px 12px;bor
 .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .bd{font-size:11px;border-radius:6px;padding:2px 7px;background:#f0ede0;color:#8a8570;font-weight:700}
 .bd.ok{background:#e8f6ed;color:#176340}
+.bd.pend{background:#FFF0BA;color:#7a5a00}
 .st{font-size:11px;border-radius:6px;padding:2px 8px;font-weight:900;white-space:nowrap}
-.st.applied{background:#FFF0BA;color:#7a5a00}.st.active{background:#e8f6ed;color:#176340}.st.left{background:#f0f1f3;color:#5f6670}.st.unknown{background:#FFE4E1;color:#a63921}
+.st.active{background:#e8f6ed;color:#176340}.st.left{background:#f0f1f3;color:#5f6670}
 .empty{text-align:center;color:#8A6D1F;padding:30px 0;font-weight:700}
+.tablewrap{overflow-x:auto;background:#fff;border:1.5px solid rgba(245,196,0,.45);border-radius:12px;max-height:78vh;overflow-y:auto}
+table.tb{border-collapse:collapse;width:100%;min-width:1100px;font-size:12px}
+.tb th,.tb td{padding:6px 8px;border-bottom:1px solid #f0ead6;white-space:nowrap;text-align:left;vertical-align:middle}
+.tb th{position:sticky;top:0;background:#FFF3B0;color:#6b5312;font-weight:800;cursor:pointer;z-index:1;user-select:none}
+.tb tbody tr:hover td{background:#FFFBEA}
+.tb td.nm{font-weight:800;cursor:pointer;color:#1C1400;text-decoration:underline;text-decoration-color:#E8A000}
+.tb td.ellip{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.tb .sc{border:1px solid #D9CFA6;border-radius:6px;background:#fff;padding:2px 6px;font-family:inherit;font-size:11px;cursor:pointer;color:#8a8570;min-width:56px}
+.tb .sc.ok{background:#e8f6ed;border-color:#28875a;color:#176340;font-weight:700}
+.tb .sc.pend{background:#FFF0BA;border-color:#E8A000;color:#7a5a00;font-weight:700}
+.tb .sc.na{opacity:.45;cursor:default}
 .overlay{position:fixed;inset:0;background:rgba(40,32,14,.5);z-index:100;overflow-y:auto;padding:14px 10px}
 .panel{max-width:640px;margin:0 auto;background:#FFFDF5;border-radius:18px;padding:14px 14px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .panel h2{font-size:17px;font-weight:900;margin-bottom:6px}
@@ -53,31 +57,34 @@ input.search{width:100%;font-family:inherit;font-size:16px;padding:10px 12px;bor
 .field .vl{font-size:14px;white-space:pre-wrap;word-break:break-word}
 .field .vl a{color:#1e5094}
 .cp{float:right;border:1px solid #D9CFA6;background:#fff;border-radius:8px;font-size:11px;padding:3px 8px;cursor:pointer;font-family:inherit;color:#6b5312;font-weight:700}
-.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}
-.stepb{border:1.5px solid #D9CFA6;border-radius:10px;background:#fff;padding:7px 2px;text-align:center;font-family:inherit;font-size:11px;font-weight:800;color:#8a8570;cursor:pointer;line-height:1.3}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0}
+.stepb{border:1.5px solid #D9CFA6;border-radius:10px;background:#fff;padding:8px 4px;text-align:center;font-family:inherit;font-size:12px;font-weight:800;color:#8a8570;cursor:pointer;line-height:1.3}
 .stepb.ok{background:#e8f6ed;border-color:#28875a;color:#176340}
-.stepb small{display:block;font-size:10px;font-weight:600}
+.stepb.pend{background:#FFF0BA;border-color:#E8A000;color:#7a5a00}
+.stepb.na{opacity:.5;cursor:default}
+.stepb small{display:block;font-size:10.5px;font-weight:600;white-space:normal}
 select,textarea,.panel input{width:100%;font-family:inherit;font-size:16px;padding:9px 10px;border:1.5px solid #D9CFA6;border-radius:10px;background:#fff}
 textarea{min-height:70px}
 .btn{width:100%;border:0;border-radius:12px;padding:13px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px}
 .btn.pri{background:#E8A000;color:#1C1400}.btn.dark{background:#1C1400;color:#FFD84D}.btn.ghost{background:#fff;border:1.5px solid #D9CFA6;color:#6b5312;font-size:13px}.btn.danger{background:#fff;border:1.5px solid #e0a39a;color:#a63921;font-size:13px}
 .msg{font-size:12px;color:#176340;font-weight:700;margin-top:6px;min-height:16px}
 .msg.err{color:#a63921}
-.tokenbox{background:#fff;border:1.5px solid rgba(245,196,0,.6);border-radius:14px;padding:14px;margin:10px 0}
+.tokenbox{background:#fff;border:1.5px solid rgba(245,196,0,.6);border-radius:14px;padding:14px;margin:10px auto}
 .tokenbox p{font-size:12.5px;color:#6b5312;margin-bottom:8px}
 .sheet{font-size:11px;font-weight:700}
 .sheet.ok{color:#176340}.sheet.failed{color:#a63921}
+.legend{font-size:11px;color:#8A6D1F;margin:2px auto 6px;max-width:680px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top"><h1>👥 太田塾 入会管理</h1><a href="/hub-ea215b88d552">‹ コックピット</a></div>
   <div class="stats">
-    <div class="stat"><b id="cActive">-</b><span>会員</span></div>
-    <div class="stat"><b id="cApplied">-</b><span>申込中</span></div>
-    <div class="stat"><b id="cTodo">-</b><span>手続き未完</span></div>
-    <div class="stat"><b id="cLeft">-</b><span>退会</span></div>
+    <div class="stat" id="stActive" onclick="setFilter('active')"><b id="cActive">-</b><span>メンバー</span></div>
+    <div class="stat" id="stTodo" onclick="setFilter('todo')"><b id="cTodo">-</b><span>手続き未完</span></div>
+    <div class="stat" id="stLeft" onclick="setFilter('left')"><b id="cLeft">-</b><span>退会</span></div>
   </div>
+  <div class="legend">手続き未完＝会費ペイ未登録・オープンチャット未招待・紹介料が未払（紹介者がいる方）のいずれか。</div>
 
   <div class="tokenbox" id="tokenBox" style="display:none">
     <p><b>管理用トークン</b>を入力してください（この端末に保存されます。太田専用）。</p>
@@ -88,10 +95,10 @@ textarea{min-height:70px}
 
   <div class="tools">
     <button class="pri" onclick="load()">🔄 最新に更新</button>
+    <button id="viewBtn" onclick="toggleView()">📋 表で見る（Excel風）</button>
     <button onclick="openCreate()">＋ 手入力で追加</button>
     <button onclick="copyText('https://otajuku-loans.pages.dev/join','申込フォームのURL')">🔗 申込フォームURLをコピー</button>
     <button onclick="exportCsv()">⬇︎ CSV書き出し</button>
-    <button id="viewBtn" onclick="toggleView()">📋 表で見る（Excel風）</button>
   </div>
   <input class="search" id="q" placeholder="名前・メール・電話・紹介者で検索" oninput="render()">
   <div class="chips" id="chips"></div>
@@ -102,13 +109,17 @@ textarea{min-height:70px}
 
 <script>
 const TOKEN_KEY='otajuku_member_admin_token';
-const STEPS=[['card','💳','会費ペイ'],['oc','💬','OC招待'],['drive','📁','Drive'],['calendar','📅','カレンダー'],['referral','🎁','紹介料']];
-const STATUS={applied:'申込中',active:'会員',left:'退会',unknown:'要確認'};
-const FILTERS=[['all','すべて'],['applied','申込中'],['todo','手続き未完'],['active','会員'],['left','退会'],['unknown','要確認']];
-let members=[], filter='all';
+const STEPS=[['card','💳','会費ペイ'],['oc','💬','オープンチャット招待'],['referral','🎁','紹介料']];
+const STATUS={active:'メンバー',left:'退会'};
+const FILTERS=[['active','メンバー'],['todo','手続き未完'],['left','退会']];
+// 紹介者欄に入っていても紹介料の対象にならない書き方（太田本人・なし・きっかけの記述など）
+const NO_REFERRER=/太田|塾長|なし|無し|いない|ない|自分|本人|^[-ー−‐]$|Facebook|facebook|セリック|告知|投稿|直接|スタッフ|紹介者|[。！!？?]|ます|です|から|ので|知って|勧め|案内|聞い|ました/;
+let members=[], filter='active';
 let view=localStorage.getItem('otajuku_member_admin_view')||'cards', sortKey='createdAt', sortDir=-1;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const stat=m=>m.status==='left'?'left':'active';
+const refName=m=>{const r=(m.referrer||'').trim();if(!r||NO_REFERRER.test(r))return '';const own=(m.name||'').replace(/[\s　]/g,'').split(/[（(]/)[0];if(own&&r.replace(/[\s　]/g,'').startsWith(own))return '';return r;};
 function token(){return localStorage.getItem(TOKEN_KEY)||'';}
 function saveToken(){const t=$('tokenInput').value.trim();if(!t){$('tokenMsg').textContent='トークンが空です';return;}localStorage.setItem(TOKEN_KEY,t);$('tokenBox').style.display='none';load();}
 async function api(action,extra={}){
@@ -124,20 +135,22 @@ async function load(){
   try{const j=await api('list');members=j.members;render();}
   catch(e){if(e.message!=='forbidden')$('list').innerHTML='<div class="empty">読み込めませんでした（'+esc(e.message)+'）</div>';}
 }
-function todoOf(m){return STEPS.filter(([k])=>k!=='referral'&&!(m.steps&&m.steps[k])).length;}
+/* 未完の項目：会費ペイ未登録／オープンチャット未招待／紹介者がいるのに紹介料未払 */
+function todoList(m){const s=m.steps||{};const t=[];if(!s.card)t.push('会費ペイ');if(!s.oc)t.push('オープンチャット招待');if(refName(m)&&!s.referral)t.push('紹介料');return t;}
 function stats(){
-  $('cActive').textContent=members.filter(m=>m.status==='active').length;
-  $('cApplied').textContent=members.filter(m=>m.status==='applied').length;
-  $('cTodo').textContent=members.filter(m=>(m.status==='active'||m.status==='applied')&&todoOf(m)>0).length;
-  $('cLeft').textContent=members.filter(m=>m.status==='left').length;
+  $('cActive').textContent=members.filter(m=>stat(m)==='active').length;
+  $('cTodo').textContent=members.filter(m=>stat(m)==='active'&&todoList(m).length).length;
+  $('cLeft').textContent=members.filter(m=>stat(m)==='left').length;
+  ['active','todo','left'].forEach(k=>$('st'+k[0].toUpperCase()+k.slice(1)).classList.toggle('on',filter===k));
 }
+function setFilter(k){filter=k;render();}
 function render(){
   stats();
-  $('chips').innerHTML=FILTERS.map(([k,l])=>`<span class="chip ${filter===k?'on':''}" onclick="filter='${k}';render()">${l}</span>`).join('');
+  $('chips').innerHTML=FILTERS.map(([k,l])=>`<span class="chip ${filter===k?'on':''}" onclick="setFilter('${k}')">${l}</span>`).join('');
   const q=$('q').value.trim().toLowerCase();
   const rows=members.filter(m=>{
-    if(filter==='todo'){if(!((m.status==='active'||m.status==='applied')&&todoOf(m)>0))return false;}
-    else if(filter!=='all'&&m.status!==filter)return false;
+    if(filter==='todo'){if(!(stat(m)==='active'&&todoList(m).length))return false;}
+    else if(stat(m)!==filter)return false;
     if(!q)return true;
     return [m.name,m.email,m.phone,m.referrer,m.no].some(v=>String(v||'').toLowerCase().includes(q));
   });
@@ -146,11 +159,17 @@ function render(){
   if(!rows.length){$('list').innerHTML='<div class="empty">該当なし</div>';return;}
   if(view==='table'){renderTable(sortRows(rows));return;}
   $('list').innerHTML=rows.map(m=>`<div class="card" onclick="openDetail('${esc(m.id)}')">
-    <div class="nm"><span>${m.no?'<span style="color:#b09a5a;font-size:12px">'+esc(m.no)+' </span>':''}${esc(m.name)}</span><span class="st ${esc(m.status)}">${STATUS[m.status]||m.status}</span></div>
+    <div class="nm"><span>${m.no?'<span style="color:#b09a5a;font-size:12px">'+esc(m.no)+' </span>':''}${esc(m.name)}</span><span class="st ${stat(m)}">${STATUS[stat(m)]}</span></div>
     <div class="meta">${esc(m.email||'')}${m.phone?' ／ '+esc(m.phone):''}${m.referrer?' ／ 紹介：'+esc(m.referrer):''}</div>
     <div class="meta">${m.source==='form'?'申込':'登録'}：${esc((m.createdAt||'').slice(0,10))}${m.source==='form'?' <span class="sheet '+esc(m.sheet)+'">'+(m.sheet==='ok'?'シート転記済':m.sheet==='failed'?'⚠︎シート未転記':'')+'</span>':''}</div>
-    <div class="badges">${STEPS.map(([k,e,l])=>`<span class="bd ${m.steps&&m.steps[k]?'ok':''}">${e}${l}${m.steps&&m.steps[k]?' '+esc(m.steps[k]):''}</span>`).join('')}</div>
+    <div class="badges">${STEPS.map(([k,e,l])=>{const v=stepView(m,k);return `<span class="bd ${v.cls}">${e}${l} ${esc(v.text)}</span>`;}).join('')}</div>
   </div>`).join('');
+}
+/* 手続きの表示：紹介料は「紹介者なし＝対象外／未払（紹介者名）／支払日」 */
+function stepView(m,k){
+  const v=(m.steps||{})[k]||'';
+  if(k==='referral'){const r=refName(m);if(!r)return {cls:'na',text:v||'対象外'};return v?{cls:'ok',text:v}:{cls:'pend',text:'未払（'+r+'）'};}
+  return v?{cls:'ok',text:v}:{cls:'',text:'未'};
 }
 function today(){const d=new Date();return (d.getMonth()+1)+'/'+d.getDate();}
 /* 表（Excel風）モード：横に広い一覧。見出しで並べ替え、手続きセルはタップで即保存 */
@@ -158,36 +177,40 @@ function toggleView(){view=view==='table'?'cards':'table';try{localStorage.setIt
 const hw=s=>String(s||'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
 function sortRows(rows){return rows.slice().sort((a,b)=>{let va,vb;if(sortKey==='no'){va=parseInt(hw(a.no))||0;vb=parseInt(hw(b.no))||0;}else if(STEPS.some(([k])=>k===sortKey)){va=(a.steps||{})[sortKey]||'';vb=(b.steps||{})[sortKey]||'';}else{va=a[sortKey]??'';vb=b[sortKey]??'';}return (va>vb?1:va<vb?-1:0)*sortDir;});}
 function setSort(k){if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=k==='createdAt'?-1:1;}render();}
-const COLS=[['no','No'],['name','氏名'],['status','状態'],['card','💳会費ペイ'],['oc','💬OC招待'],['drive','📁Drive'],['calendar','📅カレンダー'],['referral','🎁紹介料'],['email','メール'],['phone','電話'],['line','LINE'],['referrer','紹介者'],['property','不動産'],['job','生計'],['createdAt','登録日'],['sheet','転記'],['memo','メモ']];
+const COLS=[['no','No'],['name','氏名'],['status','状態'],['card','💳会費ペイ'],['oc','💬オープンチャット招待'],['referral','🎁紹介料'],['referrer','紹介者'],['email','メール'],['phone','電話'],['line','LINE'],['property','不動産'],['job','生計'],['createdAt','登録日'],['sheet','転記'],['memo','メモ']];
 function renderTable(rows){
   const th=COLS.map(([k,l])=>`<th onclick="setSort('${k}')">${l}${sortKey===k?(sortDir>0?' ▲':' ▼'):''}</th>`).join('');
-  const tr=rows.map(m=>{const s=m.steps||{};return `<tr><td>${esc(m.no||'')}</td><td class="nm" onclick="openDetail('${esc(m.id)}')">${esc(m.name)}</td><td><span class="st ${esc(m.status)}">${STATUS[m.status]||m.status}</span></td>${STEPS.map(([k])=>`<td><button class="sc ${s[k]?'ok':''}" onclick="quickStep('${esc(m.id)}','${k}')">${esc(s[k]||'—')}</button></td>`).join('')}<td>${esc(m.email||'')}</td><td>${esc(m.phone||'')}</td><td class="ellip">${m.line?`<a href="${esc(m.line)}" target="_blank" rel="noopener">${esc(m.line)}</a>`:''}</td><td class="ellip">${esc(m.referrer||'')}</td><td class="ellip">${esc(m.property||'')}</td><td class="ellip">${esc(m.job||'')}</td><td>${esc((m.createdAt||'').slice(0,10))}</td><td>${m.source==='form'?`<span class="sheet ${esc(m.sheet)}">${m.sheet==='ok'?'済':m.sheet==='failed'?'⚠︎未':''}</span>`:''}</td><td class="ellip" title="${esc(m.memo||'')}">${esc(m.memo||'')}</td></tr>`;}).join('');
+  const tr=rows.map(m=>`<tr><td>${esc(m.no||'')}</td><td class="nm" onclick="openDetail('${esc(m.id)}')">${esc(m.name)}</td><td><span class="st ${stat(m)}">${STATUS[stat(m)]}</span></td>${STEPS.map(([k])=>{const v=stepView(m,k);return `<td><button class="sc ${v.cls}" onclick="quickStep('${esc(m.id)}','${k}')">${esc(v.text==='未'?'—':v.text)}</button></td>`;}).join('')}<td class="ellip">${esc(m.referrer||'')}</td><td>${esc(m.email||'')}</td><td>${esc(m.phone||'')}</td><td class="ellip">${m.line?`<a href="${esc(m.line)}" target="_blank" rel="noopener">${esc(m.line)}</a>`:''}</td><td class="ellip">${esc(m.property||'')}</td><td class="ellip">${esc(m.job||'')}</td><td>${esc((m.createdAt||'').slice(0,10))}</td><td>${m.source==='form'?`<span class="sheet ${esc(m.sheet)}">${m.sheet==='ok'?'済':m.sheet==='failed'?'⚠︎未':''}</span>`:''}</td><td class="ellip" title="${esc(m.memo||'')}">${esc(m.memo||'')}</td></tr>`).join('');
   $('list').innerHTML=`<div class="tablewrap"><table class="tb"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div><p style="font-size:11px;color:#8A6D1F;margin-top:6px">${rows.length}名 ／ 見出しをタップで並べ替え、手続きのセルをタップで今日の日付（もう一度で解除）、氏名をタップで詳細。横にスクロールできます。</p>`;
 }
-async function quickStep(id,k){const m=members.find(x=>x.id===id);if(!m)return;const v=(m.steps||{})[k]?'':today();const patch={steps:{[k]:v}};if(k==='card'&&v&&m.status==='applied')patch.status='active';try{const j=await api('update',{id,patch});const i=members.findIndex(x=>x.id===id);if(i>=0)members[i]=j.member;render();}catch(e){alert('保存できませんでした：'+e.message);}}
+async function quickStep(id,k){const m=members.find(x=>x.id===id);if(!m)return;if(k==='referral'&&!refName(m))return;const v=(m.steps||{})[k]?'':today();try{const j=await api('update',{id,patch:{steps:{[k]:v}}});const i=members.findIndex(x=>x.id===id);if(i>=0)members[i]=j.member;render();}catch(e){alert('保存できませんでした：'+e.message);}}
 function openDetail(id){
   const m=members.find(x=>x.id===id); if(!m)return;
   const F=(lb,v,copy)=>`<div class="field"><div class="lb">${lb}${copy&&v?`<button class="cp" onclick="copyText(${JSON.stringify(v)},'${lb}')">コピー</button>`:''}</div><div class="vl">${v?(/^https?:\/\//.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v)):'<span style="color:#aaa">—</span>'}</div></div>`;
   $('ov').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeOv()"><div class="panel">
     <h2>${esc(m.name)}</h2>
     <div style="font-size:12px;color:#7a6a3a">${m.source==='form'?'申込フォームから':m.source==='import'?'名簿から取込':'手入力'}：${esc((m.createdAt||'').replace('T',' ').slice(0,16))}${m.source==='form'?` ／ <span class="sheet ${esc(m.sheet)}">${m.sheet==='ok'?'名簿シートへ転記済':m.sheet==='failed'?'⚠︎ 名簿シートへ未転記':'シート転記なし'}</span>${m.sheet==='failed'?` <button class="cp" onclick="retrySheet('${esc(m.id)}')">再送</button>`:''}`:''}</div>
-    <div class="field"><div class="lb">ステータス</div><select id="d_status">${Object.entries(STATUS).map(([k,l])=>`<option value="${k}" ${m.status===k?'selected':''}>${l}</option>`).join('')}</select></div>
-    <div class="field"><div class="lb">手続き（タップで今日の日付／もう一度で解除）</div><div class="steps">${STEPS.map(([k,e,l])=>`<button class="stepb ${m.steps&&m.steps[k]?'ok':''}" id="sb_${k}" onclick="toggleStep('${k}')">${e} ${l}<small id="sv_${k}">${esc(m.steps&&m.steps[k]||'未')}</small></button>`).join('')}</div></div>
-    ${F('メール',m.email,true)}${F('電話',m.phone,true)}${F('LINE',m.line,true)}${F('住所',m.address)}${F('紹介者',m.referrer)}${F('生計',m.job)}${F('不動産',m.property)}${F('家族構成',m.family)}${F('趣味・休日',m.hobby)}${F('期待すること・困っていること',m.expect)}${m.area?F('エリア',m.area):''}${m.trigger?F('きっかけ',m.trigger):''}
+    <div class="field"><div class="lb">状態</div><select id="d_status">${Object.entries(STATUS).map(([k,l])=>`<option value="${k}" ${stat(m)===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><div class="lb">手続き（タップで今日の日付／もう一度で解除）</div><div class="steps" id="d_steps"></div></div>
+    ${F('紹介者',m.referrer)}${F('メール',m.email,true)}${F('電話',m.phone,true)}${F('LINE',m.line,true)}${F('住所',m.address)}${F('生計',m.job)}${F('不動産',m.property)}${F('家族構成',m.family)}${F('趣味・休日',m.hobby)}${F('期待すること・困っていること',m.expect)}${m.area?F('エリア',m.area):''}${m.trigger?F('きっかけ',m.trigger):''}
     <div class="field"><div class="lb">メモ（太田用）</div><textarea id="d_memo">${esc(m.memo||'')}</textarea></div>
     <button class="btn pri" onclick="saveDetail('${esc(m.id)}')">保存する</button>
     <div class="msg" id="d_msg"></div>
     <button class="btn ghost" onclick="closeOv()">閉じる</button>
     <button class="btn danger" onclick="del('${esc(m.id)}')">この登録を削除</button>
   </div></div>`;
-  $('ov').style.display='block'; $('ov').dataset.steps=JSON.stringify(m.steps||{}); document.body.style.overflow='hidden';
+  $('ov').style.display='block'; $('ov').dataset.steps=JSON.stringify(m.steps||{}); $('ov').dataset.id=id; document.body.style.overflow='hidden';
+  drawSteps();
+}
+function drawSteps(){
+  const m=members.find(x=>x.id===$('ov').dataset.id); const s=JSON.parse($('ov').dataset.steps||'{}'); const tmp={...m,steps:s};
+  $('d_steps').innerHTML=STEPS.map(([k,e,l])=>{const v=stepView(tmp,k);return `<button class="stepb ${v.cls}" onclick="toggleStep('${k}')">${e} ${l}<small>${esc(v.text)}</small></button>`;}).join('');
 }
 function closeOv(){$('ov').style.display='none';$('ov').innerHTML='';document.body.style.overflow='';}
-function toggleStep(k){const s=JSON.parse($('ov').dataset.steps||'{}');s[k]=s[k]?'':today();$('ov').dataset.steps=JSON.stringify(s);$('sb_'+k).classList.toggle('ok',!!s[k]);$('sv_'+k).textContent=s[k]||'未';}
+function toggleStep(k){const m=members.find(x=>x.id===$('ov').dataset.id);if(k==='referral'&&!refName(m))return;const s=JSON.parse($('ov').dataset.steps||'{}');s[k]=s[k]?'':today();$('ov').dataset.steps=JSON.stringify(s);drawSteps();}
 async function saveDetail(id){
   const steps=JSON.parse($('ov').dataset.steps||'{}');
   const patch={status:$('d_status').value,memo:$('d_memo').value,steps};
-  if(patch.status==='applied'&&steps.card)patch.status='active';   // カード登録済みなら会員に
   $('d_msg').className='msg';$('d_msg').textContent='保存中…';
   try{const j=await api('update',{id,patch});const i=members.findIndex(x=>x.id===id);if(i>=0)members[i]=j.member;render();$('d_msg').textContent='✓ 保存しました';}
   catch(e){$('d_msg').className='msg err';$('d_msg').textContent='保存できませんでした（'+e.message+'）';}
@@ -198,7 +221,7 @@ function openCreate(){
   $('ov').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeOv()"><div class="panel">
     <h2>手入力で追加</h2>
     ${[['c_name','お名前（フルネーム・ふりがな・年齢）'],['c_email','メール'],['c_phone','電話'],['c_line','LINE URL'],['c_referrer','紹介者'],['c_property','不動産（エリア・棟・室）']].map(([id,lb])=>`<div class="field"><div class="lb">${lb}</div><input id="${id}"></div>`).join('')}
-    <div class="field"><div class="lb">ステータス</div><select id="c_status"><option value="active">会員</option><option value="applied">申込中</option><option value="unknown">要確認</option></select></div>
+    <div class="field"><div class="lb">状態</div><select id="c_status"><option value="active">メンバー</option><option value="left">退会</option></select></div>
     <div class="field"><div class="lb">メモ</div><textarea id="c_memo"></textarea></div>
     <button class="btn pri" onclick="create()">追加する</button><div class="msg" id="c_msg"></div>
     <button class="btn ghost" onclick="closeOv()">閉じる</button></div></div>`;
@@ -211,8 +234,8 @@ async function create(){
 }
 function copyText(t,label){navigator.clipboard.writeText(t).then(()=>{const el=document.createElement('div');el.textContent=(label||'')+'をコピーしました';el.style.cssText='position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#1C1400;color:#FFD84D;padding:9px 16px;border-radius:20px;font-weight:700;z-index:999';document.body.appendChild(el);setTimeout(()=>el.remove(),1500);}).catch(()=>prompt('コピーしてください',t));}
 function exportCsv(){
-  const H=['No','氏名','ステータス','メール','電話','LINE','住所','紹介者','生計','不動産','家族構成','趣味・休日','期待・困りごと','登録日','会費ペイ','OC招待','Drive','カレンダー','紹介料','メモ','取込元','シート転記'];
-  const rows=members.map(m=>[m.no,m.name,STATUS[m.status]||m.status,m.email,m.phone,m.line,m.address,m.referrer,m.job,m.property,m.family,m.hobby,m.expect,(m.createdAt||'').slice(0,10),...STEPS.map(([k])=>m.steps&&m.steps[k]||''),m.memo,m.source,m.sheet]);
+  const H=['No','氏名','状態','会費ペイ','オープンチャット招待','紹介料（支払日）','紹介者','メール','電話','LINE','住所','生計','不動産','家族構成','趣味・休日','期待・困りごと','登録日','メモ','取込元','シート転記'];
+  const rows=members.map(m=>[m.no,m.name,STATUS[stat(m)],m.steps?.card||'',m.steps?.oc||'',m.steps?.referral||'',m.referrer,m.email,m.phone,m.line,m.address,m.job,m.property,m.family,m.hobby,m.expect,(m.createdAt||'').slice(0,10),m.memo,m.source,m.sheet]);
   const csv='﻿'+[H,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='太田塾_名簿_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
