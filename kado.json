@@ -6,5 +6,249 @@
   "taikyo": 3,
   "lossMan": 230,
   "target": 97,
-  "rate": 90.3
+  "rate": 90.3,
+  "props": [
+    {
+      "name": "プライマリー上津バイパス",
+      "units": 14,
+      "vacant": 0,
+      "occupied": 14,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 14,
+      "parkVacant": 0,
+      "kanri": "イムズパートナー"
+    },
+    {
+      "name": "プライマリー合川A棟",
+      "units": 10,
+      "vacant": 1,
+      "occupied": 9,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 5,
+      "parkVacant": 0,
+      "kanri": "イムズパートナー"
+    },
+    {
+      "name": "プライマリー合川B棟",
+      "units": 10,
+      "vacant": 2,
+      "occupied": 8,
+      "applied": 1,
+      "taikyo": 0,
+      "parkTotal": 4,
+      "parkVacant": 2,
+      "kanri": "イムズパートナー"
+    },
+    {
+      "name": "プライマリー花畑駅西",
+      "units": 30,
+      "vacant": 1,
+      "occupied": 29,
+      "applied": 1,
+      "taikyo": 0,
+      "parkTotal": 6,
+      "parkVacant": 0,
+      "kanri": "イムズパートナー"
+    },
+    {
+      "name": "プライマリー花畑",
+      "units": 9,
+      "vacant": 9,
+      "occupied": 0,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 2,
+      "parkVacant": 2,
+      "kanri": "イムズパートナー"
+    },
+    {
+      "name": "プライマリー糸島中央",
+      "units": 8,
+      "vacant": 0,
+      "occupied": 8,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 10,
+      "parkVacant": 2,
+      "kanri": "イムズパートナー"
+    },
+    {
+      "name": "プライマリー久留米大南",
+      "units": 20,
+      "vacant": 3,
+      "occupied": 17,
+      "applied": 2,
+      "taikyo": 0,
+      "parkTotal": 1,
+      "parkVacant": 0,
+      "kanri": "お部屋倶楽部"
+    },
+    {
+      "name": "プライマリー久留米大西",
+      "units": 14,
+      "vacant": 1,
+      "occupied": 13,
+      "applied": 2,
+      "taikyo": 1,
+      "parkTotal": 2,
+      "parkVacant": 0,
+      "kanri": "お部屋倶楽部"
+    },
+    {
+      "name": "プライマリー久留米大東",
+      "units": 18,
+      "vacant": 2,
+      "occupied": 16,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 3,
+      "parkVacant": 0,
+      "kanri": "お部屋倶楽部"
+    },
+    {
+      "name": "プライマリー野中町",
+      "units": 12,
+      "vacant": 0,
+      "occupied": 12,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": null,
+      "parkVacant": null,
+      "kanri": "お部屋倶楽部"
+    },
+    {
+      "name": "プライマリー西鉄久留米駅前",
+      "units": 12,
+      "vacant": 1,
+      "occupied": 11,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": null,
+      "parkVacant": null,
+      "kanri": "ウィズザライフ"
+    },
+    {
+      "name": "プライマリー合川C棟",
+      "units": 10,
+      "vacant": 2,
+      "occupied": 8,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": null,
+      "parkVacant": null,
+      "kanri": "ウィズザライフ"
+    },
+    {
+      "name": "プライマリー日吉町",
+      "units": 14,
+      "vacant": 1,
+      "occupied": 13,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 1,
+      "parkVacant": 0,
+      "kanri": "ウィズザライフ"
+    },
+    {
+      "name": "プライマリー鷹の巣",
+      "units": 24,
+      "vacant": 0,
+      "occupied": 24,
+      "applied": 3,
+      "taikyo": 0,
+      "parkTotal": 3,
+      "parkVacant": 0,
+      "kanri": "エイブル"
+    },
+    {
+      "name": "プライマリー戸畑駅前",
+      "units": 21,
+      "vacant": 0,
+      "occupied": 21,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 2,
+      "parkVacant": 0,
+      "kanri": "DL"
+    },
+    {
+      "name": "プライマリー久留米インターA棟",
+      "units": 6,
+      "vacant": 1,
+      "occupied": 5,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 1,
+      "parkVacant": 1,
+      "kanri": "駅前管理システム"
+    },
+    {
+      "name": "プライマリー久留米インターB棟",
+      "units": 6,
+      "vacant": 1,
+      "occupied": 5,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 1,
+      "parkVacant": 0,
+      "kanri": "駅前管理システム"
+    },
+    {
+      "name": "ピュア若宮",
+      "units": 8,
+      "vacant": 0,
+      "occupied": 8,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": null,
+      "parkVacant": null,
+      "kanri": "（株）TT不動産"
+    },
+    {
+      "name": "プライマリー神埼駅前",
+      "units": 8,
+      "vacant": 1,
+      "occupied": 7,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 2,
+      "parkVacant": 0,
+      "kanri": "山﨑不動産"
+    },
+    {
+      "name": "プライマリー太宰府",
+      "units": 6,
+      "vacant": 0,
+      "occupied": 6,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": null,
+      "parkVacant": null,
+      "kanri": "クリフ/アパマン"
+    },
+    {
+      "name": "プライマリー久留米津福駅前",
+      "units": 6,
+      "vacant": 0,
+      "occupied": 6,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 1,
+      "parkVacant": 0,
+      "kanri": "アパマンショップ"
+    },
+    {
+      "name": "自宅",
+      "units": 1,
+      "vacant": 0,
+      "occupied": 1,
+      "applied": 0,
+      "taikyo": 0,
+      "parkTotal": 3,
+      "parkVacant": 0,
+      "kanri": ""
+    }
+  ]
 }
