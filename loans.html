@@ -849,6 +849,21 @@ d("2026/08/04","信用組合","愛知商銀信用組合",
 "融資手数料：融資額の2%",
 "・【諸経費まとめ】融資手数料2%＋（初回のみ）組合費2%（既存組合員は約1.6%）＋融資額の1割を定期預金で拘束\n・【金利】県内3.9%〜／県外4.1%〜\n・運用は明文化されない部分が多く、条件は担当者との個別相談で詰める前提\n・出典：担当者ヒアリング（2026年）");
 
+d("2026/09/15","ノンバンク","セゾンファンデックス",
+"全国対応（提携金融機関経由）\n※NGエリアは提携先による（長崎・佐賀・沖縄 等）",
+"会社員は緩和枠あり（年収700万×勤続5年以上）","○","○",
+"【セゾンファンデックスとは？】\n・宮崎銀行・滋賀・関西みらい・筑波・出光クレジット等の“裏側で担保評価している”保証会社兼・評価エンジン。全国対応・最大5億規模\n・プロパーが難しい今、これら金融機関の融資は実質『セゾンの評価ありき』で可否が決まる\n・使い所＝他行で出ない築古・土地値物件。プロパーが使える先でセゾンを使うのは基本もったいない（金利・手数料が高い）",
+"全国（提携金融機関のあるエリア）",
+"土地値が出る物件／高利回りの築古",
+"提携先によりNGエリアあり（長崎・佐賀・沖縄 等）",
+"○","○","○","○","35年",
+"【評価が出る物件（向いている）】\n・土地値が出る物件が本命＝土地の固定資産税評価が物件価格の50%以上／土地積算6〜7割以上\n・高利回りの築古（築20〜33年・利回り9〜12%〜）。金利が高いぶん利回りで返済比率を収める\n・構造は不問（木造/RCどちらでもOK）／最長35年\n・幹線道路沿い・地方の高積算も相性良し／残債の影響は小さめ（アパートローンを使い切った人も相談価値あり）",
+"評価額×0.8が上限目安→残り2割は緩和枠/無担保併用/入口の打診額設計で圧縮",
+"3%前後（提携先による。宮崎は2.5〜4.2%・実勢2.8〜3.2%）",
+"法人⇒代表者 / 個人⇒原則不要（提携先による）",
+"金利に含む","—","融資額の2.2%前後",
+"【どう評価するか（基準）】\n・担保評価＝物件評価額（＝打診額）×0.8 が基本＝借入上限の目安（例：3,000万物件→評価2,400万）\n・入口の『打診額』の作り方が評価のスタート地点＝最重要\n・セゾン独自評価。役所の公課証明書・評価額は見ない\n・返済比率60%以内で設計\n・会社員の緩和枠：年収700万×勤続5年以上で評価の約1.25倍＋上乗せ最大+1000万まで（1〜2棟目で有効）\n\n【出し方（最短＝宮崎ルート）】\n①物件概要書 ②レントロール ③建物・土地の謄本 ④公図 を担当者メール宛→銀行がFAXでセゾンへ→約3営業日で評価額\n\n【ルートの使い分け】\n・直接打診（宮崎・auじぶん 等）／INVASE経由（滋賀・関西みらい・出光・筑波）。INVASEは審査が遅め・出光は月5件/物件5,000万以上等の制限あり\n\n【足りない2割（自己資金分）の埋め方】\n①会社員の緩和枠 ②無担保併用（滋賀の無担保・公庫）③8掛けしない提携パッケージ業者 ④入口の打診額を設計して評価自体を伸ばす");
+
 })();
 
 // ===== 購入報告データ =====
@@ -1206,6 +1221,9 @@ function renderCard(d,idx){
       '</div>'+
       renderReports(d.名称);
   }
+  if(SAISON_BANKS.indexOf(d.名称)>=0){
+    bodyContent = "<div onclick='gotoSaison()' style='cursor:pointer;background:#FFF3F1;border:1px solid #E8B4AE;color:#C0281E;font-weight:800;font-size:12px;line-height:1.55;padding:8px 11px;border-radius:8px;margin-bottom:10px'>🔗 セゾンファンデックス保証の商品です — 評価基準・対象物件・出し方はこちら ▶</div>" + bodyContent;
+  }
 
   return '<div class="card" id="c'+idx+'">'+
     '<div class="card-head" onclick="tog('+idx+')">'+
@@ -1228,6 +1246,23 @@ function renderCard(d,idx){
 
 function tog(idx){ document.getElementById("c"+idx).classList.toggle("open"); }
 function ftog(i){ document.getElementById("fc"+i).classList.toggle("open"); }
+var SAISON_BANKS=["宮崎銀行","滋賀銀行","関西みらい銀行","筑波銀行","出光クレジット"];
+function gotoSaison(){
+  curType="all"; curQ="";
+  var si=document.getElementById("searchInput"); if(si) si.value="";
+  document.querySelectorAll(".chip").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-type")==="all"); });
+  if(curMode!=="banks"){
+    curMode="banks";
+    document.querySelectorAll(".mtab").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-mode")==="banks"); });
+    var ch=document.querySelector(".chips"); if(ch) ch.style.display="";
+    if(si) si.placeholder="金融機関名・エリアで検索…";
+  }
+  render();
+  var idx=-1; for(var i=0;i<DATA.length;i++){ if(DATA[i].名称==="セゾンファンデックス"){ idx=i; break; } }
+  if(idx<0) return;
+  var el=document.getElementById("c"+idx);
+  if(el){ el.classList.add("open"); setTimeout(function(){ el.scrollIntoView({behavior:"smooth",block:"start"}); },60); }
+}
 
 var curType="all", curQ="", curMode="banks";
 function render(){
