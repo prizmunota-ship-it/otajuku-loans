@@ -96,18 +96,6 @@
   "notes": ""
  },
  {
-  "name": "P花畑駅西",
-  "room": "505",
-  "takyobi": "",
-  "kanri": "イムズ",
-  "kagi": "",
-  "status": "完了",
-  "kanryoYotei": "",
-  "kojihi": "",
-  "itsukin": "",
-  "notes": ""
- },
- {
   "name": "P合川B棟",
   "room": "206",
   "takyobi": "4/25",
@@ -269,6 +257,18 @@
   "takyobi": "",
   "kanri": "山﨑",
   "kagi": "ガスメーター KEYBOX１９１７",
+  "status": "完了",
+  "kanryoYotei": "",
+  "kojihi": "",
+  "itsukin": "",
+  "notes": ""
+ },
+ {
+  "name": "P野中町",
+  "room": "106",
+  "takyobi": "",
+  "kanri": "",
+  "kagi": "",
   "status": "完了",
   "kanryoYotei": "",
   "kojihi": "",
