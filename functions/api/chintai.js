@@ -92,20 +92,33 @@ export async function onRequest(context) {
     // ② 一覧をページ送りで取得
     // pc=50 で1ページ50棟（既定は20棟）。市域が広いと母数が足りず、
     // 半径1.5km内に数件しか残らない事故が起きた（久留米で実測・太田指摘 2026-08-13）。
-    const base = `https://suumo.jp/chintai/${pref}/${sc}/?pc=50` + mdList.map((x) => `&md=${x}`).join('');
-    const items = [];
+    let base = `https://suumo.jp/chintai/${pref}/${sc}/?pc=50` + mdList.map((x) => `&md=${x}`).join('');
+    const requestedTowns=(u.searchParams.get('towns')||'').split(',').map(x=>x.trim()).filter(Boolean).slice(0,20);
+    let selectedTowns=[];
+    if(requestedTowns.length){
+      // Read the site's own town-selection form; never guess town IDs or use a city-wide fallback silently.
+      const cityHtml=await get(base);
+      const townForm=readForm(cityHtml,'js-machiSelectForm');
+      if(!townForm)return json({found:false,reason:'town_selector_unavailable'});
+      const townHtml=await get('https://suumo.jp'+townForm.action+'?'+townForm.params.toString());
+      const region=townSearch(townHtml,requestedTowns);
+      if(!region)return json({found:false,reason:'town_not_matched'});
+      base=region.url;selectedTowns=region.names;
+    }
+    const items = [],seenListings=new Set();
     let total = 0;
     for (let p = 1; p <= pages; p++) {
       const url = base + '&page=' + p;
       const html = await get(url);
       if (!html) break;
       if (p === 1) {
-        const t = html.match(/pagination_set-hit[^>]*>[\s\S]*?([\d,]+)\s*件/);
+        const t = html.match(/pagination_set-hit[^>]*>\s*([\d,]+)\s*(?:<span[^>]*>)?件/);
         if (t) total = parseInt(t[1].replace(/,/g, ''), 10) || 0;
       }
       const got = parseList(html);
-      items.push(...got);
-      if (got.length === 0) break;
+      const fresh=got.filter(it=>{const k=it.href||[it.name,it.addr,it.md,it.men,it.total].join('|');if(seenListings.has(k))return false;seenListings.add(k);return true;});
+      items.push(...fresh);
+      if (fresh.length === 0) break;
     }
     if (!items.length) return json({ found: false, reason: 'no_items', url: base, debug: dbg ? log : undefined });
 
@@ -119,6 +132,7 @@ export async function onRequest(context) {
       url: base,
       sc: sc,
       total: total,
+      selectedTowns,
       items: items,
       park: en.park,
       src: 'SUUMO 賃貸（募集中物件一覧）',
@@ -254,4 +268,32 @@ function parseParking(html) {
   if (!t) return { text: '', fee: 0 };
   const f = t.match(/([\d,]+)\s*円/);
   return { text: t.slice(0, 40), fee: f ? parseInt(f[1].replace(/,/g, ''), 10) : 0 };
+}
+
+
+// Official SUUMO city/town selection forms, verified against the 2026-09-16 HTML.
+function readForm(html,id){
+  const re=new RegExp('<form\\b[^>]*id="'+id+'"[^>]*>[\\s\\S]*?</form>','i');
+  const form=(html.match(re)||[])[0];if(!form)return null;
+  const action=(form.match(/action="([^"?]+)"/)||[])[1];
+  if(!action||!action.startsWith('/jj/chintai/'))return null;
+  const params=new URLSearchParams();
+  for(const m of form.matchAll(/<input\b[^>]*>/gi)){
+    const tag=m[0];if(!/type="hidden"/i.test(tag))continue;
+    const name=(tag.match(/name="([^"]+)"/)||[])[1],value=(tag.match(/value="([^"]*)"/)||[])[1];
+    if(name&&value!=null)params.append(name,value.replace(/&amp;/g,'&'));
+  }
+  return {action,params};
+}
+function townSearch(html,requested){
+  const form=readForm(html,'js-lightboxShiborikomiForm');if(!form)return null;
+  const key=s=>String(s).normalize('NFKC').replace(/[\s　]/g,'').replace(/[0-9].*$/,'');
+  const wanted=requested.map(key),names=[],codes=new Set();
+  for(const m of html.matchAll(/<label\b[^>]*for="oz(\d+)"[^>]*>[\s\S]*?<a\b[^>]*>([^<]+)<\/a>/g)){
+    const name=txt(m[2]);
+    if(!wanted.some(w=>w===key(name)||w.endsWith(key(name))))continue;
+    if(codes.has(m[1]))continue;codes.add(m[1]);names.push(name);form.params.append('oz',m[1]);
+  }
+  if(!codes.size)return null;
+  return {url:'https://suumo.jp'+form.action+'?'+form.params.toString(),names};
 }

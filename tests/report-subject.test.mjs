@@ -152,3 +152,17 @@ test('geocoding queries each address once and never offsets co-located room coor
   await c.geocodeCmp(rows);assert.equal(calls,1);
   assert.ok(rows.every(r=>r.lat===33.24&&r.lon===131.66));
 });
+
+test('structure adjustment is applied to comparable rent and missing estimates stay out of the summary',async()=>{
+  const {c}=setup();await c.selfByAddr(location,'大分市');
+  const rows=Array.from({length:5},(_,i)=>{
+    const base={age:36,men:22.58,md:'1K',lat:location.lat+0.001+i*0.001,lon:location.lon,addr:'山津町'+i};
+    return [{...base,name:'RC比較'+i,struct:'RC',total:33000},{...base,name:'木造比較'+i,struct:'木造',total:30000,lon:location.lon+0.0001}];
+  }).flat();
+  rows.push({name:'SRC未算定',addr:'山津町別',age:36,men:22.58,md:'1K',struct:'SRC',total:40000,lat:location.lat+0.002,lon:location.lon});
+  const output=c.buildCompPaper(rows,{min:24000,max:24000,men:22.58},'','',null,fixture.addr,{md:'1K',center:[location.lat,location.lon],radius:1500});
+  assert.equal(c.window.CMP_STRUCTURE_MODEL.effects['木造'].amount,3000);
+  assert.ok(rows.filter(r=>r.struct==='木造').every(r=>r._adj===33000));
+  assert.equal(rows.find(r=>r.struct==='SRC')._adj,null);
+  assert.ok(output.includes('+3,000円'));assert.ok(output.includes('月額 33,000円'));
+});

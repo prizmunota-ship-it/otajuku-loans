@@ -2,7 +2,6 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>太田塾 物件補足レポート</title>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#1f2937;background:#f1f5f9;font-size:14px;line-height:1.55;}
@@ -140,7 +139,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.14</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.15</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -359,7 +358,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='28'; /* v15.11：住所照合→建物情報の引き継ぎ→比較検索の順序を統一 */
+const APIV='29'; /* v15.11：住所照合→建物情報の引き継ぎ→比較検索の順序を統一 */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -669,6 +668,29 @@ async function suumoSearchCmp(city,pref,md,lat,lon,radius){
       const near=pool.filter(x=>x._d!=null&&x._d<=(radius||1500)+600);
       if(near.length)pool=near;
     }
+    // City-wide first pages can omit the subject's neighborhood. Add town-filtered current listings.
+    window.CMP_REGIONAL=[];
+    if(lat&&lon){
+      const subjectTown=normTown((window.SELF&&window.SELF.addr)||val('paddr')).replace(/[0-9０-９].*$/,'');
+      const nearby=[...new Set(pool.slice().sort((a,b)=>(a._d??9e9)-(b._d??9e9)).map(x=>normTown(x.addr).replace(/[0-9０-９].*$/,'')))];
+      const towns=[...new Set([subjectTown,...nearby].filter(Boolean))].slice(0,20);
+      if(towns.length){
+        setStatus('🔎 本物件周辺の町名から募集を追加検索中…');
+        const regional=await apiJson('/api/chintai?pref='+encodeURIComponent(pref||'')+'&city='+encodeURIComponent(city)
+          +(md?'&md='+encodeURIComponent(mdGroup(md).join(',')):'')+'&pages=15&detail=0&addr=0&towns='+encodeURIComponent(towns.join(',')));
+        if(regional&&regional.found){
+          window.CMP_REGIONAL=regional.selectedTowns||[];
+          j.items=window.ReportComparison.uniqueRooms([...j.items,...(regional.items||[])]);
+          const combined=j.items.filter(x=>!x.anon);
+          window.CMP_FETCHED=combined.length;
+          const locations=[...new Set(combined.map(x=>normTown(x.addr)))].filter(t=>t&&_gsiGeo[t]===undefined);
+          for(let i=0;i<locations.length;i+=8)await Promise.all(locations.slice(i,i+8).map(t=>gsiGeocode(t)));
+          combined.forEach(x=>{const g=_gsiGeo[normTown(x.addr)];x._d=g?Math.round(dist(lat,lon,g.lat,g.lon)):null;});
+          const near=combined.filter(x=>x._d!=null&&x._d<=(radius||1500)+600);
+          pool=near.length?near:combined;
+        }
+      }
+    }
     /* ★★2026-08-30 太田指示＝「条件が近いものを（同じ建物でもいいので）100室くらい出して、
        その中からさらに近いものを10件に絞る」。
        それまでは「間取り・面積で絞った結果が6件未満なら、その条件を丸ごと捨てる」という
@@ -815,8 +837,9 @@ async function autoCmpClick(){
 /* --- 類似物件 行UI --- */
 function addCmpRow(v,meta){
   const d=document.createElement('div');d.className='cmprow';
-  if(meta)d.dataset.meta=JSON.stringify({...meta,name:v&&v[0],addr:v&&v[1]});
-  d.innerHTML=`<input placeholder="物件名" value="${v&&v[0]||''}"><input placeholder="住所（所在地）" value="${v&&v[1]||''}"><input type="number" placeholder="築年" value="${v&&v[2]||''}"><input type="number" step="0.01" placeholder="面積㎡" value="${v&&v[3]||''}"><input type="number" placeholder="月額円" value="${v&&v[4]||''}"><button type="button" class="del" onclick="this.parentNode.remove()">✕</button>`;
+  if(meta&&(!meta.name||(meta.name===v?.[0]&&meta.addr===v?.[1])))d.dataset.meta=JSON.stringify({...meta,name:v&&v[0],addr:v&&v[1]});
+  v=(v||[]).map(x=>esc(x??''));
+  d.innerHTML=`<input placeholder="物件名" value="${v&&v[0]||''}"><input placeholder="住所（所在地）" value="${v&&v[1]||''}"><input type="number" placeholder="築年" value="${v[2]??''}"><input type="number" step="0.01" placeholder="面積㎡" value="${v&&v[3]||''}"><input type="number" placeholder="月額円" value="${v&&v[4]||''}"><button type="button" class="del" onclick="this.parentNode.remove()">✕</button>`;
   document.getElementById('cmpRows').appendChild(d);
 }
 function clearCmpRows(){document.getElementById('cmpRows').innerHTML='';for(let i=0;i<3;i++)addCmpRow();}
@@ -1490,6 +1513,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
           +((!window.CMP_FROM_ASSESS&&ownAge!=null&&ageTol()<50)?'／築年数 '+Math.max(0,ownAge-ageTol())+'〜'+(ownAge+ageTol())+'年（本物件±'+ageTol()+'年）':'');
         return `<div class="note scronly" style="border:1px dashed #cbd5e1;padding:7px 9px;margin:6px 0 0;background:#f8fafc;color:#334155">🛠️ <b>作成者向けメモ（印刷されません）</b><br>${cond}<br>`
           +(window.CMP_POOL_N>0?`取得した建物名判明・重複整理後の募集 ${(window.CMP_FETCHED||0).toLocaleString()}室 → 近隣候補 ${(window.CMP_POOL_ALL||0).toLocaleString()}室 → 条件順に ${window.CMP_POOL_N}室を確認対象（${window.CMP_CHECKED||0}/${window.CMP_BUILDINGS||0}棟の詳細照会が完了） → 条件適合 ${window.CMP_MATCHED||0}室 → A4掲載 ${cmp.length}室。${crossStructure?'同一建物の別条件の部屋も掲載。賃料目安は1棟1例で集計。':'掲載は1棟1例。'}<br>`:'')
+          +(window.CMP_REGIONAL&&window.CMP_REGIONAL.length?'町名を絞った追加検索：'+window.CMP_REGIONAL.map(esc).join('・')+'。<br>':'')
           /* ⚠️築年が未取得なら築年の条件は一切効いていない。効いていない条件を効いたように書かない */
           +(cmp.length<5?`調査対象範囲（半径${(opts.radius||1500).toLocaleString()}m）内の取得済み候補から、掲載できた募集事例は${cmp.length}件です（地域内の全募集件数ではありません）。`
             :(ownAge!=null&&ageTol()<50?`築年±${ageTol()}年の自動条件で${cmp.length}件です。`
@@ -2908,5 +2932,6 @@ async function buildReport(g){
 /* アプリ内ブラウザは印刷できないので、作成する前（＝入力し直しにならないうち）に警告を出す */
 if(IS_INAPP){const w=document.getElementById('inappwarn');if(w)w.style.display='block';}
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGmP_ru86M2qKEYob0Am5BsHcHbOz8zCI&language=ja&region=JP&libraries=places&callback=_gload" async defer></script>
 <script src="/usage.js"></script>
 </body></html>
