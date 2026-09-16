@@ -180,3 +180,12 @@ test('nearby town search recovers a wooden building absent from the city-wide pa
   assert.ok(queries.some(u=>decodeURIComponent(u).includes('&towns=大分県大分市山津町')));
   assert.ok(added.some(r=>r.v[0]==='町名検索で発見した木造'&&r.m.struct==='木造'));
 });
+
+test('the subject building never re-enters comparisons through its archived ads',async()=>{
+  const {c}=setup();await c.selfByAddr(location,'大分市');
+  const subject={name:'プリンスヴィラ',addr:fixture.addr,age:36,men:22.58,total:31000,struct:'RC',md:'1K',lat:location.lat,lon:location.lon};
+  c.window.CMPHIST=new Map([['プリンスヴィラ',[{period:'2021年8月',md:'1K',men:22.58,rent:24000,y:2021,mo:8}]]]);
+  c.buildCompPaper([subject],{min:24000,max:24000,men:22.58},'','',null,fixture.addr,{md:'1K',center:[location.lat,location.lon],radius:1500});
+  assert.equal(c.window.SEIYAKU.length,0);
+  assert.ok(c.window.CMP_EXCLUDED.some(r=>r.reason==='本物件または同じ名前の別棟'));
+});

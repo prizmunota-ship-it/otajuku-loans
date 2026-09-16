@@ -55,9 +55,12 @@ table.lst td.no{width:34px;text-align:center;font-weight:800;color:#fff;}
 table.lst td.no span{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:50%;font-size:11px;}
 table.lst td.r{text-align:right;white-space:nowrap;font-weight:700;}
 table.lst td.nm{font-weight:700;}
-table.lst.cmp td{font-size:10.5px;padding:2px 5px;}
+table.lst.cmp{table-layout:fixed;}
+table.lst.cmp th{font-size:10px;padding:3px;white-space:normal;}
+table.lst.cmp td{font-size:10.5px;padding:2px 3px;overflow-wrap:anywhere;}
+table.lst.cmp td:nth-child(3){white-space:normal!important;}
 table.calc.cmpspec td{padding:2px 6px;font-size:11px;}
-table.lst.cmp td.nm{font-size:11px;white-space:nowrap;}
+table.lst.cmp td.nm{font-size:11px;white-space:normal;}
 table.lst.cmp td.no span{width:19px;height:19px;line-height:19px;font-size:10px;}
 .note{font-size:9.5px;color:#94a3b8;margin-top:5px;line-height:1.45;border-top:1px solid #eef2f2;padding-top:5px;}
 .gbtn{display:inline-block;margin:2px 0 10px;font-size:11.5px;font-weight:800;color:#0f766e;text-decoration:none;border:1px solid #99f6e4;background:#f0fdfa;padding:6px 12px;border-radius:7px;}
@@ -139,7 +142,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.15</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.16</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1168,6 +1171,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const cand=[];
       allRows.forEach(c=>{
         if(c.d==null||c.d>R)return;
+        if(ownNames.length&&ownNames.indexOf(baseName(c.name))>=0)return;
         if(pickedKeys.has(bkey(c.name)))return;
         const hs=window.CMPHIST.get(nzName(c.name));if(!hs||!hs.length)return;
         if(!crossStructure&&ownCat&&c.struct&&structCat(c.struct)&&structCat(c.struct)!==ownCat)return;
@@ -1413,7 +1417,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       return bits.length?'<div class="note scronly" style="border:0;margin:0 0 8px;padding:0;line-height:1.7">'+bits.join('<br>')+'</div>':'';
     })()}`;
   /* 比較表の「本物件」行（築年は出所のある値だけ。無ければ「—」） */
-  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件${stationTxt?'（'+stationTxt.replace(/^・/,'')+'）':''}</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})(structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct))}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${hasAdj?'<span style="color:#166534;font-weight:700">基準</span>':(ownUnit>0?ownUnit.toLocaleString()+'円':'—')}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
+  if(hasOwn)rows+=`<tr class="own"><td class="no"><span style="background:#16a34a">★</span></td><td class="nm">本物件</td><td style="font-size:11px">${addr.replace(/^.*?[都道府県]/,'').split(/[0-9０-９]/)[0]||''}</td><td class="r">—</td><td class="r">${ownAgeVal==null?'—':(ownAgeVal<=0?'新築':'築'+ownAgeVal+'年')}</td><td style="font-size:10.5px">${(s=>{const t=String(s||'').replace(/ＲＣ/g,'RC');const m=t.match(/(SRC|鉄骨鉄筋|RC|鉄筋|木造|軽量鉄骨|鉄骨|ALC|ブロック)/);return m?({'鉄骨鉄筋':'SRC','鉄筋':'RC','軽量鉄骨':'軽鉄'}[m[1]]||m[1]):'—';})(structIn()||(window.SELF&&window.SELF.spec&&window.SELF.spec.struct)||(window.SELF&&window.SELF.struct))}</td><td class="r">${own.men?own.men.toFixed(2)+'㎡':'—'}</td><td class="r">${ownRent}</td><td class="r">${hasAdj?'<span style="color:#166534;font-weight:700">基準</span>':(ownUnit>0?ownUnit.toLocaleString()+'円':'—')}</td><td class="r" style="font-size:10.5px">${parkTxt(window.SELF&&window.SELF.name||'')}</td></tr>`;
   const kpi=specTbl; /* ℹ️の長い案内は廃止（太田指示 2026-08-14「内容よくわからないので不要」） */
   let note='',tbl='';
   if(cmp.length===0){
@@ -1454,7 +1458,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       const m=mapDiv('sm');
       MAPS.push({id:m.id,center:opts.center,radius:opts.radius||1500,fit:'markers',
         markers:withGeo.map(c=>({lat:c.lat,lon:c.lon,label:c.no,color:'#d97706',name:c.name+'（'+c.total.toLocaleString()+'円）'}))
-          .concat((window.SEIYAKU||[]).filter(x=>x.c.lat!=null&&x.c.lon!=null).map(x=>({lat:x.c.lat,lon:x.c.lon,label:x.no,color:'#2563eb',name:x.c.name+'（成約 '+x.period+'）'})))});
+          .concat((window.SEIYAKU||[]).filter(x=>x.c.lat!=null&&x.c.lon!=null).map(x=>({lat:x.c.lat,lon:x.c.lon,label:x.no,color:'#2563eb',name:x.c.name+'（掲載履歴 '+x.period+'）'})))});
       mapHtml=m.html; /* 📍の説明は削除（太田指示 2026-08-14「地図上でわかる」） */
     }
     /* SUUMO物件ライブラリーで本物件の実募集が取れていれば、その基準を明示する */
@@ -1470,7 +1474,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       </div>`;
     }
     tbl=mapHtml+selfBox+`<div class="bandttl">${hasOwn?'同賃料帯の募集実例':(noOwnSpec?'周辺で募集中の賃貸物件（距離順）':'周辺で募集中の類似物件')}</div>${areaWarn}${specWarn}
-      <table class="lst cmp"><tr><th style="width:34px">No</th><th>物件名</th><th>所在地</th><th style="width:60px;text-align:right">本物件から</th><th style="width:52px;text-align:right">築年</th><th style="width:62px">${crossStructure?'構造<br>参考補正':'構造'}</th><th style="width:68px;text-align:right">面積</th><th style="width:90px;text-align:right">月額総額</th><th style="width:70px;text-align:right">${hasAdj?'参考補正後<div style="font-size:8.5px;font-weight:400;color:#94a3b8">本物件条件</div>':'㎡単価'}</th><th style="width:66px;text-align:right">駐車場</th></tr>${rows}</table>`
+      <table class="lst cmp"><colgroup>${[26,122,110,48,48,64,58,72,72,70].map(w=>`<col style="width:${w/690*100}%">`).join('')}</colgroup><tr><th>No</th><th>物件名</th><th>所在地</th><th>本物件<br>から</th><th>築年</th><th>${crossStructure?'構造<br>参考補正':'構造'}</th><th>面積</th><th>月額総額</th><th>${hasAdj?'参考補正後<div style="font-size:8.5px;font-weight:400;color:#94a3b8">本物件条件</div>':'㎡単価'}</th><th>駐車場</th></tr>${rows}</table>`
       /* ⚠️注記は固定文にしない。実際に補正に使えた項目だけを書く（本物件の築年が未取得なら
          「築年数の差で引き直した」は嘘になる。2026-09-16 実測で修正） */
       +(hasAdj?(()=>{
