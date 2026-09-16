@@ -81,8 +81,10 @@ test('switching property clears automatic subject data but preserves deliberate 
 test('comparison includes the recovered building age in rent adjustment',async()=>{
   const {c}=setup();await c.selfByAddr(location,'大分市');
   const cmp={name:'比較用マンション',addr:'大分県大分市山津町2丁目2-2',age:40,men:22.58,total:30000,struct:'RC'};
-  c.buildCompPaper([cmp],{min:24000,max:24000,men:22.58},'','',null,fixture.addr,{name:c.val('paddr'),md:'1K'});
+  const out=c.buildCompPaper([cmp],{min:24000,max:24000,men:22.58},'','',null,fixture.addr,{name:c.val('paddr'),md:'1K'});
   assert.equal(cmp._adj,32000);assert.ok(cmp._adjUsed.includes('築年数'));
+  assert.ok(out.includes('2021年8月の掲載賃料'));
+  assert.ok(!out.includes('早期の成約が十分見込める'));
 });
 
 test('full lot numbers match across notation changes; neighboring and truncated lots do not',()=>{

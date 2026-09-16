@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.12</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.13</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1399,7 +1399,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     const stMin=parseInt((stationTxt.match(/徒歩(\d+)分/)||[])[1]||'99',10);
     const sBits=[];if(ownAgeVal!=null)sBits.push(ownAgeVal<=0?'新築':(ownAgeVal<=5?'築浅':'築'+ownAgeVal+'年'));if(stationTxt&&stMin<=10)sBits.push('駅近');
     const strength=sBits.length?sBits.join('×')+'の物件力':'本物件の立地条件';
-    note=hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>${rentKey==='homes-hist'?'（'+(rentPeriod||'直近')+'の募集実績）':''}は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
+    note=hasOwn&&rentKey==='homes-hist'?`<div class="evalbox"><span class="tt">【募集事例との比較】</span>今回取得した類似物件の募集額は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>です。本物件の<b>${ownRent}</b>は<b>${rentPeriod||'過去'}の掲載賃料</b>で、現在の賃料・管理費は未確認です。時期と費用の条件が異なるため、そのまま増額余地や成約見込みを示すものではありません。</div>`:hasOwn?`<div class="evalbox"><span class="tt">【賃料設定の考え方】</span>調査対象範囲内で現在募集中の同間取り・同規模の物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>で推移している。${oldTxt}${newTxt}${ucTxt}本物件の<b>${ownRent}</b>${rentKey==='homes-hist'?'（'+(rentPeriod||'直近')+'の募集実績）':''}は<b>${pos}</b>であり、${strength}を踏まえれば<b>早期の成約が十分見込める設定</b>である。`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`
       :`<div class="evalbox">周辺で現在募集中の類似物件は月額総額<b>${manEn(rMin)}〜${manEn(rMax)}</b>の帯を形成。${oldTxt}`+(appeal?`<div class="appeal">◎ ${appeal}</div>`:'')+`</div>`;
     /* 比較物件の位置図（ジオコーディング成功分に番号ピン） */
     let mapHtml='';
@@ -1439,7 +1439,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
         <span style="font-size:12px;font-weight:800;color:#166534;white-space:nowrap">📈 賃料引き直しの目安</span>
         <span style="font-size:19px;font-weight:900;color:#15803d;line-height:1">月額 ${reset.est.toLocaleString()}円</span>
         <span style="font-size:11px;color:#166534">（${reset.lo.toLocaleString()}〜${reset.hi.toLocaleString()}円）</span>
-        ${hasOwn?`<span style="font-size:11.5px;font-weight:800;color:${reset.est>=own.min?'#15803d':'#9a3412'}">現在 ${own.min.toLocaleString()}円 → ${reset.est>=own.min?'＋':'△'}${Math.abs(reset.est-own.min).toLocaleString()}円/月（年 ${reset.est>=own.min?'＋':'△'}${(Math.abs(reset.est-own.min)*12).toLocaleString()}円）</span>`:''}
+        ${hasOwn&&rentKey==='homes-hist'?`<span style="font-size:11.5px;color:#64748b">参考：${rentPeriod||'過去'}の掲載賃料 ${own.min.toLocaleString()}円（現在の賃料・管理費は未確認）</span>`:hasOwn?`<span style="font-size:11.5px;font-weight:800;color:${reset.est>=own.min?'#15803d':'#9a3412'}">現在 ${own.min.toLocaleString()}円 → ${reset.est>=own.min?'＋':'△'}${Math.abs(reset.est-own.min).toLocaleString()}円/月（年 ${reset.est>=own.min?'＋':'△'}${(Math.abs(reset.est-own.min)*12).toLocaleString()}円）</span>`:''}
         <span style="font-size:9.5px;color:#166534;flex-basis:100%;line-height:1.4">${reset.mode==='adj'
           ?`周辺${reset.wide?`半径${(window.CMP_WIDE_R||0).toLocaleString()}m以内の`:''}${reset.basis}${reset.n}件を、本物件の${reset.kinds}の差で補正した金額の中央値（${reset.med.toLocaleString()}円/㎡相当）。補正額＝専有面積1㎡あたり500円・築年1年あたり500円・駅徒歩1分あたり300円（募集条件・室内状況により変動）`
           :`周辺${reset.basis}${reset.n}件の㎡単価 中央値${reset.med.toLocaleString()}円/㎡ × ${own.men.toFixed(2)}㎡ による試算（募集条件・室内状況により変動）`}</span>
