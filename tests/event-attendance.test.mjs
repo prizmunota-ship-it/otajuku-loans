@@ -68,6 +68,27 @@ test('events without attendance reject read, save and clear, and store nothing',
  for(const body of [{eventId:empower},{eventId:empower,...reply,answers:{main:'yes'}},{eventId:empower,action:'clear'}]) assert.equal((await send(body)).status,409);
  assert.equal(kv.data.size,0);
 });
+test('回答は追加された順で新しい人が上。編集しても位置は動かず、移行済みは名前順にならぶ',async()=>{
+ const kv=new MemoryKV();let clock='2026-09-10T00:00:00Z';
+ const handler=createHandler(async()=>new Response('_member("ok")'),()=>new Date(clock));
+ const post=async body=>(await handler({request:new Request('https://otajuku-loans.pages.dev/api/event-attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId,email:'member@example.test',action:'read',...body})}),env:{ZAIKO_KV:kv}})).json();
+ const names=async()=>(await post({})).replies.map(row=>row.name);
+ await post({...reply,email:'first@example.test',name:'あ 先に回答'});
+ clock='2026-09-11T00:00:00Z';await post({...reply,email:'second@example.test',name:'ん あとで回答'});
+ assert.deepEqual(await names(),['ん あとで回答','あ 先に回答']);
+ clock='2026-09-12T00:00:00Z';
+ await post({...reply,email:'first@example.test',name:'あ 先に回答',answers:{viewing:'no',dinner:'yes'}});
+ assert.deepEqual(await names(),['ん あとで回答','あ 先に回答']);
+ // 取消してから再回答した人は、新しく追加された扱いで先頭に戻る。
+ await post({email:'first@example.test',action:'clear'});
+ clock='2026-09-13T00:00:00Z';await post({...reply,email:'first@example.test',name:'あ 先に回答'});
+ assert.deepEqual(await names(),['あ 先に回答','ん あとで回答']);
+ // createdAt を持たない移行済みの回答は updatedAt で代用し、一括移行で同時刻なら名前順。
+ const imported=new MemoryKV();const festival='2026-10-22-festival';
+ for(const name of ['ん 移行B','あ 移行A']) await imported.put('event-rsvp:v1:'+festival+':'+createHash('sha256').update(name).digest('hex'),JSON.stringify({id:createHash('sha256').update(name).digest('hex'),name,answers:{main:'yes'},comment:'',updatedAt:'2026-09-13T22:56:30.455Z'}));
+ const read=await (await handler({request:new Request('https://otajuku-loans.pages.dev/api/event-attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:festival,email:'member@example.test',action:'read'})}),env:{ZAIKO_KV:imported}})).json();
+ assert.deepEqual(read.replies.map(row=>row.name),['あ 移行A','ん 移行B']);
+});
 test('event data is unique with separate viewing/dinner and complete existing schedule',()=>{
  const all=events.flatMap(m=>m.events);assert.equal(new Set(all.map(e=>e.id)).size,all.length);
  assert.equal(all.filter(e=>e.id===eventId).length,1);assert.equal(all.find(e=>e.id===eventId).sessions.length,2);

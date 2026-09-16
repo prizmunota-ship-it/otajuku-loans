@@ -81,7 +81,10 @@
     };
 
     const OpenEventContext = React.createContext(() => {});
-    const mergeReply = (rows, mine) => [...rows.filter(row => row.id !== mine.id), mine].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    // 回答が追加された順で、新しい人ほど上（サーバー側 event-attendance.js と同じ並び）。
+    const addedAt = row => row.createdAt || row.updatedAt || '';
+    const byNewestFirst = (a, b) => addedAt(b).localeCompare(addedAt(a)) || a.name.localeCompare(b.name, 'ja');
+    const mergeReply = (rows, mine) => [...rows.filter(row => row.id !== mine.id), mine].sort(byNewestFirst);
     const countReplies = (rows, sessions) => Object.fromEntries(sessions.map(s => [s.id, {
       yes: rows.filter(row => row.answers[s.id] === 'yes').length,
       no: rows.filter(row => row.answers[s.id] === 'no').length

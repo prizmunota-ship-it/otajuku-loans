@@ -51,6 +51,11 @@ async function loadReplies(kv, eventId) {
   return all.filter(reply => !reply.withdrawn);
 }
 
+// 回答が追加された順で、新しい人ほど上。createdAt の無い移行済み回答は updatedAt で代用し、
+// 同時刻（一括移行分）は名前順にならして表示がぶれないようにする。
+const addedAt = reply => reply.createdAt || reply.updatedAt || '';
+const byNewestFirst = (a, b) => addedAt(b).localeCompare(addedAt(a)) || a.name.localeCompare(b.name, 'ja');
+
 function summarize(replies, event) {
   const totals = Object.fromEntries(event.sessions.map(session => [session.id, {yes: 0, no: 0}]));
   for (const reply of replies) for (const session of event.sessions) {
@@ -98,13 +103,17 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
         if (closed) return json({ok: false, error: 'closed'}, 409);
         const fields = validateReply(body, event);
         if (!fields) return json({ok: false, error: 'invalid_reply'}, 400);
-        const mine = {...fields, id, updatedAt: now().toISOString()};
+        // 回答を変更しても並び順が動かないよう、最初に回答した時刻を引き継ぐ。
+        // 取消し済み（withdrawn）から再回答した場合は、新しく追加された扱いにする。
+        const previous = await kv.get(key, 'json').catch(() => null);
+        const createdAt = previous && !previous.withdrawn && previous.createdAt ? previous.createdAt : now().toISOString();
+        const mine = {...fields, id, createdAt, updatedAt: now().toISOString()};
         await kv.put(key, JSON.stringify(mine));
         // Do not read-after-write: KV replicas may still contain an earlier value.
         return json({ok: true, mine, closed: false});
       }
       const replies = await loadReplies(kv, event.id);
-      replies.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+      replies.sort(byNewestFirst);
       return json({ok: true, replies, totals: summarize(replies, event), mine: replies.find(reply => reply.id === id) || null, closed, checkedAt: now().toISOString()});
     } catch (error) {
       const member = error.message === 'member_unavailable' || error.name === 'TimeoutError';
