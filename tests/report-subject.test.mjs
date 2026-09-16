@@ -166,3 +166,17 @@ test('structure adjustment is applied to comparable rent and missing estimates s
   assert.equal(rows.find(r=>r.struct==='SRC')._adj,null);
   assert.ok(output.includes('+3,000円'));assert.ok(output.includes('月額 33,000円'));
 });
+
+test('nearby town search recovers a wooden building absent from the city-wide pages',async()=>{
+  const {c}=setup();c.applySelfBuilding(fixture);c.geos={};const added=[],queries=[];
+  vm.runInContext('const _gsiGeo=geos;',c);vm.runInContext(fn('normTown'),c);
+  c.gsiGeocode=async q=>(c.geos[q]={lat:location.lat+0.0001,lon:location.lon});
+  c.selfFromChintai=()=>false;
+  const base={addr:'大分県大分市山津町２',md:'1K',age:36,men:22,total:30000};
+  c.apiJson=async u=>{queries.push(u);return u.includes('&towns=')?{found:true,selectedTowns:['山津町'],items:[{...base,name:'町名検索で発見した木造',href:'/wood'}]}:{found:true,items:[{...base,name:'市内一覧にあったRC',href:'/rc'}]};};
+  c.fetch=async(_u,o)=>({json:async()=>({found:true,items:JSON.parse(o.body).rows.map(r=>({...r,bstruct:r.href==='/wood'?'木造':'RC'}))})});
+  c.addCmpRow=(v,m)=>added.push({v,m});vm.runInContext(fn('suumoSearchCmp'),c);
+  assert.equal(await c.suumoSearchCmp('大分市','大分県','1K',location.lat,location.lon,1500),2);
+  assert.ok(queries.some(u=>decodeURIComponent(u).includes('&towns=大分県大分市山津町')));
+  assert.ok(added.some(r=>r.v[0]==='町名検索で発見した木造'&&r.m.struct==='木造'));
+});
