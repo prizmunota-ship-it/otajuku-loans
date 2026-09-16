@@ -18,18 +18,16 @@
 .event-content h2{font-size:25px;line-height:1.5;font-weight:900;margin:8px 0 14px}.event-date{font-size:18px;font-weight:800}.event-time{color:#946212;font-weight:700;margin-bottom:18px}
 .event-facts{background:white;border:1px solid #eee3c7;border-radius:14px;padding:12px 16px;margin:18px 0}.event-facts>div{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:5px 0}.event-facts dt{color:#8a7857;font-size:12px;font-weight:700}.event-facts dd{white-space:pre-line;font-weight:600}
 .event-description p{margin:0 0 12px}.event-content h3{font-size:17px;font-weight:800;margin:0 0 12px}.event-agenda{margin:22px 0}.event-agenda>div{display:grid;grid-template-columns:145px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-agenda strong{font-size:13px;color:#885d18}.event-notice{padding:12px 14px;border-left:3px solid #dfab2e;background:#fff4d5;margin:16px 0;font-size:13px}
-.event-banks{margin:22px 0}.event-banks h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px}.event-banks h3 small{font-size:12px;font-weight:600;color:#8a7f6b}
-.bank-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.bank-item{border:1px solid #eee6d6;border-radius:10px;padding:12px 14px;background:#fffdf8}
-.bank-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.bank-name{font-size:15px;font-weight:800}.bank-branch{font-size:13px;color:#6b6252}
-.bank-num{margin-left:auto;font-size:12px;font-weight:700;color:#885d18;background:#fff4d5;border-radius:999px;padding:2px 9px;white-space:nowrap}
-.bank-people{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.bank-people li{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;font-size:14px}
-.bank-title{font-size:12px;color:#885d18;background:#f6efe1;border-radius:4px;padding:1px 7px;white-space:nowrap}
-.bank-person{font-weight:700}.bank-kana{font-size:11px;color:#8a7f6b}
-.bank-declined{margin:10px 0 0;font-size:12px;color:#8a7f6b}
-@media(max-width:600px){.bank-num{margin-left:0}}
+.event-banks{margin:20px 0}.event-banks h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px}.event-banks h3 small{font-size:12px;font-weight:600;color:#8a7f6b}
+.bank-list{list-style:none;margin:0;padding:0}
+.bank-item{padding:7px 0;border-bottom:1px solid #eee6d6;font-size:13px;line-height:1.7}
+.bank-name{font-size:14px;font-weight:800}.bank-branch{margin-left:4px;color:#6b6252}
+.bank-num{margin-left:5px;font-size:11px;font-weight:700;color:#885d18;background:#fff4d5;border-radius:999px;padding:1px 7px;white-space:nowrap}
+.bank-people{margin-left:4px;color:#3d3a34}
+.bank-person{white-space:nowrap}.bank-sep{color:#c7bda8;margin:0 2px}
+.bank-title{font-size:11px;color:#885d18;margin-right:3px}
+.bank-kana{font-size:11px;color:#8a7f6b}
+.bank-declined{margin:8px 0 0;font-size:12px;color:#8a7f6b}
 .event-zoom{display:block;text-align:center;padding:12px;border:1px solid #bdd6f5;border-radius:12px;background:#eaf3ff;color:#1e5094;font-weight:800;margin:18px 0}.event-answer-card{background:#fff;border:1px solid #e8d69f;border-radius:18px;padding:20px;margin-top:26px;box-shadow:0 4px 16px #87620006}
 .event-jump{min-height:44px;border-radius:10px;background:#fff0ba;padding:9px 16px;font-weight:700;color:#654810;margin-bottom:6px}.event-answer-card{scroll-margin-top:64px}
 .event-small{font-size:12px;color:#6f716c;line-height:1.65;margin:7px 0 12px}.event-label{display:block;font-weight:700;font-size:13px;margin:18px 0 6px}.event-input{display:block;width:100%;border:1px solid #c9c9be;border-radius:10px;background:#fff;padding:11px 12px;font-family:inherit;font-size:16px;box-sizing:border-box}.event-input:focus{outline:2px solid #d6a426;outline-offset:2px}
@@ -209,8 +207,8 @@
               {event.banks && event.banks.confirmed && event.banks.confirmed.length>0 && <div className="event-banks">
                 <h3>ご参加が決まっている金融機関<small>{event.banks.confirmed.length}機関{event.banks.confirmed.reduce((n,b)=>n+b.members.length,0)}名{event.banks.asOf?`／${event.banks.asOf}`:''}</small></h3>
                 <ul className="bank-list">{event.banks.confirmed.map((b,i)=><li className="bank-item" key={i}>
-                  <div className="bank-head"><span className="bank-name">{b.name}</span>{b.branch && <span className="bank-branch">{b.branch}</span>}<span className="bank-num">{b.members.length}名</span></div>
-                  <ul className="bank-people">{b.members.map((m,j)=><li key={j}>{m.title && <span className="bank-title">{m.title}</span>}<span className="bank-person">{m.name}</span>{m.kana && <span className="bank-kana">{m.kana}</span>}</li>)}</ul>
+                  <span className="bank-name">{b.name}</span>{b.branch && <span className="bank-branch">{b.branch}</span>}<span className="bank-num">{b.members.length}名</span>
+                  <span className="bank-people">{b.members.map((m,j)=><span className="bank-person" key={j}>{j>0 && <span className="bank-sep">／</span>}{m.title && <span className="bank-title">{m.title}</span>}{m.name}{m.kana && <span className="bank-kana">（{m.kana}）</span>}</span>)}</span>
                 </li>)}</ul>
                 {event.banks.note && <p className="event-small">{event.banks.note}</p>}
                 {event.banks.declined && event.banks.declined.length>0 && <p className="bank-declined">今回は見送り（確定）：{event.banks.declined.join('／')}</p>}
