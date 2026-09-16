@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.11</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.12</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1086,8 +1086,8 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       c._men=own.men>0&&c.men>0?Math.abs(c.men-own.men):99;
       c._age=(ownAge!=null&&c.age!=null)?Math.abs(c.age-ownAge):99;
     });
-    /* 並び：①本物件と同等以上の賃料（賃料設定の妥当性を示すため）②条件の近さ ③距離 */
-    kept.sort((a,b)=>(a._adv-b._adv)||(a._sc-b._sc)||(a.d-b.d));
+    /* 賃料が高い事例を優先せず、条件の近さ・距離で選ぶ。 */
+    kept.sort((a,b)=>(a._sc-b._sc)||(a.d-b.d));
     /* ★同じ建物で複数の部屋が募集中だと、その物件だけで表が埋まって他の物件が出ない
        （操川さん指摘 2026-08-13）。1棟につき最も条件の近い1部屋だけ残す。 */
     const seenB=new Set(),uniq=[];
@@ -1103,32 +1103,10 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
       seenB.add(k);seenB.add(p);arr.push(c);
     });
     dedupe(kept,uniq);
-    /* ★件数の方針（太田指示 2026-08-13）＝標準10件、ただし最低5件は確保する。
-       厳格な条件（同間取り・面積±25%）で5件に届かないときだけ、範囲内の物件を
-       距離順で足して5件まで埋める（範囲外・位置不明は地図に出せないので足さない）。 */
-    const CAP=10, MIN=10; /* 範囲内・位置特定できた物件は10件まで使う（太田の目標件数） */
-    if(uniq.length<MIN&&soft.length){
-      /* ★㎡単価が極端に高い物件（家具家電付き・短期向けのレオパレス系など）は
-         賃料帯を壊して分析文の説得力を落とすので、緩和補充では採用しない。
-         基準＝範囲内物件の㎡単価の中央値の1.5倍（若宮で中央値1,800円に対し
-         レオパレス3,070円が1.8倍では通ってしまった・2026-08-14 実測）。 */
-      const us=kept.concat(soft).filter(c=>c.men>0&&c.total>0).map(c=>c.total/c.men).sort((a,b)=>a-b);
-      const umed=us.length?us[Math.floor(us.length/2)]:0;
-      if(umed>0)soft=soft.filter(c=>{
-        if(!(c.men>0&&c.total>0))return true;
-        if(c.total/c.men<=umed*1.5)return true;
-        window.CMP_EXCLUDED.push({name:c.name,reason:'㎡単価が周辺と大きく異なる（'+Math.round(c.total/c.men).toLocaleString()+'円/㎡）'});
-        return false;
-      });
-      /* 補充も「条件の近さ（間取り・面積・築年・構造・距離）」の点数順に埋める（2026-08-30）。
-         築年の近さだけで埋めると、間取りや面積が大きく外れた物件が先に入っていた。 */
-      soft.sort((a,b)=>(a._sc-b._sc)||(a.d-b.d));
-      const add=[];dedupe(soft,add);
-      add.forEach(c=>{if(uniq.length<MIN){c._relaxed=c._soft;uniq.push(c);}
-        else window.CMP_EXCLUDED.push({name:c.name,reason:c._soft});});
-    }else{
-      soft.forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:c._soft}));
-    }
+    /* 条件外の物件を件数合わせで補充しない。少ない場合は実数を示し、
+       利用者が範囲・築年条件を変更したときだけ条件を広げる。 */
+    const CAP=10;
+    soft.forEach(c=>window.CMP_EXCLUDED.push({name:c.name,reason:c._soft}));
     outCnt=window.CMP_EXCLUDED.length;
     /* ★★2026-08-30＝賃料引き直しの母数を広げる。
        表に載る10件だけだと、査定システムの100戸に対してサンプルが少なすぎる

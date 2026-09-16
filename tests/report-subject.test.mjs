@@ -27,7 +27,7 @@ function setup(){
   for(const name of ['setByData','srcOf','userNum','looksLikeName','prefOf','cityOf','addrOnly',
     'selfNeed','selfNeedsBuilding','applySelfBuilding','resetSubjectLookup','applySelfRooms',
     'bantiAddrs','selfByAddr','selfBySpecScan','ownAgeNow','ageTol','mdGroup','sameMd',
-    'buildCompPaper','manEn','buildReport'])vm.runInContext(fn(name),context);
+    'buildCompPaper','manEn','nzName','buildReport'])vm.runInContext(fn(name),context);
   vm.runInContext("const RE_BANTI=/[0-9０-９]\\s*[-−ー－‐]\\s*[0-9０-９]|[0-9０-９]+\\s*丁目\\s*[-−ー－‐]?\\s*[0-9０-９]|番地?\\s*[0-9０-９]/;",context);
   get('paddr').value='大分県大分市山津町2-1-13';get('pradius').value='1500';
   return {c:context,get};
@@ -91,6 +91,21 @@ test('full lot numbers match across notation changes; neighboring and truncated 
   const base=c.bantiKey('大分県大分市山津町2-1-13');
   for(const addr of ['大分県大分市山津町２丁目１－１３','大分県大分市山津町2丁目1番13号'])assert.ok(c.bantiSame(base,c.bantiKey(addr)));
   for(const addr of ['大分県大分市山津町2-1','大分県大分市山津町2-1-12','大分県大分市山津町2-1-130'])assert.equal(c.bantiSame(base,c.bantiKey(addr)),false);
+});
+
+test('shortage does not add buildings with different structure, age or floor area',async()=>{
+  const {c}=setup();await c.selfByAddr(location,'大分市');
+  const base={addr:'大分県大分市山津町2丁目3-10',age:36,men:22.58,total:30000,struct:'RC',md:'1K',lat:33.244,lon:131.669};
+  const candidates=[{...base,name:'条件一致マンション'},
+    {...base,name:'条件外木造',struct:'木造'},
+    {...base,name:'条件外築浅',age:8},
+    {...base,name:'条件外大面積',men:35}];
+  c.buildCompPaper(candidates,{min:24000,max:24000,men:22.58},'','',null,fixture.addr,
+    {name:c.val('paddr'),md:'1K',center:[location.lat,location.lon],radius:1500});
+  assert.equal(c.MAPS[0].markers.length,1);
+  assert.ok(c.MAPS[0].markers[0].name.includes('条件一致マンション'));
+  assert.equal(c.window.CMP_WIDE.length,1);
+  assert.equal(c.window.CMP_EXCLUDED.length,3);
 });
 
 test('all inline application scripts parse',()=>{
