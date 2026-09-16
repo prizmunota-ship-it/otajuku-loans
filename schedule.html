@@ -26,7 +26,6 @@
 .bank-people{margin-left:4px;color:#3d3a34}
 .bank-person{white-space:nowrap}.bank-sep{color:#c7bda8;margin:0 2px}
 .bank-title{font-size:11px;color:#885d18;margin-right:3px}
-.bank-kana{font-size:11px;color:#8a7f6b}
 .bank-declined{margin:8px 0 0;font-size:12px;color:#8a7f6b}
 .event-zoom{display:block;text-align:center;padding:12px;border:1px solid #bdd6f5;border-radius:12px;background:#eaf3ff;color:#1e5094;font-weight:800;margin:18px 0}.event-answer-card{background:#fff;border:1px solid #e8d69f;border-radius:18px;padding:20px;margin-top:26px;box-shadow:0 4px 16px #87620006}
 .event-jump{min-height:44px;border-radius:10px;background:#fff0ba;padding:9px 16px;font-weight:700;color:#654810;margin-bottom:6px}.event-answer-card{scroll-margin-top:64px}
@@ -208,7 +207,7 @@
                 <h3>ご参加が決まっている金融機関<small>{event.banks.confirmed.length}機関{event.banks.confirmed.reduce((n,b)=>n+b.members.length,0)}名{event.banks.asOf?`／${event.banks.asOf}`:''}</small></h3>
                 <ul className="bank-list">{event.banks.confirmed.map((b,i)=><li className="bank-item" key={i}>
                   <span className="bank-name">{b.name}</span>{b.branch && <span className="bank-branch">{b.branch}</span>}<span className="bank-num">{b.members.length}名</span>
-                  <span className="bank-people">{b.members.map((m,j)=><span className="bank-person" key={j}>{j>0 && <span className="bank-sep">／</span>}{m.title && <span className="bank-title">{m.title}</span>}{m.name}{m.kana && <span className="bank-kana">（{m.kana}）</span>}</span>)}</span>
+                  <span className="bank-people">{b.members.map((m,j)=><span className="bank-person" key={j}>{j>0 && <span className="bank-sep">／</span>}{m.title && <span className="bank-title">{m.title}</span>}{m.name}</span>)}</span>
                 </li>)}</ul>
                 {event.banks.note && <p className="event-small">{event.banks.note}</p>}
                 {event.banks.declined && event.banks.declined.length>0 && <p className="bank-declined">今回は見送り（確定）：{event.banks.declined.join('／')}</p>}
