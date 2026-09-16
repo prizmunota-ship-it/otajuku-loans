@@ -104,7 +104,9 @@ async function byAddress(name, addr, city, pref, dbg) {
 
   const cityUrl = await pickLink(
     'https://www.homes.co.jp/archive/' + 'address/' + slug + '/',
-    /\/archive\/address\/[a-z0-9-]+\/[a-z0-9-]+\/$/,
+    // ⚠️`_` 必須。政令市の区・郡部のスラッグ（fukuoka_higashi-city 等）を取りこぼし、
+    //    住所ナビが死んで DuckDuckGo 検索頼みになっていた（2026-09-16 実測で修正）。
+    /\/archive\/address\/[a-z0-9_-]+\/[a-z0-9_-]+\/$/,
     (t) => t === cityName || t.replace(/\s/g, '') === cityName,
     dbg, 'city'
   );

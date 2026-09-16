@@ -74,7 +74,10 @@ export async function onRequest(context) {
   try {
     // ① 市区町村ページ → ② 町（-town）/丁目（-addr）ページのURL
     const cityHtml = await get(`https://www.homes.co.jp/archive/address/${slug}/`, 'pref');
-    const cityUrl = pickLink(cityHtml, /\/archive\/address\/[a-z0-9-]+\/[a-z0-9-]+\/$/, (t) => t === city);
+    // ⚠️スラッグは政令市の区・郡部でアンダースコアを含む（fukuoka_higashi-city / kitakyushu_yahatanishi-city /
+    //    kasuya_shingu-city）。`_` を文字クラスに入れていなかったため、福岡県72市区町村のうち45件＝
+    //    福岡市・北九州市の全区と郡部が1件もマッチせず no_city_page で落ちていた（2026-09-16 実測で修正）。
+    const cityUrl = pickLink(cityHtml, /\/archive\/address\/[a-z0-9_-]+\/[a-z0-9_-]+\/$/, (t) => t === city);
     if (!cityUrl) return json({ found: false, reason: 'no_city_page', debug: dbg || undefined });
     const townHtml = await get(cityUrl, 'city');
     const town = townKey(addr, city);
