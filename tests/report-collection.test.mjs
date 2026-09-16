@@ -34,3 +34,13 @@ test('failed town matching does not silently return unrelated city-wide results'
     const j=await r.json();assert.equal(j.found,false);assert.equal(j.reason,'town_not_matched');
   }finally{globalThis.fetch=original;}
 });
+
+test('a longer town name does not additionally select an unrelated suffix town',async()=>{
+  const original=globalThis.fetch;
+  const overlapping=towns.replace('</form>','<label for="oz44201509"><a href="/example">高城新町</a></label><label for="oz44201888"><a href="/example">新町</a></label></form>');
+  globalThis.fetch=async u=>new Response(u.includes('searchMachi')?overlapping:u.includes('FR301FC001')?listing:city);
+  try{
+    const r=await onRequest({request:new Request('https://example.com/api/chintai?pref=oita&sc=sc_oita&detail=0&addr=0&towns='+encodeURIComponent('大分県大分市高城新町'))});
+    assert.deepEqual((await r.json()).selectedTowns,['高城新町']);
+  }finally{globalThis.fetch=original;}
+});

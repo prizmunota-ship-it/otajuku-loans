@@ -361,7 +361,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='29'; /* v15.11：住所照合→建物情報の引き継ぎ→比較検索の順序を統一 */
+const APIV='30'; /* v15.11：住所照合→建物情報の引き継ぎ→比較検索の順序を統一 */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){

@@ -288,11 +288,13 @@ function readForm(html,id){
 function townSearch(html,requested){
   const form=readForm(html,'js-lightboxShiborikomiForm');if(!form)return null;
   const key=s=>String(s).normalize('NFKC').replace(/[\s　]/g,'').replace(/[0-9].*$/,'');
-  const wanted=requested.map(key),names=[],codes=new Set();
-  for(const m of html.matchAll(/<label\b[^>]*for="oz(\d+)"[^>]*>[\s\S]*?<a\b[^>]*>([^<]+)<\/a>/g)){
-    const name=txt(m[2]);
-    if(!wanted.some(w=>w===key(name)||w.endsWith(key(name))))continue;
-    if(codes.has(m[1]))continue;codes.add(m[1]);names.push(name);form.params.append('oz',m[1]);
+  const catalog=[...html.matchAll(/<label\b[^>]*for="oz(\d+)"[^>]*>[\s\S]*?<a\b[^>]*>([^<]+)<\/a>/g)].map(m=>({code:m[1],name:txt(m[2])}));
+  const names=[],codes=new Set();
+  for(const w of requested.map(key)){
+    // Prefer the longest town name: 高城新町 must not also select the unrelated 新町.
+    const match=catalog.filter(t=>w===key(t.name)||w.endsWith(key(t.name))).sort((a,b)=>key(b.name).length-key(a.name).length)[0];
+    if(!match||codes.has(match.code))continue;
+    codes.add(match.code);names.push(match.name);form.params.append('oz',match.code);
   }
   if(!codes.size)return null;
   return {url:'https://suumo.jp'+form.action+'?'+form.params.toString(),names};
