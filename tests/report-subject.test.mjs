@@ -24,6 +24,8 @@ function setup(){
     dist:(a,b,c,d)=>Math.hypot(a-c,b-d)*100000,collectCmp:()=>[],parkCmpEdit:()=>{},
     overpass:async()=>null,apiJson:async()=>structuredClone(fixture)};
   vm.createContext(context);
+  vm.runInContext(fs.readFileSync(new URL('../report-comparison.js',import.meta.url),'utf8'),context);
+  vm.runInContext("const MD_GROUP=[['1R','1K'],['1DK','1LDK'],['2K','2DK'],['2LDK','3K']];",context);
   for(const name of ['setByData','srcOf','userNum','looksLikeName','prefOf','cityOf','addrOnly',
     'selfNeed','selfNeedsBuilding','applySelfBuilding','resetSubjectLookup','applySelfRooms',
     'bantiAddrs','selfByAddr','selfBySpecScan','ownAgeNow','ageTol','mdGroup','sameMd',
@@ -95,23 +97,58 @@ test('full lot numbers match across notation changes; neighboring and truncated 
   for(const addr of ['大分県大分市山津町2-1','大分県大分市山津町2-1-12','大分県大分市山津町2-1-130'])assert.equal(c.bantiSame(base,c.bantiKey(addr)),false);
 });
 
-test('shortage does not add buildings with different structure, age or floor area',async()=>{
+test('single-room search includes wood while preserving age and area criteria',async()=>{
   const {c}=setup();await c.selfByAddr(location,'大分市');
   const base={addr:'大分県大分市山津町2丁目3-10',age:36,men:22.58,total:30000,struct:'RC',md:'1K',lat:33.244,lon:131.669};
   const candidates=[{...base,name:'条件一致マンション'},
-    {...base,name:'条件外木造',struct:'木造'},
+    {...base,name:'木造も比較',struct:'木造',addr:'大分県大分市山津町2丁目3-11'},
     {...base,name:'条件外築浅',age:8},
     {...base,name:'条件外大面積',men:35}];
   c.buildCompPaper(candidates,{min:24000,max:24000,men:22.58},'','',null,fixture.addr,
     {name:c.val('paddr'),md:'1K',center:[location.lat,location.lon],radius:1500});
-  assert.equal(c.MAPS[0].markers.length,1);
+  assert.equal(c.MAPS[0].markers.length,2);
   assert.ok(c.MAPS[0].markers[0].name.includes('条件一致マンション'));
-  assert.equal(c.window.CMP_WIDE.length,1);
-  assert.equal(c.window.CMP_EXCLUDED.length,3);
+  assert.equal(c.window.CMP_WIDE.length,2);
+  assert.equal(c.window.CMP_EXCLUDED.length,2);
+  assert.equal(candidates[1]._structAdj,null);
+  assert.equal(candidates[1]._adj,null);
 });
 
 test('all inline application scripts parse',()=>{
   for(const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)){
     if(!/src=|application\/ld\+json/.test(m[1]))assert.doesNotThrow(()=>new vm.Script(m[2]));
   }
+});
+
+
+test('family layouts retain their structure filter; single layouts retain distinct rooms',async()=>{
+  for(const md of ['2LDK','1K']){
+    const {c}=setup();await c.selfByAddr(location,'大分市');
+    const base={addr:'大分県大分市山津町2丁目3-10',age:36,men:22.58,total:30000,struct:'RC',md,lat:33.244,lon:131.669};
+    const rows=[{...base,name:'同じ建物'},{...base,name:'同じ建物',total:31000},{...base,name:'別建物木造',struct:'木造',addr:'山津町2-3-11'}];
+    c.buildCompPaper(rows,{min:24000,max:24000,men:22.58},'','',null,fixture.addr,{md,center:[location.lat,location.lon],radius:1500});
+    assert.equal(c.MAPS[0].markers.length,md==='1K'?3:1);
+  }
+});
+
+test('all 100 candidates retain their metadata and receive building detail lookup',async()=>{
+  const {c}=setup();const calls=[],added=[];
+  c.window.ReportComparison=c.window.ReportComparison;
+  c.selfFromChintai=()=>false;c.gsiGeocode=async()=>null;
+  c.apiJson=async()=>({found:true,items:Array.from({length:105},(_,i)=>({name:'建物'+Math.floor(i/2),addr:'住所'+Math.floor(i/2),md:'1K',age:36,men:22,total:30000+i,href:'/chintai/jnc_'+i}))});
+  c.fetch=async(_url,opts)=>{const rows=JSON.parse(opts.body).rows;calls.push(rows);return {json:async()=>({found:true,items:rows.map(r=>({...r,bstruct:'木造',addr2:r.addr+'番地'}))})};};
+  c.addCmpRow=(v,meta)=>added.push({v,meta});
+  vm.runInContext(fn('suumoSearchCmp'),c);
+  const n=await c.suumoSearchCmp('大分市','大分県','1K',null,null,1500);
+  assert.equal(n,100);assert.equal(added.length,100);
+  assert.equal(calls.flat().length,50);assert.ok(calls.every(a=>a.length<=15));
+  assert.ok(added.every(a=>a.meta.md==='1K'&&a.meta.struct==='木造'&&a.v[1].endsWith('番地')));
+});
+
+test('geocoding queries each address once and never offsets co-located room coordinates',async()=>{
+  const {c}=setup();let calls=0;c.googleGeocode=async()=>{calls++;return {lat:33.24,lon:131.66};};
+  vm.runInContext('const _cmpGeo={};',c);vm.runInContext(fn('geocodeCmp'),c);
+  const rows=Array.from({length:20},()=>({addr:'山津町2-3-10'}));
+  await c.geocodeCmp(rows);assert.equal(calls,1);
+  assert.ok(rows.every(r=>r.lat===33.24&&r.lon===131.66));
 });

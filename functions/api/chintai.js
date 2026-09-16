@@ -41,7 +41,8 @@ export async function onRequest(context) {
     .map((x) => MD[x] || (/^\d{2}$/.test(x) ? x : '')).filter(Boolean);
   const md = mdList.join(',');
   const pages = Math.min(Math.max(parseInt(u.searchParams.get('pages') || '8', 10) || 8, 1), 15);
-  const detail = Math.min(Math.max(parseInt(u.searchParams.get('detail') || '12', 10) || 12, 0), 15);
+  const detailIn = parseInt(u.searchParams.get('detail') ?? '12', 10);
+  const detail = Number.isFinite(detailIn) ? Math.min(Math.max(detailIn, 0), 15) : 12;
   const dbg = u.searchParams.get('debug');
 
   const log = [];
