@@ -138,21 +138,16 @@ function bantiKey(a) {
   let s = norm(a).replace(/^.*?[都道府県]/, '');
   s = s.replace(/^.{2,6}?[市郡]/, '').replace(/^.{1,5}?区/, '');
   s = s.split(/[,、･・]/)[0];
-  s = s.replace(/丁目|丁|番地|番|号地|号/g, '-').replace(/[−‐ー―の]/g, '-');
+  s = s.replace(/丁目|丁|番地|番|号地|号/g, '-').replace(/[−‐‑–ー―－の]/g, '-');
   const m = s.match(/^([^\d]{1,14}?)(\d[\d-]*)/);
   if (!m) return '';
   const num = m[2].replace(/-{2,}/g, '-').replace(/-+$/, '');
   return m[1].replace(/[\s　-]/g, '') + num;
 }
-/* 番地の一致判定。完全一致が原則。
-   建物ページ側が「有田中央2-14」までしか書いていない場合に限り、
-   区切りの境目で前方一致していて、かつ数字が2区画以上あるときだけ同一と見なす。 */
+/* 番地は全区画の一致が必要。2-1 と 2-1-13 を同一扱いすると、
+   同じ街区の別建物を確定してしまう。省略住所は確定の根拠にしない。 */
 function bantiSame(a, b) {
-  if (!a || !b) return false;
-  if (a === b) return true;
-  const seg = (s) => (s.match(/\d[\d-]*$/) || [''])[0].split('-').filter(Boolean).length;
-  const pre = (x, y) => y.indexOf(x) === 0 && y.charAt(x.length) === '-' && seg(x) >= 2;
-  return pre(a, b) || pre(b, a);
+  return !!a && !!b && a === b;
 }
 /* 築年月の表記ゆれ（2009年10月／2009年10月築／2009/10）を吸収して比べる */
 function nzBuilt(s) {

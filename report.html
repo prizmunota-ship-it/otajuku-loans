@@ -140,7 +140,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.9</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.11</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -358,7 +358,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='26'; /* v15.10＝HOME'S住所ナビのスラッグ正規表現に `_` を追加（福岡市・北九州市・郡部が丸ごと取れていなかった）。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
+const APIV='27'; /* v15.11：住所照合→建物情報の引き継ぎ→比較検索の順序を統一 */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -395,6 +395,33 @@ async function fetchSpec(name,city,pref,addr){
    （[[feedback_no_guessed_data]]）。 */
 window.SELFSRC=[]; /* 実際に本物件の情報を埋められた経路（作成者向けメモに出す） */
 function selfNeed(){return !(val('pmadori')&&num('pmens')>0);}
+function selfNeedsBuilding(){
+  const s=window.SELF||{},sp=s.spec||{};
+  return !(s.name&&s.addr&&(structIn()||s.struct||sp.struct)
+    &&(userNum('page')!=null||s.built||sp.built));
+}
+/* 住所で特定した場合も、名前・住所・概要・出典を一緒に保存する。
+   住所が抜けると表示側がSELF全体を無効扱いし、築年の比較条件まで消えてしまう。 */
+function applySelfBuilding(sp){
+  if(!sp)return;
+  const s=window.SELF=window.SELF||{};
+  s.fieldSources=s.fieldSources||{};
+  const source=sp.src||"LIFULL HOME'S 建物情報";
+  for(const key of ['name','addr','kind','struct','built','floors']){
+    if(sp[key]){s[key]=sp[key];s.fieldSources[key]=source;}
+  }
+  s.spec=sp;
+}
+function resetSubjectLookup(){
+  window.SELF=null;window.GASRES=null;window.SELFSRC=[];
+  for(const id of ['pmadori','pmens','prentmin','prentmax']){
+    const el=document.getElementById(id);
+    if(el&&el.dataset.src&&!el.dataset.t){el.value='';delete el.dataset.src;}
+  }
+  /* 同じ町内の次の建物でも、自動取得した比較行は再検索する。 */
+  if(window.CHINTAI){clearCmpRows();window.CHINTAI=null;}
+  window.CMP_WIDE=[];window.SEIYAKU=[];
+}
 /* ⚠️ローマ数字（Ⅱ）と英字（II）を揃える。ポータルは同じ建物をどちらの表記でも載せるので、
    ここが揃っていないと「本物件そのものを募集一覧から名寄せする」経路が丸ごと外れる
    （オアシス浅生Ⅱ／掲載名はオアシス浅生II で実測 2026-08-21） */
@@ -538,12 +565,7 @@ async function selfByAddr(g,city){
           window.SELF=Object.assign(window.SELF||{},{byaddrSkip:'番地「'+addr+'」で見つけた建物（'+(j.name||'')+'）は本物件と'+bad+'ため採用しませんでした。'});
           break; /* この住所は当てにならない。次の候補へ */
         }
-        window.SELF=window.SELF||{};
-        if(!window.SELF.spec)window.SELF.spec=j;
-        if(!window.SELF.struct&&j.struct)window.SELF.struct=j.struct;
-        if(!window.SELF.built&&j.built)window.SELF.built=j.built;
-        if(!window.SELF.kind&&j.kind)window.SELF.kind=j.kind;
-        if(!window.SELF.floors&&j.floors)window.SELF.floors=j.floors;
+        applySelfBuilding(j);
         /* 逆引きで当たった建物名は、ポータルに残る旧名であることが多い。
            作成者が「別物件を掴んでいないか」を確かめられるように必ず見せる。 */
         window.SELF.byaddr={name:j.name||'',addr:j.matched||j.addr||'',url:j.url||''};
@@ -583,10 +605,7 @@ async function selfBySpecScan(g,city,precise){
   }
   if(cands.length===1){
     const m=cands[0];
-    window.SELF=window.SELF||{};
-    if(!window.SELF.spec)window.SELF.spec=Object.assign({src:"LIFULL HOME'S 建物情報"},m);
-    if(!window.SELF.kind&&m.kind)window.SELF.kind=m.kind;
-    if(!window.SELF.floors&&m.floors)window.SELF.floors=m.floors;
+    applySelfBuilding(Object.assign({src:"LIFULL HOME'S 建物情報"},m));
     window.SELF.byaddr={name:m.name||'',addr:m.addr||'',url:m.url||'',via:'spec'};
     applySelfRooms(m,'homes',"LIFULL HOME'S 建物情報（同じ丁目で構造・築年月が一致"+(m.name?'／掲載名 '+m.name:'')+'）');
     return m;
@@ -741,7 +760,8 @@ async function gasSearchCmp(city,md,hint,pref,selfOnly){
       const r=await fetch(GAS_SEARCH+q);
       j=await r.json();
     }
-    if(j.self&&j.self.addr)window.SELF=j.self;
+    /* 比較候補の予備検索が、確定済みの建物情報を上書きしないようにする。 */
+    if(j.self&&j.self.addr&&!(window.SELF&&window.SELF.spec))window.SELF=j.self;
     /* 本物件の募集実績が取れたら、未入力の間取り・面積・賃料をその実データで埋める */
     if(window.SELF&&window.SELF.rooms&&window.SELF.rooms.length){
       const r0=window.SELF.rooms[0];
@@ -980,7 +1000,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   let ownAge=null;
   {
     /* ⚠️ここは S / SP の宣言より前なので window.SELF から直接読む（constの巻き上げでエラーになる） */
-    const _S=window.SELF&&window.SELF.addr?window.SELF:null;
+    const _S=window.SELF||null;
     const _SP=(_S&&_S.spec&&(_S.spec.struct||_S.spec.built))?_S.spec:null;
     const br=(_S&&_S.built)||(_SP&&_SP.built)||'';
     const bm=br&&br.match(/(\d{4})年\s*(\d{1,2})?月?/);
@@ -1277,11 +1297,12 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
      ★v6.4 最重要ルール（太田指摘「相違情報を載せるな」）：
        この表に出してよいのは「出所のある値」だけ。フォームの初期値（構造=RC・築年数=0）は
        利用者が自分で選んでいない限り絶対に載せない。取れていない項目は「—（未取得）」と明示する。 */
-  const S=window.SELF&&window.SELF.addr?window.SELF:null;
+  const S=window.SELF||null;
   const isSuumo=!!(S&&(S.found||(S.rooms&&S.rooms.length)||S.built||S.struct)); /* SUUMO物件ライブラリーの実データ */
   const isWebAddr=!!(S&&!isSuumo&&S.web);                     /* Web検索で拾っただけの住所＝推定 */
   const SP=(S&&S.spec&&(S.spec.struct||S.spec.built))?S.spec:null; /* 建物情報（HOME'S建物ページ等） */
   const SRC_SUUMO='SUUMO物件ライブラリー（実データ）';
+  const fieldSrc=key=>(S&&S.fieldSources&&S.fieldSources[key])||SRC_SUUMO;
   const NA='<span style="color:#94a3b8;font-weight:400">—（未取得）</span>';
   const srcUsed=[];
   const cell=(v,src)=>{if(v==null||v===''||v==='—')return NA;if(src&&srcUsed.indexOf(src)<0)srcUsed.push(src);return v;};
@@ -1289,7 +1310,7 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
   let ageTxt=null,ownAgeVal=null,ageSrc='';
   const builtRaw=(S&&S.built)||(SP&&SP.built)||'';
   if(builtRaw){
-    ageSrc=(S&&S.built)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    ageSrc=(S&&S.built)?fieldSrc('built'):((SP&&SP.src)||'建物情報');
     const bm=builtRaw.match(/(\d{4})年\s*(\d{1,2})?月?/);
     if(bm){const y=+bm[1],mo=+(bm[2]||1),n=new Date();
       let yrs=n.getFullYear()-y;if(n.getMonth()+1<mo)yrs--;
@@ -1309,12 +1330,12 @@ function buildCompPaper(cmp,own,appeal,stationTxt,age,addr,opts){
     structSrc='作成者の入力値';
     structTxt=[kindByStruct(opts.struct),opts.struct].filter(Boolean).join(' ')+(opts.units>0?'／'+opts.units+'戸':'');
   }else if(stRaw){
-    structSrc=(S&&S.struct)?SRC_SUUMO:((SP&&SP.src)||'建物情報');
+    structSrc=(S&&S.struct)?fieldSrc('struct'):((SP&&SP.src)||'建物情報');
     structTxt=[(S&&S.kind)||(SP&&SP.kind)||kindByStruct(stRaw),stRaw,(S&&S.floors)||(SP&&SP.floors)].filter(Boolean).join(' ');
   }
   /* ── 所在地：SUUMO実データ ＞ 建物情報 ＞ Web検索（推定と明記） ＞ Googleマップの住所検索 */
   let addrCell='',addrSrc='';
-  if(isSuumo&&S.addr){addrCell=S.addr;addrSrc=SRC_SUUMO;}
+  if(isSuumo&&S.addr){addrCell=S.addr;addrSrc=fieldSrc('addr');}
   else if(SP&&SP.addr){addrCell=SP.addr;addrSrc=SP.src;}
   else if(S&&S.addr){addrCell=S.addr;addrSrc=isWebAddr?'Web検索で取得した住所（推定）':'';}
   /* ⚠️実データが1つも無く地図検索の住所しか無い場合。入力名と別建物を掴んでいた警告が確認画面で
@@ -2191,6 +2212,7 @@ function histRender(){
 async function locate(){
   const query=val('paddr');
   if(!query){setStatus('🙏 物件名または住所を入力してください',true);return;}
+  resetSubjectLookup();
   document.getElementById('go').disabled=true;
   document.getElementById('report').style.display='none';document.getElementById('toolbar').style.display='none';
   document.getElementById('confirm').style.display='none';
@@ -2389,6 +2411,14 @@ async function buildReport(g){
     if(rev){g.title=g.title&&g.title.indexOf(rev)<0?g.title+'　'+rev:rev;cityA=cityOf(rev);}
   }
   const needAuto=collectCmp().length===0;
+  /* 住所入力は、先に番地から建物を確定する。Googleの住所末尾の名前を
+     分割して検索するより確実で、条件のない比較検索と取り直しも避けられる。 */
+  let addrLookupDone=false;
+  if(cityA&&!looksLikeName(val('paddr'))&&RE_BANTI.test(val('paddr'))
+      &&(selfNeed()||selfNeedsBuilding())){
+    try{await selfByAddr(g,cityA);}catch(e){}
+    addrLookupDone=true;
+  }
   /* ★先に「本物件そのもの」（築年・間取り・面積）を確定させてから類似物件を探す。
      順番が逆だと条件が空のまま近い順に20件を掴んでしまい、同年代の物件が
      1件しか残らなかった（久留米・築28年で実測 2026-08-14）。 */
@@ -2440,20 +2470,22 @@ async function buildReport(g){
     /* ⚠️v12.5と同じ罠：構造・築年が入っただけで「取得済み」と見なすと、
        間取り・面積が空のまま /api/spec を呼ばずに終わる。SUUMOに募集中の部屋が
        無い物件（ピュア若宮＝掲載なし）は HOME'S の部屋情報でしか埋まらない。 */
-    if(qn&&!(window.SELF&&(window.SELF.struct||window.SELF.built))||(qn&&!(val('pmadori')&&num('pmens')>0))){
+    if(qn&&(selfNeedsBuilding()||selfNeed())){
       setStatus('🏢 '+qn+' の建物情報（構造・築年）を照会中…');
       const sp=await fetchSpec(qn,cityOf(g.title),prefOf(g.title),addrOnly(g.title));
       if(sp){
-        window.SELF=window.SELF||{name:sp.name,addr:sp.addr};
-        window.SELF.name=window.SELF.name||sp.name;
-        window.SELF.addr=sp.addr||window.SELF.addr;
-        window.SELF.spec=sp;
+        applySelfBuilding(sp);
         /* ★本物件の募集情報を実データで埋める（太田指摘：ここが空だと使えない）
            ①建物ページの部屋情報＝間取り・専有面積 ②賃貸掲載履歴＝直近の募集賃料
            いずれも「過去の募集時点の実績」なので、表示側で必ず出典と時点を明記する。 */
         applySelfRooms(sp,'homes',(sp.src||"LIFULL HOME'S 建物情報")+'（'+(sp.name||qn)+'）');
       }
     }
+  }
+  /* 間取りだけ取れても完了にしない。築年・構造の欠落も比較検索の前に補う。 */
+  if(!addrLookupDone&&(selfNeed()||selfNeedsBuilding())){
+    try{await selfByAddr(g,cityA);}catch(e){}
+    addrLookupDone=true;
   }
   const radius=parseInt(val('pradius'))||1500;
   /* ★本物件が確定してから類似物件を自動検索する（ゼロタップ）。
@@ -2473,7 +2505,7 @@ async function buildReport(g){
        「該当物件の情報は何が何でも正確に取る」）。
        ここで基準が確定したら、類似物件は条件付きで取り直す（条件ゼロのまま近い順に
        並べただけの一覧を出さないため）。 */
-    if(selfNeed()){
+    if(!addrLookupDone&&(selfNeed()||selfNeedsBuilding())){
       let ok=false;
       try{ok=!!(await selfByAddr(g,cityA));}catch(e){}
       if(ok&&val('pmadori')&&num('pmens')>0){
@@ -2481,7 +2513,7 @@ async function buildReport(g){
         try{clearCmpRows();await suumoSearchCmp(cityA,prefOf(g.title),val('pmadori'),g.lat,g.lon,radius);}catch(e){}
       }
     }
-  }else if(selfNeed()){
+  }else if(!addrLookupDone&&(selfNeed()||selfNeedsBuilding())){
     try{await selfByAddr(g,cityA);}catch(e){}
   }
   setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');

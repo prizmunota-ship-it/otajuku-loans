@@ -305,7 +305,7 @@ export async function readBuilding(u) {
         period: m[1] + '年' + m[2] + '月' + (m[3] || ''),
         rent: Math.round(parseFloat(m[4]) * 10000),
         men: parseFloat(String(m[5]).replace(/[^\d.]/g, '')) || null,
-        md: /[0-9]?[SLDK]/.test(m[6]) ? m[6].trim() : '',
+        md: /^(?:\d+[SLDKR]+|ワンルーム)$/.test(m[6].trim()) ? m[6].trim().replace(/^ワンルーム$/, '1R') : '',
         floor: m[7].trim(),
       });
       if (history.length >= 40) break;
