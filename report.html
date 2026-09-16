@@ -358,7 +358,7 @@ async function gasByName(name){
 }
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
-const APIV='25'; /* v15.10＝HOME'S住所ナビのスラッグ正規表現に `_` を追加（福岡市・北九州市・郡部が丸ごと取れていなかった）。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
+const APIV='26'; /* v15.10＝HOME'S住所ナビのスラッグ正規表現に `_` を追加（福岡市・北九州市・郡部が丸ごと取れていなかった）。項目や照合を変えたら必ず上げる（24時間キャッシュを掴み続けるため） */
 async function apiJson(url){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
   for(let i=0;i<2;i++){
@@ -2199,7 +2199,17 @@ async function locate(){
   let libQuery='';
   /* ★購入後に改名した物件は、SUUMO・HOME'S・Googleマップに旧名で載っていて情報が取れない
      （例：プライマリー鷹の巣＝シャトレ鷹の巣Ⅴ）。別名欄があればそちらで照会する（太田指摘 2026-08-13） */
-  const alias=val('palias');
+  let alias=val('palias');
+  /* ★別名欄が空でも、同じ物件名で前回うまくいった別名が検索履歴にあれば引き継ぐ。
+     改名物件は一度だけ別名を入れて作れば、次からは物件名だけで当たる（2026-09-16 追加）。
+     ⚠️改名物件は物件名でも番地でも当たらない（HOME'S/SUUMOに旧名でしか載っておらず、
+     丁目の代表点しか取れないと番地逆引きも使えない）ので、別名は唯一の手がかりになる。 */
+  if(!alias&&looksLikeName(query)){
+    try{
+      const h=histLoad().find(x=>x&&x.q&&String(x.q).trim()===query&&String(x.alias||'').trim());
+      if(h){alias=String(h.alias).trim();document.getElementById('palias').value=alias;}
+    }catch(e){}
+  }
   const lookupName=alias||query;
   if(alias||looksLikeName(query)){
     setStatus('🔎 「'+lookupName+'」をSUUMO物件ライブラリーで照会中…');
