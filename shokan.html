@@ -274,25 +274,32 @@ function calc(){
 }
 
 /* ---------- PDF読み取り ---------- */
-const PATS=[
-  {id:'ri1', keys:['当期純利益','当期純損失'], label:'当期純利益', last:true},
-  {id:'de1', keys:['減価償却費'], label:'減価償却費'},
-  {id:'zo1', keys:['雑収入'], label:'雑収入'},
-];
+/* 空白は潰さずタブに変換する。潰すと表の隣のセルの数字と繋がってしまう */
 function normalize(t){
-  return t.replace(/[　\s]+/g,'')
-          .replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
-          .replace(/[，]/g,',');
+  return t.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+          .replace(/[，]/g,',')
+          .replace(/[　\s]+/g,'\t');
 }
-function grabAfter(txt,key,takeLast){
-  const re=new RegExp(key+'[^0-9▲△\\-]{0,12}(△?▲?-?[0-9][0-9,]*)','g');
-  let m,found=[];
-  while((m=re.exec(txt))!==null){ found.push(m[1]); }
-  if(!found.length)return null;
-  const s=(takeLast?found[found.length-1]:found[0]).replace(/,/g,'');
-  const neg=/^[▲△-]/.test(s);
-  const v=parseFloat(s.replace(/[▲△-]/g,''));
-  return isNaN(v)?null:(neg?-v:v);
+const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+/* 決算書は「当 期 純 利 益」のように1文字ずつ分かれていることがある */
+const labelPat=key=>key.split('').map(esc).join('\\t*');
+function candidates(txt,key){
+  const rx=new RegExp('(.{0,2})'+labelPat(key)+'(.?)[^0-9▲△\\-]{0,12}?(△?▲?-?[0-9][0-9,]*)','g');
+  const out=[];let m;
+  while((m=rx.exec(txt))!==null){
+    const s=m[3].replace(/,/g,'');
+    const neg=/^[▲△-]/.test(s);
+    const v=parseFloat(s.replace(/[▲△-]/g,''));
+    if(!isNaN(v))out.push({prev:m[1].slice(-1),next:m[2],val:neg?-v:v});
+  }
+  return out;
+}
+function pick(txt,key,opt){
+  opt=opt||{};
+  const c=candidates(txt,key).filter(x=>
+    !(opt.notPrev&&opt.notPrev.indexOf(x.prev)>=0)&&
+    !(opt.notNext&&opt.notNext.indexOf(x.next)>=0));
+  return c.length?c[0].val:null;
 }
 async function readPdf(file){
   const msg=$('pdfmsg');
@@ -305,34 +312,38 @@ async function readPdf(file){
     for(let i=1;i<=pdf.numPages;i++){
       const pg=await pdf.getPage(i);
       const tc=await pg.getTextContent();
-      all+=tc.items.map(it=>it.str).join('');
+      all+=tc.items.map(it=>it.str).join('\t')+'\t';
     }
     const txt=normalize(all);
-    if(txt.length<300){
+    if(txt.replace(/\t/g,'').length<300){
       msg.className='ng';
       msg.innerHTML='<b>この決算書は画像（スキャン）のため、自動で読み取れませんでした。</b><br>お手数ですが、下の欄に決算書を見ながら直接入力してください。数字は6か所だけです。';
       return;
     }
     const hits=[],miss=[];
-    PATS.forEach(p=>{
-      let v=null;
-      for(const k of p.keys){ v=grabAfter(txt,k,p.last); if(v!==null)break; }
-      if(v!==null){ $(p.id).value=v; $(p.id).classList.add('auto'); hits.push(p.label+' '+yen(v)+'円'); }
-      else miss.push(p.label);
-    });
-    const loanKeys=['長期借入金','短期借入金'];
+    const put=(id,v,label)=>{
+      if(v!==null){ $(id).value=v; $(id).classList.add('auto'); hits.push(label+' '+yen(v)+'円'); }
+      else miss.push(label);
+    };
+    /* 「税引前当期純利益」と1株当たりの「当期純利益額」を除外して拾う */
+    put('ri1', pick(txt,'当期純利益',{notPrev:['前'],notNext:['額']}), '当期純利益');
+    put('de1', pick(txt,'減価償却費'), '減価償却費');
+    put('zo1', pick(txt,'雑収入'), '雑収入');
+
     let lsum=0,lfound=false;
-    loanKeys.forEach(k=>{const v=grabAfter(txt,k,false); if(v!==null){lsum+=v;lfound=true;}});
+    ['長期借入金','短期借入金'].forEach(k=>{const v=pick(txt,k);if(v!==null){lsum+=v;lfound=true;}});
     if(lfound){ $('loan').value=lsum; $('loan').classList.add('auto'); hits.push('借入金 '+yen(lsum)+'円'); }
     else miss.push('借入金');
+    const yaku=pick(txt,'役員借入金');
 
     if(hits.length){
       msg.className='ok';
       msg.innerHTML='<b>読み取れた項目（緑色の欄）：</b><br>'+hits.join('　／　')+
         (miss.length?'<br><br><b style="color:#7a1c14">読み取れなかった項目：</b>'+miss.join('・')+'　→ 手入力してください':'')+
+        (yaku!==null?'<br><br><b>役員からの借入 '+yen(yaku)+'円 を検出しました。</b>上の借入金にこれが含まれている場合は、差し引いた金額に直してください（疑似資本として除外されます）。':'')+
         '<br><br>※ <b>必ず決算書と数字が合っているか目視で確認してください。</b>様式によっては別の行の数字を拾うことがあります。'+
-        '<br>※ 役員からの借入が含まれていた場合は、その分を引いた金額に直してください。'+
-        '<br>※ 前々期の欄は自動入力されません。前期のPDFのみ対象です。';
+        '<br>※ 雑収入は一過性のものだけが控除対象です。毎期発生する収入であれば0に直してください。'+
+        '<br>※ 自動入力は<b>前期の欄のみ</b>です。前々期は決算書を見て手入力してください。';
       save();
     }else{
       msg.className='ng';
