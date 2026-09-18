@@ -284,13 +284,14 @@ const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 /* 決算書は「当 期 純 利 益」のように1文字ずつ分かれていることがある */
 const labelPat=key=>key.split('').map(esc).join('\\t*');
 function candidates(txt,key){
-  const rx=new RegExp('(.{0,2})'+labelPat(key)+'(.?)[^0-9▲△\\-]{0,12}?(△?▲?-?[0-9][0-9,]*)','g');
+  const rx=new RegExp('(.{0,8})'+labelPat(key)+'(.{0,3}?)[^0-9▲△\\-]{0,12}?(△?▲?-?[0-9][0-9,]*)','g');
   const out=[];let m;
   while((m=rx.exec(txt))!==null){
     const s=m[3].replace(/,/g,'');
     const neg=/^[▲△-]/.test(s);
     const v=parseFloat(s.replace(/[▲△-]/g,''));
-    if(!isNaN(v))out.push({prev:m[1].slice(-1),next:m[2],val:neg?-v:v});
+    /* 「税引前\t当期純利益」のようにタブで分かれることがあるので、前後の文字はタブを除いて判定する */
+    if(!isNaN(v))out.push({prev:m[1].replace(/\t/g,'').slice(-1),next:m[2].replace(/\t/g,'').slice(0,1),val:neg?-v:v});
   }
   return out;
 }
