@@ -1,10 +1,10 @@
 {
-  "asof": "2026/9/16",
+  "asof": "2026/9/20",
   "total": 267,
   "vacant": 26,
-  "applied": 5,
+  "applied": 4,
   "taikyo": 3,
-  "lossMan": 234,
+  "lossMan": 199,
   "target": 97,
   "rate": 90.3,
   "props": [
@@ -35,7 +35,7 @@
       "units": 10,
       "vacant": 2,
       "occupied": 8,
-      "applied": 1,
+      "applied": 0,
       "taikyo": 0,
       "parkTotal": 4,
       "parkVacant": 2,
