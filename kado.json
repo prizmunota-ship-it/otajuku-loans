@@ -1,12 +1,12 @@
 {
   "asof": "2026/9/22",
   "total": 267,
-  "vacant": 24,
-  "applied": 6,
+  "vacant": 25,
+  "applied": 5,
   "taikyo": 3,
   "lossMan": 202,
   "target": 97,
-  "rate": 91.0,
+  "rate": 90.6,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -77,9 +77,9 @@
     {
       "name": "プライマリー久留米大南",
       "units": 20,
-      "vacant": 1,
-      "occupied": 19,
-      "applied": 4,
+      "vacant": 2,
+      "occupied": 18,
+      "applied": 3,
       "taikyo": 0,
       "parkTotal": 1,
       "parkVacant": 0,
