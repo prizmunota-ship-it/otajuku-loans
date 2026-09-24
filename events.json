@@ -133,7 +133,6 @@
         "title": "エンパワータイム(16時〜18時)",
         "location": "天神ワンビルB1 iiTo TENJIN",
         "note": "※今月のみ第4木曜",
-        "attendance": false,
         "id": "2026-09-24-event",
         "startDate": "2026-09-24",
         "endDate": "2026-09-24",
@@ -152,7 +151,7 @@
           ],
           [
             "集合場所",
-            "iiTo TENJIN の一番奥にある共用の席エリアです（下のフロアマップと写真の赤丸のあたり）。"
+            "iiTo TENJIN に入って、奥へ進んだ先の共用席エリアです（下の写真をご覧ください）。"
           ],
           [
             "最寄り",
@@ -174,13 +173,25 @@
         "venuePhotos": [
           {
             "src": "/assets/venue/onebldg-b1-map.png",
-            "alt": "ワンビルB1のフロアマップ。赤丸が集合場所",
-            "caption": "B1フロアマップ。赤丸が集合場所です（iiTo TENJIN の一番奥）。"
+            "alt": "ワンビルB1のフロアマップ",
+            "caption": "B1フロアマップ。赤丸のあたりが集合場所です。"
           },
           {
-            "src": "/assets/venue/onebldg-b1-photo.webp",
-            "alt": "集合場所の様子。奥の席エリアが赤丸",
-            "caption": "実際の様子。少し奥まっていて分かりづらいのですが、赤丸のあたりに集まっています。"
+            "src": "/assets/venue/onebldg-b1-entrance.jpg",
+            "alt": "iiTo TENJIN の入口付近",
+            "caption": "地下1階に下りて、この案内板のあたりが入口です。"
+          },
+          {
+            "src": "/assets/venue/onebldg-b1-seats.jpg",
+            "alt": "入った奥の席エリア",
+            "caption": "入って奥に進んだ、この席のあたりに集まっています。"
+          }
+        ],
+        "sessions": [
+          {
+            "id": "main",
+            "label": "エンパワータイムへの参加",
+            "time": ""
           }
         ]
       },
@@ -277,7 +288,6 @@
         "title": "エンパワータイム(16時〜18時)",
         "location": "天神ワンビルB1 iiTo TENJIN",
         "note": "※今月のみ第1木曜",
-        "attendance": false,
         "id": "2026-10-01-event",
         "startDate": "2026-10-01",
         "endDate": "2026-10-01",
@@ -296,7 +306,7 @@
           ],
           [
             "集合場所",
-            "iiTo TENJIN の一番奥にある共用の席エリアです（下のフロアマップと写真の赤丸のあたり）。"
+            "iiTo TENJIN に入って、奥へ進んだ先の共用席エリアです（下の写真をご覧ください）。"
           ],
           [
             "最寄り",
@@ -318,13 +328,25 @@
         "venuePhotos": [
           {
             "src": "/assets/venue/onebldg-b1-map.png",
-            "alt": "ワンビルB1のフロアマップ。赤丸が集合場所",
-            "caption": "B1フロアマップ。赤丸が集合場所です（iiTo TENJIN の一番奥）。"
+            "alt": "ワンビルB1のフロアマップ",
+            "caption": "B1フロアマップ。赤丸のあたりが集合場所です。"
           },
           {
-            "src": "/assets/venue/onebldg-b1-photo.webp",
-            "alt": "集合場所の様子。奥の席エリアが赤丸",
-            "caption": "実際の様子。少し奥まっていて分かりづらいのですが、赤丸のあたりに集まっています。"
+            "src": "/assets/venue/onebldg-b1-entrance.jpg",
+            "alt": "iiTo TENJIN の入口付近",
+            "caption": "地下1階に下りて、この案内板のあたりが入口です。"
+          },
+          {
+            "src": "/assets/venue/onebldg-b1-seats.jpg",
+            "alt": "入った奥の席エリア",
+            "caption": "入って奥に進んだ、この席のあたりに集まっています。"
+          }
+        ],
+        "sessions": [
+          {
+            "id": "main",
+            "label": "エンパワータイムへの参加",
+            "time": ""
           }
         ]
       },
@@ -489,7 +511,6 @@
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
-        "attendance": false,
         "id": "2026-10-27-event",
         "startDate": "2026-10-27",
         "endDate": "2026-10-27",
@@ -499,6 +520,13 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
+        ],
+        "sessions": [
+          {
+            "id": "main",
+            "label": "エンパワータイムへの参加",
+            "time": ""
+          }
         ]
       }
     ]
@@ -536,7 +564,6 @@
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
-        "attendance": false,
         "id": "2026-11-24-event",
         "startDate": "2026-11-24",
         "endDate": "2026-11-24",
@@ -546,6 +573,13 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
+        ],
+        "sessions": [
+          {
+            "id": "main",
+            "label": "エンパワータイムへの参加",
+            "time": ""
+          }
         ]
       }
     ]
@@ -582,7 +616,6 @@
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
         "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
-        "attendance": false,
         "id": "2026-12-22-event",
         "startDate": "2026-12-22",
         "endDate": "2026-12-22",
@@ -592,6 +625,13 @@
         "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
+        ],
+        "sessions": [
+          {
+            "id": "main",
+            "label": "エンパワータイムへの参加",
+            "time": ""
+          }
         ]
       }
     ]
