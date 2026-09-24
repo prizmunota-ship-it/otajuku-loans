@@ -491,6 +491,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
 .mbook-tbl .it{min-width:132px}
 .pd-tbl td.neg{color:var(--crit)}
 .pd-tbl tr.roth td{background:var(--surface-2);font-weight:600}
+.payment-box{padding:12px 16px;border-top:1px solid var(--line,#ddd);font-size:13px;min-width:0}.payment-help{font-size:12px;color:var(--muted);margin:6px 0 10px}.payment-line{display:flex;justify-content:space-between;gap:12px;padding:5px 0}.payment-line span{overflow-wrap:anywhere;min-width:0}.payment-line b{white-space:nowrap}.payment-box.payment-summary{padding:4px 16px 6px;font-size:12px;line-height:1.35;color:var(--muted);border-top:0}.payment-summary .payment-line{padding:1px 0;gap:8px}.payment-summary .payment-line b{font-weight:400}.payment-edit{display:grid;grid-template-columns:65px minmax(80px,1fr) 110px 48px;gap:6px;margin:8px 0}.payment-edit input{min-width:0;width:100%;box-sizing:border-box}.payment-edit button{font-size:12px}.f-pay[readonly]{background:#eee}@media(max-width:480px){.payment-edit{grid-template-columns:58px minmax(80px,1fr) 85px}.payment-edit button{grid-column:3}.payment-box{padding:10px}}
 </style>
 </head>
 <body>
@@ -569,7 +570,18 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function normalizeState(){if(!state||!state.accounts)state=defaultState();if(!state.tsumi)state.tsumi=[];if(!state.spots)state.spots=[];if(!state.card)state.card={on:false,acctId:null,items:[]};
     if(state.bufferMonths==null)state.bufferMonths=1;
     if(!Array.isArray(state.card.items)){state.card.items=((+state.card.pay)>0)?[{name:'カード',pay:+state.card.pay}]:[];}
-    state.accounts.forEach(a=>{if(!a.photos)a.photos=[];});}
+    state.accounts.forEach(a=>{if(!a.photos)a.photos=[];syncPayments(a);});}
+  function syncPayments(a){if(Array.isArray(a.payments))a.pay=a.payments.reduce((sum,p)=>sum+Math.max(0,+p.amount||0),0);}
+  function paymentDetails(a,edit){
+    const rows=Array.isArray(a.payments)?a.payments:null;
+    if(edit){
+      let h='<div class="payment-box"><b>毎月の支払い内訳</b><div class="payment-help">日付・内容・金額を登録すると、月の合計を自動計算します。別枠で管理するカード・積立は重複登録しないでください。</div>';
+      (rows||[]).forEach((p,i)=>{h+='<div class="payment-edit"><input aria-label="支払日" class="txt pd-day" data-id="'+a.id+'" data-pi="'+i+'" type="number" min="1" max="31" value="'+(p.day||'')+'" placeholder="日"><input aria-label="支払い内容" class="txt pd-name" data-id="'+a.id+'" data-pi="'+i+'" value="'+esc(p.name||'')+'" placeholder="支払い内容"><input aria-label="支払額" class="txt pd-amount" data-id="'+a.id+'" data-pi="'+i+'" inputmode="numeric" value="'+iv(p.amount)+'" placeholder="円"><button type="button" data-payment-del="'+a.id+'" data-pi="'+i+'">削除</button></div>';});
+      return h+'<button type="button" class="addbtn" data-payment-add="'+a.id+'">＋ 支払いを追加</button></div>';
+    }
+    if(!rows||!rows.length)return '';
+    return '<div class="payment-box payment-summary">'+rows.slice().sort((a,b)=>(a.day||99)-(b.day||99)).map(p=>'<div class="payment-line"><span>'+ (p.day?esc(String(p.day))+'日':'日付未設定')+'：'+esc(p.name||'内容未設定')+'</span><b class="num">'+yen(p.amount)+'円</b></div>').join('')+'</div>';
+  }
   function cardTotal(){return (state.card.items||[]).reduce((s,i)=>s+(+i.pay||0),0);}
   const acctById=id=>state.accounts.find(a=>a.id===id);
   const spotById=id=>(state.spots||[]).find(s=>s.id===id);
@@ -640,7 +652,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     previewBackup=null;previewAssetsBackup=null;previewMode=false;
     migrateProps();ASSETS=buildASSETS();activeTab='home';render();try{window.scrollTo(0,0);}catch(e){}}
   const DEMO={v:1,asof:'（入力例）',accounts:[
-    {grp:'個人',id:'d1',bank:'A銀行',branch:'本店',acct:'1234567',bal:1850000,pay:320000,payday:5,borrow:42000000,note:'自宅ローン 120,000 / アパートA 200,000',photos:[]},
+    {grp:'個人',id:'d1',bank:'A銀行',branch:'本店',acct:'1234567',bal:1850000,pay:320000,payday:5,borrow:42000000,note:'',payments:[{day:5,name:'自宅ローン',amount:120000},{day:25,name:'アパートA',amount:200000}],photos:[]},
     {grp:'個人',id:'d2',bank:'B信用金庫',branch:'〇〇支店',acct:'2345678',bal:280000,pay:350000,payday:10,borrow:0,note:'車のローン',photos:[]},
     {grp:'法人',id:'d3',bank:'C信用組合',branch:'△△支店',acct:'3456789',bal:5200000,pay:880000,payday:27,borrow:96000000,note:'物件① 500,000 / 物件② 380,000',photos:[]},
     {grp:'法人',id:'d4',bank:'D銀行',branch:'□□支店',acct:'4567890',bal:640000,pay:210000,payday:15,borrow:28000000,note:'物件③ 210,000',photos:[]}
@@ -733,11 +745,12 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
         +'<div class="erow"><div class="efield"><label>支店</label><input class="txt small f-branch" data-id="'+a.id+'" value="'+esc(a.branch||'')+'" placeholder="任意"></div>'
         +'<div class="efield"><label>口座番号</label><input class="txt small f-acct" data-id="'+a.id+'" value="'+esc(a.acct||'')+'" placeholder="任意"></div></div>'
         +'<div class="erow"><div class="efield"><label>残高（円）</label><input class="inp f-bal" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.bal)+'" placeholder="0" style="max-width:none"></div>'
-        +'<div class="efield"><label>毎月返済（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.pay)+'" placeholder="0" style="max-width:none"></div></div>'
-        +'<div class="efield"><label>返済日（毎月何日に引き落とし・任意）</label><input class="inp f-payday" inputmode="numeric" data-id="'+a.id+'" value="'+(a.payday||'')+'" placeholder="例）27" style="max-width:140px;text-align:right"></div>'
+        +'<div class="efield"><label>月の支払合計（円）</label><input class="inp f-pay" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.pay)+'" '+(Array.isArray(a.payments)?'readonly aria-label="月の支払合計（自動計算）"':'')+' placeholder="0" style="max-width:none"></div></div>'
+        +(Array.isArray(a.payments)?'':'<div class="efield"><label>返済日（毎月何日に引き落とし・任意）</label><input class="inp f-payday" inputmode="numeric" data-id="'+a.id+'" value="'+(a.payday||'')+'" placeholder="例）27" style="max-width:140px;text-align:right"></div>')
+        +paymentDetails(a,true)
         +'<div class="efield"><label>借入残高（円・任意／金融機関ごとの借入まとめに使用）</label><input class="inp f-borrow" inputmode="numeric" data-id="'+a.id+'" value="'+iv(a.borrow)+'" placeholder="0" style="max-width:none;text-align:right"></div>'
         +'<div class="efield"><label>返済の内訳・メモ（任意）</label><textarea class="txt small f-note" data-id="'+a.id+'" rows="2" placeholder="例）物件A 120,000 / 物件B 80,000">'+esc(a.note||'')+'</textarea></div>'
-        +'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>'
+        +(Array.isArray(a.payments)?'':'<button class="calcbtn" data-calc="'+a.id+'">🧮 借入額・金利・年数から毎月返済＆残高を自動計算</button>')
         +'</div>';
     }
     const hasDetail=a.note;
@@ -747,10 +760,11 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
       +'<div class="bankcell"><div class="bankname">'+esc(a.bank||'（無名口座）')+(hasDetail?'<span class="caret">▶</span>':'')+' '+statusPill+'</div>'
       +'<div class="acct">'+esc(a.branch||'')+' '+esc(a.acct||'')+'</div>'
       +'</div>'
-      +'<div class="right pay"><div class="lab">毎月返済</div><div class="big num">'+(a.pay?yen(a.pay):'—')+'</div>'+(a.pay&&a.payday?'<div class="payday">毎月'+a.payday+'日</div>':'')+'</div>'
+      +'<div class="right pay"><div class="lab">月の支払合計</div><div class="big num">'+(a.pay?yen(a.pay):'—')+'</div>'+(a.pay&&a.payday&&!Array.isArray(a.payments)?'<div class="payday">毎月'+a.payday+'日</div>':'')+'</div>'
       +'<div class="right bal"><div class="lab">残高</div><div class="big num yen">'+yen(a.bal)+'</div>'
       +(a.pay?'<div class="diff num '+(diff<0?'neg':'pos')+'">'+(diff<0?'▲':'+')+yen(Math.abs(diff))+' '+(diff<0?'不足':'余裕')+'</div>':'<span class="pill neu" style="margin-top:3px">'+LAB[st]+'</span>')
       +'</div></div>';
+    html+=paymentDetails(a,false);
     if(hasDetail) html+='<div class="detail"><div class="note">'+esc(a.note)+'</div></div>';
     html+='</div>';
     return html;
@@ -830,6 +844,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     var events=[];
     state.accounts.forEach(function(a){
       var pay=+a.pay||0, bal=+a.bal||0, day=+a.payday||0;
+      if(pay>0&&Array.isArray(a.payments)){events.push({date:today0,monthly:true,name:a.bank||'口座',amt:pay,diff:bal-pay});return;}
       if(pay>0 && day>=1 && day<=31){ var nd=nextOcc(day); if(nd) events.push({date:nd,name:a.bank||'口座',amt:pay,diff:bal-pay}); }
     });
     var c=state.card;
@@ -853,13 +868,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(shorts.length){
       var totalShort=shorts.reduce(function(s,e){return s+(-e.diff);},0);
       var f=shorts[0];
-      out+='<div class="forecast has-short"><div class="fc-head">📅 資金ショート予報<small>（返済日に預金が不足するものだけ表示）</small></div>';
-      out+='<div class="fc-alert"><span class="fc-a-date">'+md(f.date)+'・'+cd(f.date)+'</span>「'+esc(f.name)+'」が <b class="num">不足 ▲¥'+yen(-f.diff)+'</b></div>';
+      out+='<div class="forecast has-short"><div class="fc-head">📅 資金ショート予報<small>（登録した支払額に対して残高が不足する口座）</small></div>';
+      out+='<div class="fc-alert"><span class="fc-a-date">'+(f.monthly?'月合計':md(f.date)+'・'+cd(f.date))+'</span>「'+esc(f.name)+'」が <b class="num">不足 ▲¥'+yen(-f.diff)+'</b></div>';
       if(shorts.length>1) out+='<div class="fc-sub">不足する引き落とし '+shorts.length+'件・不足合計 <b class="num">▲¥'+yen(totalShort)+'</b></div>';
       out+='<div class="fc-list"><div class="fc-row fc-hdr"><span class="fc-date">返済日</span><span class="fc-name">口座</span><span class="fc-amt">引落額</span><span class="fc-st">不足額</span></div>';
       shorts.forEach(function(e){
         out+='<div class="fc-row fc-crit">'
-          +'<span class="fc-date">'+md(e.date)+'<small>'+cd(e.date)+'</small></span>'
+          +'<span class="fc-date">'+(e.monthly?'月合計':md(e.date))+'<small>'+(e.monthly?'':cd(e.date))+'</small></span>'
           +'<span class="fc-name">'+esc(e.name)+'</span>'
           +'<span class="fc-amt num yen">¥'+yen(e.amt)+'</span>'
           +'<span class="fc-st num neg">▲¥'+yen(-e.diff)+' 不足</span>'
@@ -879,7 +894,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(out) return out;
     if(events.length){
       return '<div class="forecast all-ok"><div class="fc-head">📅 資金ショート予報</div>'
-        +'<div class="fc-ok">✓ 直近の引き落としは、すべて残高で足ります（不足はありません）</div></div>';
+        +'<div class="fc-ok">✓ 登録した口座の支払額に対して、残高の不足はありません</div></div>';
     }
     var hasPay=state.accounts.some(function(a){return (+a.pay)>0;});
     if(hasPay) return '<div class="forecast prompt"><div class="fc-head">📅 資金ショート予報</div>'
@@ -1348,6 +1363,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
   function memberView(){return !IS_OWNER||previewMode;}   // メンバー(または会員プレビュー)は資金繰り帳のみ／資産は主宰専用
   function renderTabs(){const el=$('tabbar');if(!el)return;if(memberView()){el.innerHTML='';return;}const tabs=[['home','🏠 ホーム'],['cash','💰 資金'],['assets','🏢 資産']];el.innerHTML=tabs.map(t=>'<button class="tabbtn'+(activeTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('');}
   function render(){
+    state.accounts.forEach(syncPayments);
     const eb=$('editBanner');if(eb)eb.hidden=!editing||demoMode;
     if(memberView())activeTab='cash';   // メンバーは資金繰り帳のみ
     ASSETS=buildASSETS();
@@ -1488,6 +1504,8 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     if(e=t.closest('[data-pexp]')){const n=e.getAttribute('data-pexp');pexpA[n]=!pexpA[n];render();return;}
     if(t.closest('#fabEdit')){editing=!editing;if(editing){gexp['法人']=true;gexp['個人']=true;}else{gexp['法人']=false;gexp['個人']=false;}document.body.classList.toggle('editing',editing);render();return;}
     if(e=t.closest('[data-jump]')){const j=e.getAttribute('data-jump');if(j==='個人'){gexp['個人']=true;}else if(j==='法人'){gexp['法人']=true;}else if(j==='クレカ'){if(!state.card.on){state.card.on=true;if(!state.card.items||!state.card.items.length)state.card.items=[{name:'',pay:0}];save();}}else if(j==='スポット'){state.spots=state.spots||[];if(!state.spots.length){state.spots.push({id:uid(),name:'',amount:0,acctId:null,months:[],day:'',note:''});save();}}pendingScroll=j;render();return;}
+    if(e=t.closest('[data-payment-add]')){const a=acctById(e.getAttribute('data-payment-add'));if(!a)return;if(!Array.isArray(a.payments)){a.payments=(+a.pay>0)?[{name:'既存の支払い（内容を編集）',day:a.payday||'',amount:+a.pay}]:[];}a.payments.push({name:'',day:'',amount:0});syncPayments(a);save();render();return;}
+    if(e=t.closest('[data-payment-del]')){const a=acctById(e.getAttribute('data-payment-del'));if(!a||!Array.isArray(a.payments))return;a.payments.splice(+e.getAttribute('data-pi'),1);syncPayments(a);save();render();return;}
     if(e=t.closest('[data-addspot]')){state.spots=state.spots||[];state.spots.push({id:uid(),name:'',amount:0,acctId:null,months:[],day:'',note:''});save();render();const inp=document.querySelector('.sf-name[data-sid="'+state.spots[state.spots.length-1].id+'"]');if(inp)inp.focus();return;}
     if(e=t.closest('[data-cardadd]')){state.card.items=state.card.items||[];state.card.items.push({name:'',pay:0});save();render();const inp=document.querySelector('.cf-name[data-cardname="'+(state.card.items.length-1)+'"]');if(inp)inp.focus();return;}
     if(e=t.closest('[data-carddel]')){const i=+e.getAttribute('data-carddel');if(state.card.items&&state.card.items[i]!==undefined){state.card.items.splice(i,1);save();render();}return;}
@@ -1527,6 +1545,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const id=t.getAttribute('data-id');const a=id?acctById(id):null;
     const tid=t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
     const sid=t.getAttribute('data-sid');const sp=sid?spotById(sid):null;
+    if(t.classList.contains('pd-name')&&a&&a.payments){const p=a.payments[+t.getAttribute('data-pi')];if(p){p.name=t.value;save();}return;}
     if(t.classList.contains('sf-name')&&sp){sp.name=t.value;save();return;}
     if(t.classList.contains('sf-note')&&sp){sp.note=t.value;save();return;}
     if(t.classList.contains('f-bank')&&a){a.bank=t.value;save();return;}
@@ -1546,12 +1565,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
     const t=ev.target;if(!t.classList&&t.id!=='cardOn')return;const id=t.getAttribute&&t.getAttribute('data-id');const a=id?acctById(id):null;
     const tid=t.getAttribute&&t.getAttribute('data-tid');const ts=tid?tsumiById(tid):null;
     const sid=t.getAttribute&&t.getAttribute('data-sid');const sp=sid?spotById(sid):null;
+    if((t.classList.contains('pd-day')||t.classList.contains('pd-amount'))&&a&&a.payments){const p=a.payments[+t.getAttribute('data-pi')];if(!p)return;const v=pnum(t.value);if(t.classList.contains('pd-day'))p.day=(Number.isInteger(v)&&v>=1&&v<=31)?v:'';else p.amount=Math.max(0,v);syncPayments(a);save();render();return;}
     if(t.classList.contains('sf-amt')&&sp){sp.amount=pnum(t.value);save();render();return;}
     if(t.classList.contains('sf-acct')&&sp){sp.acctId=t.value||null;save();render();return;}
     if(t.classList.contains('sf-day')&&sp){var sd=pnum(t.value);sp.day=(sd>=1&&sd<=31)?sd:'';save();render();return;}
     if(t.classList.contains('sf-months')&&sp){sp.months=t.value.split(/[^0-9]+/).map(Number).filter(function(n){return n>=1&&n<=12;});save();render();return;}
     if(t.classList.contains('f-bal')&&a){a.bal=pnum(t.value);save();render();return;}
-    if(t.classList.contains('f-pay')&&a){a.pay=pnum(t.value);save();render();return;}
+    if(t.classList.contains('f-pay')&&a&&!Array.isArray(a.payments)){a.pay=pnum(t.value);save();render();return;}
     if(t.classList.contains('f-borrow')&&a){a.borrow=pnum(t.value);save();render();return;}
     if(t.classList.contains('f-payday')&&a){var d=pnum(t.value);a.payday=(d>=1&&d<=31)?d:'';save();render();return;}
     if(t.classList.contains('tf-bal')&&ts){ts.bal=pnum(t.value);save();render();return;}
