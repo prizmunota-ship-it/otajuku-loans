@@ -139,7 +139,7 @@
         "endAt": "2026-09-24T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "16時〜18時",
-        "venue": "ONE FUKUOKA BLDG.（ワンビル）B1「iiTo TENJIN」\n福岡市中央区天神1-11-1\n※一番奥の共用席エリアに集まっています（下の写真をご覧ください）",
+        "venue": "ONE FUKUOKA BLDG.（ワンビル）B1「iiTo TENJIN」\n福岡市中央区天神1-11-1\n※一番奥の共用席エリアにいます（下の写真をご覧ください）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -184,16 +184,10 @@
           {
             "src": "/assets/venue/onebldg-b1-seats.jpg",
             "alt": "入った奥の席エリア",
-            "caption": "入って奥に進んだ、この席のあたりに集まっています。"
+            "caption": "入って奥に進んだ、この席のあたりにいます。"
           }
         ],
-        "sessions": [
-          {
-            "id": "main",
-            "label": "エンパワータイムへの参加",
-            "time": ""
-          }
-        ]
+        "attendance": false
       },
       {
         "date": "26(土)",
@@ -294,7 +288,7 @@
         "endAt": "2026-10-01T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "16時〜18時",
-        "venue": "ONE FUKUOKA BLDG.（ワンビル）B1「iiTo TENJIN」\n福岡市中央区天神1-11-1\n※一番奥の共用席エリアに集まっています（下の写真をご覧ください）",
+        "venue": "ONE FUKUOKA BLDG.（ワンビル）B1「iiTo TENJIN」\n福岡市中央区天神1-11-1\n※一番奥の共用席エリアにいます（下の写真をご覧ください）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -339,7 +333,7 @@
           {
             "src": "/assets/venue/onebldg-b1-seats.jpg",
             "alt": "入った奥の席エリア",
-            "caption": "入って奥に進んだ、この席のあたりに集まっています。"
+            "caption": "入って奥に進んだ、この席のあたりにいます。"
           }
         ],
         "sessions": [
