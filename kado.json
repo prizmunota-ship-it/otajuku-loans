@@ -2,9 +2,9 @@
   "asof": "2026/9/30",
   "total": 267,
   "vacant": 25,
-  "applied": 2,
+  "applied": 4,
   "taikyo": 3,
-  "lossMan": 163,
+  "lossMan": 191,
   "target": 97,
   "rate": 90.6,
   "props": [
@@ -71,7 +71,7 @@
       "applied": 0,
       "taikyo": 0,
       "parkTotal": 10,
-      "parkVacant": 2,
+      "parkVacant": 0,
       "kanri": "イムズパートナー"
     },
     {
@@ -79,7 +79,7 @@
       "units": 20,
       "vacant": 2,
       "occupied": 18,
-      "applied": 3,
+      "applied": 2,
       "taikyo": 0,
       "parkTotal": 1,
       "parkVacant": 0,
