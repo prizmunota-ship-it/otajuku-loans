@@ -194,7 +194,7 @@ function render(){
  }
  if(!order.length){list.innerHTML=html+'<div class="empty">該当する部屋はありません</div>';return}
  order.forEach(prop=>{
-  const rooms=g[prop],any=rooms[0];
+  const rooms=g[prop].slice().sort((a,b)=>Number(!!String(a.broker||"").trim())-Number(!!String(b.broker||"").trim())),any=rooms[0];
   const open=flt?true:!!OPEN[prop];
   const kr=KR[any.kado_key||prop];
   const nm=String(prop).replace(/^プライマリー/,'');
