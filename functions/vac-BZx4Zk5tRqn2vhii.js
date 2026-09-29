@@ -105,7 +105,7 @@ footer{text-align:center;color:var(--mut);font-size:14px;margin-top:24px}
 <header>
  <h1>🏠 プライマリー空室一覧</h1>
  <div class="upd" id="upd"></div>
- <a href="/vac-list-7Yc4Wn9Q.pdf" style="display:inline-block;margin-top:9px;background:#0E5030;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:9px 18px;border-radius:10px;">📊 一覧表（PDF・1枚）を見る</a>
+ <a href="/vac-list-7Yc4Wn9Q.pdf?v=ec3d832ada49" style="display:inline-block;margin-top:9px;background:#0E5030;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:9px 18px;border-radius:10px;">📊 一覧表（PDF・1枚）を見る</a>
  <div class="chips" id="chips"></div>
  <div class="tabs" id="tabs">
   <button id="tab-list" class="on" onclick="showTab('list')">📋 空室一覧</button>
