@@ -99,6 +99,6 @@ test('event data is unique with separate viewing/dinner and complete existing sc
  const empower=all.filter(e=>e.title.includes('エンパワータイム'));
  assert.ok(empower.length>=7);
  for(const e of empower) assert.equal(e.attendance===false, e.location!=='東京', e.id);
- assert.ok(empower.filter(e=>e.type==='オンライン').every(e=>e.zoom));
+ assert.ok(empower.filter(e=>e.type==='オンライン').every(e=>e.meet || e.zoom));
  assert.equal(all.find(e=>e.id==='2026-11-12-event').sessions.length,1);
 });

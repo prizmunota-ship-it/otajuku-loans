@@ -510,14 +510,13 @@
         "type": "オンライン",
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
-        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
         "id": "2026-10-27-event",
         "startDate": "2026-10-27",
         "endDate": "2026-10-27",
         "endAt": "2026-10-27T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "21時〜22時",
-        "venue": "オンライン（Zoom）",
+        "venue": "オンライン（Google Meet）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -527,7 +526,8 @@
             "label": "エンパワータイムへの参加",
             "time": ""
           }
-        ]
+        ],
+        "meet": "https://meet.google.com/dst-zpkt-abs"
       }
     ]
   },
@@ -563,14 +563,13 @@
         "type": "オンライン",
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
-        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
         "id": "2026-11-24-event",
         "startDate": "2026-11-24",
         "endDate": "2026-11-24",
         "endAt": "2026-11-24T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "21時〜22時",
-        "venue": "オンライン（Zoom）",
+        "venue": "オンライン（Google Meet）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -580,7 +579,8 @@
             "label": "エンパワータイムへの参加",
             "time": ""
           }
-        ]
+        ],
+        "meet": "https://meet.google.com/dst-zpkt-abs"
       }
     ]
   },
@@ -618,14 +618,13 @@
         "type": "オンライン",
         "title": "エンパワータイム(21時〜22時)",
         "location": "",
-        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1",
         "id": "2026-12-22-event",
         "startDate": "2026-12-22",
         "endDate": "2026-12-22",
         "endAt": "2026-12-22T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "21時〜22時",
-        "venue": "オンライン（Zoom）",
+        "venue": "オンライン（Google Meet）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -635,7 +634,8 @@
             "label": "エンパワータイムへの参加",
             "time": ""
           }
-        ]
+        ],
+        "meet": "https://meet.google.com/dst-zpkt-abs"
       }
     ]
   }
