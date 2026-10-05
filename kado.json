@@ -1,12 +1,12 @@
 {
-  "asof": "2026/10/4",
+  "asof": "2026/10/5",
   "total": 267,
-  "vacant": 27,
+  "vacant": 25,
   "applied": 1,
   "taikyo": 3,
-  "lossMan": 150,
+  "lossMan": 152,
   "target": 97,
-  "rate": 89.9,
+  "rate": 90.6,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -33,9 +33,9 @@
     {
       "name": "プライマリー合川B棟",
       "units": 10,
-      "vacant": 2,
-      "occupied": 8,
-      "applied": 0,
+      "vacant": 1,
+      "occupied": 9,
+      "applied": 1,
       "taikyo": 0,
       "parkTotal": 4,
       "parkVacant": 2,
@@ -55,9 +55,9 @@
     {
       "name": "プライマリー花畑",
       "units": 9,
-      "vacant": 9,
-      "occupied": 0,
-      "applied": 0,
+      "vacant": 8,
+      "occupied": 1,
+      "applied": 1,
       "taikyo": 0,
       "parkTotal": 2,
       "parkVacant": 2,
