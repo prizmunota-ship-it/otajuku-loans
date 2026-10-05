@@ -276,7 +276,7 @@ function render(){
   const krHtml=kr!=null?'<span class="kr'+(kr<90?' lo':'')+'">稼働 '+kr+'％</span>':'';
   const comp=any.comp||'';
   const co=CO[comp==='エイブル黒崎店'?'エイブル':comp];
-  const cr=co&&co.total?'<small style="display:block">管理全体 稼働 '+((co.total-co.vacant)/co.total*100).toFixed(1)+'％</small>':'';
+  const cr=co&&co.total?'<small style="display:block;'+((co.total-co.vacant)/co.total<0.9?'color:#dc2626':'')+'">管理全体 稼働 '+((co.total-co.vacant)/co.total*100).toFixed(1)+'％</small>':'';
   const ctag=comp?'<span class="ptag" data-c="'+esc(comp)+'" onclick="openContact(event)">'+esc(comp)+cr+'</span>':'';
   html+='<div class="pcard'+(open?' open':'')+'" id="pc-'+esc(prop)+'">'
    +'<div class="phead" onclick="tog(this)">'
