@@ -153,7 +153,20 @@ body{font-family:'Noto Sans JP',sans-serif;background:linear-gradient(160deg,#FF
 
 <script>
 // ===== メンバー認証（融資一覧と同じGAS照合・localStorage共有） =====
-var GAS_URL = "https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";
+async function checkMember(email){
+  var controller = new AbortController();
+  var timer = setTimeout(function(){ controller.abort(); }, 25000);
+  try {
+    var response = await fetch('/api/member-check', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email:email}), signal: controller.signal
+    });
+    if(!response.ok) throw new Error('membership unavailable');
+    var data = await response.json();
+    if(data.result !== 'ok' && data.result !== 'ng') throw new Error('invalid response');
+    return data.result;
+  } finally { clearTimeout(timer); }
+}
 
 // 認証済みなら入口を閉じてメニュー表示。ただし毎回「在籍」を再確認（退会者を締め出すため）
 if(localStorage.getItem("otajuku_auth") === "ok" && localStorage.getItem("otajuku_email")){
@@ -166,7 +179,7 @@ if(localStorage.getItem("otajuku_auth") === "ok" && localStorage.getItem("otajuk
 // 在籍の再確認：登録から外れていたら強制ログアウト
 function revalidate(){
   var em = localStorage.getItem("otajuku_email"); if(!em) return;
-  window._recheck = function(r){
+  checkMember(em).then(function(r){
     if(r !== "ok"){
       localStorage.removeItem("otajuku_auth"); localStorage.removeItem("otajuku_email"); localStorage.removeItem("otajuku_auth_ts");
       var ov=document.getElementById("loginOverlay"); ov.style.display="flex";
@@ -174,13 +187,11 @@ function revalidate(){
     } else {
       localStorage.setItem("otajuku_auth_ts", ""+Date.now());   // 照合OK→24時間の期限を更新
     }
-  };
-  var s=document.createElement("script");
-  s.src = GAS_URL + "?email=" + encodeURIComponent(em) + "&callback=_recheck";
-  document.body.appendChild(s);
+  }).catch(function(){ /* Keep existing session on a temporary connection failure. */ });
 }
 
-function doLogin(){
+async function doLogin(){
+  if(document.getElementById("loginBtn").disabled) return;
   var email = document.getElementById("loginEmail").value.trim();
   var msg = document.getElementById("loginMsg");
   var btn = document.getElementById("loginBtn");
@@ -192,9 +203,8 @@ function doLogin(){
   btn.disabled = true;
   msg.className="login-msg loading";
   msg.textContent="確認中...";
-  var script = document.createElement("script");
-  window._loginCallback = function(result){
-    if(document.body.contains(script)) document.body.removeChild(script);
+  try {
+    var result = await checkMember(email);
     if(result === "ok"){
       localStorage.setItem("otajuku_auth", "ok");
       localStorage.setItem("otajuku_email", email.toLowerCase());
@@ -207,9 +217,12 @@ function doLogin(){
       msg.textContent="このメールアドレスは登録されていません。太田までご連絡ください。";
       btn.disabled = false;
     }
-  };
-  script.src = GAS_URL + "?email=" + encodeURIComponent(email) + "&callback=_loginCallback";
-  document.body.appendChild(script);
+  } catch(error) {
+    msg.className="login-msg error";
+    msg.textContent="確認に接続できませんでした。通信状況を確認して、もう一度ログインしてください。";
+  } finally {
+    btn.disabled = false;
+  }
 }
 function logout(){ localStorage.removeItem("otajuku_auth"); localStorage.removeItem("otajuku_email"); location.reload(); }
 document.getElementById("loginEmail").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
