@@ -16,10 +16,10 @@
 .event-back{min-height:44px;font-weight:700;color:#785519;text-align:left}.event-back:disabled{opacity:.5}
 .event-content{padding:24px 28px 36px}.event-eyebrow{font-size:12px;color:#977024;font-weight:700;letter-spacing:.03em}
 .event-content h2{font-size:25px;line-height:1.5;font-weight:900;margin:8px 0 14px}.event-date{font-size:18px;font-weight:800}.event-time{color:#946212;font-weight:700;margin-bottom:18px}
-.event-facts{background:white;border:1px solid #eee3c7;border-radius:14px;padding:12px 16px;margin:18px 0}.event-facts>div{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:5px 0}.event-facts dt{color:#8a7857;font-size:12px;font-weight:700}.event-facts dd{white-space:pre-line;font-weight:600}
+.event-facts{background:white;border:1px solid #eee3c7;border-radius:14px;padding:12px 16px;margin:18px 0}.event-facts>div{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:5px 0}.event-facts dt{color:#8a7857;font-size:12px;font-weight:700}.event-facts dd{white-space:pre-line;font-weight:600}
 .event-description p{margin:0 0 12px}.event-content h3{font-size:17px;font-weight:800;margin:0 0 12px}.event-agenda{margin:22px 0}.event-agenda>div{display:grid;grid-template-columns:145px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-agenda strong{font-size:13px;color:#885d18}.event-notice{padding:12px 14px;border-left:3px solid #dfab2e;background:#fff4d5;margin:16px 0;font-size:13px}
 .event-access{margin:22px 0}.event-access>div:not(.venue-photos){display:grid;grid-template-columns:96px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-access strong{font-size:13px;color:#885d18}.event-map{display:inline-block;margin-top:14px;padding:10px 14px;border:1px solid #bdd6f5;border-radius:12px;background:#eaf3ff;color:#1e5094;font-weight:800;font-size:13px}
-.venue-photos{margin:18px 0 4px}.venue-photo{margin:0 0 16px}.venue-photo img{display:block;width:100%;height:auto;border:1px solid #e3d9c2;border-radius:12px;background:#fff}.venue-photo figcaption{font-size:12px;color:#6f716c;line-height:1.6;margin-top:6px}
+.venue-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0 4px}.venue-photo{margin:0;min-width:0}.venue-photo a{display:block}.venue-photo img{display:block;width:100%;max-width:100%;height:auto;max-height:40vh;object-fit:contain;border:1px solid #e3d9c2;border-radius:12px;background:#fff}.venue-photo figcaption{font-size:12px;color:#6f716c;line-height:1.6;margin-top:6px}
 .event-banks{margin:20px 0}.event-banks h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px}.event-banks h3 small{font-size:12px;font-weight:600;color:#8a7f6b}
 .bank-list{list-style:none;margin:0;padding:0}
 .bank-item{padding:7px 0;border-bottom:1px solid #eee6d6;font-size:13px;line-height:1.7}
@@ -39,6 +39,7 @@
 @media(max-width:600px){.event-overlay{padding:0}.event-panel{min-height:100%;border-radius:0}.event-content{padding:20px 18px 36px}.event-content h2{font-size:21px}.event-topbar{padding:6px 18px}.event-agenda>div{grid-template-columns:120px 1fr;gap:8px}.event-agenda strong{font-size:12px}.event-answer-card{padding:18px 14px}.event-section-head{align-items:flex-start}.event-section-head h3{padding-top:8px}.event-section-head small{display:block}.event-table th,.event-table td{padding:10px 5px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 .event-venue-link{color:#1e5094;text-decoration:underline;text-underline-offset:3px;display:block;padding:3px 0}.event-venue-link:hover{color:#123766}
+.event-facts>.event-fee-notice{display:block;margin-top:10px;padding:14px;border:2px solid #e7ac27;border-radius:10px;background:#fff1be}.event-fee-notice dt{font-weight:800;color:#80500c;margin-bottom:3px}.event-fee-notice strong{display:block;color:#a54411;font-size:17px;font-weight:900}.event-fee-notice span{display:block;font-size:12px;margin-top:5px;color:#705a2c}@media(max-width:600px){.venue-photos{grid-template-columns:minmax(0,1fr);gap:14px}}
 </style>
 </head>
 <body>
@@ -205,7 +206,8 @@
               {!closed && attendance && <button type="button" className="event-jump" onClick={()=>panel.current?.querySelector('#event-answer-section')?.scrollIntoView({behavior:'smooth',block:'start'})}>出欠を回答・変更する ↓</button>}
               <dl className="event-facts">
                 <div><dt>会場</dt><dd>{event.venueMapLink && event.mapUrl ? <a className="event-venue-link" href={event.mapUrl} target="_blank" rel="noopener noreferrer">{event.venue} ↗</a> : event.venue}</dd></div>
-                {event.fee && <div><dt>会費</dt><dd>{event.fee}</dd></div>}
+                {event.fee && <div><dt>参加費</dt><dd>{event.fee}</dd></div>}
+                {event.feeNotice && <div className="event-fee-notice"><dt>太田より</dt><dd><strong>{event.feeNotice}</strong>{event.feeBreakdown && <span>{event.feeBreakdown}</span>}</dd></div>}
                 {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
               </dl>
               <div className="event-description">{event.descriptionTitle && <h3>{event.descriptionTitle}</h3>}{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
@@ -220,7 +222,7 @@
                 {event.banks.declined && event.banks.declined.length>0 && <p className="bank-declined">今回は見送り（確定）：{event.banks.declined.join('／')}</p>}
               </div>}
               {event.access && event.access.length>0 && <div className="event-access"><h3>アクセス</h3>{event.access.map(([label,detail],i)=><div key={i}><strong>{label}</strong><span>{detail}</span></div>)}{event.mapUrl && <a className="event-map" href={event.mapUrl} target="_blank" rel="noopener noreferrer">Googleマップで現地を開く ↗</a>}</div>}
-              {event.venuePhotos && event.venuePhotos.length>0 && <div className="venue-photos">{event.venuePhotos.map((p,i)=><figure className="venue-photo" key={i}><img src={p.src} alt={p.alt||p.caption||'会場の写真'} loading="lazy" />{p.caption && <figcaption>{p.caption}</figcaption>}</figure>)}</div>}
+              {event.venuePhotos && event.venuePhotos.length>0 && <div className="venue-photos">{event.venuePhotos.map((p,i)=><figure className="venue-photo" key={i}><a href={p.src} target="_blank" rel="noopener noreferrer" aria-label={(p.alt||'会場の写真')+'を拡大する'}><img src={p.src} alt={p.alt||p.caption||'会場の写真'} loading="lazy" /></a>{p.caption && <figcaption>{p.caption}</figcaption>}</figure>)}</div>}
               {event.agenda && <div className="event-agenda"><h3>当日の流れ</h3>{event.agenda.map(([time,label],i)=><div key={i}><strong>{time}</strong><span>{label}</span></div>)}</div>}
               {event.notice && <p className="event-notice">{event.notice}</p>}
               {(event.meet || event.zoom) && <a className="event-zoom" href={event.meet || event.zoom} target="_blank" rel="noopener noreferrer">{event.meet ? 'Google Meet' : 'Zoom'}に入室する ↗</a>}
