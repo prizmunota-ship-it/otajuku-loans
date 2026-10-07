@@ -208,6 +208,7 @@
                 {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
               </dl>
               <div className="event-description">{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
+              {event.venueUrl && /^https:\/\//.test(event.venueUrl) && <p><a className="event-map" href={event.venueUrl} target="_blank" rel="noopener noreferrer">{event.venueLinkLabel || '会場の詳細を見る ↗'}</a></p>}
               {event.banks && event.banks.confirmed && event.banks.confirmed.length>0 && <div className="event-banks">
                 <h3>ご参加が決まっている金融機関<small>{event.banks.confirmed.length}機関{event.banks.confirmed.reduce((n,b)=>n+b.members.length,0)}名{event.banks.asOf?`／${event.banks.asOf}`:''}</small></h3>
                 <ul className="bank-list">{event.banks.confirmed.map((b,i)=><li className="bank-item" key={i}>
