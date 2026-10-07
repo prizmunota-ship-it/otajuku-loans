@@ -644,12 +644,16 @@
         "notice": "出欠は船の忘年会について回答してください。ワンビルへの早めの合流は任意で、出欠回答は不要です。",
         "venuePhotos": [
           {
-            "src": "/assets/events/2026-12-11/wasen-exterior.png",
+            "src": "/assets/events/2026-12-11/wasen-exterior.jpg",
+            "width": 1292,
+            "height": 854,
             "alt": "夜の那珂川を進むはかた舟の和船",
             "caption": "今回貸し切る「はかた舟」の和船"
           },
           {
-            "src": "/assets/events/2026-12-11/wasen-interior.png",
+            "src": "/assets/events/2026-12-11/wasen-interior.jpg",
+            "width": 1290,
+            "height": 858,
             "alt": "和船の掘りごたつ席の船内",
             "caption": "和船の船内：掘りごたつ席でくつろげます（写真はイメージです）"
           }
