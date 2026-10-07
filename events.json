@@ -503,7 +503,36 @@
             "締め・集合写真撮影・退場"
           ]
         ],
-        "notice": "名刺を多めにご持参ください。17:45〜18:00は名刺交換の時間です。ぜひお早めにお越しください。"
+        "notice": "名刺を多めにご持参ください。17:45〜18:00は名刺交換の時間です。ぜひお早めにお越しください。",
+        "descriptionTitle": "イベント案内",
+        "mapUrl": "https://www.google.com/maps/search/?api=1&query=ナインドアーズ+福岡市博多区博多駅前2-8-12",
+        "venueMapLink": true,
+        "venueUrl": "https://ninedoors.jp/",
+        "venueLinkLabel": "会場の詳細を見る（ナインドアーズ） ↗",
+        "venuePhotos": [
+          {
+            "src": "/assets/events/2026-10-22/vol2-group.jpg",
+            "width": 2168,
+            "height": 1224,
+            "wide": true,
+            "alt": "第2回金融機関祭りの集合写真",
+            "caption": "第2回金融機関祭り（2026年2月26日）の集合写真"
+          },
+          {
+            "src": "/assets/events/2026-10-22/vol2-exchange.jpg",
+            "width": 1280,
+            "height": 960,
+            "alt": "第2回金融機関祭りの会場で交流する参加者",
+            "caption": "前回の様子：同じ会場で顔を合わせ、交流する時間"
+          },
+          {
+            "src": "/assets/events/2026-10-22/vol2-gathering.jpg",
+            "width": 1477,
+            "height": 1108,
+            "alt": "第2回金融機関祭りの参加者の様子",
+            "caption": "前回の様子：参加者同士のつながりも生まれます"
+          }
+        ]
       },
       {
         "date": "27(火)",
