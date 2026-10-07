@@ -641,16 +641,6 @@
             "下船"
           ]
         ],
-        "access": [
-          [
-            "集合場所",
-            "20:00 福博であい橋に集合（下のGoogleマップをご確認ください）"
-          ],
-          [
-            "ワンビルから",
-            "徒歩約9分・600m。地下からの移動も含め15分程度が目安です。"
-          ]
-        ],
         "mapUrl": "https://www.google.com/maps/search/?api=1&query=福博であい橋",
         "notice": "出欠は船の忘年会について回答してください。ワンビルへの早めの合流は任意で、出欠回答は不要です。",
         "venuePhotos": [
@@ -666,7 +656,9 @@
           }
         ],
         "venueUrl": "https://yakatabune.co.jp/#yakata",
-        "venueLinkLabel": "船の詳細を見る（はかた舟・和船） ↗"
+        "venueLinkLabel": "船の詳細を見る（はかた舟・和船） ↗",
+        "venueMapLink": true,
+        "descriptionTitle": "イベント案内"
       },
       {
         "date": "22(火)",
