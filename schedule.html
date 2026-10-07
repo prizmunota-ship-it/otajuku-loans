@@ -38,7 +38,6 @@
 .event-filters{display:flex;gap:7px;margin:14px 0}.event-filters button{border:1px solid #e2dac6;border-radius:22px;padding:6px 18px;min-height:42px;color:#7b6e51;background:#fff;font-size:12px}.event-filters button[aria-pressed=true]{background:#6e571f;color:#fff;border-color:#6e571f}.event-table-wrap{overflow-x:auto;border:1px solid #e4e1d4;border-radius:12px;background:#fff}.event-table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed}.event-table th,.event-table td{padding:12px 8px;text-align:center;border-bottom:1px solid #eee9dc;overflow-wrap:anywhere}.event-table th:first-child{width:38%;text-align:left}.event-table thead{background:#f8f1de;color:#827047}.event-table tbody th{font-weight:700}.event-table small{display:block;font-size:10px;font-weight:400;color:#938567}.rsvp-badge{display:inline-block;padding:3px 7px;border-radius:5px;white-space:nowrap}.rsvp-badge.yes{color:#197443;background:#eaf5ee}.rsvp-badge.no{color:#5f6670;background:#f0f1f3}.event-comment td{text-align:left;color:#77715d;font-size:11px;padding-top:0;white-space:pre-line}.event-comment td:before{content:'ひとこと：'}.event-sync-note{margin-top:12px}
 @media(max-width:600px){.event-overlay{padding:0}.event-panel{min-height:100%;border-radius:0}.event-content{padding:20px 18px 36px}.event-content h2{font-size:21px}.event-topbar{padding:6px 18px}.event-agenda>div{grid-template-columns:120px 1fr;gap:8px}.event-agenda strong{font-size:12px}.event-answer-card{padding:18px 14px}.event-section-head{align-items:flex-start}.event-section-head h3{padding-top:8px}.event-section-head small{display:block}.event-table th,.event-table td{padding:10px 5px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-.event-compact>section{margin-top:24px;padding-top:20px;border-top:1px solid #eee6d6}.event-compact .event-agenda{margin:8px 0 0}.event-compact .event-agenda>div{grid-template-columns:64px 1fr;padding:6px 0;border:0}.event-compact .event-date{margin:0}.event-compact .event-map{margin-top:8px}.compact-location{margin-top:12px}.compact-fee{font-size:19px;font-weight:800;color:#885d18}.event-compact .venue-photos{margin-top:10px}
 </style>
 </head>
 <body>
@@ -122,24 +121,6 @@
       return data;
     }
 
-    function CompactEventInfo({event, dayLabel}) {
-      return <div className="event-compact">
-        <h2 id="event-heading">{event.title}</h2>
-        <section><h3>日時</h3><p className="event-date">{dayLabel}</p>
-          <div className="event-agenda">{event.agenda?.map(([time,label],i)=><div key={i}><strong>{time}</strong><span>{label}</span></div>)}</div>
-        </section>
-        <section><h3>場所</h3><p>{event.venue}</p>
-          {event.mapUrl && <a className="event-map" href={event.mapUrl} target="_blank" rel="noopener noreferrer">Googleマップで集合場所を開く ↗</a>}
-          {event.access?.map(([label,detail],i)=><p className="event-small compact-location" key={i}>{label}：{detail}</p>)}
-        </section>
-        <section><h3>参加費</h3><p className="compact-fee">{event.fee}</p>{event.feeNote && <p className="event-small">{event.feeNote}</p>}</section>
-        <section><h3>案内</h3><div className="event-description">{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
-          {event.venueUrl && /^https:\/\//.test(event.venueUrl) && <a className="event-map" href={event.venueUrl} target="_blank" rel="noopener noreferrer">{event.venueLinkLabel || '会場の詳細を見る ↗'}</a>}
-        </section>
-        {event.venuePhotos?.length>0 && <section><h3>写真</h3><div className="venue-photos">{event.venuePhotos.map((p,i)=><figure className="venue-photo" key={i}><img src={p.src} alt={p.alt||p.caption||'会場の写真'} loading="lazy" />{p.caption && <figcaption>{p.caption}</figcaption>}</figure>)}</div></section>}
-      </div>;
-    }
-
     function EventDetail({event, onClose}) {
       const [data, setData] = useState(null);
       const [loading, setLoading] = useState(true);
@@ -216,7 +197,6 @@
           <section className="event-panel" role="dialog" aria-modal="true" aria-labelledby="event-heading" ref={panel} tabIndex="-1">
             <div className="event-topbar"><button type="button" onClick={onClose} disabled={saving} className="event-back">‹ 年間スケジュールに戻る</button><span>太田塾</span></div>
             <div className="event-content">
-              {event.detailLayout==='compact' ? <CompactEventInfo event={event} dayLabel={dayLabel} /> : <>
               <div className="event-eyebrow">{event.type} · {event.audience}</div>
               <h2 id="event-heading">{event.title}</h2>
               <p className="event-date">{dayLabel}</p>
@@ -244,10 +224,8 @@
               {event.notice && <p className="event-notice">{event.notice}</p>}
               {(event.meet || event.zoom) && <a className="event-zoom" href={event.meet || event.zoom} target="_blank" rel="noopener noreferrer">{event.meet ? 'Google Meet' : 'Zoom'}に入室する ↗</a>}
               {!attendance && <p className="event-small event-no-rsvp">出欠の回答は不要です。{event.meet ? '当日はGoogle Meetから参加してください。入室承認を求められた場合は、そのままお待ちください。' : event.zoom ? '当日はそのままZoomに入室してください。' : '当日、直接お越しください。'}</p>}
-              </>}
               {!attendance ? null : event.attendanceUrl ? <div id="event-answer-section" className="event-answer-card"><h3>出欠の確認・変更</h3><p className="event-small">このイベントは、これまでの回答をそのまま残すため、従来の回答ページで受け付けています。</p><a className="event-zoom" href={event.attendanceUrl} target="_blank" rel="noopener noreferrer">これまでの出欠を確認・変更する ↗</a></div> : <div id="event-answer-section" className="event-answer-card">
                 <h3>{closed ? '回答受付は終了しました' : 'あなたの出欠'}</h3>
-                {event.detailLayout==='compact' && event.notice && <p className="event-small">{event.notice}</p>}
                 {!closed && <p className="event-small">参加・不参加を選んで保存してください。回答はあとから変更できます。</p>}
                 {loading && !data && <p className="event-loading" role="status">出欠を読み込んでいます…</p>}
                 {!closed && data && <form onSubmit={save}>
