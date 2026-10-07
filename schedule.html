@@ -39,7 +39,7 @@
 @media(max-width:600px){.event-overlay{padding:0}.event-panel{min-height:100%;border-radius:0}.event-content{padding:20px 18px 36px}.event-content h2{font-size:21px}.event-topbar{padding:6px 18px}.event-agenda>div{grid-template-columns:120px 1fr;gap:8px}.event-agenda strong{font-size:12px}.event-answer-card{padding:18px 14px}.event-section-head{align-items:flex-start}.event-section-head h3{padding-top:8px}.event-section-head small{display:block}.event-table th,.event-table td{padding:10px 5px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 .event-venue-link{color:#1e5094;text-decoration:underline;text-underline-offset:3px;display:block;padding:3px 0}.event-venue-link:hover{color:#123766}
-.event-facts>.event-fee-notice{display:block;margin-top:10px;padding:14px;border:2px solid #e7ac27;border-radius:10px;background:#fff1be}.event-fee-notice dt{font-weight:800;color:#80500c;margin-bottom:3px}.event-fee-notice strong{display:block;color:#a54411;font-size:17px;font-weight:900}.event-fee-notice span{display:block;font-size:12px;margin-top:5px;color:#705a2c}@media(max-width:600px){.venue-photos{grid-template-columns:minmax(0,1fr);gap:14px}}
+.event-fee-notice{margin:8px 0 0;font-weight:400}.event-fee-notice strong{color:#d4aa00;font-size:inherit;font-weight:700}@media(max-width:600px){.venue-photos{grid-template-columns:minmax(0,1fr);gap:14px}}
 </style>
 </head>
 <body>
@@ -206,8 +206,7 @@
               {!closed && attendance && <button type="button" className="event-jump" onClick={()=>panel.current?.querySelector('#event-answer-section')?.scrollIntoView({behavior:'smooth',block:'start'})}>出欠を回答・変更する ↓</button>}
               <dl className="event-facts">
                 <div><dt>会場</dt><dd>{event.venueMapLink && event.mapUrl ? <a className="event-venue-link" href={event.mapUrl} target="_blank" rel="noopener noreferrer">{event.venue} ↗</a> : event.venue}</dd></div>
-                {event.fee && <div><dt>参加費</dt><dd>{event.fee}</dd></div>}
-                {event.feeNotice && <div className="event-fee-notice"><dt>太田より</dt><dd><strong>{event.feeNotice}</strong>{event.feeBreakdown && <span>{event.feeBreakdown}</span>}</dd></div>}
+                {event.fee && <div><dt>参加費</dt><dd>{event.fee}{event.feeNotice && <p className="event-fee-notice">{event.feeNoticeHighlight ? event.feeNotice.split(event.feeNoticeHighlight).map((part,i)=><React.Fragment key={i}>{i>0 && <strong>{event.feeNoticeHighlight}</strong>}{part}</React.Fragment>) : event.feeNotice}</p>}</dd></div>}
                 {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
               </dl>
               <div className="event-description">{event.descriptionTitle && <h3>{event.descriptionTitle}</h3>}{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
