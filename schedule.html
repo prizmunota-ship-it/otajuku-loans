@@ -127,7 +127,7 @@
       const [saving, setSaving] = useState(false);
       const [error, setError] = useState('');
       const [success, setSuccess] = useState('');
-      const [name, setName] = useState(localStorage.getItem('otajuku_name') || '');
+      const [name, setName] = useState('');
       const [answers, setAnswers] = useState({});
       const [comment, setComment] = useState('');
       const [filter, setFilter] = useState('all');
@@ -151,7 +151,10 @@
             result.totals = countReplies(result.replies, sessions);
           }
           setData(result);
-          if (initial && result.mine) {setName(result.mine.name); setAnswers(result.mine.answers); setComment(result.mine.comment || '');}
+          if (initial) {
+            setName(result.mine?.name || result.memberName || '');
+            if (result.mine) {setAnswers(result.mine.answers); setComment(result.mine.comment || '');}
+          }
         } catch (e) { if(alive.current) setError(errorMessage(e.message)); }
         finally { if(alive.current) setLoading(false); }
       }
@@ -180,7 +183,7 @@
           const result = await attendanceRequest(event.id, 'save', {name:name.trim(), answers, comment:comment.trim()});
           if(!alive.current) return;
           savedReply.current = result.mine;
-          try {localStorage.setItem('otajuku_name', result.mine.name);sessionStorage.setItem(receiptKey, JSON.stringify(result.mine));} catch {}
+          try {sessionStorage.setItem(receiptKey, JSON.stringify(result.mine));} catch {}
           setData(previous => {const replies=mergeReply(previous.replies, result.mine); return {...previous,mine:result.mine,replies,totals:countReplies(replies,sessions)};});
           setSuccess('回答を保存しました。変更するときは選び直して保存できます。');
         } catch (e) {if(alive.current) setError('保存できませんでした。'+errorMessage(e.message));}

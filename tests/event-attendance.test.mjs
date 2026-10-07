@@ -102,3 +102,29 @@ test('event data is unique with separate viewing/dinner and complete existing sc
  assert.ok(empower.filter(e=>e.type==='オンライン').every(e=>e.meet || e.zoom));
  assert.equal(all.find(e=>e.id==='2026-11-12-event').sessions.length,1);
 });
+
+test('name autofill uses only the verified email, paginates and omits personal profile fields',async()=>{
+ const {kv,send}=setup();
+ await kv.put('member:v1:a',JSON.stringify({email:'other@example.test',name:'別の会員',phone:'private'}));
+ await kv.put('member:v1:b',JSON.stringify({email:'member@example.test',name:'退会した方',status:'left'}));
+ await kv.put('member:v1:c',JSON.stringify({email:' MEMBER@EXAMPLE.TEST ',name:'登録 太郎（トウロク タロウ）　45歳',status:'active',phone:'private',address:'private'}));
+ const r=await send({});assert.equal(r.memberName,'登録 太郎');assert.equal(r.mine,null);
+ assert.equal(JSON.stringify(r).includes('private'),false);assert.equal(JSON.stringify(r).includes('other@example'),false);
+ await send(reply);const saved=await send({});assert.equal(saved.mine.name,reply.name);assert.equal(saved.memberName,'登録 太郎');
+});
+test('name autofill supports separate nameKanji and approved extras, without leaking another name',async()=>{
+ const {kv,send}=setup();
+ await kv.put('member:v1:a',JSON.stringify({email:'member@example.test',nameKanji:'登録 花子',name:'登録 花子（カナ） 30歳'}));
+ assert.equal((await send({})).memberName,'登録 花子');
+ await kv.put('member:extras:v1',JSON.stringify([{email:'member@example.test',name:'太田 圭一'}]));
+ assert.equal((await send({})).memberName,'太田 圭一');
+ assert.equal((await send({email:'unknown@example.test'})).memberName,'');
+ const denied=setup({member:false});
+ denied.kv.get=async()=>{throw new Error('Must not read roster before membership verification');};
+ assert.equal((await denied.send({})).status,403);
+});
+test('optional roster failure does not prevent reading existing attendance',async()=>{
+ const {kv,send}=setup();await send(reply);
+ const get=kv.get.bind(kv);kv.get=async(key,type)=>{if(key==='member:extras:v1')throw new Error('profile unavailable');return get(key,type);};
+ const r=await send({});assert.equal(r.status,200);assert.equal(r.memberName,'');assert.equal(r.mine.name,reply.name);
+});

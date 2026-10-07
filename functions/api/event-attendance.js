@@ -23,6 +23,35 @@ async function verifyMember(email, fetcher) {
   throw new Error('member_unavailable');
 }
 
+// Look up only the verified member's display name; never return roster records.
+async function memberDisplayName(kv, email) {
+  const displayName = record => {
+    const raw = record.nameKanji || record.name || '';
+    if (typeof raw !== 'string') return '';
+    return raw.split(/[（(\r\n]/)[0].replace(/[\s　]+[0-9０-９]+歳.*$/, '').trim().slice(0, 60);
+  };
+  const matches = record => record && record.status !== 'left' &&
+    typeof record.email === 'string' && record.email.trim().toLowerCase() === email;
+  const extras = await kv.get('member:extras:v1', 'json');
+  if (Array.isArray(extras)) {
+    const extra = extras.find(matches);
+    if (extra && displayName(extra)) return displayName(extra);
+  }
+  let cursor, count = 0;
+  do {
+    const page = await kv.list({prefix: 'member:v1:', limit: 1000, ...(cursor ? {cursor} : {})});
+    for (let i = 0; i < page.keys.length; i += 50) {
+      const records = await Promise.all(page.keys.slice(i, i + 50).map(key => kv.get(key.name, 'json')));
+      const record = records.find(record => matches(record) && displayName(record));
+      if (record) return displayName(record);
+    }
+    count += page.keys.length;
+    if (page.list_complete) break;
+    cursor = page.cursor;
+  } while (cursor && count < 5000);
+  return '';
+}
+
 function validateReply(input, event) {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
@@ -112,9 +141,9 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
         // Do not read-after-write: KV replicas may still contain an earlier value.
         return json({ok: true, mine, closed: false});
       }
-      const replies = await loadReplies(kv, event.id);
+      const [replies, memberName] = await Promise.all([loadReplies(kv, event.id), memberDisplayName(kv, email).catch(() => '')]);
       replies.sort(byNewestFirst);
-      return json({ok: true, replies, totals: summarize(replies, event), mine: replies.find(reply => reply.id === id) || null, closed, checkedAt: now().toISOString()});
+      return json({ok: true, memberName, replies, totals: summarize(replies, event), mine: replies.find(reply => reply.id === id) || null, closed, checkedAt: now().toISOString()});
     } catch (error) {
       const member = error.message === 'member_unavailable' || error.name === 'TimeoutError';
       return json({ok: false, error: member ? 'membership_unavailable' : 'storage_unavailable'}, 503);
