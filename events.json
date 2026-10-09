@@ -341,6 +341,26 @@
         ]
       },
       {
+        "date": "20(火)",
+        "type": "オンライン",
+        "title": "ワンチームエンパワータイム（オンライン）",
+        "location": "Google Meet",
+        "id": "2026-10-20-one-team-empower",
+        "startDate": "2026-10-20",
+        "endDate": "2026-10-20",
+        "endAt": "2026-10-20T22:00:00+09:00",
+        "audience": "ワンチーム限定",
+        "time": "21:00〜22:00（1時間）",
+        "venue": "オンライン（Google Meet）",
+        "note": "毎月第3火曜日／ワンチーム限定",
+        "descriptionTitle": "イベント案内",
+        "description": [
+          "ワンチームのメンバー限定で、毎月第3火曜日に開催します。相談・質問・活動報告を持ち寄り、次の一歩につなげる時間です。"
+        ],
+        "attendance": false,
+        "meet": "https://meet.google.com/dst-zpkt-abs"
+      },
+      {
         "date": "22(木)",
         "type": "リアル",
         "title": "金融機関祭りVol.3",
@@ -602,6 +622,26 @@
         ]
       },
       {
+        "date": "17(火)",
+        "type": "オンライン",
+        "title": "ワンチームエンパワータイム（オンライン）",
+        "location": "Google Meet",
+        "id": "2026-11-17-one-team-empower",
+        "startDate": "2026-11-17",
+        "endDate": "2026-11-17",
+        "endAt": "2026-11-17T22:00:00+09:00",
+        "audience": "ワンチーム限定",
+        "time": "21:00〜22:00（1時間）",
+        "venue": "オンライン（Google Meet）",
+        "note": "毎月第3火曜日／ワンチーム限定",
+        "descriptionTitle": "イベント案内",
+        "description": [
+          "ワンチームのメンバー限定で、毎月第3火曜日に開催します。相談・質問・活動報告を持ち寄り、次の一歩につなげる時間です。"
+        ],
+        "attendance": false,
+        "meet": "https://meet.google.com/dst-zpkt-abs"
+      },
+      {
         "date": "24(火)",
         "type": "オンライン",
         "title": "エンパワータイム(21時〜22時)",
@@ -707,6 +747,26 @@
         "descriptionTitle": "イベント案内",
         "feeNotice": "※実際は料理8,800円＋飲み放題3,300円＝12,100円かかりますが、差額は太田が負担します。気持ち程度ですが、日頃の感謝を込めて♥️",
         "feeNoticeHighlight": "差額は太田が負担"
+      },
+      {
+        "date": "15(火)",
+        "type": "オンライン",
+        "title": "ワンチームエンパワータイム（オンライン）",
+        "location": "Google Meet",
+        "id": "2026-12-15-one-team-empower",
+        "startDate": "2026-12-15",
+        "endDate": "2026-12-15",
+        "endAt": "2026-12-15T22:00:00+09:00",
+        "audience": "ワンチーム限定",
+        "time": "21:00〜22:00（1時間）",
+        "venue": "オンライン（Google Meet）",
+        "note": "毎月第3火曜日／ワンチーム限定",
+        "descriptionTitle": "イベント案内",
+        "description": [
+          "ワンチームのメンバー限定で、毎月第3火曜日に開催します。相談・質問・活動報告を持ち寄り、次の一歩につなげる時間です。"
+        ],
+        "attendance": false,
+        "meet": "https://meet.google.com/dst-zpkt-abs"
       },
       {
         "date": "22(火)",
