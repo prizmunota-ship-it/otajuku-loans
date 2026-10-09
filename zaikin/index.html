@@ -1378,7 +1378,7 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    const head='<tr><th class="it">物件</th>'+[1,2,3,4,5,6,7,8,9,10,11,12].map((mm,i)=>'<th class="'+(i>=cm?'fut':'')+'">'+mm+'月</th>').join('')+'<th class="yr">年計</th></tr>';
    const rows=ASSETS.monthlyBook.map(r=>{const cls=r.t==='total'?'rtot':(r.t==='other'?'roth':'');const yr=r.v.reduce((a,b)=>a+(b||0),0);
      return '<tr class="'+cls+'"><td class="it">'+esc(r.l)+'</td>'+r.v.map((x,i)=>'<td class="'+(i>=cm?'fut ':'')+((x||0)<0?'neg':'')+'">'+(x?yen(x):'')+'</td>').join('')+'<td class="yr">'+yen(yr)+'</td></tr>';}).join('');
-   return '<div class="mbook"><div class="mbook-cap">月間収支（物件ごと）／各月の差引収支・単位：円　※9月以降(薄字)は翌月反映前</div><div class="pd-tw"><table class="pd-tbl mbook-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';}
+   return '<div class="mbook"><div class="mbook-cap">月間収支（物件ごと）／各月の差引収支・単位：円　'+(cm<12?'※'+(cm+1)+'月以降（薄字）は未確定':'全月集計済み')+'</div><div class="pd-tw"><table class="pd-tbl mbook-tbl"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div></div>';}
   function pMonthlyBlock(p){const m=pMonths(p);const der=m.derived;const cm=der?12:(ASSETS.completeMonths||12);const net=m.net.slice(0,cm).reduce((a,b)=>a+b,0);
    const cap=der?'月次 収支（自動試算）':'月次 収支差額';
    return '<div class="mc2"><div class="mc2-h"><span>'+cap+'<small>単位：万円'+(der?'・入力から自動計算':'')+'</small></span><span class="mc2-s">'+(der?'年間 差引':('1〜'+cm+'月 差引'))+' <b class="num">¥'+yen(net)+'</b></span></div>'+achart(m.net,cm)+'</div>';}
