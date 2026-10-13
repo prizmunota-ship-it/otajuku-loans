@@ -225,7 +225,7 @@
               {event.agenda && <div className="event-agenda"><h3>当日の流れ</h3>{event.agenda.map(([time,label],i)=><div key={i}><strong>{time}</strong><span>{label}</span></div>)}</div>}
               {event.notice && <p className="event-notice">{event.notice}</p>}
               {(event.meet || event.zoom) && <a className="event-zoom" href={event.meet || event.zoom} target="_blank" rel="noopener noreferrer">{event.meet ? 'Google Meet' : 'Zoom'}に入室する ↗</a>}
-              {!attendance && <p className="event-small event-no-rsvp">出欠の回答は不要です。{event.meet ? '当日はGoogle Meetから参加してください。入室承認を求められた場合は、そのままお待ちください。' : event.zoom ? '当日はそのままZoomに入室してください。' : '当日、直接お越しください。'}</p>}
+              {!attendance && <p className="event-small event-no-rsvp">出欠の回答は不要です。{event.meet ? '当日はGoogle Meetから参加してください。入室承認を求められた場合は、そのままお待ちください。' : event.zoom ? '当日はZoomに参加し、待機室で太田の入室承認をお待ちください。' : '当日、直接お越しください。'}</p>}
               {!attendance ? null : event.attendanceUrl ? <div id="event-answer-section" className="event-answer-card"><h3>出欠の確認・変更</h3><p className="event-small">このイベントは、これまでの回答をそのまま残すため、従来の回答ページで受け付けています。</p><a className="event-zoom" href={event.attendanceUrl} target="_blank" rel="noopener noreferrer">これまでの出欠を確認・変更する ↗</a></div> : <div id="event-answer-section" className="event-answer-card">
                 <h3>{closed ? '回答受付は終了しました' : 'あなたの出欠'}</h3>
                 {!closed && <p className="event-small">参加・不参加を選んで保存してください。回答はあとから変更できます。</p>}

@@ -344,21 +344,21 @@
         "date": "20(火)",
         "type": "オンライン",
         "title": "ONEチーム限定・エンパワータイム",
-        "location": "Google Meet",
+        "location": "Zoom",
         "id": "2026-10-20-one-team-empower",
         "startDate": "2026-10-20",
         "endDate": "2026-10-20",
         "endAt": "2026-10-20T22:00:00+09:00",
         "audience": "ONEチーム限定",
         "time": "21:00〜22:00（1時間）",
-        "venue": "オンライン（Google Meet）",
+        "venue": "オンライン（Zoom）",
         "note": "毎月第3火曜日／ONEチーム限定",
         "descriptionTitle": "イベント案内",
         "description": [
           "ONEチームのメンバー限定で、毎月第3火曜日に開催します。相談・質問・活動報告を持ち寄り、次の一歩につなげる時間です。"
         ],
         "attendance": false,
-        "meet": "https://meet.google.com/dst-zpkt-abs"
+        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1"
       },
       {
         "date": "22(木)",
@@ -579,7 +579,7 @@
         "endAt": "2026-10-27T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "21時〜22時",
-        "venue": "オンライン（Google Meet）",
+        "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -590,7 +590,7 @@
             "time": ""
           }
         ],
-        "meet": "https://meet.google.com/dst-zpkt-abs"
+        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1"
       }
     ]
   },
@@ -625,21 +625,21 @@
         "date": "17(火)",
         "type": "オンライン",
         "title": "ONEチーム限定・エンパワータイム",
-        "location": "Google Meet",
+        "location": "Zoom",
         "id": "2026-11-17-one-team-empower",
         "startDate": "2026-11-17",
         "endDate": "2026-11-17",
         "endAt": "2026-11-17T22:00:00+09:00",
         "audience": "ONEチーム限定",
         "time": "21:00〜22:00（1時間）",
-        "venue": "オンライン（Google Meet）",
+        "venue": "オンライン（Zoom）",
         "note": "毎月第3火曜日／ONEチーム限定",
         "descriptionTitle": "イベント案内",
         "description": [
           "ONEチームのメンバー限定で、毎月第3火曜日に開催します。相談・質問・活動報告を持ち寄り、次の一歩につなげる時間です。"
         ],
         "attendance": false,
-        "meet": "https://meet.google.com/dst-zpkt-abs"
+        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1"
       },
       {
         "date": "24(火)",
@@ -652,7 +652,7 @@
         "endAt": "2026-11-24T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "21時〜22時",
-        "venue": "オンライン（Google Meet）",
+        "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -663,7 +663,7 @@
             "time": ""
           }
         ],
-        "meet": "https://meet.google.com/dst-zpkt-abs"
+        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1"
       }
     ]
   },
@@ -752,21 +752,21 @@
         "date": "15(火)",
         "type": "オンライン",
         "title": "ONEチーム限定・エンパワータイム",
-        "location": "Google Meet",
+        "location": "Zoom",
         "id": "2026-12-15-one-team-empower",
         "startDate": "2026-12-15",
         "endDate": "2026-12-15",
         "endAt": "2026-12-15T22:00:00+09:00",
         "audience": "ONEチーム限定",
         "time": "21:00〜22:00（1時間）",
-        "venue": "オンライン（Google Meet）",
+        "venue": "オンライン（Zoom）",
         "note": "毎月第3火曜日／ONEチーム限定",
         "descriptionTitle": "イベント案内",
         "description": [
           "ONEチームのメンバー限定で、毎月第3火曜日に開催します。相談・質問・活動報告を持ち寄り、次の一歩につなげる時間です。"
         ],
         "attendance": false,
-        "meet": "https://meet.google.com/dst-zpkt-abs"
+        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1"
       },
       {
         "date": "22(火)",
@@ -779,7 +779,7 @@
         "endAt": "2026-12-22T23:59:59+09:00",
         "audience": "太田塾メンバー",
         "time": "21時〜22時",
-        "venue": "オンライン（Google Meet）",
+        "venue": "オンライン（Zoom）",
         "description": [
           "相談・質問・活動報告を持ち寄り、仲間と次の一歩につなげる時間です。"
         ],
@@ -790,7 +790,7 @@
             "time": ""
           }
         ],
-        "meet": "https://meet.google.com/dst-zpkt-abs"
+        "zoom": "https://us06web.zoom.us/j/83003669381?pwd=dCNwwLUXT6A1me1V7L79Vodj11IYF2.1"
       }
     ]
   }
