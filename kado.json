@@ -1,12 +1,12 @@
 {
-  "asof": "2026/10/11",
+  "asof": "2026/10/13",
   "total": 267,
-  "vacant": 23,
-  "applied": 5,
+  "vacant": 21,
+  "applied": 7,
   "taikyo": 2,
-  "lossMan": 148,
+  "lossMan": 121,
   "target": 97,
-  "rate": 91.4,
+  "rate": 92.1,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -22,9 +22,9 @@
     {
       "name": "プライマリー合川A棟",
       "units": 10,
-      "vacant": 1,
-      "occupied": 9,
-      "applied": 0,
+      "vacant": 0,
+      "occupied": 10,
+      "applied": 1,
       "taikyo": 0,
       "parkTotal": 5,
       "parkVacant": 0,
@@ -121,9 +121,9 @@
     {
       "name": "プライマリー西鉄久留米駅前",
       "units": 12,
-      "vacant": 2,
-      "occupied": 10,
-      "applied": 0,
+      "vacant": 1,
+      "occupied": 11,
+      "applied": 1,
       "taikyo": 1,
       "parkTotal": null,
       "parkVacant": null,
