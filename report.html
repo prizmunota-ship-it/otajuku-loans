@@ -125,7 +125,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
 @media screen and (max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
 @media print{
- @page{size:A4 portrait;margin:5mm;}
+ @page{size:A4 portrait;margin:10mm;}
  #excluded,.scronly{display:none!important;}
  /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
@@ -134,15 +134,15 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
  .map,.map *{will-change:auto!important;}
  /* 地図タイルなどの画面外要素を紙幅の計算から隔離し、自動縮小を防ぐ。 */
  .map{contain:strict;}
- .printsheet{contain:strict;width:200mm;height:286mm;page-break-after:always;overflow:hidden;}
+ .printsheet{contain:strict;width:190mm;height:276mm;page-break-after:always;overflow:hidden;}
  /* 印刷は等倍。画面用の縮小(transform)と高さ合わせを解除する */
  .mapwrap{width:690px!important;height:auto!important;overflow:hidden!important;}
  .map{transform:none!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
- .wrap{padding:0;margin:0 auto;width:200mm;max-width:100%;}
+ .wrap{padding:0;margin:0 auto;width:190mm;max-width:100%;}
  #report{width:100%;overflow:clip;}
  /* 地図の描画幅を変えず、紙面全体を等比拡大して中央に配置する。 */
- .paper{page-break-after:auto;border:none;box-shadow:none;border-radius:0;margin:0 auto;width:690px;max-width:none;padding:8px 0;zoom:1;transform:scale(var(--print-scale,1.0955));transform-origin:top center;}
+ .paper{page-break-after:auto;border:none;box-shadow:none;border-radius:0;margin:0 auto;width:690px;max-width:none;padding:8px 0;zoom:1;transform:scale(var(--print-scale,1.0407));transform-origin:top center;}
  .printsheet:last-child{page-break-after:auto;}
 }
 </style></head><body>
@@ -1836,8 +1836,8 @@ function scaleMaps(){
 /* A4の内容幅へ等倍比で拡大する。地図の高さは描画前に確保し、
    印刷開始時のタイル再取得や縦横比の引き伸ばしを避ける。 */
 function fitReportPrint(){
-  const scale=200/25.4*96/690;
-  const maxHeight=287/25.4*96-4;
+  const scale=190/25.4*96/690;
+  const maxHeight=277/25.4*96-4;
   document.querySelectorAll('#report .paper').forEach(p=>{
     if(!p.parentElement.classList.contains('printsheet')){const sheet=document.createElement('div');sheet.className='printsheet';p.before(sheet);sheet.appendChild(p);}
     const clone=p.cloneNode(true);
@@ -1865,8 +1865,8 @@ function sizeReportMaps(){
     document.body.appendChild(clone);
     const map=clone.querySelector('.map:not(.sm)');
     const other=clone.offsetHeight-map.offsetHeight;
-    // 200×287mmの印刷領域から端数・文字の折り返し分の余裕を確保する。
-    maps[0].style.height=Math.max(520,Math.floor(972-other))+'px';
+    // 四辺10mmの余白を残した190×277mmの領域内で、注記まで収める。
+    maps[0].style.height=Math.max(520,Math.floor(990-other))+'px';
     clone.remove();
   });
 }
