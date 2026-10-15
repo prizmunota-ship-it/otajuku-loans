@@ -367,15 +367,26 @@ async function gasByName(name){
 /* 自前API（Cloudflare Functions）呼び出し。デプロイ切替の一瞬など、まれにJSONでない応答が返るので1回だけ取り直す。
    ⚠️応答は24時間キャッシュされるため、APIの返す項目を増やしたらAPIVを上げること（古い形のJSONを掴み続ける） */
 const APIV='30'; /* v15.11：住所照合→建物情報の引き継ぎ→比較検索の順序を統一 */
-async function apiJson(url){
+function withinTime(task,ms){
+  return new Promise(resolve=>{
+    const timer=setTimeout(()=>resolve(null),Math.max(0,ms));
+    Promise.resolve().then(task).then(v=>{clearTimeout(timer);resolve(v);},()=>{clearTimeout(timer);resolve(null);});
+  });
+}
+async function apiJson(url,options={}){
   url+=(url.indexOf('?')<0?'?':'&')+'v='+APIV;
-  for(let i=0;i<2;i++){
+  const attempts=options.attempts||2;
+  for(let i=0;i<attempts;i++){
+    const ac=new AbortController();
     try{
-      const r=await fetch(url);
-      if(r.ok){const t=await r.text();
-        if(t&&t[0]==='{')return JSON.parse(t);}
-    }catch(e){}
-    if(i===0)await new Promise(r=>setTimeout(r,600));
+      const value=await withinTime(async()=>{
+        const r=await fetch(url,{signal:ac.signal});
+        if(r.ok){const t=await r.text();if(t&&t[0]==='{')return JSON.parse(t);}
+        return null;
+      },options.timeoutMs||12000);
+      if(value)return value;
+    }finally{ac.abort();}
+    if(i+1<attempts)await new Promise(r=>setTimeout(r,600));
   }
   return null;
 }
@@ -2290,6 +2301,11 @@ function histRender(){
 async function locate(){
   const query=val('paddr');
   if(!query){setStatus('🙏 物件名または住所を入力してください',true);return;}
+  if(document.getElementById('go').disabled)return;
+  if(location.protocol==='file:'){
+    setStatus('編集用ファイルでは検索できません。公開版 https://otajuku-loans.pages.dev/report を開いてください。',true);return;
+  }
+  try{
   resetSubjectLookup();
   document.getElementById('go').disabled=true;
   document.getElementById('report').style.display='none';document.getElementById('toolbar').style.display='none';
@@ -2311,6 +2327,10 @@ async function locate(){
     }catch(e){}
   }
   const lookupName=alias||query;
+  const deadline=Date.now()+20000;
+  const step=task=>Date.now()>=deadline?Promise.resolve(null):withinTime(task,Math.min(6000,deadline-Date.now()));
+  // 地図照会は物件情報の応答待ちと並行。正式住所が取れた場合はそちらを優先する。
+  const direct=step(()=>googleGeocodeFull(lookupName));
   if(alias||looksLikeName(query)){
     setStatus('🔎 「'+lookupName+'」をSUUMO物件ライブラリーで照会中…');
     /* ★★2026-08-30＝ここは旧GAS頼みだったが、GASが応答しないと住所が取れず、
@@ -2318,29 +2338,30 @@ async function locate(){
        「位置を特定中」のまま進まない／Placesが別物件（プレアール鷹の巣）を掴む、という状態だった。
        自前の /api/suumolib を先に引いて、掲載名と所在地を確定させる。
        これで「鷹の巣１ シャトレ鷹の巣5」で検索でき、番地までROOFTOPで特定できる（実測）。 */
-    const L=await apiJson('/api/suumolib?name='+encodeURIComponent(lookupName));
+    const L=await apiJson('/api/suumolib?name='+encodeURIComponent(lookupName),{timeoutMs:6000,attempts:1});
     if(L&&L.found&&L.addr){
       window.SELF=Object.assign(window.SELF||{},{name:L.name||lookupName,addr:L.addr,found:true,
         struct:L.struct,built:L.built,kind:L.kind,floors:L.floors,station:L.station,rooms:L.rooms||[]});
       libQuery=L.addr+' '+(L.name||lookupName);
     }
-    if(!libQuery){
-      const j=await gasByName(lookupName);
-      /* SUUMO掲載でもWeb検索由来でも、住所が取れたらそれを位置特定に使う */
-      if(j&&j.self&&j.self.addr)libQuery=j.self.addr+' '+lookupName;
-    }
+    // 位置確認では旧GASを追加で待たない。詳細はレポート作成時に照会する。
   }
   setStatus('🔍 「'+query+'」の位置を特定中…（Google）');
-  let res=libQuery?await googleGeocodeFull(libQuery):null;
+  let res=libQuery?await step(()=>googleGeocodeFull(libQuery)):null;
   if(res&&window.SELF)res.title=window.SELF.name+'　'+res.title;
-  if(!res)res=await googleGeocodeFull(query);
+  if(!res)res=await direct;
   const vague=!res||['APPROXIMATE','GEOMETRIC_CENTER'].includes(res.locType);
-  if(vague&&!libQuery){const p=await placesText(query);if(p)res=p;}
-  if(!res)res=await geocode(query);
+  if(vague&&!libQuery){const p=await step(()=>placesText(lookupName));if(p)res=p;}
+  if(!res)res=await step(()=>geocode(query));
   document.getElementById('go').disabled=false;
   if(!res){setStatus('「'+query+'」が見つかりませんでした🙏 住所（市区町村＋番地）で、もう一度お試しください。',true);return;}
   hideStatus();
   showConfirm(res,query);
+  }catch(e){
+    setStatus('検索を完了できませんでした。市区町村と番地を入力して、もう一度お試しください。',true);
+  }finally{
+    document.getElementById('go').disabled=false;
+  }
 }
 /* 緯度経度→住所（ピン移動後の市区町村の取り直しに使う） */
 function reverseGeocode(lat,lon){return new Promise(res=>{
