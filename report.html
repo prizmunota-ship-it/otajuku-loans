@@ -125,6 +125,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
 @media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
 @media print{
+ @page{size:A4 portrait;margin:0;}
  #excluded,.scronly{display:none!important;}
  /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
@@ -137,7 +138,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
  .wrap{padding:0;max-width:none;}
  /* 画面と同じ内容幅690pxに固定（左右パディングを外して690pxを確保・狭い用紙では100%に縮む） */
- .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin:0 auto;width:690px;max-width:100%;padding-left:0;padding-right:0;}
+ .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin:0;width:690px;max-width:none;padding:8px 0;zoom:1.1503;}
  .paper:last-child{page-break-after:auto;}
 }
 </style></head><body>
@@ -1828,6 +1829,26 @@ function scaleMaps(){
     w.style.height=Math.round(m.offsetHeight*s)+'px';
   });
 }
+/* A4の内容幅へ等倍比で拡大する。地図の高さは描画前に確保し、
+   印刷開始時のタイル再取得や縦横比の引き伸ばしを避ける。 */
+function sizeReportMaps(){
+  document.querySelectorAll('#report .paper').forEach(p=>{
+    const maps=p.querySelectorAll('.map:not(.sm)');
+    if(maps.length!==1)return;
+    const clone=p.cloneNode(true);
+    clone.style.cssText='position:absolute;left:-10000px;top:0;width:690px;max-width:none;padding:8px 0;border:0;margin:0;visibility:hidden;';
+    clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    clone.querySelectorAll('.scronly').forEach(el=>el.remove());
+    clone.querySelectorAll('.mapwrap').forEach(el=>{el.style.height='auto';});
+    clone.querySelectorAll('.map').forEach(el=>{el.style.transform='none';});
+    document.body.appendChild(clone);
+    const map=clone.querySelector('.map:not(.sm)');
+    const other=clone.offsetHeight-map.offsetHeight;
+    // 297mm / 210mm * 690px = 975.86px。端数による白紙追加を避ける。
+    maps[0].style.height=Math.max(520,Math.floor(972-other))+'px';
+    clone.remove();
+  });
+}
 window.addEventListener('resize',scaleMaps);
 function tbl(items,color,n,extraCol){
   if(!items.length)return `<div class="phase" style="margin:4px 0">この範囲では見つかりませんでした（地図データ未収録の場合あり）</div>`;
@@ -2034,6 +2055,7 @@ const MAP_MONO=[
   {featureType:'administrative',elementType:'geometry.stroke',stylers:[{saturation:-100},{lightness:-10}]}
 ];
 function initMaps(g){
+  sizeReportMaps();scaleMaps();
   MAPRDY=0;MAPTOT=MAPS.length;window.__forcePrint=false;printBtnState();
   MAPS.forEach(cfg=>{
     const el=document.getElementById(cfg.id);if(!el)return;
