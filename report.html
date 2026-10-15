@@ -90,7 +90,7 @@ table.lst.cmp td.no span{width:19px;height:19px;line-height:19px;font-size:10px;
 .cover .foot .brand{text-align:right;font-size:10px;color:#94a3b8;line-height:1.7;white-space:nowrap;}
 .cover .foot .brand .bn{font-size:11.5px;font-weight:800;color:#0f766e;}
 .cover .disc{margin-top:12px;font-size:9.5px;color:#94a3b8;line-height:1.6;}
-@media(max-width:640px){.cover .inner{padding:24px 20px 20px;}.cover h1{font-size:22px;}.cover .meta{grid-template-columns:1fr;}.cover .toc ol{grid-template-columns:1fr;}.cover .foot{flex-direction:column;align-items:flex-start;}.cover .foot .brand{text-align:left;}}
+@media screen and (max-width:640px){.cover .inner{padding:24px 20px 20px;}.cover h1{font-size:22px;}.cover .meta{grid-template-columns:1fr;}.cover .toc ol{grid-template-columns:1fr;}.cover .foot{flex-direction:column;align-items:flex-start;}.cover .foot .brand{text-align:left;}}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;margin:4px 0;}
 .legend .c{display:flex;align-items:center;gap:4px;}
 .legend .sw{width:14px;height:14px;border-radius:3px;border:1px solid #cbd5e1;display:inline-block;}
@@ -123,27 +123,31 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px 11px;margin-top:9px;}
 .fld label{display:block;font-size:10.5px;font-weight:700;color:#6b7280;margin-bottom:2px;}
 .fld input,.fld select{width:100%;padding:8px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:14px;}
-@media(max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
+@media screen and (max-width:640px){.grid{grid-template-columns:1fr 1fr;}.kpi3{grid-template-columns:1fr 1fr;}.paper{padding:14px 12px 10px;}}
 @media print{
- @page{size:A4 portrait;margin:0;}
+ @page{size:A4 portrait;margin:5mm;}
  #excluded,.scronly{display:none!important;}
  /* 背景色・ピンの色を印刷にも出す（既定では省かれてアイコンが白抜けする） */
  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
  /* 「地図をズームするには…」の操作案内は印刷しない（色を出す設定にすると印刷面に出てしまう） */
  .gm-style-moc,.gm-style-mot,.gmnoprint,.gm-fullscreen-control,.gm-svpc{display:none!important;}
  .map,.map *{will-change:auto!important;}
+ /* 地図タイルなどの画面外要素を紙幅の計算から隔離し、自動縮小を防ぐ。 */
+ .map{contain:strict;}
+ .printsheet{contain:strict;width:200mm;height:286mm;page-break-after:always;overflow:hidden;}
  /* 印刷は等倍。画面用の縮小(transform)と高さ合わせを解除する */
- .mapwrap{width:690px!important;height:auto!important;overflow:visible!important;}
+ .mapwrap{width:690px!important;height:auto!important;overflow:hidden!important;}
  .map{transform:none!important;}
  body{background:#fff;}.appbar,.form,.status,.toolbar{display:none!important;}
- .wrap{padding:0;max-width:none;}
- /* 画面と同じ内容幅690pxに固定（左右パディングを外して690pxを確保・狭い用紙では100%に縮む） */
- .paper{page-break-after:always;border:none;box-shadow:none;border-radius:0;margin:0;width:690px;max-width:none;padding:8px 0;zoom:1.1503;}
- .paper:last-child{page-break-after:auto;}
+ .wrap{padding:0;margin:0 auto;width:200mm;max-width:100%;}
+ #report{width:100%;overflow:clip;}
+ /* 地図の描画幅を変えず、紙面全体を等比拡大して中央に配置する。 */
+ .paper{page-break-after:auto;border:none;box-shadow:none;border-radius:0;margin:0 auto;width:690px;max-width:none;padding:8px 0;zoom:1;transform:scale(var(--print-scale,1.0955));transform-origin:top center;}
+ .printsheet:last-child{page-break-after:auto;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.16</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.18</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1831,6 +1835,23 @@ function scaleMaps(){
 }
 /* A4の内容幅へ等倍比で拡大する。地図の高さは描画前に確保し、
    印刷開始時のタイル再取得や縦横比の引き伸ばしを避ける。 */
+function fitReportPrint(){
+  const scale=200/25.4*96/690;
+  const maxHeight=287/25.4*96-4;
+  document.querySelectorAll('#report .paper').forEach(p=>{
+    if(!p.parentElement.classList.contains('printsheet')){const sheet=document.createElement('div');sheet.className='printsheet';p.before(sheet);sheet.appendChild(p);}
+    const clone=p.cloneNode(true);
+    clone.style.cssText='position:absolute;left:-10000px;top:0;width:690px;max-width:none;padding:8px 0;border:0;margin:0;visibility:hidden;zoom:1;transform:none;';
+    clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    clone.querySelectorAll('.scronly').forEach(el=>el.remove());
+    clone.querySelectorAll('.mapwrap').forEach(el=>{el.style.height='auto';});
+    clone.querySelectorAll('.map').forEach(el=>{el.style.transform='none';});
+    document.body.appendChild(clone);
+    p.style.setProperty('--print-scale',String(Math.min(scale,maxHeight/clone.offsetHeight)));
+    clone.remove();
+  });
+}
+window.addEventListener('beforeprint',fitReportPrint);
 function sizeReportMaps(){
   document.querySelectorAll('#report .paper').forEach(p=>{
     const maps=p.querySelectorAll('.map:not(.sm)');
@@ -1844,7 +1865,7 @@ function sizeReportMaps(){
     document.body.appendChild(clone);
     const map=clone.querySelector('.map:not(.sm)');
     const other=clone.offsetHeight-map.offsetHeight;
-    // 297mm / 210mm * 690px = 975.86px。端数による白紙追加を避ける。
+    // 200×287mmの印刷領域から端数・文字の折り返し分の余裕を確保する。
     maps[0].style.height=Math.max(520,Math.floor(972-other))+'px';
     clone.remove();
   });
