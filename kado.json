@@ -1,10 +1,10 @@
 {
-  "asof": "2026/10/13",
+  "asof": "2026/10/15",
   "total": 267,
   "vacant": 22,
   "applied": 6,
   "taikyo": 2,
-  "lossMan": 135,
+  "lossMan": 137,
   "target": 97,
   "rate": 91.8,
   "props": [
@@ -104,7 +104,7 @@
       "applied": 1,
       "taikyo": 1,
       "parkTotal": 3,
-      "parkVacant": 1,
+      "parkVacant": 0,
       "kanri": "お部屋倶楽部"
     },
     {
