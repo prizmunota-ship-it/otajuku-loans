@@ -1297,12 +1297,13 @@ body.editing .editbtn.on{box-shadow:0 2px 10px rgba(14,124,107,.4);}
    if(!ASSETS){return '<div class="asum"><div class="asum-load">🏢 資産データを読み込み中…</div></div>';}
    const T=ASSETS.total;const R=(l,v)=>'<div class="asum-c"><span class="asl">'+l+'</span><span class="asv num">'+v+'</span></div>';
    const unsecuredZan=(ASSETS.loans||[]).reduce((sum,loan)=>sum+(+loan.zan||0),0);
+   const unsecuredMonthly=(ASSETS.loans||[]).reduce((sum,loan)=>sum+(+loan.monthly||0),0);
    const nyuU=ASSETS.props.reduce((a,p)=>a+(+p.units||0),0),nyuN=ASSETS.props.reduce((a,p)=>a+(+p.nyukyo||0),0);
    const occ=nyuU?(nyuN/nyuU*100).toFixed(1):null;
    const vacV=ASSETS.props.reduce((a,p)=>a+(p.vac?(+p.vac.vacant||0):0),0),vacA=ASSETS.props.reduce((a,p)=>a+(p.vac?(+p.vac.applied||0):0),0);
    return '<div class="asum"><div class="asum-h">🏢 資産サマリー<small>'+esc(ASSETS.asof)+'</small></div><div class="asum-g">'
     +R('購入額（保有）',aoku(T.kounyuAll))+R('当初借入',aoku(T.loan))+R('物件の残債',aoku(T.zentaiZan))
-    +R('無担保借入の残債',(unsecuredZan/1e8).toFixed(2)+'<small>億</small>')
+    +'<div class="asum-c"><span class="asl">無担保借入</span><span class="asv num"><small>残額 </small>'+(unsecuredZan/1e8).toFixed(2)+'<small>億</small></span><span class="asv num"><small>毎月返済 </small>¥'+yen(unsecuredMonthly)+'</span></div>'
     +R('満室家賃(年)',aoku(T.rentY))+R('満室家賃(月)','¥'+yen(T.rentM))+R('棟数/戸数',T.tou+'<small>棟</small> '+yen(T.units)+'<small>戸</small>')
     +R('残債利回り',T.rimawari+'<small>%</small>')+R('返済比率(収益)',T.ratio2+'<small>%</small>')+R('返済比率(無担保含)',T.ratio1+'<small>%</small>')
     +(occ!=null?R('入居/稼働率',yen(nyuN)+'<small>/'+yen(nyuU)+'戸</small> '+occ+'<small>%</small>'):'')
