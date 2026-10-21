@@ -1,12 +1,12 @@
 {
-  "asof": "2026/10/19",
+  "asof": "2026/10/21",
   "total": 267,
-  "vacant": 21,
-  "applied": 7,
-  "taikyo": 2,
-  "lossMan": 139,
+  "vacant": 22,
+  "applied": 6,
+  "taikyo": 3,
+  "lossMan": 142,
   "target": 97,
-  "rate": 92.1,
+  "rate": 91.8,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -123,7 +123,7 @@
       "units": 12,
       "vacant": 1,
       "occupied": 11,
-      "applied": 1,
+      "applied": 0,
       "taikyo": 1,
       "parkTotal": null,
       "parkVacant": null,
@@ -165,10 +165,10 @@
     {
       "name": "プライマリー戸畑駅前",
       "units": 21,
-      "vacant": 0,
-      "occupied": 21,
+      "vacant": 1,
+      "occupied": 20,
       "applied": 0,
-      "taikyo": 0,
+      "taikyo": 1,
       "parkTotal": 2,
       "parkVacant": 0,
       "kanri": "DL"
