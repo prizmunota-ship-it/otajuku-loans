@@ -145,18 +145,6 @@
  },
  {
   "name": "P久留米大東",
-  "room": "306",
-  "takyobi": "",
-  "kanri": "お部屋",
-  "kagi": "",
-  "status": "完了",
-  "kanryoYotei": "",
-  "kojihi": "",
-  "itsukin": "",
-  "notes": ""
- },
- {
-  "name": "P久留米大東",
   "room": "307",
   "takyobi": "",
   "kanri": "お部屋",
@@ -209,6 +197,18 @@
   "takyobi": "",
   "kanri": "山﨑",
   "kagi": "ガスメーター KEYBOX１９１７",
+  "status": "完了",
+  "kanryoYotei": "",
+  "kojihi": "",
+  "itsukin": "",
+  "notes": ""
+ },
+ {
+  "name": "P久留米大東",
+  "room": "306",
+  "takyobi": "",
+  "kanri": "お部屋",
+  "kagi": "現地KEYBOX７７５５",
   "status": "完了",
   "kanryoYotei": "",
   "kojihi": "",
