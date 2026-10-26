@@ -1,12 +1,12 @@
 {
-  "asof": "2026/10/21",
+  "asof": "2026/10/26",
   "total": 267,
-  "vacant": 22,
+  "vacant": 23,
   "applied": 5,
-  "taikyo": 3,
-  "lossMan": 190,
+  "taikyo": 4,
+  "lossMan": 196,
   "target": 97,
-  "rate": 91.8,
+  "rate": 91.4,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -121,10 +121,10 @@
     {
       "name": "プライマリー西鉄久留米駅前",
       "units": 12,
-      "vacant": 1,
-      "occupied": 11,
+      "vacant": 2,
+      "occupied": 10,
       "applied": 0,
-      "taikyo": 1,
+      "taikyo": 2,
       "parkTotal": null,
       "parkVacant": null,
       "kanri": "ウィズザライフ"
