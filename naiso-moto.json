@@ -132,6 +132,18 @@
   "notes": ""
  },
  {
+  "name": "P西鉄久留米駅前",
+  "room": "201",
+  "takyobi": "11/24",
+  "kanri": "ウィズ",
+  "kagi": "",
+  "status": "空予定",
+  "kanryoYotei": "",
+  "kojihi": "",
+  "itsukin": "",
+  "notes": ""
+ },
+ {
   "name": "P久留米大東",
   "room": "306",
   "takyobi": "",
@@ -198,18 +210,6 @@
   "kanri": "山﨑",
   "kagi": "ガスメーター KEYBOX１９１７",
   "status": "完了",
-  "kanryoYotei": "",
-  "kojihi": "",
-  "itsukin": "",
-  "notes": ""
- },
- {
-  "name": "P西鉄久留米駅前",
-  "room": "201",
-  "takyobi": "11/24",
-  "kanri": "ウィズ",
-  "kagi": "",
-  "status": "空予定",
   "kanryoYotei": "",
   "kojihi": "",
   "itsukin": "",
