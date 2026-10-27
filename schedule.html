@@ -17,7 +17,10 @@
 .event-content{padding:24px 28px 36px}.event-eyebrow{font-size:12px;color:#977024;font-weight:700;letter-spacing:.03em}
 .event-content h2{font-size:25px;line-height:1.5;font-weight:900;margin:8px 0 14px}.event-date{font-size:18px;font-weight:800}.event-time{color:#946212;font-weight:700;margin-bottom:18px}
 .event-facts{background:white;border:1px solid #eee3c7;border-radius:14px;padding:12px 16px;margin:18px 0}.event-facts>div{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:5px 0}.event-facts dt{color:#8a7857;font-size:12px;font-weight:700}.event-facts dd{white-space:pre-line;font-weight:600}
-.event-headline{font-size:clamp(24px,4.5vw,38px);font-weight:900;line-height:1.5;white-space:pre-line;color:#785019;margin:18px 0 24px;padding:20px 18px;background:linear-gradient(135deg,#fff5ce,#fffaf0);border-left:5px solid #dbab34;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
+.event-headline{container-type:inline-size;font-weight:900;line-height:1.5;white-space:pre-line;color:#785019;margin:18px 0 24px;padding:20px 18px;background:linear-gradient(135deg,#fff5ce,#fffaf0);border-left:5px solid #dbab34;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
+.event-headline span{display:block;white-space:nowrap;font-size:min(26px,4cqw)}
+.event-time{white-space:pre-line}
+.event-participation-message{white-space:pre-line;padding:18px 20px;margin:20px 0;border:2px solid #dfb54d;border-radius:14px;background:#fff3c9;color:#694718;font-size:16px;font-weight:800;line-height:1.9}
 .event-description p{margin:0 0 12px}.event-content h3{font-size:17px;font-weight:800;margin:0 0 12px}.event-agenda{margin:22px 0}.event-agenda>div{display:grid;grid-template-columns:145px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-agenda strong{font-size:13px;color:#885d18}.event-notice{padding:12px 14px;border-left:3px solid #dfab2e;background:#fff4d5;margin:16px 0;font-size:13px}
 .event-access{margin:22px 0}.event-access>div:not(.venue-photos){display:grid;grid-template-columns:96px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-access strong{font-size:13px;color:#885d18}.event-map{display:inline-block;margin-top:14px;padding:10px 14px;border:1px solid #bdd6f5;border-radius:12px;background:#eaf3ff;color:#1e5094;font-weight:800;font-size:13px}
 .venue-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0 4px}.venue-photo{margin:0;min-width:0}.venue-photo a{display:block}.venue-photo img{display:block;width:100%;max-width:100%;height:auto;max-height:none;object-fit:contain;border:0;border-radius:0;background:#fff}.venue-photo figcaption{font-size:12px;color:#6f716c;line-height:1.6;margin-top:6px}
@@ -206,7 +209,7 @@
             <div className="event-content">
               <div className="event-eyebrow">{event.type} · {event.audience}</div>
               <h2 id="event-heading">{event.title}</h2>
-              {event.headline && <p className="event-headline">{event.headline}</p>}
+              {event.headline && <p className="event-headline">{event.headline.split("\n").map((line,i)=><span key={i}>{line}</span>)}</p>}
               <p className="event-date">{dayLabel}</p>
               <p className="event-time">{event.time}</p>
               {!closed && attendance && <button type="button" className="event-jump" onClick={()=>panel.current?.querySelector('#event-answer-section')?.scrollIntoView({behavior:'smooth',block:'start'})}>出欠を回答・変更する ↓</button>}
@@ -215,6 +218,7 @@
                 {event.fee && <div><dt>参加費</dt><dd>{event.fee}{event.feeNotice && <p className="event-fee-notice">{event.feeNoticeHighlight ? event.feeNotice.split(event.feeNoticeHighlight).map((part,i)=><React.Fragment key={i}>{i>0 && <strong>{event.feeNoticeHighlight}</strong>}{part}</React.Fragment>) : event.feeNotice}</p>}</dd></div>}
                 {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
               </dl>
+              {event.participationMessage && <div className="event-participation-message">{event.participationMessage}</div>}
               {event.title.includes('エンパワータイム') && <AboutEmpower />}
               <div className="event-description">{event.descriptionTitle && <h3>{event.descriptionTitle}</h3>}{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
               {event.venueUrl && /^https:\/\//.test(event.venueUrl) && <p><a className="event-map" href={event.venueUrl} target="_blank" rel="noopener noreferrer">{event.venueLinkLabel || '会場の詳細を見る ↗'}</a></p>}
