@@ -209,6 +209,7 @@
                 {event.fee && <div><dt>参加費</dt><dd>{event.fee}{event.feeNotice && <p className="event-fee-notice">{event.feeNoticeHighlight ? event.feeNotice.split(event.feeNoticeHighlight).map((part,i)=><React.Fragment key={i}>{i>0 && <strong>{event.feeNoticeHighlight}</strong>}{part}</React.Fragment>) : event.feeNotice}</p>}</dd></div>}
                 {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
               </dl>
+              {event.title.includes('エンパワータイム') && <AboutEmpower />}
               <div className="event-description">{event.descriptionTitle && <h3>{event.descriptionTitle}</h3>}{event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
               {event.venueUrl && /^https:\/\//.test(event.venueUrl) && <p><a className="event-map" href={event.venueUrl} target="_blank" rel="noopener noreferrer">{event.venueLinkLabel || '会場の詳細を見る ↗'}</a></p>}
               {event.banks && event.banks.confirmed && event.banks.confirmed.length>0 && <div className="event-banks">
@@ -306,8 +307,8 @@
       return (
         <div className="mb-4 bg-white rounded-2xl border-2 border-amber-300 shadow-sm p-4 text-left">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="text-[13px] font-black text-amber-900">【エンパワータイム】</div>
-            <button onClick={onClose} className="text-[11px] font-bold text-amber-700 underline shrink-0">閉じる</button>
+            <div className="text-[13px] font-black text-amber-900">エンパワータイムとは？</div>
+            {onClose && <button onClick={onClose} className="text-[11px] font-bold text-amber-700 underline shrink-0">閉じる</button>}
           </div>
           <div className="text-[11px] sm:text-[12px] text-slate-700 font-semibold leading-relaxed space-y-2">
             <p>※自分と仲間を勇気づける座談会的なもの。情報交換等</p>
