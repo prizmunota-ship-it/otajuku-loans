@@ -140,6 +140,7 @@
       /* attendance:false のイベント（東京以外のエンパワータイム）は出欠を取らず、案内とZoom入室リンクだけを出す（2026-09-14）。 */
       const attendance = event.attendance !== false;
       const sessions = event.sessions || [];
+      const answerLabel = (s,v) => v === 'yes' ? (s.yesLabel || '○ 参加') : v === 'no' ? (s.noLabel || '× 不参加') : '未回答';
       const sessionClosed = s => s.deadline && Date.now() >= Date.parse(s.deadline);
       const receiptKey = 'otajuku_rsvp_receipt:' + (localStorage.getItem('otajuku_email') || '').toLowerCase() + ':' + event.id;
       async function load(initial = false) {
@@ -249,7 +250,7 @@
                   <textarea id="rsvp-comment" className="event-input" rows={2} maxLength={300} value={comment} disabled={saving} onChange={e=>{setComment(e.target.value);changed();}} placeholder="途中参加など、伝えておきたいことがあればどうぞ" />
                   <p className="event-small">お名前・出欠・ひとことは、このイベントを見るメンバーに表示されます。</p>
                   <button className="event-save" type="submit" disabled={!valid || saving || loading}>{saving?'保存しています…':data.mine?'回答を更新する':'回答を保存する'}</button>
-                  {data.mine && !success && <p className="event-saved">保存済み：{sessions.map(s=>s.label+' '+(data.mine.answers[s.id]==='yes'?'○ 参加':'× 不参加')).join(' ／ ')}</p>}
+                  {data.mine && !success && <p className="event-saved">保存済み：{sessions.map(s=>s.label+' '+answerLabel(s,data.mine.answers[s.id])).join(' ／ ')}</p>}
                 </form>}
                 {error && <div role="alert" className="event-error">{error}{!data && <button className="event-retry" onClick={()=>load(true)} disabled={loading}>もう一度読み込む</button>}</div>}
                 {success && <p className="event-success" role="status">✓ {success}</p>}
@@ -259,7 +260,7 @@
                 <div className="event-section-head"><h3 id="attendance-heading">みんなの出欠 <small>{data.replies.length}名回答</small></h3><button type="button" onClick={()=>load(false)} disabled={loading || saving} className="event-refresh">{loading?'更新中…':'最新の回答に更新'}</button></div>
                 <div className="event-counts">{sessions.map(s=><div key={s.id}><strong>{s.label}</strong><span className="count-yes">参加 {data.totals[s.id].yes}名</span><span>不参加 {data.totals[s.id].no}名</span></div>)}</div>
                 <div className="event-filters" aria-label="回答の絞り込み">{[['all','すべて'],['yes','参加'],['no','不参加']].map(([value,label])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}</button>)}</div>
-                {!visibleRows.length ? <p className="event-small">{data.replies.length?'該当する回答はありません。':'まだ回答はありません。'}</p> : <div className="event-table-wrap"><table className="event-table"><thead><tr><th scope="col">お名前</th>{sessions.map(s=><th scope="col" key={s.id}>{s.label}</th>)}</tr></thead><tbody>{visibleRows.map(row=><React.Fragment key={row.id}><tr><th scope="row">{row.name}{row.id===data.mine?.id && <small>あなた</small>}</th>{sessions.map(s=><td key={s.id}><span className={'rsvp-badge '+(row.answers[s.id]==='yes'?'yes':'no')}>{row.answers[s.id]==='yes'?'○ 参加':'× 不参加'}</span></td>)}</tr>{row.comment && <tr className="event-comment"><td colSpan={1+sessions.length}>{row.comment}</td></tr>}</React.Fragment>)}</tbody></table></div>}
+                {!visibleRows.length ? <p className="event-small">{data.replies.length?'該当する回答はありません。':'まだ回答はありません。'}</p> : <div className="event-table-wrap"><table className="event-table"><thead><tr><th scope="col">お名前</th>{sessions.map(s=><th scope="col" key={s.id}>{s.label}</th>)}</tr></thead><tbody>{visibleRows.map(row=><React.Fragment key={row.id}><tr><th scope="row">{row.name}{row.id===data.mine?.id && <small>あなた</small>}</th>{sessions.map(s=><td key={s.id}><span className={'rsvp-badge '+(row.answers[s.id]==='yes'?'yes':'no')}>{answerLabel(s,row.answers[s.id])}</span></td>)}</tr>{row.comment && <tr className="event-comment"><td colSpan={1+sessions.length}>{row.comment}</td></tr>}</React.Fragment>)}</tbody></table></div>}
                 <p className="event-small event-sync-note">ほかの方の回答の反映には、少し時間がかかる場合があります。</p>
               </section>}
             </div>
