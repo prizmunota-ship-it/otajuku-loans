@@ -40,6 +40,7 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 .event-venue-link{color:#1e5094;text-decoration:underline;text-underline-offset:3px;display:block;padding:3px 0}.event-venue-link:hover{color:#123766}
 .event-fee-notice{margin:8px 0 0;font-weight:400}.event-fee-notice strong{color:#946212;font-size:inherit;font-weight:700}@media(max-width:600px){.venue-photos{grid-template-columns:minmax(0,1fr);gap:14px}}
+.event-welcome{margin:22px 0 12px;padding:18px 14px;text-align:center;background:#fff0bd;border:2px solid #dfab2e;border-radius:14px;color:#78500c}.event-welcome strong{display:block;font-size:20px;font-weight:900;line-height:1.5}.event-welcome span{display:block;margin-top:6px;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
@@ -225,6 +226,7 @@
               {event.venuePhotos && event.venuePhotos.length>0 && <div className="venue-photos">{event.venuePhotos.map((p,i)=><figure className="venue-photo" key={i} style={p.wide?{gridColumn:'1 / -1'}:undefined}><a href={p.src} target="_blank" rel="noopener noreferrer" aria-label={(p.alt||'会場の写真')+'を拡大する'}><img src={p.src} alt={p.alt||p.caption||'会場の写真'} width={p.width} height={p.height} loading="eager" /></a>{p.caption && <figcaption>{p.caption}</figcaption>}</figure>)}</div>}
               {event.agenda && <div className="event-agenda"><h3>当日の流れ</h3>{event.agenda.map(([time,label],i)=><div key={i}><strong>{time}</strong><span>{label}</span></div>)}</div>}
               {event.notice && <p className="event-notice">{event.notice}</p>}
+              {event.type === 'オンライン' && event.title.includes('エンパワータイム') && <div className="event-welcome"><strong>いつでもご自由に入室ください</strong><span>開催時間内は、途中からのご参加も歓迎です！</span></div>}
               {(event.meet || event.zoom) && <a className="event-zoom" href={event.meet || event.zoom} target="_blank" rel="noopener noreferrer">{event.meet ? 'Google Meet' : 'Zoom'}に入室する ↗</a>}
               {!attendance && <p className="event-small event-no-rsvp">出欠の回答は不要です。{event.meet ? '当日はGoogle Meetから参加してください。入室承認を求められた場合は、そのままお待ちください。' : event.zoom ? '当日はZoomに参加し、待機室で太田の入室承認をお待ちください。' : '当日、直接お越しください。'}</p>}
               {!attendance ? null : event.attendanceUrl ? <div id="event-answer-section" className="event-answer-card"><h3>出欠の確認・変更</h3><p className="event-small">このイベントは、これまでの回答をそのまま残すため、従来の回答ページで受け付けています。</p><a className="event-zoom" href={event.attendanceUrl} target="_blank" rel="noopener noreferrer">これまでの出欠を確認・変更する ↗</a></div> : <div id="event-answer-section" className="event-answer-card">
