@@ -123,6 +123,7 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
       const key = PREFIX + event.id + ':' + id;
       const closed = now() >= new Date(event.endAt);
       if (body.action === 'clear') {
+        if (event.sessions.some(s => s.deadline && now() >= new Date(s.deadline))) return json({ok: false, error: 'closed'}, 409);
         if (closed) return json({ok: false, error: 'closed'}, 409);
         // Write a tombstone even when a replica still caches a missing/old reply.
         await kv.put(key, JSON.stringify({id, withdrawn: true, updatedAt: now().toISOString()}));
@@ -135,6 +136,12 @@ export function createHandler(fetcher = fetch, now = () => new Date()) {
         // 回答を変更しても並び順が動かないよう、最初に回答した時刻を引き継ぐ。
         // 取消し済み（withdrawn）から再回答した場合は、新しく追加された扱いにする。
         const previous = await kv.get(key, 'json').catch(() => null);
+        for (const session of event.sessions) {
+          if (session.deadline && now() >= new Date(session.deadline)) {
+            const previousAnswer = previous && !previous.withdrawn ? previous.answers?.[session.id] || 'no' : 'no';
+            if (fields.answers[session.id] !== previousAnswer) return json({ok: false, error: 'closed'}, 409);
+          }
+        }
         const createdAt = previous && !previous.withdrawn && previous.createdAt ? previous.createdAt : now().toISOString();
         const mine = {...fields, id, createdAt, updatedAt: now().toISOString()};
         await kv.put(key, JSON.stringify(mine));

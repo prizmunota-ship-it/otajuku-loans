@@ -140,6 +140,7 @@
       /* attendance:false のイベント（東京以外のエンパワータイム）は出欠を取らず、案内とZoom入室リンクだけを出す（2026-09-14）。 */
       const attendance = event.attendance !== false;
       const sessions = event.sessions || [];
+      const sessionClosed = s => s.deadline && Date.now() >= Date.parse(s.deadline);
       const receiptKey = 'otajuku_rsvp_receipt:' + (localStorage.getItem('otajuku_email') || '').toLowerCase() + ':' + event.id;
       async function load(initial = false) {
         setLoading(true); setError('');
@@ -156,7 +157,8 @@
           setData(result);
           if (initial) {
             setName(result.mine?.name || result.memberName || '');
-            if (result.mine) {setAnswers(result.mine.answers); setComment(result.mine.comment || '');}
+            setAnswers(Object.fromEntries(sessions.map(s=>[s.id,result.mine?.answers?.[s.id] || (sessionClosed(s)?'no':'')])));
+            if (result.mine) setComment(result.mine.comment || '');
           }
         } catch (e) { if(alive.current) setError(errorMessage(e.message)); }
         finally { if(alive.current) setLoading(false); }
@@ -236,9 +238,10 @@
                 {!closed && data && <form onSubmit={save}>
                   <label className="event-label" htmlFor="rsvp-name">お名前（フルネーム）</label>
                   <input id="rsvp-name" className="event-input" value={name} maxLength={60} required autoComplete="name" disabled={saving} placeholder="例：太田 圭一" onChange={e=>{setName(e.target.value);changed();}} />
-                  {sessions.map(s=><fieldset className="event-session" key={s.id} disabled={saving}>
-                    <legend>{s.label}<span>{s.time}</span></legend>
-                    <div className="event-choices">{[['yes','○ 参加'],['no','× 不参加']].map(([value,label])=><label className={`event-choice ${answers[s.id]===value?'is-'+value:''}`} key={value}>
+                  {sessions.map(s=><fieldset className="event-session" key={s.id} disabled={saving || sessionClosed(s)}>
+                    <legend>{s.label}<span>{s.time}{sessionClosed(s) ? '（受付終了）' : ''}</span></legend>
+                    {s.help && <p className="event-small">{s.help}</p>}
+                    <div className="event-choices">{[['yes',s.yesLabel || '○ 参加'],['no',s.noLabel || '× 不参加']].map(([value,label])=><label className={`event-choice ${answers[s.id]===value?'is-'+value:''}`} key={value}>
                       <input type="radio" name={'rsvp-'+s.id} value={value} checked={answers[s.id]===value} required onChange={()=>{setAnswers({...answers,[s.id]:value});changed();}} /><span>{label}</span>
                     </label>)}</div>
                   </fieldset>)}

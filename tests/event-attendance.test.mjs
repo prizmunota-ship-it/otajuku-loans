@@ -128,3 +128,19 @@ test('optional roster failure does not prevent reading existing attendance',asyn
  const get=kv.get.bind(kv);kv.get=async(key,type)=>{if(key==='member:extras:v1')throw new Error('profile unavailable');return get(key,type);};
  const r=await send({});assert.equal(r.status,200);assert.equal(r.memberName,'');assert.equal(r.mine.name,reply.name);
 });
+
+ test('Tokyo recording remains open through Nov 17 while live sessions close at start',async()=>{
+ const eventId='2026-11-12-event';
+ const body={eventId,action:'save',name:'確認',answers:{main:'no',party:'no',recording:'yes'}};
+ const after=setup({date:'2026-11-13T00:00:00+09:00'});
+ assert.equal((await after.send(body)).ok,true);
+ assert.equal((await after.send({...body,answers:{...body.answers,main:'yes'}})).status,409);
+ assert.equal((await after.send({...body,answers:{...body.answers,party:'yes'}})).status,409);
+ assert.equal((await setup({date:'2026-11-17T23:59:59+09:00'}).send(body)).ok,true);
+ assert.equal((await setup({date:'2026-11-18T00:00:00+09:00'}).send(body)).status,409);
+ const early=setup({date:'2026-11-11T00:00:00+09:00'});
+ assert.equal((await early.send({...body,answers:{main:'yes',party:'yes',recording:'no'}})).ok,true);
+ after.kv.data=early.kv.data;
+ assert.equal((await after.send({...body,answers:{main:'yes',party:'yes',recording:'no'}})).ok,true);
+ assert.equal((await after.send({eventId,action:'clear'})).status,409);
+ });
