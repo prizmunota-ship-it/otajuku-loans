@@ -221,6 +221,7 @@
               </dl>
               {event.participationMessage && <div className="event-participation-message">{event.participationMessage}</div>}
               {event.title.includes('エンパワータイム') && <AboutEmpower />}
+              {event.speakerPhoto && <figure style={{margin:"24px auto",maxWidth:320}}><img src={event.speakerPhoto} alt={event.speakerName} style={{display:"block",width:"100%",height:"auto",borderRadius:12}} /><figcaption style={{textAlign:"center",fontWeight:700,marginTop:10}}>講師：{event.speakerName}</figcaption></figure>}
               <div className="event-description">{event.descriptionTitle && <h3>{event.descriptionTitle}</h3>}{event.descriptionStyle === 'bullets' ? <ul className="event-description-list">{event.description.map((p,i)=><li key={i}>{p}</li>)}</ul> : event.description.map((p,i)=><p key={i}>{p}</p>)}</div>
               {event.venueUrl && /^https:\/\//.test(event.venueUrl) && <p><a className="event-map" href={event.venueUrl} target="_blank" rel="noopener noreferrer">{event.venueLinkLabel || '会場の詳細を見る ↗'}</a></p>}
               {event.banks && event.banks.confirmed && event.banks.confirmed.length>0 && <div className="event-banks">

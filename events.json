@@ -602,6 +602,8 @@
         "location": "オンライン・東京",
         "highlight": true,
         "id": "2026-11-12-event",
+        "speakerPhoto": "/assets/events/ota-yasunori-20261112.png",
+        "speakerName": "大田泰徳先生",
         "startDate": "2026-11-12",
         "endDate": "2026-11-12",
         "endAt": "2026-11-18T00:00:00+09:00",
