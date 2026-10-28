@@ -1,5 +1,5 @@
 // 自動生成（vacancy-dashboard / gen_mobile_kita.py）。手で編集しない。
-const DATA = {"kpi": {"asof": "2026-10-28"}, "rooms": [], "kado": [{"name": "プライマリー鷹の巣", "total_ju": 24, "total_p": 3, "kanri": "エイブル", "area": "北九州"}], "contacts": {"お問い合わせ": {"tel": [{"name": "株式会社プライズムン（太田）", "num": "080-3977-0118"}], "line": "https://line.me/ti/p/8GcbgI0sTQ", "email": ["prizmun.ota@gmail.com"]}}};
+const DATA = {"kpi": {"asof": "2026-10-29"}, "rooms": [], "kado": [{"name": "プライマリー鷹の巣", "total_ju": 24, "total_p": 3, "kanri": "エイブル", "area": "北九州"}], "contacts": {"お問い合わせ": {"tel": [{"name": "株式会社プライズムン（太田）", "num": "080-3977-0118"}], "line": "https://line.me/ti/p/8GcbgI0sTQ", "email": ["prizmun.ota@gmail.com"]}}};
 const HTML = `<!doctype html>
 <html lang="ja"><head>
 <meta charset="utf-8">
