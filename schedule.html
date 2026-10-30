@@ -278,9 +278,9 @@
                       <input type="radio" name={'rsvp-'+s.id} value={value} checked={answers[s.id]===value} required onChange={()=>{setAnswers({...answers,[s.id]:value});changed();}} /><span>{label}</span>
                     </label>)}</div>
                   </fieldset>)}
-                  <label className="event-label" htmlFor="rsvp-comment">ひとこと（任意）</label>
-                  <textarea id="rsvp-comment" className="event-input" rows={2} maxLength={300} value={comment} disabled={saving} onChange={e=>{setComment(e.target.value);changed();}} placeholder="途中参加など、伝えておきたいことがあればどうぞ" />
-                  <p className="event-small">お名前・出欠・ひとことは、このイベントを見るメンバーに表示されます。</p>
+                  {!event.compactAttendance && <><label className="event-label" htmlFor="rsvp-comment">ひとこと（任意）</label>
+                  <textarea id="rsvp-comment" className="event-input" rows={2} maxLength={300} value={comment} disabled={saving} onChange={e=>{setComment(e.target.value);changed();}} placeholder="途中参加など、伝えておきたいことがあればどうぞ" /></>}
+                  {!event.compactAttendance && <p className="event-small">お名前・出欠・ひとことは、このイベントを見るメンバーに表示されます。</p>}
                   <button className="event-save" type="submit" disabled={!valid || saving || loading}>{saving?'保存しています…':data.mine?'回答を更新する':'回答を保存する'}</button>
                   {!event.compactAttendance && data.mine && !success && <p className="event-saved">保存済み：{sessions.map(s=>s.label+' '+answerLabel(s,data.mine.answers[s.id])).join(' ／ ')}</p>}
                 </form>}
