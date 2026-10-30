@@ -45,7 +45,8 @@
 .event-save{width:100%;min-height:50px;border-radius:12px;background:#edc14b;color:#372707;font-weight:800;font-size:15px;margin-top:8px}.event-save:hover{background:#dfae2d}.event-save:disabled{background:#e7dfca;color:#978b6d;cursor:not-allowed}.event-saved{font-size:12px;color:#4f6c59;margin-top:10px}.event-success{margin-top:14px;background:#e8f6ee;padding:12px;border-radius:10px;color:#17613f;font-size:13px;font-weight:700}.event-error{margin:14px 0;padding:12px;background:#fff0eb;border-radius:10px;color:#a63921;font-size:13px}.event-loading{color:#856a30;padding:18px 0}.event-retry{display:block;min-height:44px;text-decoration:underline;font-weight:700}
 .event-attendees{margin-top:28px}.event-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.event-section-head h3{margin:0}.event-section-head small{font-size:12px;font-weight:600;color:#827a64}.event-refresh{font-size:12px;color:#83601b;min-height:44px;text-decoration:underline}.event-counts{display:grid;gap:8px;margin:12px 0}.event-counts>div{background:#fff;border:1px solid #e6e4d7;border-radius:12px;padding:12px;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px}.event-counts strong{width:100%;font-size:13px}.event-counts .count-yes{font-size:17px;font-weight:800;color:#197443}.event-counts span{align-self:center;color:#71756b}
 .event-filters{display:flex;gap:7px;margin:14px 0}.event-filters button{border:1px solid #e2dac6;border-radius:22px;padding:6px 18px;min-height:42px;color:#7b6e51;background:#fff;font-size:12px}.event-filters button[aria-pressed=true]{background:#6e571f;color:#fff;border-color:#6e571f}.event-table-wrap{overflow-x:auto;border:1px solid #e4e1d4;border-radius:12px;background:#fff}.event-table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed}.event-table th,.event-table td{padding:12px 8px;text-align:center;border-bottom:1px solid #eee9dc;overflow-wrap:anywhere}.event-table th:first-child{width:38%;text-align:left}.event-table thead{background:#f8f1de;color:#827047}.event-table tbody th{font-weight:700}.event-table tfoot{background:#fff3c9;color:#694718}.event-table tfoot th,.event-table tfoot td{border-top:2px solid #dfb54d;border-bottom:0}.event-table tfoot strong{font-size:16px}
-.event-table small{display:block;font-size:10px;font-weight:400;color:#938567}.rsvp-badge{display:inline-block;padding:3px 7px;border-radius:5px;white-space:nowrap}.rsvp-badge.yes{color:#197443;background:#eaf5ee}.rsvp-badge.no{color:#5f6670;background:#f0f1f3}.event-comment td{text-align:left;color:#77715d;font-size:11px;padding-top:0;white-space:pre-line}.event-comment td:before{content:'ひとこと：'}.event-sync-note{margin-top:12px}
+.event-table small{display:block;font-size:10px;font-weight:400;color:#938567}.rsvp-badge{display:inline-block;padding:3px 7px;border-radius:5px;white-space:nowrap}.event-table .rsvp-badge{white-space:normal;text-wrap:balance}
+.rsvp-badge.yes{color:#197443;background:#eaf5ee}.rsvp-badge.no{color:#5f6670;background:#f0f1f3}.event-comment td{text-align:left;color:#77715d;font-size:11px;padding-top:0;white-space:pre-line}.event-comment td:before{content:'ひとこと：'}.event-sync-note{margin-top:12px}
 @media(max-width:600px){.event-overlay{padding:0}.event-panel{min-height:100%;border-radius:0}.event-content{padding:20px 18px 36px}.event-content h2{font-size:21px}.event-topbar{padding:6px 18px}.event-agenda>div{grid-template-columns:120px 1fr;gap:8px}.event-agenda strong{font-size:12px}.event-answer-card{padding:18px 14px}.event-section-head{align-items:flex-start}.event-section-head h3{padding-top:8px}.event-section-head small{display:block}.event-table th,.event-table td{padding:10px 5px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 .event-venue-link{color:#1e5094;text-decoration:underline;text-underline-offset:3px;display:block;padding:3px 0}.event-venue-link:hover{color:#123766}
@@ -150,6 +151,12 @@
       /* attendance:false のイベント（東京以外のエンパワータイム）は出欠を取らず、案内とZoom入室リンクだけを出す（2026-09-14）。 */
       const attendance = event.attendance !== false;
       const sessions = event.sessions || [];
+      const seminarChoice = !!event.seminarChoice;
+      const seminarMode = a => a.seminar==='yes' ? 'live' : a.recording==='yes' ? 'recording' : a.seminar==='no' && a.recording==='no' ? 'none' : '';
+      const tableSessions = seminarChoice ? [{id:'seminarMode',label:'セミナー'},...sessions.filter(s=>s.id==='party')] : sessions;
+      const rowLabel = (s,a) => s.id==='seminarMode' ? ({live:'○ オンライン参加',recording:'○ 録画のみ購入',none:'× 希望しない'}[seminarMode(a)] || '未回答') : answerLabel(s,a[s.id]);
+      const rowYes = (s,a) => s.id==='seminarMode' ? ['live','recording'].includes(seminarMode(a)) : a[s.id]==='yes';
+
       const answerLabel = (s,v) => v === 'yes' ? (s.yesLabel || '○ 参加') : v === 'no' ? (s.noLabel || '× 不参加') : '未回答';
       const sessionClosed = s => s.deadline && Date.now() >= Date.parse(s.deadline);
       const receiptKey = 'otajuku_rsvp_receipt:' + (localStorage.getItem('otajuku_email') || '').toLowerCase() + ':' + event.id;
@@ -168,7 +175,10 @@
           setData(result);
           if (initial) {
             setName(result.mine?.name || result.memberName || '');
-            setAnswers(Object.fromEntries(sessions.map(s=>[s.id,result.mine?.answers?.[s.id] || (sessionClosed(s)?'no':'')])));
+            const initialAnswers=Object.fromEntries(sessions.map(s=>[s.id,result.mine?.answers?.[s.id] || (sessionClosed(s)?'no':'')]));
+            if(seminarChoice && initialAnswers.seminar==='yes') initialAnswers.recording='no';
+            if(seminarChoice && initialAnswers.recording==='yes') initialAnswers.seminar='no';
+            setAnswers(initialAnswers);
             if (result.mine) setComment(result.mine.comment || '');
           }
         } catch (e) { if(alive.current) setError(errorMessage(e.message)); }
@@ -201,13 +211,13 @@
           savedReply.current = result.mine;
           try {sessionStorage.setItem(receiptKey, JSON.stringify(result.mine));} catch {}
           setData(previous => {const replies=mergeReply(previous.replies, result.mine); return {...previous,mine:result.mine,replies,totals:countReplies(replies,sessions)};});
-          setSuccess('回答を保存しました。変更するときは選び直して保存できます。');
+          setSuccess(event.compactAttendance ? '保存しました。' : '回答を保存しました。変更するときは選び直して保存できます。');
         } catch (e) {if(alive.current) setError('保存できませんでした。'+errorMessage(e.message));}
         finally {if(alive.current) {setSaving(false);requestAnimationFrame(()=>panel.current?.querySelector('.event-save')?.focus());}}
       }
       const dayLabel = new Date(event.startDate + 'T00:00:00+09:00').toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short',timeZone:'Asia/Tokyo'});
       const valid = name.trim() && sessions.every(s => answers[s.id] === 'yes' || answers[s.id] === 'no');
-      const visibleRows = (data?.replies || []).filter(row => filter==='all' || sessions.some(s=>row.answers[s.id]===filter));
+      const visibleRows = (data?.replies || []).filter(row => filter==='all' || tableSessions.some(s=>filter==='yes' ? rowYes(s,row.answers) : rowLabel(s,row.answers).startsWith('×')));
       return (
         <div className="event-overlay" onKeyDown={handleKeys}>
           <section className="event-panel" role="dialog" aria-modal="true" aria-labelledby="event-heading" ref={panel} tabIndex="-1">
@@ -253,7 +263,15 @@
                 {!closed && data && <form onSubmit={save}>
                   <label className="event-label" htmlFor="rsvp-name">お名前（フルネーム）</label>
                   <input id="rsvp-name" className="event-input" value={name} maxLength={60} required autoComplete="name" disabled={saving} placeholder="例：太田 圭一" onChange={e=>{setName(e.target.value);changed();}} />
-                  {sessions.map(s=><fieldset className="event-session" key={s.id} disabled={saving || sessionClosed(s)}>
+                  {seminarChoice && <fieldset className="event-session" disabled={saving}>
+                    <legend>セミナー（3,000円）<span>オンライン：11/12 16:00〜17:30 ／ 録画購入申込：11/17まで</span></legend>
+                    <div className="event-choices">{[['live','オンライン参加（録画付き）'],['recording','録画のみ購入'],['none','どちらも希望しない']].map(([value,label])=>{
+                      const next={seminar:value==='live'?'yes':'no',recording:value==='recording'?'yes':'no'};
+                      const locked=sessions.some(s=>['seminar','recording'].includes(s.id) && sessionClosed(s) && next[s.id] !== (data.mine?.answers?.[s.id] || 'no'));
+                      return <label className={`event-choice ${seminarMode(answers)===value?'is-yes':''}`} key={value}><input type="radio" name="rsvp-seminar-mode" required value={value} checked={seminarMode(answers)===value} disabled={locked} onChange={()=>{setAnswers({...answers,...next});changed();}} /><span>{label}</span></label>;
+                    })}</div>
+                  </fieldset>}
+                  {sessions.filter(s=>!seminarChoice || s.id==='party').map(s=><fieldset className="event-session" key={s.id} disabled={saving || sessionClosed(s)}>
                     <legend>{s.label}<span>{s.time}{sessionClosed(s) ? '（受付終了）' : ''}</span></legend>
                     {s.help && <p className="event-small">{s.help}</p>}
                     <div className="event-choices">{[['yes',s.yesLabel || '○ 参加'],['no',s.noLabel || '× 不参加']].map(([value,label])=><label className={`event-choice ${answers[s.id]===value?'is-'+value:''}`} key={value}>
@@ -274,7 +292,7 @@
                 <div className="event-section-head"><h3 id="attendance-heading">{event.compactAttendance ? "参加状況" : <>みんなの出欠 <small>{data.replies.length}名回答</small></>}</h3><button type="button" onClick={()=>load(false)} disabled={loading || saving} className="event-refresh">{loading?'更新中…':'最新の回答に更新'}</button></div>
                 {!event.compactAttendance && <div className="event-counts">{sessions.map(s=><div key={s.id}><strong>{s.label}</strong><span className="count-yes">参加 {data.totals[s.id].yes}名</span><span>不参加 {data.totals[s.id].no}名</span></div>)}</div>}
                 <div className="event-filters" aria-label="回答の絞り込み">{[['all','すべて'],['yes','参加'],['no','不参加']].map(([value,label])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}</button>)}</div>
-                {!visibleRows.length ? <p className="event-small">{data.replies.length?'該当する回答はありません。':'まだ回答はありません。'}</p> : <div className="event-table-wrap"><table className="event-table"><thead><tr><th scope="col">お名前</th>{sessions.map(s=><th scope="col" key={s.id}>{s.label}</th>)}</tr></thead><tbody>{visibleRows.map(row=><React.Fragment key={row.id}><tr><th scope="row">{row.name}{row.id===data.mine?.id && <small>あなた</small>}</th>{sessions.map(s=><td key={s.id}><span className={'rsvp-badge '+(row.answers[s.id]==='yes'?'yes':'no')}>{answerLabel(s,row.answers[s.id])}</span></td>)}</tr>{row.comment && <tr className="event-comment"><td colSpan={1+sessions.length}>{row.comment}</td></tr>}</React.Fragment>)}</tbody>{event.compactAttendance && <tfoot><tr><th scope="row">参加合計<small>全回答の集計</small></th>{sessions.map(s=><td key={s.id}><strong>{data.totals[s.id].yes}人</strong></td>)}</tr></tfoot>}</table></div>}
+                {!visibleRows.length ? <p className="event-small">{data.replies.length?'該当する回答はありません。':'まだ回答はありません。'}</p> : <div className="event-table-wrap"><table className="event-table"><thead><tr><th scope="col">お名前</th>{tableSessions.map(s=><th scope="col" key={s.id}>{s.label}</th>)}</tr></thead><tbody>{visibleRows.map(row=><React.Fragment key={row.id}><tr><th scope="row">{row.name}{row.id===data.mine?.id && <small>あなた</small>}</th>{tableSessions.map(s=><td key={s.id}><span className={'rsvp-badge '+(rowYes(s,row.answers)?'yes':'no')}>{rowLabel(s,row.answers)}</span></td>)}</tr>{row.comment && <tr className="event-comment"><td colSpan={1+tableSessions.length}>{row.comment}</td></tr>}</React.Fragment>)}</tbody>{event.compactAttendance && <tfoot><tr><th scope="row">参加合計<small>全回答の集計</small></th>{tableSessions.map(s=><td key={s.id}>{s.id==='seminarMode' ? <><strong>{data.replies.filter(r=>rowYes(s,r.answers)).length}人</strong><small>オンライン {data.replies.filter(r=>seminarMode(r.answers)==='live').length}人<br/>録画のみ {data.replies.filter(r=>seminarMode(r.answers)==='recording').length}人</small></> : <strong>{data.totals[s.id].yes}人</strong>}</td>)}</tr></tfoot>}</table></div>}
                 {!event.compactAttendance && <p className="event-small event-sync-note">ほかの方の回答の反映には、少し時間がかかる場合があります。</p>}
               </section>}
             </div>

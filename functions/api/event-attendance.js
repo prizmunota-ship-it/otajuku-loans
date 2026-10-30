@@ -64,6 +64,7 @@ function validateReply(input, event) {
     if (!['yes', 'no'].includes(input.answers[id])) return null;
     answers[id] = input.answers[id];
   }
+  if (event.seminarChoice && answers.seminar === 'yes' && answers.recording === 'yes') return null;
   return {name, answers, comment};
 }
 

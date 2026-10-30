@@ -144,3 +144,19 @@ test('optional roster failure does not prevent reading existing attendance',asyn
  assert.equal((await after.send({...body,answers:{seminar:'yes',party:'yes',recording:'no'}})).ok,true);
  assert.equal((await after.send({eventId,action:'clear'})).status,409);
  });
+
+test('seminar choice excludes duplicate purchase and keeps dinner independent',async()=>{
+ const {send}=setup({date:'2026-10-30T01:00:00Z'});
+ const base={action:'save',eventId:'2026-11-12-event',name:'確認',comment:''};
+ assert.equal((await send({...base,answers:{seminar:'yes',recording:'yes',party:'yes'}})).status,400);
+ for(const answers of [{seminar:'yes',recording:'no',party:'no'},{seminar:'no',recording:'yes',party:'yes'},{seminar:'no',recording:'no',party:'yes'}]) {
+  assert.equal((await send({...base,answers})).ok,true);
+  assert.deepEqual((await send({eventId:base.eventId})).mine.answers,answers);
+ }
+});
+test('recording-only remains available after live seminar deadline',async()=>{
+ const {send}=setup({date:'2026-11-13T01:00:00Z'});
+ const base={action:'save',eventId:'2026-11-12-event',name:'確認',comment:''};
+ assert.equal((await send({...base,answers:{seminar:'no',recording:'yes',party:'no'}})).ok,true);
+ assert.equal((await send({...base,answers:{seminar:'yes',recording:'no',party:'no'}})).status,409);
+});

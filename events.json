@@ -603,6 +603,7 @@
         "highlight": true,
         "id": "2026-11-12-event",
         "compactAttendance": true,
+        "seminarChoice": true,
         "zoom": "https://us06web.zoom.us/j/84850301005?pwd=U5oZGMAAgxlqc2JwCwDbACUWjn1zlI.1",
         "zoomInVenue": true,
         "speakerPhoto": "/assets/events/ota-yasunori-20261112.png",
