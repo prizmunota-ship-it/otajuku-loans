@@ -20,7 +20,8 @@
 .event-headline{container-type:inline-size;font-weight:900;line-height:1.5;white-space:pre-line;color:#785019;margin:18px 0 24px;padding:20px 10px;background:linear-gradient(135deg,#fff5ce,#fffaf0);border-left:5px solid #dbab34;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
 .event-headline span{display:block;white-space:nowrap;font-size:min(34px,calc(99cqw / var(--headline-chars,20)))}
 .event-time{white-space:pre-line}
-.event-participation-headline{display:block;font-size:clamp(20px,5.2vw,26px);line-height:1.6;color:#694718;margin-bottom:10px;font-weight:900;overflow-wrap:anywhere}
+.event-participation-headline{display:block;font-size:clamp(16px,4.7vw,24px);line-height:1.6;color:#694718;margin-bottom:10px;font-weight:900;text-align:center}
+.event-participation-headline span{display:block;white-space:nowrap}
 .event-participation-message{white-space:pre-line;padding:18px 20px;margin:20px 0;border:2px solid #dfb54d;border-radius:14px;background:#fff3c9;color:#694718;font-size:16px;font-weight:800;line-height:1.9}
 .event-description-list{padding-left:1.35em;list-style:disc}.event-description-list li{padding-left:.2em;margin:0 0 14px;line-height:1.8}.event-description-list li::marker{color:#a37725}
 .event-description p{margin:0 0 12px}.event-content h3{font-size:17px;font-weight:800;margin:0 0 12px}.event-agenda{margin:22px 0}.event-agenda>div{display:grid;grid-template-columns:145px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid #eee6d6}.event-agenda strong{font-size:13px;color:#885d18}.event-notice{padding:12px 14px;border-left:3px solid #dfab2e;background:#fff4d5;margin:16px 0;font-size:13px}
@@ -220,7 +221,7 @@
                 {event.fee && <div><dt>参加費</dt><dd>{event.fee}{event.feeNotice && <p className="event-fee-notice">{event.feeNoticeHighlight ? event.feeNotice.split(event.feeNoticeHighlight).map((part,i)=><React.Fragment key={i}>{i>0 && <strong>{event.feeNoticeHighlight}</strong>}{part}</React.Fragment>) : event.feeNotice}</p>}</dd></div>}
                 {event.capacity && <div><dt>人数</dt><dd>{event.capacity}</dd></div>}
               </dl>
-              {event.participationMessage && <div className="event-participation-message">{event.participationHeadline && <strong className="event-participation-headline">{event.participationHeadline}</strong>}<div style={event.participationHeadline ? {fontWeight:500,fontSize:15} : undefined}>{event.participationMessage}</div></div>}
+              {event.participationMessage && <div className="event-participation-message">{event.participationHeadline && <strong className="event-participation-headline">{event.participationHeadline.split("\n").map((line,i)=><span key={i}>{line}</span>)}</strong>}<div style={event.participationHeadline ? {fontWeight:500,fontSize:15} : undefined}>{event.participationMessage}</div></div>}
               {event.title.includes('エンパワータイム') && <AboutEmpower />}
               {event.speakerPhoto && <figure style={{margin:"24px auto",maxWidth:320}}><img src={event.speakerPhoto} alt={event.speakerName} style={{display:"block",width:"100%",height:"auto",borderRadius:12}} /><figcaption style={{textAlign:"center",fontWeight:700,marginTop:10}}>講師：{event.speakerName}</figcaption></figure>}
               {event.speakerProfile && <section className="event-description" aria-label="講師プロフィール"><h3>講師プロフィール</h3><ul className="event-description-list">{event.speakerProfile.map((text,i)=><li key={i}>{text}</li>)}</ul></section>}
