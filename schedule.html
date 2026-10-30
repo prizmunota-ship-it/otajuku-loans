@@ -264,7 +264,7 @@
                   <textarea id="rsvp-comment" className="event-input" rows={2} maxLength={300} value={comment} disabled={saving} onChange={e=>{setComment(e.target.value);changed();}} placeholder="途中参加など、伝えておきたいことがあればどうぞ" />
                   <p className="event-small">お名前・出欠・ひとことは、このイベントを見るメンバーに表示されます。</p>
                   <button className="event-save" type="submit" disabled={!valid || saving || loading}>{saving?'保存しています…':data.mine?'回答を更新する':'回答を保存する'}</button>
-                  {data.mine && !success && <p className="event-saved">保存済み：{sessions.map(s=>s.label+' '+answerLabel(s,data.mine.answers[s.id])).join(' ／ ')}</p>}
+                  {!event.compactAttendance && data.mine && !success && <p className="event-saved">保存済み：{sessions.map(s=>s.label+' '+answerLabel(s,data.mine.answers[s.id])).join(' ／ ')}</p>}
                 </form>}
                 {error && <div role="alert" className="event-error">{error}{!data && <button className="event-retry" onClick={()=>load(true)} disabled={loading}>もう一度読み込む</button>}</div>}
                 {success && <p className="event-success" role="status">✓ {success}</p>}
@@ -275,7 +275,7 @@
                 {!event.compactAttendance && <div className="event-counts">{sessions.map(s=><div key={s.id}><strong>{s.label}</strong><span className="count-yes">参加 {data.totals[s.id].yes}名</span><span>不参加 {data.totals[s.id].no}名</span></div>)}</div>}
                 <div className="event-filters" aria-label="回答の絞り込み">{[['all','すべて'],['yes','参加'],['no','不参加']].map(([value,label])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}</button>)}</div>
                 {!visibleRows.length ? <p className="event-small">{data.replies.length?'該当する回答はありません。':'まだ回答はありません。'}</p> : <div className="event-table-wrap"><table className="event-table"><thead><tr><th scope="col">お名前</th>{sessions.map(s=><th scope="col" key={s.id}>{s.label}</th>)}</tr></thead><tbody>{visibleRows.map(row=><React.Fragment key={row.id}><tr><th scope="row">{row.name}{row.id===data.mine?.id && <small>あなた</small>}</th>{sessions.map(s=><td key={s.id}><span className={'rsvp-badge '+(row.answers[s.id]==='yes'?'yes':'no')}>{answerLabel(s,row.answers[s.id])}</span></td>)}</tr>{row.comment && <tr className="event-comment"><td colSpan={1+sessions.length}>{row.comment}</td></tr>}</React.Fragment>)}</tbody>{event.compactAttendance && <tfoot><tr><th scope="row">参加合計<small>全回答の集計</small></th>{sessions.map(s=><td key={s.id}><strong>{data.totals[s.id].yes}人</strong></td>)}</tr></tfoot>}</table></div>}
-                <p className="event-small event-sync-note">ほかの方の回答の反映には、少し時間がかかる場合があります。</p>
+                {!event.compactAttendance && <p className="event-small event-sync-note">ほかの方の回答の反映には、少し時間がかかる場合があります。</p>}
               </section>}
             </div>
           </section>
