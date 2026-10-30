@@ -15,6 +15,7 @@
 .event-topbar{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;background:#fffdf7f5;border-bottom:1px solid #f0e6c8;padding:6px 20px;z-index:2;color:#9d7636;font-size:12px}
 .event-back{min-height:44px;font-weight:700;color:#785519;text-align:left}.event-back:disabled{opacity:.5}
 .event-content{padding:24px 28px 36px}.event-eyebrow{font-size:12px;color:#977024;font-weight:700;letter-spacing:.03em}
+.event-content{container-type:inline-size}.event-content h2.event-title-lines{font-size:min(25px,5.5cqw)}.event-title-lines span{white-space:nowrap}
 .event-content h2{font-size:25px;line-height:1.5;font-weight:900;margin:8px 0 14px}.event-date{font-size:18px;font-weight:800}.event-time{color:#946212;font-weight:700;margin-bottom:18px}
 .event-facts{background:white;border:1px solid #eee3c7;border-radius:14px;padding:12px 16px;margin:18px 0}.event-facts>div{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:5px 0}.event-facts dt{color:#8a7857;font-size:12px;font-weight:700}.event-facts dd{white-space:pre-line;font-weight:600}
 .event-headline{container-type:inline-size;font-weight:900;line-height:1.5;white-space:pre-line;color:#785019;margin:18px 0 24px;padding:20px 10px;background:linear-gradient(135deg,#fff5ce,#fffaf0);border-left:5px solid #dbab34;border-radius:0 12px 12px 0;overflow-wrap:anywhere}
@@ -212,7 +213,7 @@
             <div className="event-topbar"><button type="button" onClick={onClose} disabled={saving} className="event-back">‹ 年間スケジュールに戻る</button><span>太田塾</span></div>
             <div className="event-content">
               <div className="event-eyebrow">{event.type} · {event.audience}</div>
-              <h2 id="event-heading">{event.title}</h2>
+              <h2 id="event-heading" className={event.title.includes("\n") ? "event-title-lines" : undefined}>{event.title.split("\n").map((line,i)=><span key={i} style={{display:"block"}}>{line}</span>)}</h2>
               {event.headline && <p className="event-headline">{event.headline.split("\n").map((line,i)=><span key={i} style={{'--headline-chars':Array.from(line).length}}>{line}</span>)}</p>}
               <p className="event-date">{dayLabel}</p>
               <p className="event-time">{event.time}</p>
@@ -294,7 +295,7 @@
               <div className="text-[10px] sm:text-[11px] font-bold text-slate-500">{event.date}</div>
             )}
             <button type="button" onClick={() => openEvent(event)} className="block text-left text-[11px] font-bold text-orange-700 underline decoration-orange-300 underline-offset-2 break-words mt-0.5 tracking-tight py-1">
-              {event.title} <span aria-hidden="true">›</span>
+              {event.title.split("\n").map((line,i)=><span key={i} style={{display:"block",textWrap:"balance"}}>{line}{i===event.title.split("\n").length-1 && <span aria-hidden="true"> ›</span>}</span>)}
             </button>
             {event.location && (
               <div className={`mt-0.5 ${event.highlight ? 'text-red-600 font-extrabold text-[10px] sm:text-[11px]' : 'text-[9px] sm:text-[10px] text-slate-400 font-semibold'}`}>
