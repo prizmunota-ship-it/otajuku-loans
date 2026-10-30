@@ -24,18 +24,6 @@
   "notes": ""
  },
  {
-  "name": "P合川A棟",
-  "room": "203",
-  "takyobi": "4/19",
-  "kanri": "イムズ",
-  "kagi": "KEYBOX0131",
-  "status": "内装中",
-  "kanryoYotei": "2026-10-28",
-  "kojihi": "",
-  "itsukin": "",
-  "notes": ""
- },
- {
   "name": "P久留米大南",
   "room": "202",
   "takyobi": "",
@@ -84,24 +72,12 @@
   "notes": ""
  },
  {
-  "name": "P久留米インターA棟",
-  "room": "201",
-  "takyobi": "",
-  "kanri": "駅前",
-  "kagi": "B棟階段手すりKEYBOX０２０５",
-  "status": "完了",
-  "kanryoYotei": "",
-  "kojihi": "",
-  "itsukin": "",
-  "notes": ""
- },
- {
   "name": "P久留米大東",
   "room": "107",
   "takyobi": "10/29",
   "kanri": "お部屋",
   "kagi": "",
-  "status": "空予定",
+  "status": "未内装",
   "kanryoYotei": "",
   "kojihi": "",
   "itsukin": "",
