@@ -15,15 +15,17 @@
 #loanFinder .finder-check>summary:focus-visible{outline:3px solid #1558a7;outline-offset:3px}
 #loanFinder .finder-check>ul{margin-top:12px}
 
-#loanFinder>details>summary.finder-entry{position:relative;list-style:none;background:#155887;color:white;padding:11px 14px;font-size:15px;line-height:1.5}
+/* Compact entry matching the page's warm gold palette. */
+#loanFinder{margin-top:10px}
+#loanFinder>details{border:1px solid #d9b65b;border-radius:9px}
+#loanFinder>details>summary.finder-entry{position:relative;list-style:none;background:#fff1bf;color:#674700;padding:10px 42px 10px 14px;min-height:44px;line-height:24px}
 #loanFinder .finder-entry::-webkit-details-marker{display:none}
-#loanFinder .finder-entry strong{font-size:16px}
-#loanFinder .finder-entry span{margin:2px 0 0;font-size:12px;color:white}
-#loanFinder .finder-entry .finder-entry-open,#loanFinder .finder-entry .finder-entry-close{display:inline-block;padding:2px 8px;background:white;color:#155887;border-radius:5px;font-weight:700;margin-top:6px}
-#loanFinder .finder-entry .finder-entry-close{display:none}
-#loanFinder>details[open]>.finder-entry .finder-entry-open{display:none}
-#loanFinder>details[open]>.finder-entry .finder-entry-close{display:inline-block}
-#loanFinder .finder-entry:focus-visible{outline:3px solid #f3ba33;outline-offset:-4px}
+#loanFinder .finder-entry strong{font-size:15px}
+#loanFinder .finder-entry::after{content:'＋';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:21px;font-weight:700}
+#loanFinder>details[open]>.finder-entry::after{content:'−'}
+#loanFinder .finder-entry:hover{background:#ffe8a0}
+#loanFinder .finder-entry:focus-visible{outline:3px solid #a87512;outline-offset:-3px}
+#loanFinder .finder-body{padding-top:12px}
 #loanFinder .finder-required{display:inline-block;color:#a51d25;background:#ffebeb;font-size:10px;padding:1px 4px;margin-left:5px;border-radius:3px}
 #loanFinder .finder-grid .finder-invalid{border:2px solid #c42c35;background:#fff5f5}
 #loanFinder .finder-field-error{display:block;color:#ab2029;font-size:12px;font-weight:600;line-height:1.5;margin-top:4px}
