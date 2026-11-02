@@ -148,6 +148,7 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
 .login-msg.loading { color:#A08040; }
 .login-msg.success { color:#1A7A3A; font-weight:700; }
 </style>
+<link rel="stylesheet" href="/loan-finder.css">
 </head>
 <body>
 <script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=localStorage.getItem("otajuku_email");if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}var ts=parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);if(Date.now()-ts<86400000){return;}window._rc=function(r){if(r==="ok"){localStorage.setItem("otajuku_auth_ts",""+Date.now());}else{localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");localStorage.removeItem("otajuku_auth_ts");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
@@ -199,6 +200,7 @@ h1 { font-size:20px; font-weight:900; color:#fff; letter-spacing:0.04em; }
     <span class="count" id="countLabel">33件</span>
   </div>
 </div>
+<section id="loanFinder" aria-label="物件条件で融資先検索"></section>
 <div class="cards" id="cardContainer"><div class="card" id="c0"><div class="card-head" onclick="tog(0)"><span class="type-badge b-shinku">信用組合</span><div class="card-title-area"><div class="card-name">横浜幸銀信用組合</div><div class="card-meta"><span class="meta-pill">年収 決まりなし</span><span class="meta-pill">支店のある地域</span></div><div class="eval-row"><div class="eval-item"><span class="em em-caut">▲</span>個人</div><div class="eval-item"><span class="em em-ok">○</span>法人</div><div class="eval-item" style="margin-left:4px">金利&nbsp;<span class="rate-val">3%</span></div></div></div><svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"></path></svg></div><div class="card-body"><div class="card-body-inner"><div class="section"><div class="sec-title">契約者条件</div><div class="grid2"><div class="ic"><div class="lb">契約エリア</div><div class="vl">支店のある地域</div></div><div class="ic"><div class="lb">年収目安</div><div class="vl">決まりなし</div></div></div><div class="memo">・一見は断られるケース大
 ・紹介者が重要
 ・原則法人契約、個人は要相談
@@ -1282,6 +1284,7 @@ function gotoSaison(){
 
 var curType="all", curQ="", curMode="banks";
 function render(){
+  document.getElementById("loanFinder").hidden=(curMode!=="banks");
   var box=document.getElementById("cardContainer");
   if(curMode==="funding"){ box.innerHTML=renderAllFunding(); return; }
   var filtered=DATA.filter(function(d){
@@ -1362,4 +1365,5 @@ document.getElementById("loginEmail").addEventListener("keydown", function(e){ i
 
 
 <script src="/usage.js"></script>
+<script src="/loan-finder.js"></script>
 </body></html>
