@@ -1,20 +1,20 @@
 {
   "asof": "2026/11/2",
   "total": 267,
-  "vacant": 20,
-  "applied": 5,
-  "taikyo": 2,
+  "vacant": 19,
+  "applied": 6,
+  "taikyo": 1,
   "lossMan": 185,
   "target": 97,
-  "rate": 92.5,
+  "rate": 92.9,
   "props": [
     {
       "name": "プライマリー上津バイパス",
       "units": 14,
-      "vacant": 1,
-      "occupied": 13,
-      "applied": 0,
-      "taikyo": 1,
+      "vacant": 0,
+      "occupied": 14,
+      "applied": 1,
+      "taikyo": 0,
       "parkTotal": 14,
       "parkVacant": 0,
       "kanri": "イムズパートナー"
