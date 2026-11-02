@@ -43,12 +43,38 @@ var host=document.getElementById('loanFinder');
 if(!host) return;
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 var prefs='北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 新潟県 富山県 石川県 福井県 山梨県 長野県 岐阜県 静岡県 愛知県 三重県 滋賀県 京都府 大阪府 兵庫県 奈良県 和歌山県 鳥取県 島根県 岡山県 広島県 山口県 徳島県 香川県 愛媛県 高知県 福岡県 佐賀県 長崎県 熊本県 大分県 宮崎県 鹿児島県 沖縄県'.split(' ');
-host.innerHTML='<details><summary>🏠 物件の条件から融資先を探す<span>所在地・構造・築年数を入力</span></summary><div class="finder-body"><p>登録済みの融資条件から、相談先の候補を探せます。AIは使用しません。</p><form id="finderForm"><div class="finder-grid"><label>物件の都道府県<select name="pref" required><option value="">選択してください</option>'+prefs.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select></label><label>市区町村（任意）<input name="city" placeholder="例：福岡市博多区" maxlength="60"></label><label>構造<select name="structure" required><option value="">選択してください</option><option value="木造">木造</option><option value="軽鉄">軽量鉄骨</option><option value="重鉄">重量鉄骨</option><option value="RC">RC</option></select></label><label>築年数（新築は0）<input name="age" type="number" min="0" max="150" step="1" required inputmode="numeric" placeholder="例：25"></label><label>購入名義<select name="entity" required><option value="">選択してください</option><option>法人</option><option>個人</option></select></label><label>購入価格（万円・任意）<input name="price" type="number" min="1" step="any" inputmode="decimal" placeholder="例：5000"></label><label>希望融資期間（年・任意）<input name="term" type="number" min="1" max="60" step="1" inputmode="numeric" placeholder="例：20"></label></div><div class="finder-actions"><button type="submit">相談先の候補を表示</button><button type="reset">入力をクリア</button></div></form><p class="finder-note">融資の可否や承認確率を判定するものではありません。入力内容は送信・保存されません。</p><div id="finderResults" aria-live="polite"></div></div></details>';
+host.innerHTML='<details><summary class="finder-entry"><strong>🔍 融資先検索</strong><span class="finder-entry-hint">物件情報を入力して、相談先を探す</span><span class="finder-entry-open">タップして入力 ＋</span><span class="finder-entry-close">入力欄を閉じる −</span></summary><div class="finder-body"><p>登録済みの融資条件から、相談先の候補を探せます。AIは使用しません。</p><form id="finderForm" novalidate><p id="finderErrors" role="alert" hidden></p><div class="finder-grid"><label>物件の都道府県<select name="pref" required><option value="">選択してください</option>'+prefs.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select></label><label>市区町村（任意）<input name="city" placeholder="例：福岡市博多区" maxlength="60"></label><label>構造<select name="structure" required><option value="">選択してください</option><option value="木造">木造</option><option value="軽鉄">軽量鉄骨</option><option value="重鉄">重量鉄骨</option><option value="RC">RC</option></select></label><label>築年数（新築は0）<input name="age" type="number" min="0" max="150" step="1" required inputmode="numeric" placeholder="例：25"></label><label>購入名義<select name="entity" required><option value="">選択してください</option><option>法人</option><option>個人</option></select></label><label>購入価格（万円・任意）<input name="price" type="number" min="1" step="any" inputmode="decimal" placeholder="例：5000"></label><label>希望融資期間（年・任意）<input name="term" type="number" min="1" max="60" step="1" inputmode="numeric" placeholder="例：20"></label></div><div class="finder-actions"><button type="submit">相談先の候補を表示</button><button type="reset">入力をクリア</button></div></form><p class="finder-note">融資の可否や承認確率を判定するものではありません。入力内容は送信・保存されません。</p><div id="finderResults" aria-live="polite"></div></div></details>';
 var form=document.getElementById('finderForm'),result=document.getElementById('finderResults');
-form.addEventListener('input',function(){if(result.textContent) result.innerHTML='<p>条件が変更されました。「相談先の候補を表示」を押してください。</p>';});
-form.addEventListener('reset',function(){result.innerHTML='';});
+var attempted=false;
+var fields=Array.prototype.slice.call(form.querySelectorAll('input,select'));
+fields.forEach(function(field){
+ field.id='finder-'+field.name;
+ field.dataset.title=field.parentElement.firstChild.textContent.trim();
+ if(field.required){var badge=document.createElement('small');badge.className='finder-required';badge.textContent='必須';field.parentElement.insertBefore(badge,field);}
+ var error=document.createElement('small');error.id=field.id+'-error';error.className='finder-field-error';error.hidden=true;
+ field.setAttribute('aria-describedby',error.id);field.parentElement.appendChild(error);
+});
+function validateFields(){
+ var invalid=[];
+ fields.forEach(function(field){
+  var valid=field.validity.valid,error=document.getElementById(field.id+'-error');
+  field.classList.toggle('finder-invalid',!valid);field.setAttribute('aria-invalid',String(!valid));error.hidden=valid;
+  if(!valid){
+   invalid.push(field);
+   error.textContent=field.validity.valueMissing?(field.tagName==='SELECT'?'未選択：選択してください':'未入力：入力してください'):field.name==='age'?'0〜150の整数で入力してください':field.name==='term'?'1〜60の整数で入力してください':'1以上の数値で入力してください';
+  }else error.textContent='';
+ });
+ var message=document.getElementById('finderErrors');message.hidden=!attempted||invalid.length===0;
+ message.textContent=invalid.length?'赤枠の'+invalid.length+'項目を確認してください（'+invalid.map(function(f){return f.dataset.title;}).join('・')+'）':'';
+ return invalid;
+}
+function inputChanged(){validateFields();if(result.textContent) result.innerHTML='<p>条件が変更されました。「相談先の候補を表示」を押してください。</p>';}
+form.addEventListener('input',inputChanged);
+form.addEventListener('change',inputChanged);
+form.addEventListener('reset',function(){result.innerHTML='';attempted=false;setTimeout(validateFields,0);});
+validateFields();
 form.addEventListener('submit',function(e){
- e.preventDefault(); if(!form.reportValidity()) return;
+ e.preventDefault();attempted=true;var invalid=validateFields();if(invalid.length){result.innerHTML='';invalid[0].focus();invalid[0].scrollIntoView({behavior:'smooth',block:'center'});return;}
  var f=new FormData(form),p={pref:f.get('pref'),city:f.get('city'),structure:f.get('structure'),age:Number(f.get('age')),entity:f.get('entity'),price:f.get('price')===''?null:Number(f.get('price')),term:f.get('term')===''?null:Number(f.get('term'))};
  var rows=DATA.map(function(d){return assess(d,p);}).sort(function(a,b){return a.group-b.group||b.yes.length-a.yes.length;});
  var html='<p class="finder-note">登録条件の一致項目数順です。金利順や融資の通りやすさ順ではありません。物件価格の評価・年収・自己資金などは各機関の詳細で確認してください。</p>';
