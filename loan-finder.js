@@ -60,7 +60,7 @@ form.addEventListener('submit',function(e){
    if(r.check.some(function(x){return x.indexOf('期間不足')>=0;})) html+='<p class="finder-warning">希望期間を満たせるか要確認</p>';
    if(r.yes.length) html+='<p class="finder-match">'+r.yes.map(esc).join('<br>')+'</p>';
    if(r.outside.length) html+='<p class="finder-warning">'+r.outside.map(esc).join('<br>')+'</p>';
-   html+='<details><summary>確認したい点（'+r.check.length+'項目）</summary><ul>'+r.check.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></details><button type="button" data-bank="'+DATA.indexOf(r.bank)+'">融資条件・購入報告を見る</button></article>';
+   html+='<details class="finder-check"><summary><strong>確認したい点（'+r.check.length+'項目）</strong><span class="finder-check-open">タップして確認</span><span class="finder-check-close">タップして閉じる</span></summary><ul>'+r.check.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></details><button type="button" data-bank="'+DATA.indexOf(r.bank)+'">融資条件・購入報告を見る</button></article>';
   }); html+='</details>';
  }); result.innerHTML=html;
 });
