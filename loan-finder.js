@@ -37,7 +37,29 @@ function assess(d,p){
   if(d.名称==='AGビジネスサポート' && p.price!==null && p.price>5000) check.unshift('購入価格5,000万円超：審査ハードルが上がる。契約書・通帳・購入後の事業計画をしっかり準備');
   return {bank:d,yes:yes,check:check,outside:outside,group:outside.length?2:(yes.length>=3&&!periodConcern?0:1)};
 }
-root.LoanFinder={assess:assess};
+function lenderType(d){
+ // A few historical records have a mismatched category; use their institution names.
+ if(/信用金庫/.test(d.名称)) return '信用金庫';
+ if(/信用組合/.test(d.名称)) return '信用組合';
+ if(/銀行/.test(d.名称)) return '銀行';
+ return d.種類;
+}
+// Display policy, not a lending eligibility judgment. Unknown rates remain visible.
+var NEW_BUILD_RATE_LIMIT=3.5;
+function highRate(d){
+ var text=(d.金利||'').split(/\n/)[0],rates=[],m;
+ var pattern=/(\d+(?:\.\d+)?)\s*(?:%|％|[〜～／])/g;
+ while((m=pattern.exec(text))) rates.push(Number(m[1]));
+ return rates.length>0 && Math.min.apply(null,rates)>=NEW_BUILD_RATE_LIMIT;
+}
+function search(data,p){
+ return data.filter(function(d){return p.age!==0 || (['銀行','信用金庫','信用組合'].indexOf(lenderType(d))>=0 && !highRate(d));})
+ .map(function(d){return assess(d,p);}).sort(function(a,b){
+  var types=['銀行','信用金庫','信用組合'];
+  return (p.age===0?types.indexOf(lenderType(a.bank))-types.indexOf(lenderType(b.bank)):0)||a.group-b.group||b.yes.length-a.yes.length;
+ });
+}
+root.LoanFinder={assess:assess,search:search,lenderType:lenderType};
 if(typeof document==='undefined') return;
 var host=document.getElementById('loanFinder');
 if(!host) return;
@@ -76,13 +98,14 @@ validateFields();
 form.addEventListener('submit',function(e){
  e.preventDefault();attempted=true;var invalid=validateFields();if(invalid.length){result.innerHTML='';invalid[0].focus();invalid[0].scrollIntoView({behavior:'smooth',block:'center'});return;}
  var f=new FormData(form),p={pref:f.get('pref'),city:f.get('city'),structure:f.get('structure'),age:Number(f.get('age')),entity:f.get('entity'),price:f.get('price')===''?null:Number(f.get('price')),term:f.get('term')===''?null:Number(f.get('term'))};
- var rows=DATA.map(function(d){return assess(d,p);}).sort(function(a,b){return a.group-b.group||b.yes.length-a.yes.length;});
- var html='<p class="finder-note">登録条件の一致項目数順です。金利順や融資の通りやすさ順ではありません。物件価格の評価・年収・自己資金などは各機関の詳細で確認してください。</p>';
- ['条件の一致が多い相談候補','個別確認が必要な金融機関','登録条件に合わない金融機関'].forEach(function(label,g){
-  var list=rows.filter(function(r){return r.group===g;});
+ var rows=search(DATA,p),isNew=p.age===0;
+ var html=(isNew?'<p class="finder-note">新築は銀行→信用金庫→信用組合の順に表示します。ノンバンクと登録金利が3.5％以上の金融機関は表示しません。金利が未登録の先は個別確認が必要です。</p>':'')+'<p class="finder-note">各区分内は登録条件の一致項目数順です。金利順や融資の通りやすさ順ではありません。物件価格の評価・年収・自己資金などは各機関の詳細で確認してください。</p>';
+ (isNew?['銀行','信用金庫','信用組合']:['条件の一致が多い相談候補','個別確認が必要な金融機関','登録条件に合わない金融機関']).forEach(function(label,g){
+  var list=rows.filter(function(r){return isNew?lenderType(r.bank)===label:r.group===g;});
   html+='<details class="finder-group"'+(g===0?' open':'')+'><summary>'+label+'（'+list.length+'件）</summary>';
   if(!list.length) html+='<p>該当なし。他の区分も確認してください。</p>';
   list.forEach(function(r){html+='<article class="finder-result"><h3>'+esc(r.bank.名称)+'</h3><small>情報更新：'+esc(r.bank.更新日)+'</small>';
+   if(isNew) html+='<p class="'+(r.group===0?'finder-match':'finder-warning')+'">'+['条件の一致が多い相談候補','個別確認が必要','登録条件に合いません'][r.group]+'</p>';
    if(r.check.some(function(x){return x.indexOf('期間不足')>=0;})) html+='<p class="finder-warning">希望期間を満たせるか要確認</p>';
    if(r.yes.length) html+='<p class="finder-match">'+r.yes.map(esc).join('<br>')+'</p>';
    if(r.outside.length) html+='<p class="finder-warning">'+r.outside.map(esc).join('<br>')+'</p>';

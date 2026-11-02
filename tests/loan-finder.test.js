@@ -18,3 +18,18 @@ assert(!LoanFinder.assess(bank({名称:'AGビジネスサポート'}),Object.ass
 assert(LoanFinder.assess(bank(),Object.assign({},p,{age:0})).check.join().indexOf('35年')>=0,'new build cap');
 })();
 '13 loan finder checks passed';
+
+(function(){
+function assert(x,m){if(!x)throw Error(m);}
+var p={pref:'福岡県',city:'',entity:'法人',structure:'木造',age:0,term:null,price:null};
+function d(n,t,r){return {名称:n,種類:t,金利:r,法人:'○',木造:'○',物件エリア:'全国'};}
+var data=[d('信組信用組合','銀行','3%'),d('高金利銀行','銀行','3.5%'),d('会社','ノンバンク','2%'),d('信金信用金庫','信用金庫','3%'),d('通常銀行','銀行','2%'),d('auじぶん銀行','ノンバンク','2.15%'),d('未記録銀行','銀行','—'),d('段階銀行','銀行','変動 2.50／2.80／3.20／4.20%'),d('範囲銀行','銀行','3〜4.5%')];
+var rows=LoanFinder.search(data,p),names=rows.map(function(r){return r.bank.名称;});
+assert(names.indexOf('会社')<0,'new excludes nonbank even low rate');
+assert(names.indexOf('高金利銀行')<0,'new excludes 3.5 percent');
+assert(names.indexOf('auじぶん銀行')>=0,'bank name corrects old category');
+assert(names.indexOf('未記録銀行')>=0&&names.indexOf('段階銀行')>=0&&names.indexOf('範囲銀行')>=0,'unknown and mixed rates preserved');
+assert(names.indexOf('信金信用金庫')>names.indexOf('範囲銀行')&&names.indexOf('信組信用組合')>names.indexOf('信金信用金庫'),'bank then shinkin then shinkumi');
+assert(LoanFinder.search(data,Object.assign({},p,{age:1})).length===data.length,'used properties unchanged');
+})();
+'Loan finder assessment and new-build policy checks passed';
