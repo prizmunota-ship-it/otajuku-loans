@@ -23,13 +23,17 @@ function setup(){
     paper:(_title,_subtitle,body)=>body,parkTxt:()=> '—',MAPS:[],mapDiv:()=>({id:'test',html:''}),
     dist:(a,b,c,d)=>Math.hypot(a-c,b-d)*100000,collectCmp:()=>[],parkCmpEdit:()=>{},
     overpass:async()=>null,apiJson:async()=>structuredClone(fixture)};
+  context.console={error:()=>{}};
+  context.ReportNetwork={fetch:(...args)=>context.fetch(...args)};
+  context.placeCmpEdit=()=>{};
+  context.reportRunning=false;context.nearbyUnavailable=false;
   vm.createContext(context);
   vm.runInContext(fs.readFileSync(new URL('../report-comparison.js',import.meta.url),'utf8'),context);
   vm.runInContext("const MD_GROUP=[['1R','1K'],['1DK','1LDK'],['2K','2DK'],['2LDK','3K']];",context);
   for(const name of ['setByData','srcOf','userNum','looksLikeName','prefOf','cityOf','addrOnly',
     'selfNeed','selfNeedsBuilding','applySelfBuilding','resetSubjectLookup','applySelfRooms',
     'bantiAddrs','selfByAddr','selfBySpecScan','ownAgeNow','ageTol','mdGroup','sameMd',
-    'buildCompPaper','manEn','nzName','buildReport'])vm.runInContext(fn(name),context);
+    'buildCompPaper','manEn','nzName','buildReportContent','buildReport'])vm.runInContext(fn(name),context);
   vm.runInContext("const RE_BANTI=/[0-9０-９]\\s*[-−ー－‐]\\s*[0-9０-９]|[0-9０-９]+\\s*丁目\\s*[-−ー－‐]?\\s*[0-9０-９]|番地?\\s*[0-9０-９]/;",context);
   get('paddr').value='大分県大分市山津町2-1-13';get('pradius').value='1500';
   return {c:context,get};
