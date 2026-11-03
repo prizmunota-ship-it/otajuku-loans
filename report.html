@@ -2494,9 +2494,12 @@ function parkCmpEdit(){
   const h=document.getElementById('cmpeditHome'),d=document.getElementById('cmpdetails');
   if(h&&d&&d.parentNode!==h)h.appendChild(d);
 }
+function emptyCmpEditorSlot(){
+  return '<div class="scronly" style="margin-top:10px"><div id="cmpeditSlot" data-open="true"></div></div>';
+}
 function placeCmpEdit(){
   const s=document.getElementById('cmpeditSlot'),d=document.getElementById('cmpdetails');
-  if(s&&d){s.appendChild(d);d.open=false;}
+  if(s&&d){s.appendChild(d);d.open=s.dataset.open==='true';}
 }
 async function buildReport(g){
   document.getElementById('go').disabled=true;
@@ -2784,11 +2787,12 @@ async function buildReport(g){
     const md=val('pmadori')||'1LDK';
     compHtml=paper('類似物件の賃貸情報','周辺で募集中の類似物件との比較（賃料設定の妥当性）',
       `<div class="phase" style="font-size:12px;line-height:1.9">
-        📋 このページは、<b>本物件の賃料</b>が分かると自動作成されます。<br>
-        <b style="color:#b91c1c">「収益・積算評価を追加」の「満室想定年収入」と「総戸数」を入力してください</b>（1戸あたりの想定賃料を自動計算します）。<br>
-        ※直接「本物件の想定 月額総額」を入れてもOKです。<br><br>
-        さらに、下の検索ボタンから<b>SUUMO・アットホーム等</b>の募集をコピー＆貼り付けすると、比較表と分析文が自動で入ります。
+        本物件の賃料と、比較できる募集情報を取得できませんでした。<br>
+        下の<b>「条件の変更や追加はこちら」→「本物件の想定」</b>にある<b>「想定月額賃料（1戸・円）」</b>へ、1戸あたりの月額を入力してください（建物全体の年収入ではありません）。<br>
+        入力後は<b>「情報を更新（変更を反映）」</b>を押してください。<br>
+        比較する募集情報は、検索先の情報を「まとめて貼り付け」または「比較物件の行を追加」から追加できます。
       </div>
+      ${emptyCmpEditorSlot()}
       <div style="margin-top:8px">
         ${city?`<a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Asuumo.jp">🔍 SUUMOで${city}の${md}を探す ↗</a>
         <a class="gbtn" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent(city+' '+md+' 賃貸')}+site%3Aathome.co.jp">🔍 アットホームで探す ↗</a>
