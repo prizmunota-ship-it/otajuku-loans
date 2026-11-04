@@ -147,7 +147,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.19</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.20</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -1596,11 +1596,18 @@ node["highway"="bus_stop"](around:${radius},${lat},${lon});node["public_transpor
   return null;
 }
 /* J-SHIS 地震動予測（ブラウザから直接取得可・データセット名まで含めたパスが必須） */
-async function jshis(lat,lon){try{
-  const r=await ReportNetwork.fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/TTL_MTTL/meshinfo.geojson?position=${lon},${lat}&epsg=4612`);
-  if(!r.ok)return null;const j=await r.json();
-  return (j.features&&j.features[0]&&j.features[0].properties)||null;
-}catch(e){return null;}}
+async function jshis(lat,lon){
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const r=await ReportNetwork.fetch(`https://www.j-shis.bosai.go.jp/map/api/pshm/Y2023/AVR/TTL_MTTL/meshinfo.geojson?position=${lon},${lat}&epsg=4612`);
+      if(!r.ok)continue;
+      const j=await r.json();
+      const props=j.features&&j.features[0]&&j.features[0].properties;
+      if(props)return props;
+    }catch(e){}
+  }
+  return null;
+}
 
 /* ============ 分類 ============ */
 /* 市区町村別 人口増減率(%)＝令和7年(2025)国勢調査 人口速報集計（2020→2025）。事業計画書アプリと共通データ */
@@ -1681,21 +1688,12 @@ function classify(els,lat,lon,radius){
 }
 /* OSMにバス停が無い／少ない地域の補完：Google Places（正式名称・日本語）
    ※type:'bus_station'は日本では収録が薄くZERO_RESULTSになるため keyword:'バス停' を使う（羽犬塚で実証） */
-function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
-  try{
-    const svc=new google.maps.places.PlacesService(document.createElement('div'));
-    let done=false;const fin=v=>{if(!done){done=true;res(v||[]);}};
-    const req={location:new google.maps.LatLng(lat,lon),radius:Math.min(radius,3000)};
-    if(opt&&opt.type)req.type=opt.type;
-    if(opt&&opt.keyword)req.keyword=opt.keyword;
-    svc.nearbySearch(req,(r,s)=>{
-      if(s!=='OK'||!r){fin([]);return;}
-      fin(r.filter(p=>p.geometry&&p.name).map(p=>({name:p.name.replace(/\s*[（(]バス[)）]\s*$/,'').replace(/バス停(留所)?$/,'').trim(),
-        lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),op:'',src:'Google'})));
-    });
-    setTimeout(()=>fin([]),8000);
-  }catch(e){res([]);}
-});}
+async function placesNearby(lat,lon,radius,opt){
+  const req={location:new google.maps.LatLng(lat,lon),radius:Math.min(radius,3000),...opt};
+  const rows=await psearch('near',req);
+  return rows.map(p=>({...p,name:p.name.replace(/\s*[（(]バス[)）]\s*$/,'').replace(/バス停(留所)?$/,'').trim(),op:'',src:'Google Places'}));
+}
+
 /* Google Placesを距離順で取得（rankBy:DISTANCE＝半径指定不可・近い順に最大20件）。
    閉店（CLOSED_PERMANENTLY）は除外し、公式名称＋実測座標を返す。 */
 /* ★Places検索は必ずこの関数を通す（1本ずつ順番に投げる）。
@@ -1703,20 +1701,39 @@ function placesNearby(lat,lon,radius,opt){return new Promise(res=>{
    2026-08-08に8本並列で実測したところ全滅し、OSMのままの表が出ていた。
    上限に当たった時は間隔を空けて2回まで再試行する。 */
 let PQ=Promise.resolve();
+let nearbyQueries=new Map();
+let nearbyOsmGroups=new Set();
+const nearbyPageRequirements={
+  '最寄り駅情報':[['transport',['train_station','subway_station']]],
+  'バス停情報':[['transport',['バス停']]],
+  'ショッピング環境':[['shops',['shopping_mall','department_store','supermarket','convenience_store','drugstore']]],
+  '医療環境':[['services',['hospital','doctor','dentist']]],
+  '生活・公共施設':[['services',['post_office','bank','police']]],
+  '福祉施設':[['education',['老人ホーム 介護施設']]],
+  '教育施設・公園':[['education',['school','park','幼稚園 保育園']]]
+};
+function nearbyPageUnavailable(title){
+  return (nearbyPageRequirements[title]||[]).some(([group,queries])=>!nearbyOsmGroups.has(group)&&!queries.every(q=>nearbyQueries.get(q)===true));
+}
+function missingNearbyPages(){
+  return Object.keys(nearbyPageRequirements).filter(title=>
+    (title!=='教育施設・公園'||document.getElementById('opt_edu').checked)&&nearbyPageUnavailable(title));
+}
 function psearch(kind,req){
   const run=()=>new Promise(res=>{
     try{
       const svc=new google.maps.places.PlacesService(document.createElement('div'));
-      let done=false;const fin=v=>{if(!done){done=true;res(v);}};
+      let done=false;const fin=(v,ok=false)=>{if(!done){done=true;if(v!=='RETRY')nearbyQueries.set(req.type||req.keyword||req.query,ok);res(v);}};
       const cb=(r,s)=>{
-        if(s==='OVER_QUERY_LIMIT'){fin('RETRY');return;}
-        if(s!=='OK'||!r){fin([]);return;}
+        if(s==='OVER_QUERY_LIMIT'||s==='UNKNOWN_ERROR'){fin('RETRY');return;}
+        if(s==='ZERO_RESULTS'){fin([],true);return;}
+        if(s!=='OK'||!Array.isArray(r)){fin([]);return;}
         fin(r.filter(p=>p.geometry&&p.name&&p.business_status!=='CLOSED_PERMANENTLY')
-            .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),types:p.types||[],rt:p.user_ratings_total||0})));
+            .map(p=>({name:p.name.replace(/\s+/g,' ').trim(),lat:p.geometry.location.lat(),lon:p.geometry.location.lng(),types:p.types||[],rt:p.user_ratings_total||0})),true);
       };
       if(kind==='near')svc.nearbySearch(req,cb);else svc.textSearch(req,cb);
       setTimeout(()=>fin([]),8000);
-    }catch(e){res([]);}
+    }catch(e){nearbyQueries.set(req.type||req.keyword||req.query,false);res([]);}
   });
   const job=async()=>{
     for(let i=0;i<3;i++){
@@ -1724,6 +1741,7 @@ function psearch(kind,req){
       if(v!=='RETRY')return Array.isArray(v)?v:[];
       await new Promise(s=>setTimeout(s,400*(i+1)));
     }
+    nearbyQueries.set(req.type||req.keyword||req.query,false);
     return [];
   };
   const p=PQ.then(job);
@@ -1970,7 +1988,7 @@ function facilityPaper(title,lead,groups,g,radius,src){
   }
   MAPS.push({id:m.id,center:[g.lat,g.lon],radius,markers});
   const lg=`<div class="legend" style="margin:2px 0 8px"><span class="c">📍 赤ピン（本物件）</span><span class="c"><span class="sw" style="border:1.5px dashed #dc2626;background:transparent"></span>地図の表示範囲＝調査対象範囲（半径${radius.toLocaleString()}m）</span><span class="c">番号は下表のNoと対応（重なる場合は引き出し線で実位置を表示）</span></div>`;
-  if(nearbyUnavailable){
+  if(nearbyPageUnavailable(title)){
     if(!rows.length)body='<div class="phase">周辺施設データを取得できていません。施設が存在しないことを示すものではありません。</div>';
     body='<div class="phase" style="color:#92400e">※周辺施設データの一部が未取得のため、このページは不完全です。再取得後にご確認ください。</div>'+body;
   }
@@ -2540,7 +2558,8 @@ async function buildReport(g){
   try{
     await buildReportContent(g);
     document.title='作成完了｜物件補足レポート';
-    if(nearbyUnavailable)setStatus((nearbySupplemented?'⚠️ 周辺施設を別の情報源で自動補完しました。一部の取得先が応答しなかったため、施設情報は取得できた範囲で表示しています。':'⚠️ レポートを表示しました。周辺施設データの一部は未取得です。各ページの注意書きをご確認ください。')+'<br><button class="addrow" onclick="confirmGo()">🔁 未取得データを再確認して更新</button>',true);
+    nearbyUnavailable=missingNearbyPages().length>0;
+    if(nearbyUnavailable)setStatus('⚠️ 次の施設情報を取得できませんでした：'+missingNearbyPages().join('・')+'。取得済みのページは利用できます。<br><button class="addrow" onclick="confirmGo()">🔁 未取得データを再確認して更新</button>',true);
     else hideStatus();
   }catch(e){
     document.title=oldTitle;
@@ -2559,6 +2578,8 @@ async function buildReportContent(g){
   MAPS=[];mapSeq=0;
   nearbyUnavailable=false;
   nearbySupplemented=false;
+  nearbyQueries=new Map();
+  nearbyOsmGroups=new Set();
   const radius=parseInt(val('pradius'))||1500;
   const nearbyTask=(async()=>{
     const direct=await overpass(g.lat,g.lon,radius).catch(()=>null);
@@ -2687,6 +2708,9 @@ async function buildReportContent(g){
   const nearbyResult=await nearbyTask;
   const els=nearbyResult.elements;
   nearbyUnavailable=!nearbyResult.complete;
+  for(const group of ['shops','services','education','transport']){
+    if(nearbyResult.complete||(Array.isArray(nearbyResult.missing)&&!nearbyResult.missing.includes(group)))nearbyOsmGroups.add(group);
+  }
   const query=g.query||val('paddr');
   const F0=classify(els||[],g.lat,g.lon,radius);
   /* バス停がOSMに無い／少ない地域はGoogle Placesで補完（羽犬塚など収録ゼロの地域対策） */
