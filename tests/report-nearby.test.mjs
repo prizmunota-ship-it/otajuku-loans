@@ -19,3 +19,12 @@ test('valid empty responses are successful while total failure remains incomplet
  const original=globalThis.fetch;
  try{for(const failure of [false,true]){globalThis.fetch=async()=>failure?Response.json({remark:'timeout',elements:[]}):Response.json({elements:[]});const j=await(await onRequest({request})).json();assert.equal(j.complete,!failure);assert.equal(j.elements.length,0);assert.equal(j.missing.length,failure?4:0);}}finally{globalThis.fetch=original;}
 });
+
+test('Google recovery retains prior data, classifies schools and deduplicates names',async()=>{
+ const fs=await import('node:fs'),vm=await import('node:vm');
+ const html=fs.readFileSync(process.env.REPORT_HTML||new URL('../report.html',import.meta.url),'utf8');
+ const start=html.indexOf('async function recoverNearbyPlaces('),source=html.slice(start,html.indexOf('\n}',start)+2);
+ const F={station:[{name:'existing',d:100}],park:[],kinder:[],welfare:[],elem:[{name:'中央小学校',d:300}],jhs:[],hs:[],school:[]};
+ const c={addPlaces:async(list,g,r,opt)=>opt.types?.[0]==='school'?[{name:'中央小学校',d:300},{name:'中央中学校',d:200}]:[...list,{name:opt.types?.[0]||opt.text[0],d:50}]};
+ vm.createContext(c);vm.runInContext(source,c);assert.equal(await c.recoverNearbyPlaces(F,{},2000),true);assert.equal(F.station.length,2);assert.equal(F.elem.length,1);assert.equal(F.jhs[0].name,'中央中学校');assert.equal(F.station[0].d,50);
+});

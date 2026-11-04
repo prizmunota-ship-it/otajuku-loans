@@ -1733,6 +1733,22 @@ function psearch(kind,req){
 function placesRanked(lat,lon,type){
   return psearch('near',{location:new google.maps.LatLng(lat,lon),rankBy:google.maps.places.RankBy.DISTANCE,type:type});
 }
+/* OSM全体が応答しない時も、駅・教育・福祉をGoogleの既存検索キューで補完する。 */
+async function recoverNearbyPlaces(F,g,radius){
+  const count=()=>Object.values(F).reduce((n,list)=>n+list.length,0);
+  const before=count();
+  F.station=await addPlaces(F.station,g,radius,{types:['train_station','subway_station']});
+  F.park=await addPlaces(F.park,g,radius,{types:['park']});
+  F.kinder=await addPlaces(F.kinder,g,radius,{text:['幼稚園 保育園']});
+  F.welfare=await addPlaces(F.welfare,g,radius,{text:['老人ホーム 介護施設']});
+  const schools=await addPlaces([],g,radius,{types:['school']});
+  for(const item of schools){
+    const key=/小学校/.test(item.name)?'elem':/中学校/.test(item.name)?'jhs':/高校|高等学校/.test(item.name)?'hs':/幼稚園|保育園|こども園/.test(item.name)?'kinder':'school';
+    if(!F[key].some(x=>x.name.replace(/\s/g,'')===item.name.replace(/\s/g,'')))F[key].push(item);
+  }
+  for(const list of Object.values(F))list.sort((a,b)=>a.d-b.d);
+  return count()>before;
+}
 /* Googleのキーワード検索。業種タグが付いていない店を拾うために使う。
    ⚠️実例：A-プライス前原店はtypesが[store]だけで type:'supermarket' の検索に出てこないが、
    キーワード「スーパー」なら出る（2026-08-08 太田報告で判明）。 */
@@ -2514,6 +2530,7 @@ function placeCmpEdit(){
 }
 let reportRunning=false;
 let nearbyUnavailable=false;
+let nearbySupplemented=false;
 async function buildReport(g){
   if(reportRunning)return;
   reportRunning=true;
@@ -2522,7 +2539,7 @@ async function buildReport(g){
   try{
     await buildReportContent(g);
     document.title='作成完了｜物件補足レポート';
-    if(nearbyUnavailable)setStatus('⚠️ レポートを表示しました。周辺施設データの一部は未取得です。各ページの注意書きをご確認ください。<br><button class="addrow" onclick="confirmGo()">🔁 未取得データを再確認して更新</button>',true);
+    if(nearbyUnavailable)setStatus((nearbySupplemented?'⚠️ 周辺施設を別の情報源で自動補完しました。一部の取得先が応答しなかったため、施設情報は取得できた範囲で表示しています。':'⚠️ レポートを表示しました。周辺施設データの一部は未取得です。各ページの注意書きをご確認ください。')+'<br><button class="addrow" onclick="confirmGo()">🔁 未取得データを再確認して更新</button>',true);
     else hideStatus();
   }catch(e){
     document.title=oldTitle;
@@ -2540,6 +2557,7 @@ async function buildReportContent(g){
   window._lastLoc={lat:g.lat,lon:g.lon};window._lastTitle=g.title;
   MAPS=[];mapSeq=0;
   nearbyUnavailable=false;
+  nearbySupplemented=false;
   const radius=parseInt(val('pradius'))||1500;
   const nearbyTask=(async()=>{
     const direct=await overpass(g.lat,g.lon,radius).catch(()=>null);
@@ -2685,6 +2703,10 @@ async function buildReportContent(g){
       });
       F0.bus.sort((a,b)=>a.d-b.d);
     }catch(e){}
+  }
+  if(nearbyUnavailable){
+    setStatus('🔁 取得できなかった周辺施設をGoogleの情報で自動補完中…');
+    try{nearbySupplemented=await recoverNearbyPlaces(F0,g,radius);}catch(e){console.warn('Google nearby recovery incomplete',e);}
   }
   /* 駅・バス停はGoogle経路APIで実測徒歩分に補正（失敗時は道路換算のまま） */
   try{
