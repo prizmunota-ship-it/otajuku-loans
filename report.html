@@ -147,7 +147,7 @@ table.lst tr.own td{background:#dcfce7;font-weight:800;}
 }
 </style></head><body>
 <div class="wrap">
-<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.18</div></div>
+<div class="appbar"><div class="lg">🌻 太田塾</div><div class="tg">物件補足レポート</div><div class="tg" style="margin-left:auto;font-weight:800;color:#0f766e">v15.19</div></div>
 
 <div id="inappwarn" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.8;color:#991b1b;font-weight:700">
   ⚠️ いまLINEなどの<b>アプリ内ブラウザ</b>で開いています。このままだと<b>印刷・PDF保存ができません</b >。<br>
@@ -2541,7 +2541,17 @@ async function buildReportContent(g){
   MAPS=[];mapSeq=0;
   nearbyUnavailable=false;
   const radius=parseInt(val('pradius'))||1500;
-  const nearbyTask=overpass(g.lat,g.lon,radius).catch(()=>null);
+  const nearbyTask=(async()=>{
+    const direct=await overpass(g.lat,g.lon,radius).catch(()=>null);
+    if(direct!==null)return {elements:direct,complete:true};
+    // Separate server-side requests recover browser/network failures without restarting the report.
+    try{
+      const r=await ReportNetwork.fetch('/api/nearby?lat='+g.lat+'&lon='+g.lon+'&r='+radius,{},60000);
+      const j=await r.json();
+      if(r.ok&&Array.isArray(j.elements)&&typeof j.complete==='boolean')return j;
+    }catch(e){console.warn('Nearby recovery failed',e);}
+    return {elements:[],complete:false};
+  })();
   let cityA=cityOf(g.title);
   /* タイトルに市区町村が無い（物件名だけ／ピン移動後など）は座標から住所を取り直す */
   if(!cityA){
@@ -2654,9 +2664,10 @@ async function buildReportContent(g){
   }else if(!addrLookupDone&&(selfNeed()||selfNeedsBuilding())){
     try{await selfByAddr(g,cityA);}catch(e){}
   }
-  setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（10〜30秒）');
-  const els=await nearbyTask;
-  nearbyUnavailable=els===null;
+  setStatus('📍 '+g.title+'<br>🛰️ 周辺施設・交通データを取得中…（混雑時は取得先を切り替えて自動再取得します）');
+  const nearbyResult=await nearbyTask;
+  const els=nearbyResult.elements;
+  nearbyUnavailable=!nearbyResult.complete;
   const query=g.query||val('paddr');
   const F0=classify(els||[],g.lat,g.lon,radius);
   /* バス停がOSMに無い／少ない地域はGoogle Placesで補完（羽犬塚など収録ゼロの地域対策） */
