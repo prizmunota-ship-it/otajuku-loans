@@ -1808,7 +1808,7 @@ async function addPlaces(list,g,radius,opt){
     if(out.some(x=>{const a=norm(x.name);return (a.includes(key)||key.includes(a))&&dist(x.lat,x.lon,p.lat,p.lon)<80;}))continue;
     if(opt.minGap&&out.some(x=>dist(x.lat,x.lon,p.lat,p.lon)<opt.minGap))continue;
     seen.add(key);
-    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:'',rt:p.rt||0});
+    out.push({name:p.name,lat:p.lat,lon:p.lon,d:d,min:wmin(d),op:'',rt:p.rt||0,src:'Google Places'});
   }
   out.sort((a,b)=>a.d-b.d);
   return out;
@@ -1918,6 +1918,7 @@ function paper(title,lead,body,src){
 }
 /* 1項目＝1ページに収めるため、区分が複数ある場合も「区分」列を持つ1つの表にまとめる（太田指示：地図を大きく・文字より絵で） */
 function facilityPaper(title,lead,groups,g,radius,src){
+  if(groups.some(gr=>gr.items.some(it=>it.src==='Google Places'))&&!src.includes('Google'))src='Google Places／'+src;
   const m=mapDiv();const markers=[];let idx=0;
   const rows=[];let extraCol=null;
   /* 1ページに確実に収めるため、掲載は近い順に最大6件まで（地図を大きく取るため） */
