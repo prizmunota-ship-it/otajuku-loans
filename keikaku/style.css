@@ -33,3 +33,5 @@
 @media print{#readPanel{display:block!important}.entry-panel{display:none!important}.paper-frame{width:281mm}.paper{transform:none!important}.linked-plan{font-size:7px}}
 
 .paper-frame{min-width:0}@media print{.paper{width:281mm!important}}
+
+[data-funding-month]{cursor:pointer}[data-funding-month]:hover,[data-funding-month]:focus{outline:1px solid #679f8c;outline-offset:-1px}.original-sheet td.funding-selected,.mobile-number-scroll td.funding-selected{box-shadow:inset 0 0 0 1px #679f8c}.entry-panel #fundingMonth{margin:8px 0 12px;font-size:10px}.entry-panel #entrySummary{margin-top:12px}.entry-panel .empty{font-size:11px;padding:8px 0}@media print{.funding-selected{box-shadow:none!important}}
