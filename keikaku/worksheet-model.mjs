@@ -31,16 +31,16 @@ export function selfFundingExpenses(settings){const result=[];for(const [bankId,
  result.push({id:`self-${bankId}-${month}`,bankId,month:next,amount,name:'自己資金（'+month+'相談分）'});
  }return result;}
 export function numericRows(w,ledger,settings,year,today){const ym=today.slice(0,7),live=liveMetrics(ledger,settings.cfMode),deposits=depositTotals(ledger),selfExpenses=selfFundingExpenses(settings);const rows=w.numbers.map(r=>({...r,values:year===w.year?[...r.values]:Array(12).fill('—'),sources:Array(12).fill(year===w.year?'元Excel':'未設定')}));
- rows[6]={...rows[6],label:'預金残高（当月実額・翌月以降見込）',values:Array(12).fill('—'),sources:Array(12).fill('過去残高未登録')};
+ rows[6]={...rows[6],label:'預金残高（当月実額・翌月以降月末見込）',values:Array(12).fill('—'),sources:Array(12).fill('過去残高未登録')};
  for(let i=0;i<12;i++){const month=`${year}-${String(i+1).padStart(2,'0')}`;
   if(month>=ym&&live.available){[live.units,live.rent/10000,live.cfMissing?null:live.cf/10000].forEach((v,r)=>{rows[r].values[i]=v==null?'未登録':v;rows[r].sources[i]=month===ym?'総合収支・最新登録値':'総合収支・最新値据置';});}
   if(month===ym&&deposits.available){rows[6].values[i]=deposits.total/10000;rows[6].sources[i]='総合収支・現在預金（口座＋積立）';}
   if(month>ym&&deposits.available){
-   const planned=settings.entries.filter(e=>e.include&&e.month>=ym&&e.month<month);
+   const planned=settings.entries.filter(e=>e.include&&e.month>=ym&&e.month<=month);
    const net=planned.reduce((sum,e)=>sum+(['borrowing','income'].includes(e.kind)?e.amount:e.kind==='expense'?-e.amount:0),0);
-   const own=selfExpenses.filter(e=>e.month>=ym&&e.month<month).reduce((sum,e)=>sum+e.amount,0);
+   const own=selfExpenses.filter(e=>e.month>=ym&&e.month<=month).reduce((sum,e)=>sum+e.amount,0);
    rows[6].values[i]=(deposits.total+net-own)/10000;
-   rows[6].sources[i]='見込：当月実残高＋当月から前月までの借入＋賃収その他−支出（自己資金含む）';
+   rows[6].sources[i]='見込：月末見込：現在実残高＋現在月から表示月までの借入＋賃収その他−支出（自己資金含む）';
   }
   ['borrowing','income','expense'].forEach((kind,k)=>{rows[k+3].values[i]=settings.entries.filter(e=>e.month===month&&e.kind===kind&&e.include).reduce((s,e)=>s+e.amount/10000,0);if(kind==='expense')rows[k+3].values[i]+=selfExpenses.filter(x=>x.month===month).reduce((sum,x)=>sum+x.amount/10000,0);rows[k+3].sources[i]='資金調達案・予定支出（計画）';});
  }
