@@ -3,11 +3,15 @@ const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>
 const yen=n=>Math.round(n).toLocaleString('ja-JP')+'円',man=n=>(n/10000).toLocaleString('ja-JP',{maximumFractionDigits:1});
 const statuses={todo:'未着手',doing:'進行中',waiting:'確認待ち',done:'完了'},fundStatuses={idea:'検討中',applied:'申込中',approved:'承認済み',received:'入金済み',cancelled:'中止'};
 const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'});
+if(!window.supabase){$('#gateMessage').textContent='ログイン機能の読込みに失敗しました。ページを再読み込みしてください。';$('#loginSubmit').disabled=true;throw Error('Authentication library unavailable');}
 const client=window.supabase.createClient('https://xhbgmnousqkoiqaruprr.supabase.co','sb_publishable_ZhUJDpEF1nCnMYunq27dzg_vcdmjPlc');
 let plan,ledger,revision,dirty=false,compare=false,editing,updated;
 async function api(method='GET',body){const {data}=await client.auth.getSession();if(!data.session)throw Error('総合収支アプリでログインしてください。');const r=await fetch('/api/action-plan',{method,headers:{Authorization:'Bearer '+data.session.access_token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const v=await r.json();if(!r.ok)throw Error(v.error||'読込に失敗しました');return v;}
 function changed(){dirty=true;$('#sync').textContent='未保存の変更があります';render();}
 async function load(){if(dirty&&!confirm('未保存の変更を破棄して読み込みますか？'))return;$('#reload').disabled=true;try{const d=await api();({plan,ledger,revision}=d);updated=d.ledgerUpdated;dirty=false;$('#gate').hidden=true;$('#app').hidden=false;$('#sync').textContent=d.initial?'初期案です。内容を確認して保存してください。':'保存済みの計画を読み込みました';render();}catch(e){$('#gateMessage').textContent=e.message;$('#sync').textContent=e.message;}finally{$('#reload').disabled=false;}}
+$('#gateReload').onclick=load;
+$('#loginForm').onsubmit=async e=>{e.preventDefault();const button=$('#loginSubmit');button.disabled=true;$('#gateMessage').textContent='ログインしています…';try{const {error}=await client.auth.signInWithPassword({email:$('#loginEmail').value.trim(),password:$('#loginPassword').value});if(error)throw error;$('#loginPassword').value='';await load();}catch(e){$('#gateMessage').textContent=/invalid login credentials/i.test(e.message||'')?'メールアドレスまたはパスワードが違います。総合収支アプリと同じ情報でお試しください。':'ログインできませんでした。通信環境を確認して、もう一度お試しください。';}finally{button.disabled=false;}};
+window.addEventListener('focus',()=>{if(!$('#gate').hidden&&!$('#loginSubmit').disabled)load();});
 $('#reload').onclick=load;$('#save').onclick=async()=>{if(!validatePlan(plan)){alert('入力内容を確認してください');return;}$('#save').disabled=true;try{const d=await api('PUT',{plan,revision});revision=d.revision;dirty=false;$('#sync').textContent='計画を保存しました';}catch(e){$('#sync').textContent=e.message;alert(e.message);}finally{$('#save').disabled=false;}};
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 $('#start').onchange=e=>{if(!e.target.value)return;plan.start=e.target.value;changed();};$('#compare').onclick=()=>{compare=!compare;render();};$('#print').onclick=()=>window.print();
