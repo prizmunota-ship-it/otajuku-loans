@@ -52,7 +52,16 @@ $('#reload').onclick=load;$('#gateReload').onclick=load;$('#print').onclick=()=>
 
 // Fit the complete annual sheet without hiding any financial rows.
 let fitFrame;
-function fitSheet(){cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{const paper=$('#paper'),frame=paper.parentElement;if(innerWidth<=760){frame.style.height='';paper.style.removeProperty('--sheet-scale');return;}const available=Math.max(180,innerHeight-frame.getBoundingClientRect().top-10);const scale=Math.min(1,available/paper.offsetHeight);paper.style.setProperty('--sheet-scale',scale);frame.style.height=`${Math.ceil(paper.offsetHeight*scale)}px`;});}
+function fitSheet(){cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{
+ const paper=$('#paper'),frame=paper.parentElement;
+ if(innerWidth<=760){frame.style.height='';paper.style.width='';paper.style.removeProperty('--sheet-scale');return;}
+ const width=frame.clientWidth;if(!width)return;
+ const available=Math.max(180,innerHeight-frame.getBoundingClientRect().top-10);
+ // Compensate the layout width before scaling, so the visible sheet fills its column.
+ paper.style.width=width+'px';let scale=1;
+ if(paper.offsetHeight>available){let low=.05,high=1;for(let i=0;i<12;i++){const trial=(low+high)/2;paper.style.width=(width/trial)+'px';if(paper.offsetHeight*trial<=available)low=trial;else high=trial;}scale=low;}
+ paper.style.width=(width/scale)+'px';paper.style.setProperty('--sheet-scale',scale);frame.style.height=`${Math.ceil(paper.offsetHeight*scale)}px`;
+});}
 new ResizeObserver(fitSheet).observe($('#paper'));
 window.addEventListener('resize',fitSheet);
 document.fonts.ready.then(fitSheet);
