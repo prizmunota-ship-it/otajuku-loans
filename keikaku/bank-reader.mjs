@@ -44,3 +44,10 @@ $('#previousYear').onclick=()=>{if(year>2000){year--;draw();}};$('#nextYear').on
 $('#manage').onclick=()=>{$('#entryPanel').hidden=false;$('#entryPanel').scrollIntoView({behavior:'smooth'});};$('#closeEntries').onclick=()=>{$('#entryPanel').hidden=true;};$('#addEntry').onclick=()=>editEntry();$('#cancelEntry').onclick=()=>$('#entryDialog').close();$('#saveWorksheet').onclick=save;
 $('#loginForm').onsubmit=async event=>{event.preventDefault();$('#loginSubmit').disabled=true;try{if(!client)throw Error('unavailable');const {error}=await client.auth.signInWithPassword({email:$('#loginEmail').value.trim(),password:$('#loginPassword').value});if(error)throw error;$('#loginPassword').value='';await load();}catch{$('#gateMessage').textContent='ログインできませんでした。メールアドレス・パスワードと通信環境を確認してください。';}finally{$('#loginSubmit').disabled=false;}};
 $('#reload').onclick=load;$('#gateReload').onclick=load;$('#print').onclick=()=>window.print();window.addEventListener('focus',()=>{if(!$('#gate').hidden&&!$('#loginSubmit').disabled)load();});window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});load();
+
+// Fit the complete annual sheet without hiding any financial rows.
+let fitFrame;
+function fitSheet(){cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{const paper=$('#paper'),frame=paper.parentElement;if(innerWidth<=760){frame.style.height='';paper.style.removeProperty('--sheet-scale');return;}const available=Math.max(180,innerHeight-frame.getBoundingClientRect().top-10);const scale=Math.min(1,available/paper.offsetHeight);paper.style.setProperty('--sheet-scale',scale);frame.style.height=`${Math.ceil(paper.offsetHeight*scale)}px`;});}
+new ResizeObserver(fitSheet).observe($('#paper'));
+window.addEventListener('resize',fitSheet);
+document.fonts.ready.then(fitSheet);
