@@ -1,7 +1,7 @@
 export const bankIds=w=>w.banks.map((_,i)=>'bank-'+i);
 const n=v=>Number(String(v??'').normalize('NFKC').replaceAll(',',''))||0;
 export function initialWorksheet(w){return {version:1,bankOrder:bankIds(w),entries:[3,4,5].flatMap((row)=>w.numbers[row].values.map((v,i)=>({id:`excel-${w.year}-${row}-${i+1}`,month:`${w.year}-${String(i+1).padStart(2,'0')}`,name:w.numbers[row].label+'（元Excel）',kind:['borrowing','income','expense'][row-3],amount:n(v)*10000,include:true,status:'planned',source:'excel'})).filter(e=>e.amount!==0)),cfMode:'calculated'};}
-export function validateWorksheet(v,ids){const ym=s=>typeof s==='string'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(s);return !!v&&v.version===1&&['registered','calculated'].includes(v.cfMode)&&Array.isArray(v.bankOrder)&&v.bankOrder.length===ids.length&&new Set(v.bankOrder).size===ids.length&&v.bankOrder.every(x=>ids.includes(x))&&Array.isArray(v.entries)&&v.entries.length<=500&&new Set(v.entries.map(e=>e.id)).size===v.entries.length&&v.entries.every(e=>typeof e.id==='string'&&e.id.length<=200&&typeof e.name==='string'&&e.name.length>0&&e.name.length<=300&&ym(e.month)&&['borrowing','income','expense'].includes(e.kind)&&typeof e.amount==='number'&&Number.isFinite(e.amount)&&e.amount>=0&&e.amount<=1e12&&typeof e.include==='boolean'&&['idea','planned','done'].includes(e.status)&&['excel','manual','plan'].includes(e.source));}
+export function validateWorksheet(v,ids){const ym=s=>typeof s==='string'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(s);return !!v&&v.version===1&&validateBankNotes(v.bankNotes,ids)&&['registered','calculated'].includes(v.cfMode)&&Array.isArray(v.bankOrder)&&v.bankOrder.length===ids.length&&new Set(v.bankOrder).size===ids.length&&v.bankOrder.every(x=>ids.includes(x))&&Array.isArray(v.entries)&&v.entries.length<=500&&new Set(v.entries.map(e=>e.id)).size===v.entries.length&&v.entries.every(e=>typeof e.id==='string'&&e.id.length<=200&&typeof e.name==='string'&&e.name.length>0&&e.name.length<=300&&ym(e.month)&&['borrowing','income','expense'].includes(e.kind)&&typeof e.amount==='number'&&Number.isFinite(e.amount)&&e.amount>=0&&e.amount<=1e12&&typeof e.include==='boolean'&&['idea','planned','done'].includes(e.status)&&['excel','manual','plan'].includes(e.source));}
 export function liveMetrics(ledger,cfMode){const a=ledger.assets||{},props=ledger.props??a.props??[],rental=props.filter(p=>['個人','法人'].includes(p.grp));const sum=(arr,key)=>arr.reduce((s,p)=>s+(Number(p[key])||0),0);const j=ledger.jihanki??a.jihanki;return {units:sum(props,'units'),rent:sum(rental,'rentY')+(Number(j?.rentY)||0),cf:cfMode==='calculated'?sum(rental,'rentY')-sum(rental,'payY')-sum(rental,'mgmt')-sum(rental,'kotoze')+(Number(j?.rentY)||0):sum(rental,'incomeY'),cfMissing:cfMode==='registered'&&rental.some(p=>p.incomeY==null||p.incomeY===''),available:props.length>0};}
 export function numericRows(w,ledger,settings,year,today){const ym=today.slice(0,7),live=liveMetrics(ledger,settings.cfMode);const rows=w.numbers.map(r=>({...r,values:year===w.year?[...r.values]:Array(12).fill('—'),sources:Array(12).fill(year===w.year?'元Excel':'未設定')}));
  for(let i=0;i<12;i++){const month=`${year}-${String(i+1).padStart(2,'0')}`;
@@ -16,4 +16,21 @@ export function importExpenses(settings,plan,ledger,year,today){const items=[];c
  (ledger.spots||[]).forEach(e=>(e.months||[]).forEach(m=>{const month=`${year}-${String(m).padStart(2,'0')}`;if(!items.some(x=>x.month===month&&x.amount===Number(e.amount)&&/梅満|売主/.test(x.name)&&/梅満|売主/.test(e.name||'')))add('spot-'+(e.id||e.name)+'-'+month,month,e.name,e.amount);}));
  const months=new Set(items.map(x=>x.month)),ids=new Set(items.map(x=>x.id));
  return {items,settings:{...settings,entries:[...settings.entries.filter(e=>!ids.has(e.id)&&!(e.source==='excel'&&e.kind==='expense'&&months.has(e.month))),...items]}};
+}
+
+export function validateBankNotes(notes,ids){return notes===undefined||(notes&&typeof notes==='object'&&!Array.isArray(notes)&&Object.entries(notes).every(([id,v])=>ids.includes(id)&&v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).every(k=>['focus','note'].includes(k)&&typeof v[k]==='string'&&v[k].length<=2000)));}
+// Ambiguous labels reconciled with the saved repayment-account mapping (2026-08-31).
+const verifiedLenders={a4y0oklx4nzi:'福岡信用金庫',avms3eva4nzi:'福岡ひびき信用金庫'};
+export function bankReserveTargets(ledger,w){
+ const canonical=s=>{const text=String(s||'').normalize('NFKC').replaceAll(' ','');const aliases=[['福岡ひびき信用金庫',/福岡ひびき|ひびき/],['福岡信用金庫',/福岡信用金庫/],['福岡県信用組合',/福岡県信用組合|けんしん/],['横浜幸銀信用組合',/横浜幸銀|横浜興銀|幸銀/],['朝銀西信用組合',/朝銀西|朝銀/],['筑邦銀行',/筑邦|ちくぎん/],['唐津信用金庫',/唐津/],['大分銀行',/大分銀行/],['豊和銀行',/豊和/],['福岡中央銀行',/福岡中央/]];return aliases.find(([,re])=>re.test(text))?.[0]||null;};
+ const result=Object.fromEntries(w.banks.map((b,i)=>['bank-'+i,{name:b.name.split('\n')[0],balance:0,records:[],missing:0,target:0}]));
+ const byName=Object.fromEntries(Object.entries(result).map(([id,v])=>[canonical(v.name),id]));const seen=new Set();
+ for(const [group,items] of [['property',ledger.props??ledger.assets?.props??[]],['other',ledger.oloans??ledger.assets?.loans??[]]])for(const loan of items){
+  const name=loan.fin||loan.bank||verifiedLenders[loan.id]||(group==='other'?loan.name:'');const id=byName[canonical(name)];if(!id)continue;
+  const key=group+':'+(loan.id||JSON.stringify(loan));if(seen.has(key))continue;seen.add(key);
+  if(loan.zan==null||loan.zan===''||!Number.isFinite(Number(loan.zan))){result[id].missing++;continue;}
+  const balance=Math.max(0,Number(loan.zan));if(!balance)continue;result[id].balance+=balance;result[id].records.push({name:loan.name||'借入',balance});
+ }
+ for(const r of Object.values(result))r.target=Math.ceil(r.balance*.05/10000)*10000;
+ return result;
 }
