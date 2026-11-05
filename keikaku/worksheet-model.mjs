@@ -5,10 +5,17 @@ export function validateWorksheet(v,baseIds){
  const custom=v?.customBanks??[];
  if(!Array.isArray(custom)||custom.length>30||!custom.every(b=>b&&typeof b.name==='string'&&b.name.trim().length>0&&b.name.length<=100))return false;
  const ids=[...baseIds,...custom.map((_,i)=>'bank-'+(baseIds.length+i))];
+ if(!validatePropertyPlans(v?.propertyPlans,ids))return false;
  const hidden=v?.hiddenBanks??[];if(!Array.isArray(hidden)||new Set(hidden).size!==hidden.length||!hidden.every(id=>ids.includes(id)))return false;
  const cells=v?.bankMonths;
  if(cells!==undefined&&(!cells||typeof cells!=='object'||Array.isArray(cells)||!Object.entries(cells).every(([id,months])=>ids.includes(id)&&months&&typeof months==='object'&&!Array.isArray(months)&&Object.entries(months).every(([month,value])=>/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)&&typeof value==='string'&&value.length<=1000))))return false;
  const ym=s=>typeof s==='string'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(s);return !!v&&v.version===1&&validateBankNotes(v.bankNotes,ids)&&['registered','calculated'].includes(v.cfMode)&&Array.isArray(v.bankOrder)&&v.bankOrder.length===ids.length&&new Set(v.bankOrder).size===ids.length&&v.bankOrder.every(x=>ids.includes(x))&&Array.isArray(v.entries)&&v.entries.length<=500&&new Set(v.entries.map(e=>e.id)).size===v.entries.length&&v.entries.every(e=>typeof e.id==='string'&&e.id.length<=200&&typeof e.name==='string'&&e.name.length>0&&e.name.length<=300&&ym(e.month)&&['borrowing','income','expense','action'].includes(e.kind)&&(e.bankId===undefined||e.bankId===''||ids.includes(e.bankId))&&typeof e.amount==='number'&&Number.isFinite(e.amount)&&e.amount>=0&&e.amount<=1e12&&typeof e.include==='boolean'&&['idea','planned','done'].includes(e.status)&&['excel','manual','plan'].includes(e.source));}
+export function validatePropertyPlans(plans,ids){return plans===undefined||(Array.isArray(plans)&&plans.length<=500&&new Set(plans.map(p=>p?.id)).size===plans.length&&new Set(plans.map(p=>p?.bankId+':'+p?.consultMonth)).size===plans.length&&plans.every(p=>p&&typeof p.id==='string'&&p.id.length<=200&&ids.includes(p.bankId)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.consultMonth)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.startMonth)&&typeof p.name==='string'&&p.name.trim().length>0&&p.name.length<=200&&Number.isInteger(p.units)&&p.units>=0&&p.units<=100000&&Number.isFinite(p.rentY)&&p.rentY>=0&&p.rentY<=1e12&&Number.isFinite(p.cfY)&&Math.abs(p.cfY)<=1e12&&typeof p.include==='boolean'&&typeof p.inLedger==='boolean'));}
+export function propertyPlanTotals(settings,ledger,month){
+ const canonical=s=>String(s||'').normalize('NFKC').replace(/\s/g,'');
+ const owned=new Set((ledger.props??ledger.assets?.props??[]).map(p=>canonical(p.name)));const seen=new Set();const totals={units:0,rentY:0,cfY:0,count:0};
+ for(const p of settings.propertyPlans||[]){const key=canonical(p.name);if(!p.include||p.inLedger||p.startMonth>month||owned.has(key)||seen.has(key))continue;seen.add(key);totals.units+=p.units;totals.rentY+=p.rentY;totals.cfY+=p.cfY;totals.count++;}return totals;
+}
 export function liveMetrics(ledger,cfMode){const a=ledger.assets||{},props=ledger.props??a.props??[],rental=props.filter(p=>['個人','法人'].includes(p.grp));const sum=(arr,key)=>arr.reduce((s,p)=>s+(Number(p[key])||0),0);const j=ledger.jihanki??a.jihanki;return {units:sum(props,'units'),rent:sum(rental,'rentY')+(Number(j?.rentY)||0),cf:cfMode==='calculated'?sum(rental,'rentY')-sum(rental,'payY')-sum(rental,'mgmt')-sum(rental,'kotoze')+(Number(j?.rentY)||0):sum(rental,'incomeY'),cfMissing:cfMode==='registered'&&rental.some(p=>p.incomeY==null||p.incomeY===''),available:props.length>0};}
 export function depositTotals(ledger){const sum=items=>(items||[]).reduce((s,a)=>s+(Number(a.bal)||0),0);const accounts=sum(ledger.accounts),savings=sum(ledger.tsumi);return {accounts,savings,total:accounts+savings,available:Array.isArray(ledger.accounts)||Array.isArray(ledger.tsumi)};}
 // The table uses 万円 by default. Recognize both labelled amounts and its original two-amount format.
@@ -34,6 +41,7 @@ export function numericRows(w,ledger,settings,year,today){const ym=today.slice(0
  rows[6]={...rows[6],label:'預金残高（当月実額・翌月以降月末見込）',values:Array(12).fill('—'),sources:Array(12).fill('過去残高未登録')};
  for(let i=0;i<12;i++){const month=`${year}-${String(i+1).padStart(2,'0')}`;
   if(month>=ym&&live.available){[live.units,live.rent/10000,live.cfMissing?null:live.cf/10000].forEach((v,r)=>{rows[r].values[i]=v==null?'未登録':v;rows[r].sources[i]=month===ym?'総合収支・最新登録値':'総合収支・最新値据置';});}
+  if(month>=ym&&live.available){const p=propertyPlanTotals(settings,ledger,month);if(p.count)[p.units,p.rentY/10000,p.cfY/10000].forEach((v,r)=>{if(typeof rows[r].values[i]==='number')rows[r].values[i]+=v;rows[r].sources[i]='総合収支・最新登録値＋取得予定の年額（計画）';});}
   if(month===ym&&deposits.available){rows[6].values[i]=deposits.total/10000;rows[6].sources[i]='総合収支・現在預金（口座＋積立）';}
   if(month>ym&&deposits.available){
    const planned=settings.entries.filter(e=>e.include&&e.month>ym&&e.month<=month);
