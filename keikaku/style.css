@@ -40,3 +40,5 @@
 @media screen and (min-width:761px){.original-sheet{font-size:12px;line-height:1.25}.original-sheet th,.original-sheet td{padding:3px}.original-sheet tbody th,.original-sheet thead th,.original-sheet .original-number-head th{font-size:12px}.original-sheet .original-focus,.original-sheet .original-note{font-size:10px;line-height:1.3;padding:3px}.original-sheet tbody tr>td:not(.original-focus):not(.original-note){font-size:11px}.original-sheet .inline-month{min-height:1.3em}.original-sheet .reserve-target{font-size:10px}.original-sheet .linked-plan{font-size:10px}.original-sheet .bank-heading .bank-name{font-size:11px}}
 
 @media screen and (min-width:761px){.original-sheet tbody tr>td.numeric-value{font-size:10.5px;white-space:nowrap;padding-left:1px;padding-right:1px;font-variant-numeric:tabular-nums}}
+
+.expense-details{margin-top:12px;font-size:11px;border-top:1px solid #dce2da;padding-top:10px}.expense-item{display:flex;align-items:center;gap:6px;padding:9px 0;border-bottom:1px solid #e5ebe6}.expense-item span{flex:1}.expense-item small{display:block;color:#71806a;font-size:9px}.expense-item b{white-space:nowrap}
