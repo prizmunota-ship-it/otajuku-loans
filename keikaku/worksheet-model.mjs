@@ -11,11 +11,22 @@ export function validateWorksheet(v,baseIds){
  const ym=s=>typeof s==='string'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(s);return !!v&&v.version===1&&validateBankNotes(v.bankNotes,ids)&&['registered','calculated'].includes(v.cfMode)&&Array.isArray(v.bankOrder)&&v.bankOrder.length===ids.length&&new Set(v.bankOrder).size===ids.length&&v.bankOrder.every(x=>ids.includes(x))&&Array.isArray(v.entries)&&v.entries.length<=500&&new Set(v.entries.map(e=>e.id)).size===v.entries.length&&v.entries.every(e=>typeof e.id==='string'&&e.id.length<=200&&typeof e.name==='string'&&e.name.length>0&&e.name.length<=300&&ym(e.month)&&['borrowing','income','expense','action'].includes(e.kind)&&(e.bankId===undefined||e.bankId===''||ids.includes(e.bankId))&&typeof e.amount==='number'&&Number.isFinite(e.amount)&&e.amount>=0&&e.amount<=1e12&&typeof e.include==='boolean'&&['idea','planned','done'].includes(e.status)&&['excel','manual','plan'].includes(e.source));}
 export function liveMetrics(ledger,cfMode){const a=ledger.assets||{},props=ledger.props??a.props??[],rental=props.filter(p=>['個人','法人'].includes(p.grp));const sum=(arr,key)=>arr.reduce((s,p)=>s+(Number(p[key])||0),0);const j=ledger.jihanki??a.jihanki;return {units:sum(props,'units'),rent:sum(rental,'rentY')+(Number(j?.rentY)||0),cf:cfMode==='calculated'?sum(rental,'rentY')-sum(rental,'payY')-sum(rental,'mgmt')-sum(rental,'kotoze')+(Number(j?.rentY)||0):sum(rental,'incomeY'),cfMissing:cfMode==='registered'&&rental.some(p=>p.incomeY==null||p.incomeY===''),available:props.length>0};}
 export function depositTotals(ledger){const sum=items=>(items||[]).reduce((s,a)=>s+(Number(a.bal)||0),0);const accounts=sum(ledger.accounts),savings=sum(ledger.tsumi);return {accounts,savings,total:accounts+savings,available:Array.isArray(ledger.accounts)||Array.isArray(ledger.tsumi)};}
-// Only explicitly labelled self-funding in edited month cells is automatically linked.
+// The table uses 万円 by default. Recognize both labelled amounts and its original two-amount format.
+export function selfFundingAmount(text){
+ const value=text.normalize('NFKC');const number='([0-9][0-9,]*(?:\\.[0-9]+)?)';
+ const explicit=new RegExp('自己資金\\s*(?:[（(]\\s*(億円?|万円?|円)\\s*[）)])?\\s*[:=]?\\s*'+number+'\\s*(億円?|万円?|円)?(?![0-9.,])','g');
+ const matches=[...value.matchAll(explicit)].filter(m=>!/^\s*[%割]/.test(value.slice(m.index+m[0].length)));
+ const money=(digits,unit)=>Math.round(Number(digits.replaceAll(',',''))*(unit?.startsWith('億')?1e8:unit==='円'?1:1e4));
+ if(matches.length){const total=matches.reduce((sum,m)=>sum+money(m[2],m[3]||m[1]),0);return Number.isFinite(total)&&total<=1e12?total:null;}
+ if(value.includes('自己資金'))return null;
+ // In the established "融資相談 / 8,000万 / 800万" layout the second amount is self-funding.
+ if(!/融資相談|物件相談/.test(value))return null;
+ const rest=value.replace(/融資相談|物件相談/g,'').trim();
+ const pair=rest.match(new RegExp('^'+number+'\\s*(万円?|円)?\\s*(?:[\\n/／]+)\\s*'+number+'\\s*(万円?|円)?$'));
+ return pair?money(pair[3],pair[4]):null;
+}
 export function selfFundingExpenses(settings){const result=[];for(const [bankId,months] of Object.entries(settings.bankMonths||{}))for(const [month,text] of Object.entries(months)){
- const normalized=text.normalize('NFKC');const matches=[...normalized.matchAll(/自己資金\s*[:：=]?\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(億円?|万円?|円)/g)];
- let amount=0;for(const match of matches){const value=Number(match[1].replaceAll(',',''));amount+=Math.round(value*(match[2].startsWith('億')?1e8:match[2].startsWith('万')?1e4:1));}
- if(!matches.length||!Number.isFinite(amount)||amount<0||amount>1e12)continue;
+ const amount=selfFundingAmount(text);if(amount===null||amount<0||amount>1e12)continue;
  const [y,m]=month.split('-').map(Number),next=m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`;
  result.push({id:`self-${bankId}-${month}`,bankId,month:next,amount,name:'自己資金（'+month+'相談分）'});
  }return result;}
