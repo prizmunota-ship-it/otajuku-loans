@@ -27,3 +27,16 @@ test('confirmed December forecast excludes obsolete Excel expense and excludes N
 
 test('property plans add units and annual rent/CF from acquisition month and carry across years',()=>{const s=initialWorksheet(w);s.propertyPlans=[{id:'p1',bankId:'bank-0',consultMonth:'2026-11',name:'予定RC',units:20,rentY:8000000,cfY:3000000,startMonth:'2026-12',include:true,inLedger:false}];assert.ok(validateWorksheet(s,['bank-0','bank-1']));const r=numericRows(w,ledger,s,2026,'2026-11-05');assert.equal(r[0].values[10],10);assert.equal(r[0].values[11],30);assert.equal(r[1].values[11],2012);assert.equal(r[2].values[11],1112);assert.equal(numericRows(w,ledger,s,2027,'2026-11-05')[0].values[0],30);s.propertyPlans[0].units=24;assert.equal(numericRows(w,ledger,s,2026,'2026-11-05')[0].values[11],34);s.propertyPlans[0].include=false;assert.equal(numericRows(w,ledger,s,2026,'2026-11-05')[0].values[11],10);});
 test('property plans avoid double-counting owned or duplicate properties and validate inputs',async()=>{const {propertyPlanTotals}=await import('../keikaku/worksheet-model.mjs');const p={id:'p1',bankId:'bank-0',consultMonth:'2026-11',name:'予定RC',units:20,rentY:8000000,cfY:3000000,startMonth:'2026-12',include:true,inLedger:false};const s=initialWorksheet(w);s.propertyPlans=[p,{...p,id:'p2',bankId:'bank-1'}];assert.equal(propertyPlanTotals(s,ledger,'2026-12').units,20);assert.equal(propertyPlanTotals(s,{props:[{name:'予定ＲＣ'}]},'2026-12').units,0);s.propertyPlans=[{...p,inLedger:true}];assert.equal(propertyPlanTotals(s,ledger,'2026-12').units,0);s.propertyPlans=[{...p,units:-1}];assert.equal(validateWorksheet(s,['bank-0','bank-1']),false);s.propertyPlans=[null];assert.equal(validateWorksheet(s,['bank-0','bank-1']),false);});
+
+
+test('compact consultation amounts preserve legacy cash and prefer edited structured values',async()=>{
+ const {consultationAmounts,selfFundingExpenses}=await import('../keikaku/worksheet-model.mjs');
+ assert.deepEqual(consultationAmounts(undefined,'融資相談\n６，３００万\n７００万'),{price:63000000,ownCash:7000000});
+ assert.deepEqual(consultationAmounts({price:80000000,ownCash:0},'自己資金700万'),{price:80000000,ownCash:0});
+ assert.deepEqual(consultationAmounts(undefined,''),{price:null,ownCash:null});
+ const settings={bankMonths:{'bank-0':{'2026-11':'物件価格63000000円\n自己資金7000000円'}}};
+ assert.deepEqual(consultationAmounts(undefined,settings.bankMonths['bank-0']['2026-11']),{price:63000000,ownCash:7000000});
+ assert.equal(selfFundingExpenses(settings)[0].amount,7000000);
+ settings.bankMonths['bank-0']['2026-11']='物件価格63000000円\n自己資金8000000円';
+ assert.equal(selfFundingExpenses(settings).length,1);assert.equal(selfFundingExpenses(settings)[0].amount,8000000);
+});

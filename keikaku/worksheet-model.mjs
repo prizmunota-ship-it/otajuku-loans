@@ -10,7 +10,7 @@ export function validateWorksheet(v,baseIds){
  const cells=v?.bankMonths;
  if(cells!==undefined&&(!cells||typeof cells!=='object'||Array.isArray(cells)||!Object.entries(cells).every(([id,months])=>ids.includes(id)&&months&&typeof months==='object'&&!Array.isArray(months)&&Object.entries(months).every(([month,value])=>/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)&&typeof value==='string'&&value.length<=1000))))return false;
  const ym=s=>typeof s==='string'&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(s);return !!v&&v.version===1&&validateBankNotes(v.bankNotes,ids)&&['registered','calculated'].includes(v.cfMode)&&Array.isArray(v.bankOrder)&&v.bankOrder.length===ids.length&&new Set(v.bankOrder).size===ids.length&&v.bankOrder.every(x=>ids.includes(x))&&Array.isArray(v.entries)&&v.entries.length<=500&&new Set(v.entries.map(e=>e.id)).size===v.entries.length&&v.entries.every(e=>typeof e.id==='string'&&e.id.length<=200&&typeof e.name==='string'&&e.name.length>0&&e.name.length<=300&&ym(e.month)&&['borrowing','income','expense','action'].includes(e.kind)&&(e.bankId===undefined||e.bankId===''||ids.includes(e.bankId))&&typeof e.amount==='number'&&Number.isFinite(e.amount)&&e.amount>=0&&e.amount<=1e12&&typeof e.include==='boolean'&&['idea','planned','done'].includes(e.status)&&['excel','manual','plan'].includes(e.source));}
-export function validatePropertyPlans(plans,ids){return plans===undefined||(Array.isArray(plans)&&plans.length<=500&&new Set(plans.map(p=>p?.id)).size===plans.length&&new Set(plans.map(p=>p?.bankId+':'+p?.consultMonth)).size===plans.length&&plans.every(p=>p&&typeof p.id==='string'&&p.id.length<=200&&ids.includes(p.bankId)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.consultMonth)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.startMonth)&&typeof p.name==='string'&&p.name.trim().length>0&&p.name.length<=200&&Number.isInteger(p.units)&&p.units>=0&&p.units<=100000&&Number.isFinite(p.rentY)&&p.rentY>=0&&p.rentY<=1e12&&Number.isFinite(p.cfY)&&Math.abs(p.cfY)<=1e12&&typeof p.include==='boolean'&&typeof p.inLedger==='boolean'));}
+export function validatePropertyPlans(plans,ids){return plans===undefined||(Array.isArray(plans)&&plans.length<=500&&new Set(plans.map(p=>p?.id)).size===plans.length&&new Set(plans.map(p=>p?.bankId+':'+p?.consultMonth)).size===plans.length&&plans.every(p=>p&&typeof p.id==='string'&&p.id.length<=200&&ids.includes(p.bankId)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.consultMonth)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.startMonth)&&typeof p.name==='string'&&p.name.trim().length>0&&p.name.length<=200&&Number.isInteger(p.units)&&p.units>=0&&p.units<=100000&&Number.isFinite(p.rentY)&&p.rentY>=0&&p.rentY<=1e12&&Number.isFinite(p.cfY)&&Math.abs(p.cfY)<=1e12&&['price','ownCash'].every(k=>p[k]===undefined||(Number.isFinite(p[k])&&p[k]>=0&&p[k]<=1e12))&&typeof p.include==='boolean'&&typeof p.inLedger==='boolean'));}
 export function propertyPlanTotals(settings,ledger,month){
  const canonical=s=>String(s||'').normalize('NFKC').replace(/\s/g,'');
  const owned=new Set((ledger.props??ledger.assets?.props??[]).map(p=>canonical(p.name)));const seen=new Set();const totals={units:0,rentY:0,cfY:0,count:0};
@@ -77,4 +77,13 @@ export function bankReserveTargets(ledger,w){
  }
  for(const r of Object.values(result))r.target=Math.ceil(r.balance*.05/10000)*10000;
  return result;
+}
+
+// Read saved legacy amounts without importing obsolete source-Excel plans.
+export function consultationAmounts(plan,text=''){
+ const normalized=text.normalize('NFKC');
+ const pair=normalized.match(/(?:融資相談|物件相談)\s*([0-9,]+(?:\.[0-9]+)?)\s*(万円?|円)?\s*[\n/／]+/);
+ const labelled=normalized.match(/物件価格\s*[:：]?\s*([0-9,]+(?:\.[0-9]+)?)\s*(億円?|万円?|円)?/);
+ const match=labelled||pair;const price=match?Math.round(Number(match[1].replaceAll(',',''))*(match[2]?.startsWith('億')?1e8:match[2]==='円'?1:10000)):null;
+ return {price:plan?.price??price,ownCash:plan?.ownCash??selfFundingAmount(text)};
 }
