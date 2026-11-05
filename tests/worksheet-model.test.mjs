@@ -42,3 +42,15 @@ test('compact consultation amounts preserve legacy cash and prefer edited struct
 });
 
 test('November adds both funding types only once; December actual replaces adjustment',()=>{const s=initialWorksheet(w);s.entries=[{month:'2026-11',kind:'borrowing',amount:2000000,include:true},{month:'2026-11',kind:'income',amount:500000,include:true},{month:'2026-11',kind:'income',amount:9000000,include:false},{month:'2026-11',kind:'expense',amount:100000,include:true},{month:'2026-12',kind:'expense',amount:700000,include:true}];const l={accounts:[{bal:10000000}]};const rows=numericRows(w,l,s,2026,'2026-11-05');assert.equal(rows[6].values[10],1250);assert.equal(rows[6].values[11],1180);assert.equal(numericRows(w,l,s,2026,'2026-12-01')[6].values[11],1000);});
+
+test('manual expense and income flow through current and future deposits, survive edits and reset',async()=>{
+ const {editNumericAdjustment}=await import('../keikaku/worksheet-model.mjs');let s={...initialWorksheet(w),entries:[]};const l={...ledger,accounts:[{bal:10000000}]};
+ s=editNumericAdjustment(s,5,'2026-11',100);let r=numericRows(w,l,s,2026,'2026-11-05');assert.equal(r[5].values[10],100);assert.equal(r[6].values[10],900);assert.equal(r[6].values[11],900);assert.equal(numericRows(w,l,s,2027,'2026-11-05')[6].values[0],900);
+ s=editNumericAdjustment(s,4,'2026-12',50);r=numericRows(w,l,s,2026,'2026-11-05');assert.equal(r[6].values[10],900);assert.equal(r[6].values[11],950);
+ s=editNumericAdjustment(s,5,'2026-11',200);assert.equal(s.numericAdjustments.length,2);assert.equal(numericRows(w,l,s,2026,'2026-11-05')[6].values[11],850);
+ s=editNumericAdjustment(s,5,'2026-11',0);assert.equal(numericRows(w,l,s,2026,'2026-11-05')[6].values[11],1050);assert.ok(validateWorksheet(s,['bank-0','bank-1']));
+});
+test('metric and deposit corrections carry forward without treating annual CF as cash',async()=>{
+ const {editNumericAdjustment,validateNumericAdjustments}=await import('../keikaku/worksheet-model.mjs');let s={...initialWorksheet(w),entries:[]};const l={...ledger,accounts:[{bal:10000000}]};s=editNumericAdjustment(s,0,'2026-12',5);s=editNumericAdjustment(s,2,'2026-12',100);s=editNumericAdjustment(s,6,'2026-11',12.3456);const r=numericRows(w,l,s,2026,'2026-11-05');assert.equal(r[0].values[10],10);assert.equal(r[0].values[11],15);assert.equal(r[2].values[11],912);assert.equal(r[6].values[11],1012.3456);assert.equal(numericRows(w,l,s,2027,'2026-11-05')[0].values[0],15);
+ assert.equal(validateNumericAdjustments([{row:5,month:'2026-13',delta:100}]),false);assert.equal(validateNumericAdjustments([{row:0,month:'2026-11',delta:1.5}]),false);assert.equal(validateNumericAdjustments([{row:5,month:'2026-11',delta:Infinity}]),false);assert.equal(validateNumericAdjustments([{row:5,month:'2026-11',delta:1},{row:5,month:'2026-11',delta:2}]),false);
+});

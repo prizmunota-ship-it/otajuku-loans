@@ -5,6 +5,7 @@ export function validateWorksheet(v,baseIds){
  const custom=v?.customBanks??[];
  if(!Array.isArray(custom)||custom.length>30||!custom.every(b=>b&&typeof b.name==='string'&&b.name.trim().length>0&&b.name.length<=100))return false;
  const ids=[...baseIds,...custom.map((_,i)=>'bank-'+(baseIds.length+i))];
+ if(!validateNumericAdjustments(v?.numericAdjustments))return false;
  if(!validatePropertyPlans(v?.propertyPlans,ids))return false;
  const hidden=v?.hiddenBanks??[];if(!Array.isArray(hidden)||new Set(hidden).size!==hidden.length||!hidden.every(id=>ids.includes(id)))return false;
  const cells=v?.bankMonths;
@@ -54,6 +55,12 @@ export function numericRows(w,ledger,settings,year,today){const ym=today.slice(0
   }
   ['borrowing','income','expense'].forEach((kind,k)=>{rows[k+3].values[i]=settings.entries.filter(e=>e.month===month&&e.kind===kind&&e.include).reduce((s,e)=>s+e.amount/10000,0);if(kind==='expense')rows[k+3].values[i]+=selfExpenses.filter(x=>x.month===month).reduce((sum,x)=>sum+x.amount/10000,0);rows[k+3].sources[i]='資金調達案・予定支出（計画）';});
  }
+ // Manual changes are deltas, so later source updates still flow through.
+ for(let i=0;i<12;i++){const month=`${year}-${String(i+1).padStart(2,'0')}`;for(const a of settings.numericAdjustments||[]){
+  if(a.row<=2&&a.month<=month&&numericCellValue(rows[a.row].values[i])!==null){rows[a.row].values[i]=numericCellValue(rows[a.row].values[i])+a.delta;rows[a.row].sources[i]+='＋手入力調整';}
+  if(a.row>=3&&a.row<=5&&a.month===month){rows[a.row].values[i]+=a.delta;rows[a.row].sources[i]+='＋手入力調整';}
+  if(month>=ym&&a.month>=ym&&a.month<=month&&a.row>=3&&typeof rows[6].values[i]==='number'){rows[6].values[i]+=a.delta*(a.row===5?-1:1);rows[6].sources[i]+='＋手入力調整';}
+ }}
  return rows;
 }
 export function importExpenses(settings,plan,ledger,year,today){const items=[];const add=(id,month,name,amount)=>{if(month.startsWith(String(year))&&month>=today.slice(0,7))items.push({id,month,name,amount:Number(amount)||0,kind:'expense',include:true,status:'planned',source:'plan'});};
@@ -89,3 +96,8 @@ export function consultationAmounts(plan,text=''){
  const match=labelled||pair;const price=match?Math.round(Number(match[1].replaceAll(',',''))*(match[2]?.startsWith('億')?1e8:match[2]==='円'?1:10000)):null;
  return {price:plan?.price??price,ownCash:plan?.ownCash??selfFundingAmount(text)};
 }
+
+export function validateNumericAdjustments(items){return items===undefined||(Array.isArray(items)&&items.length<=1500&&new Set(items.map(x=>x?.month+':'+x?.row)).size===items.length&&items.every(x=>x&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(x.month)&&Number.isInteger(x.row)&&x.row>=0&&x.row<=6&&Number.isFinite(x.delta)&&Math.abs(x.delta)<=1e8&&(x.row!==0||Number.isInteger(x.delta))));}
+export function editNumericAdjustment(settings,row,month,delta){const items=(settings.numericAdjustments||[]).filter(x=>x.row!==row||x.month!==month);if(delta!==0)items.push({row,month,delta});if(!validateNumericAdjustments(items))throw Error('入力する数値を確認してください');return {...settings,numericAdjustments:items};}
+
+export function numericCellValue(value){if(typeof value==='number')return Number.isFinite(value)?value:null;const text=String(value??'').normalize('NFKC').replace(/\s/g,'');const match=text.match(/^([+-]?[0-9,]+(?:\.[0-9]+)?)(?:\([+-][0-9,]+\))?$/);return match?Number(match[1].replaceAll(',','')):null;}

@@ -77,3 +77,5 @@
 #entryPanel .entry-row button{font-size:10px;padding:3px 4px;border-radius:4px}
 #entryPanel .expense-details{margin-top:8px;padding-top:7px}
 @media(max-width:760px){#entryPanel #entryForm input,#entryPanel #entryForm select{font-size:16px;height:34px}#entryPanel #entryForm>.toolbar,#entryPanel #entryForm>.toolbar button{height:34px}}
+
+[data-numeric-row]{cursor:pointer}[data-numeric-row]:hover,[data-numeric-row]:focus-visible{outline:1px solid #679f8c;outline-offset:-1px}.manual-value{color:#88631b!important}#numericForm{display:grid;gap:12px}#numericForm label{display:grid;gap:4px}#numericForm input,#numericForm select{width:100%}#numericForm .toolbar{justify-content:flex-end;font-size:12px}#numericCurrent{font-weight:600}
