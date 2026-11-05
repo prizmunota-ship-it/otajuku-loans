@@ -1,3 +1,4 @@
+import {initialWorksheet,validateWorksheet,bankIds} from '../../keikaku/worksheet-model.mjs';
 // Private source notes returned only through the owner-authenticated planner API.
 const bankWorksheet={
   "year": 2026,
@@ -414,17 +415,27 @@ export function createHandler(fetcher=fetch){return async({request,env})=>{
   const key='action-plan:v1:'+user.id;
   if(request.method==='GET'){
    const saved=await env.ZAIKO_KV.get(key,'json');
+   const worksheet=await env.ZAIKO_KV.get('action-worksheet:v1:'+user.id,'json');
    const lr=await fetcher(URL+'/rest/v1/ledgers?user_id=eq.'+encodeURIComponent(user.id)+'&select=data,updated_at',{headers:{apikey:KEY,Authorization:token}});
    if(!lr.ok)return json({error:'総合収支の読込に失敗しました'},502);
    const records=await lr.json();if(!records[0])return json({error:'総合収支アプリにデータがありません'},404);
    const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'});
    const initial=initialPlan(today);
    if((records[0].data.spots||[]).some(s=>/梅満|売主/.test(s.name||'')&&Number(s.amount)===500000&&(s.months||[]).map(Number).includes(12)))initial.events=initial.events.filter(e=>e.id!=='ume');
-   return json({bankWorksheet,plan:saved?.plan||initial,revision:saved?.revision||null,ledger:records[0].data,ledgerUpdated:records[0].updated_at,email:user.email,initial:!saved});
+   return json({worksheet:worksheet?.data||initialWorksheet(bankWorksheet),worksheetRevision:worksheet?.revision||null,bankWorksheet,plan:saved?.plan||initial,revision:saved?.revision||null,ledger:records[0].data,ledgerUpdated:records[0].updated_at,email:user.email,initial:!saved});
   }
   if(!request.headers.get('Content-Type')?.startsWith('application/json'))return json({error:'形式が不正です'},415);
   const raw=await request.text();if(raw.length>150000)return json({error:'データが大きすぎます'},413);
   let body;try{body=JSON.parse(raw);}catch{return json({error:'形式が不正です'},400);}
+  if(body.worksheet){
+   if(!validateWorksheet(body.worksheet,bankIds(bankWorksheet)))return json({error:'並び順・日付・金額を確認してください'},400);
+   const wk='action-worksheet:v1:'+user.id,old=await env.ZAIKO_KV.get(wk,'json');
+   if((old?.revision||null)!==(body.worksheetRevision||null))return json({error:'別の画面で更新されています。入力を控えてから再読み込みしてください。'},409);
+   const revision=crypto.randomUUID();
+   if(old)await env.ZAIKO_KV.put(wk+':backup:'+old.revision,JSON.stringify(old),{expirationTtl:2592000});
+   await env.ZAIKO_KV.put(wk,JSON.stringify({data:body.worksheet,revision,updatedAt:new Date().toISOString()}));
+   return json({worksheetRevision:revision});
+  }
   if(!validatePlan(body.plan))return json({error:'日付・金額・必須項目を確認してください'},400);
   const previous=await env.ZAIKO_KV.get(key,'json');
   if((previous?.revision||null)!==(body.revision||null))return json({error:'別の画面で更新されています。再読込前に入力を控えてください。'},409);
