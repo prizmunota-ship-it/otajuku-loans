@@ -1,0 +1,31 @@
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>(n/10000).toLocaleString('ja-JP',{maximumFractionDigits:1});
+const status={todo:'未着手',doing:'進行中',waiting:'確認待ち',done:'完了'};
+const fundStatus={idea:'検討',applied:'申込中',approved:'承認',received:'入金済',cancelled:'中止'};
+export function renderPlanView({plan,ledger,rows,selectedMonth,today,dirty}){
+ const $=s=>document.querySelector(s),months=rows.map(r=>r.month);
+ if(!months.includes(selectedMonth))selectedMonth=months.includes(today.slice(0,7))?today.slice(0,7):months[0];
+ const regular=plan.actions.filter(a=>a.id.startsWith('review-')),actions=plan.actions.filter(a=>!a.id.startsWith('review-'));
+ const cell=(text,cls='')=>`<td class="${cls}">${text}</td>`;
+ const timeline=(name,next,values)=>`<tr><th>${e(name)}</th><td class="next-action">${e(next)}</td>${months.map(m=>cell(values(m),m===today.slice(0,7)?'current-month':'')).join('')}</tr>`;
+ let timelineRows=actions.map(a=>timeline(a.name,a.owner+' / '+(a.due||'期限未定'),m=>a.due.startsWith(m)?`<span class="state ${a.status}">${Number(a.due.slice(8))}日まで<br>${status[a.status]}</span>`:'')).join('');
+ timelineRows+=plan.purchases.filter(p=>p.enabled).map(p=>timeline(p.name,'購入・決済（予定）',m=>m===p.month?`<b>購入 ${p.units}戸</b><br>自己資金<br>${money(p.cash)}万`: '')).join('');
+ timelineRows+=plan.funding.map(f=>timeline(f.name,f.next||'次の行動を入力',m=>m===f.month?`${fundStatus[f.status]}<br>${money(f.net)}万`: '')).join('');
+ timelineRows+=timeline('毎月の見直し','預金・融資・翌月の予定',m=>regular.filter(a=>a.due.startsWith(m)).map(a=>`${Number(a.due.slice(8))}日<br>${status[a.status]}`).join('<br>'));
+ const financial=[['所有戸数（戸）',r=>r.units],['資金調達（承認済）',r=>r.funding],['家賃・その他収入',r=>r.rent+r.otherIncome+r.newIncome],['返済・経費・カード等',r=>r.loans+r.saving+r.card+r.operating+r.newExpense+r.newFundingPay],['購入・工事等の支出',r=>r.ownCash+r.spot+r.events],['月末の預金見込み',r=>r.end]];
+ const financeRows=financial.map(([name,fn],i)=>`<tr class="${i===5?'balance-row':''}"><th colspan="2">${name}</th>${rows.map(r=>cell(i===0?fn(r):money(fn(r)),i===5&&r.end<plan.reserve?'below-reserve':'')).join('')}</tr>`).join('');
+ const unresolved=actions.filter(a=>!a.due).map(a=>a.name);
+ const outside=actions.filter(a=>a.due&&!months.includes(a.due.slice(0,7))).map(a=>a.due+' '+a.name);
+ const inactive=plan.purchases.filter(p=>p.enabled&&!p.operationMonth).map(p=>p.name);
+ const notes=[`起点預金 ${money(rows[0].begin)}万円 ／ 最低預金の設定 ${money(plan.reserve)}万円。`,...plan.events.filter(x=>!x.paid&&months.includes(x.month)).map(x=>`${x.month} ${x.name} ${money(x.amount)}万円。`),...(unresolved.length?['期限未定：'+unresolved.join('、')+'。']:[]),...(outside.length?['期間外：'+outside.join('、')+'。']:[])];
+ $('#paper').innerHTML=`<div class="sheet-heading"><div><p class="sheet-kicker">PRIMARY / ANNUAL PLAN</p><h2>年間行動計画表</h2></div><div class="sheet-date">${months[0].replace('-','年')}月 — ${months.at(-1).replace('-','年')}月<br>太田 圭一 ${dirty?'／ 未保存':''}</div></div><div class="sheet-goal"><span>目標</span><strong>${e(plan.goal)}</strong><em>${e(plan.goalMonth)}までに ${plan.goalUnits}戸</em></div><table class="year-sheet"><colgroup><col class="item-col"><col class="next-col">${months.map(()=>'<col>').join('')}</colgroup><thead><tr><th>案件・行動</th><th>直近でやること / 期限</th>${months.map(m=>`<th class="${m===today.slice(0,7)?'current-month':''}"><small>${m.slice(0,4)}</small>${Number(m.slice(5))}月</th>`).join('')}</tr></thead><tbody>${timelineRows}<tr class="sheet-section"><th colspan="14">数値計画 <span>金額：万円 ／ 個人・法人合計の試算</span></th></tr>${financeRows}</tbody></table><div class="sheet-notes"><b>確認事項</b><p>${notes.map(e).join(' ')}</p></div><p class="sheet-foot">${e(ledger.asof||'預金は口座ごとの確認日時点')}。期限・購入条件は初期案を含みます。${inactive.length?'収支開始月が未設定の購入物件は、購入後の家賃・返済を未計上。':''}月内の資金不足・未入力費用は別途確認。</p>`;
+ $('#mobileMonth').innerHTML=months.map(m=>`<option value="${m}" ${m===selectedMonth?'selected':''}>${m.replace('-','年')}月</option>`).join('');
+ $('#prevMonth').disabled=selectedMonth===months[0];$('#nextMonth').disabled=selectedMonth===months.at(-1);
+ const r=rows.find(r=>r.month===selectedMonth),due=plan.actions.filter(a=>a.due.startsWith(selectedMonth)).sort((a,b)=>a.due.localeCompare(b.due));
+ const mobileTasks=due.map(a=>`<li><div><time>${Number(a.due.slice(8))}日</time><span class="mobile-status ${a.status}">${status[a.status]}</span></div><strong>${e(a.name)}</strong><p>${e(a.owner)}</p></li>`).join('');
+ const purchases=plan.purchases.filter(p=>p.enabled&&p.month===selectedMonth).map(p=>`<li><strong>${e(p.name)}</strong><p>購入予定 ${p.units}戸 ／ 自己資金 ${money(p.cash)}万円</p></li>`).join('');
+ const funds=plan.funding.filter(f=>f.month===selectedMonth).map(f=>`<li><strong>${e(f.name)}</strong><p>${fundStatus[f.status]} ${money(f.net)}万円 ／ ${e(f.next)}</p></li>`).join('');
+ const overdue=plan.actions.filter(a=>a.due&&a.due<today&&a.status!=='done'&&!a.due.startsWith(selectedMonth));
+ $('#mobileContent').innerHTML=`<div class="mobile-goal"><span>目標 / ${e(plan.goalMonth)}</span><h2>${e(plan.goal)}</h2><p>${plan.goalUnits}戸を目指す</p></div><section class="mobile-section"><h3>この月にやること</h3><ol class="mobile-tasks">${mobileTasks||'<li>期限のある行動は未登録です</li>'}</ol></section>${purchases||funds?`<section class="mobile-section"><h3>購入・資金調達</h3><ul class="mobile-tasks">${purchases}${funds}</ul></section>`:''}<section class="mobile-section"><h3>この月のお金 <small>万円</small></h3><dl class="mobile-money">${financial.map(([name,fn],i)=>`<div class="${i===5?'mobile-total':''}"><dt>${name}</dt><dd class="${i===5&&fn(r)<plan.reserve?'bad':''}">${i===0?fn(r)+'戸':money(fn(r))}</dd></div>`).join('')}</dl><p class="sub">最低預金の設定 ${money(plan.reserve)}万円。未入力費用・月内の不足は別途確認。</p></section>${unresolved.length?`<details class="mobile-section"><summary>期限を決めること（${unresolved.length}件）</summary><ul>${unresolved.map(x=>`<li>${e(x)}</li>`).join('')}</ul></details>`:''}${overdue.length?`<details class="mobile-section"><summary>ほかの月の期限超過（${overdue.length}件）</summary><ul>${overdue.map(a=>`<li>${e(a.due)} ${e(a.name)}</li>`).join('')}</ul></details>`:''}<p class="sub">${e(ledger.asof||'総合収支アプリの登録残高を使用')}。期限・条件は初期案を含みます。${inactive.length?'購入後の家賃・返済が未設定の物件があります。':''}</p>`;
+ return selectedMonth;
+}
