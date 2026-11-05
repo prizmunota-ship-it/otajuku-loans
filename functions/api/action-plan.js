@@ -1,3 +1,18 @@
+// Private source notes returned only through the owner-authenticated planner API.
+const bankWorksheet={year:2026,goalUnits:310,source:'20260701.xlsx（7月1日時点の当初計画）＋その後の相談記録',amountMeaning:'price',banks:[
+{id:'howa',name:'豊和銀行',target:'境川RC（シャトレ境川Ⅱ）／北九州',current:'境川RC（シャトレ境川Ⅱ）を相談中。融資承認は未確認。',cash:700,cashBasis:'本人申告・手付金と諸費用込みの概算',next:'融資額・自己資金・決済日を確認',milestones:[{month:12,label:'決済予定',kind:'updated',note:'境川RC。12月の決済を想定。相談開始月は未確定。'}]},
+{id:'fukuoka-central',name:'福岡中央銀行',target:'糸島・久留米／築20年台のRC',current:'ハザードマップを確認。具体的な物件名は未記載。',cash:800,scale:8000,cashBasis:'原表の必要自己資金（本人確認済み）',next:'持込物件を選定し、融資相談',milestones:[{month:11,label:'融資相談',kind:'original',note:'原表：8,000万／800万。実施済みかは未確認。'}]},
+{id:'oita',name:'大分銀行',target:'具体的な物件名・構造は未記載',current:'当初の7月相談計画。実施状況は未確認。',cash:1000,scale:13000,cashBasis:'原表の必要自己資金（本人確認済み）',next:'当初の相談案件と進捗を確認',milestones:[{month:7,label:'物件相談',kind:'original',note:'原表：13,000万／1,000万。'}]},
+{id:'kenshin',name:'福岡県信用組合',target:'築30年程度・高利回りのRC',current:'当初の3月相談計画。具体的な物件名は未記載。',cash:1000,scale:8800,cashBasis:'原表の必要自己資金（本人確認済み）',next:'候補物件と必要自己資金を確認',milestones:[{month:3,label:'物件相談',kind:'original',note:'原表：8,800万／1,000万。'}]},
+{id:'chogin',name:'朝銀西信用組合',target:'新築木造／上津・合川A棟横の土地',current:'当初の4月相談計画。現在の進捗は未確認。',cash:500,scale:5300,cashBasis:'原表の必要自己資金（本人確認済み）',next:'新築計画の進捗と融資条件を確認',milestones:[{month:4,label:'物件相談',kind:'original',note:'原表：5,300万／500万。'}]},
+{id:'yokohama',name:'横浜幸銀信用組合',target:'檜原新築の竣工後、次の案件を検討',current:'原表は「檜原新築竣工まで身動き取れず」。現況は要確認。',cash:null,next:'竣工状況と次の持込時期を確認',milestones:[{month:10,label:'新築竣工',kind:'original',note:'原表の予定。竣工済みとの確認はしていない。'}]},
+{id:'fukuoka-shinkin',name:'福岡信用金庫',target:'法人の資金調達／オリックス保証',current:'物件購入融資とは別の資金調達枠。',cash:null,next:'借入可能額・条件・申込時期を確認',milestones:[]},
+{id:'chikuho',name:'筑邦銀行',target:'資金調達の融資情報を確認',current:'具体的な物件・調達額・相談月は未記載。',cash:null,next:'利用できる融資と申込条件を確認',milestones:[]},
+{id:'karatsu',name:'唐津信用金庫',target:'築浅物件を想定（具体的な物件は未記載）',current:'原表の優先度メモは「忘れる」。再検討するか確認。',cash:400,scale:4900,cashBasis:'原表の必要自己資金（本人確認済み）',next:'当初の6月相談を継続するか確認',milestones:[{month:6,label:'物件相談',kind:'original',note:'原表：4,900万／400万。実施状況は未確認。'}]},
+{id:'hibiki',name:'福岡ひびき信用金庫',target:'候補物件は未記載',current:'原表の優先度メモは「忘れる」。再検討するか確認。',cash:null,next:'相談を再開するか確認',milestones:[]},
+{id:'ag',name:'AG（長崎RC相談先）',target:'長崎RC／セントラルパークマンション',current:'後から追加した案件。6,000万円・25年の審査相談。承認は未確認。',cash:700,cashBasis:'本人申告・手付金と諸費用込みの概算',next:'審査結果・必要自己資金・決済日を確認',milestones:[{month:12,label:'決済予定',kind:'updated',note:'12月決済の想定。融資未確定。'}]}
+]};
+
 import {validatePlan,monthsFrom} from '../../keikaku/model.mjs';
 const URL='https://xhbgmnousqkoiqaruprr.supabase.co';
 const KEY='sb_publishable_ZhUJDpEF1nCnMYunq27dzg_vcdmjPlc';
@@ -37,7 +52,7 @@ export function createHandler(fetcher=fetch){return async({request,env})=>{
    const today=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'});
    const initial=initialPlan(today);
    if((records[0].data.spots||[]).some(s=>/梅満|売主/.test(s.name||'')&&Number(s.amount)===500000&&(s.months||[]).map(Number).includes(12)))initial.events=initial.events.filter(e=>e.id!=='ume');
-   return json({plan:saved?.plan||initial,revision:saved?.revision||null,ledger:records[0].data,ledgerUpdated:records[0].updated_at,email:user.email,initial:!saved});
+   return json({bankWorksheet,plan:saved?.plan||initial,revision:saved?.revision||null,ledger:records[0].data,ledgerUpdated:records[0].updated_at,email:user.email,initial:!saved});
   }
   if(!request.headers.get('Content-Type')?.startsWith('application/json'))return json({error:'形式が不正です'},415);
   const raw=await request.text();if(raw.length>150000)return json({error:'データが大きすぎます'},413);

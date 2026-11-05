@@ -5,22 +5,7 @@
 <button id="loginSubmit" class="primary" type="submit">ログインして年間計画を開く</button>
 </form><p class="sub">総合収支アプリと同じメールアドレス・パスワードを使用します。</p><button id="gateReload" type="button">ログイン済みの場合は再確認</button><p class="sub"><a href="/zaikin/" target="_blank" rel="noopener">パスワードの再設定は総合収支アプリへ ↗</a></p></div>
 <div id="app" hidden>
-<header><div><div class="brand">PRIMARY <span>PLAN</span></div><h1>年間行動計画</h1></div><div class="toolbar"><a href="/zaikin/" target="_blank" rel="noopener">総合収支を開く ↗</a><button id="reload">最新データを取得</button><button id="print">A4で印刷</button><button id="save" class="primary" hidden>計画を保存</button></div></header>
-<div class="statusbar"><span id="sync"></span><span id="source"></span></div>
-<nav class="modebar" aria-label="画面切替"><button id="showPlan" aria-pressed="true">計画を見る</button><button id="showInput" aria-pressed="false">入力・編集</button><span id="viewHint">年間の目標と、次にやること。</span></nav>
-<main id="readPanel"><div id="paper" class="paper"></div><section id="mobilePlan" class="mobile-plan"><div class="month-nav"><button id="prevMonth" aria-label="前の月">←</button><select id="mobileMonth" aria-label="表示する月"></select><button id="nextMonth" aria-label="次の月">→</button></div><div id="mobileContent"></div></section></main>
-<main id="inputPanel" hidden>
-<section class="goal"><div><div class="eyebrow">GOAL / 目指す状態</div><h2 id="goalText"></h2><p id="goalMeta"></p></div><button data-dialog="settings">目標・試算条件を編集</button></section>
-<div id="warnings" class="notice"></div>
-<div id="kpis" hidden></div>
-<div class="viewbar"><div><h2>期間・月別の金額</h2><p class="sub">基本の金額は「目標・試算条件」、月ごとの違いはこちらで入力します。</p></div><div class="toolbar"><label>開始月 <input id="start" type="month"></label><select id="editMonth" aria-label="編集する月"></select><button id="editMonthButton">月の金額を入力</button><button id="compare" hidden>購入なしと比較</button></div></div>
-<section class="panel" hidden><div id="chart" class="chart" aria-label="月末残高の推移"></div><div class="scroll"><table id="annual"></table></div><div class="legend"><span class="dot"></span>未着手 <span class="dot doing"></span>進行中 <span class="dot waiting"></span>確認待ち <span class="dot done"></span>完了　／ 行動名を押すと期限・内容を編集できます。</div></section>
-<section class="split"><div class="panel"><div class="sectionhead"><h2>行動・期限・担当</h2><button data-dialog="action">＋ 行動</button></div><div id="now"></div></div><div class="panel" hidden><div class="sectionhead"><h2>期限を決める行動</h2></div><div id="undated"></div></div></section>
-<section class="panel"><div class="sectionhead"><div><h2>購入予定</h2><p class="sub">自己資金は手付金を含む未払額を入力。購入融資はここで差し引いた自己資金を使うため、調達案件へ重ねて入れません。</p></div><button data-dialog="purchase">＋ 購入予定</button></div><div id="purchases" class="cards"></div></section>
-<section class="panel"><div class="sectionhead"><div><h2>資金調達案件</h2><p class="sub">承認済み・未入金の案件だけ残高へ加算。検討・申込中・入金済みは加算しません。</p></div><button data-dialog="funding">＋ 調達案件</button></div><div id="funding"></div></section>
-<section class="panel"><div class="sectionhead"><h2>その他の予定支出</h2><button data-dialog="event">＋ 支出</button></div><div id="events"></div></section>
-<details class="panel"><summary>連動中の預金・返済と試算の根拠</summary><div id="accounts"></div><p class="sub">預金と口座の月支払額、積金、特定支出、返済予定表を総合収支アプリから読み取ります。残高自体はこの画面から変更しません。返済予定表がない先の月は現在額を据え置きます。月別家賃は未入力が多いため、初版では直近確認額を仮定として別管理。計画は利用者別にクラウド保存され、総合収支の実績とは分離しています。</p></details>
-<footer>月末残高の試算です。決済日と入出金日が未確定のため、月内の資金不足・口座別の振替可否は未判定です。複数端末で同時編集せず、保存後に別端末で最新データを取得してください。</footer>
-</main></div>
-<dialog id="editor"><form id="form"><div class="sectionhead"><h2 id="dialogTitle"></h2><button type="button" id="close" aria-label="閉じる">×</button></div><div id="fields"></div><div class="dialogfoot"><button type="button" id="delete" class="danger">削除</button><button type="submit" class="primary">反映する</button></div></form></dialog>
-<script type="module" src="app.mjs"></script></body></html>
+<header><div><div class="brand">PRIMARY <span>PLAN</span></div><h1>金融機関別・年間計画</h1></div><div class="toolbar"><a href="/zaikin/" target="_blank" rel="noopener">総合収支を開く ↗</a><button id="reload">最新データを取得</button><button id="print">A4で印刷</button></div></header>
+<div class="statusbar"><span id="sync"></span></div>
+<main id="readPanel"><div id="paper" class="paper"></div><section id="mobilePlan" class="mobile-plan"></section></main></div>
+<script type="module" src="bank-reader.mjs"></script></body></html>
