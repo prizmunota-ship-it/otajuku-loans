@@ -53,3 +53,27 @@
 .mobile-month .consultation-button{flex:1;width:auto;font-size:13px;min-height:60px}.mobile-month .consultation-button strong{font-size:14px}.mobile-month .consult-label{font-size:10px}.mobile-month .consult-empty{opacity:.4}
 #propertyDialog{max-height:90dvh;overflow:auto}#propertyForm input{min-width:0;width:100%;box-sizing:border-box}#propertyForm input[type=checkbox]{width:auto}
 @media print{.consultation-button{display:block!important}.consult-empty{visibility:hidden}}
+
+/* Keep funding entry short and give the saved list the available space. */
+#entryPanel{padding:10px;max-height:none;overflow:visible}
+#entryPanel h2{font-size:14px;line-height:1.4}
+#entryPanel #fundingMonth{margin:2px 0 5px;font-size:10px}
+#entryPanel #entryForm{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 8px;padding:5px 0 8px;align-items:end}
+#entryPanel #entryForm>label{min-width:0;line-height:1.3;gap:2px}
+#entryPanel #entryForm>label:nth-of-type(3){grid-column:1/-1}
+#entryPanel #entryForm input,#entryPanel #entryForm select{width:100%;min-width:0;height:29px;padding:3px 6px;border-radius:4px}
+#entryPanel #entryForm>.toolbar{grid-column:2;margin:0;justify-content:flex-end;flex-wrap:nowrap;gap:4px;height:29px}
+#entryPanel #entryForm>.toolbar button{height:29px;padding:3px 7px}
+#entryPanel .funding-totals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;padding:6px 8px}
+#entryPanel .funding-totals>div{display:block;min-width:0}
+#entryPanel .funding-totals>div+div{margin:0;padding:0 0 0 8px;border-top:0;border-left:1px solid #d2e2d6}
+#entryPanel .funding-totals span{display:block;font-size:10px}
+#entryPanel .funding-totals strong{display:block;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+#entryPanel #entrySummary{margin:8px 0 2px;font-size:11px;font-weight:600}
+#entryPanel .entry-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px;align-items:center;padding:7px 0}
+#entryPanel .entry-row>div{min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+#entryPanel .entry-row strong{font-size:11px;font-weight:500}
+#entryPanel .entry-row b{font-size:11px;font-variant-numeric:tabular-nums}
+#entryPanel .entry-row button{font-size:10px;padding:3px 4px;border-radius:4px}
+#entryPanel .expense-details{margin-top:8px;padding-top:7px}
+@media(max-width:760px){#entryPanel #entryForm input,#entryPanel #entryForm select{font-size:16px;height:34px}#entryPanel #entryForm>.toolbar,#entryPanel #entryForm>.toolbar button{height:34px}}
