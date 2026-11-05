@@ -35,3 +35,8 @@
 .paper-frame{min-width:0}@media print{.paper{width:281mm!important}}
 
 [data-funding-month]{cursor:pointer}[data-funding-month]:hover,[data-funding-month]:focus{outline:1px solid #679f8c;outline-offset:-1px}.original-sheet td.funding-selected,.mobile-number-scroll td.funding-selected{box-shadow:inset 0 0 0 1px #679f8c}.entry-panel #fundingMonth{margin:8px 0 12px;font-size:10px}.entry-panel #entrySummary{margin-top:12px}.entry-panel .empty{font-size:11px;padding:8px 0}@media print{.funding-selected{box-shadow:none!important}}
+
+.funding-totals{margin:14px 0;padding:10px;background:#eef5ef;border-radius:5px}.funding-totals>div{display:flex;align-items:baseline;justify-content:space-between;gap:8px}.funding-totals span{font-size:11px}.funding-totals strong{font-size:18px;color:#174e3d}.funding-totals>div+div{margin-top:5px;padding-top:5px;border-top:1px solid #d2e2d6}
+@media screen and (min-width:761px){.original-sheet{font-size:12px;line-height:1.25}.original-sheet th,.original-sheet td{padding:3px}.original-sheet tbody th,.original-sheet thead th,.original-sheet .original-number-head th{font-size:12px}.original-sheet .original-focus,.original-sheet .original-note{font-size:10px;line-height:1.3;padding:3px}.original-sheet tbody tr>td:not(.original-focus):not(.original-note){font-size:11px}.original-sheet .inline-month{min-height:1.3em}.original-sheet .reserve-target{font-size:10px}.original-sheet .linked-plan{font-size:10px}.original-sheet .bank-heading .bank-name{font-size:11px}}
+
+@media screen and (min-width:761px){.original-sheet tbody tr>td.numeric-value{font-size:10.5px;white-space:nowrap;padding-left:1px;padding-right:1px;font-variant-numeric:tabular-nums}}
