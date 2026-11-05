@@ -1,12 +1,12 @@
 {
   "asof": "2026/11/5",
   "total": 267,
-  "vacant": 19,
-  "applied": 6,
+  "vacant": 20,
+  "applied": 5,
   "taikyo": 1,
-  "lossMan": 193,
+  "lossMan": 202,
   "target": 97,
-  "rate": 92.9,
+  "rate": 92.5,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -55,9 +55,9 @@
     {
       "name": "プライマリー花畑",
       "units": 9,
-      "vacant": 6,
-      "occupied": 3,
-      "applied": 2,
+      "vacant": 7,
+      "occupied": 2,
+      "applied": 1,
       "taikyo": 0,
       "parkTotal": 2,
       "parkVacant": 1,
