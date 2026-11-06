@@ -79,3 +79,5 @@
 @media(max-width:760px){#entryPanel #entryForm input,#entryPanel #entryForm select{font-size:16px;height:34px}#entryPanel #entryForm>.toolbar,#entryPanel #entryForm>.toolbar button{height:34px}}
 
 [data-numeric-row]{cursor:pointer}[data-numeric-row]:hover,[data-numeric-row]:focus-visible{outline:1px solid #679f8c;outline-offset:-1px}.manual-value{color:#88631b!important}#numericForm{display:grid;gap:12px}#numericForm label{display:grid;gap:4px}#numericForm input,#numericForm select{width:100%}#numericForm .toolbar{justify-content:flex-end;font-size:12px}#numericCurrent{font-weight:600}
+
+#propertyForm>fieldset{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0;margin:0;border:0;min-width:0}#propertyForm>fieldset>label{display:grid;gap:3px;font-size:12px}#propertyForm>fieldset>p,#propertyForm .consultation-kind{grid-column:1/-1}#propertyForm .consultation-kind{display:grid;gap:4px}#propertyForm select{width:100%}.working-terms{font-size:9px;line-height:1.4}#deleteWorking{justify-self:start;font-size:11px}@media(max-width:600px){#propertyForm>fieldset{grid-template-columns:1fr}}

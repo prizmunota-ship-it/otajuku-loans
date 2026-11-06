@@ -6,7 +6,7 @@ export function validateWorksheet(v,baseIds){
  if(!Array.isArray(custom)||custom.length>30||!custom.every(b=>b&&typeof b.name==='string'&&b.name.trim().length>0&&b.name.length<=100))return false;
  const ids=[...baseIds,...custom.map((_,i)=>'bank-'+(baseIds.length+i))];
  if(!validateNumericAdjustments(v?.numericAdjustments))return false;
- if(!validatePropertyPlans(v?.propertyPlans,ids))return false;
+ if(!validatePropertyPlans(v?.propertyPlans,ids)||!validateWorkingCapitalPlans(v?.workingCapitalPlans,ids))return false;
  const hidden=v?.hiddenBanks??[];if(!Array.isArray(hidden)||new Set(hidden).size!==hidden.length||!hidden.every(id=>ids.includes(id)))return false;
  const cells=v?.bankMonths;
  if(cells!==undefined&&(!cells||typeof cells!=='object'||Array.isArray(cells)||!Object.entries(cells).every(([id,months])=>ids.includes(id)&&months&&typeof months==='object'&&!Array.isArray(months)&&Object.entries(months).every(([month,value])=>/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)&&typeof value==='string'&&value.length<=1000))))return false;
@@ -101,3 +101,5 @@ export function validateNumericAdjustments(items){return items===undefined||(Arr
 export function editNumericAdjustment(settings,row,month,delta){const items=(settings.numericAdjustments||[]).filter(x=>x.row!==row||x.month!==month);if(delta!==0)items.push({row,month,delta});if(!validateNumericAdjustments(items))throw Error('入力する数値を確認してください');return {...settings,numericAdjustments:items};}
 
 export function numericCellValue(value){if(typeof value==='number')return Number.isFinite(value)?value:null;const text=String(value??'').normalize('NFKC').replace(/\s/g,'');const match=text.match(/^([+-]?[0-9,]+(?:\.[0-9]+)?)(?:\([+-][0-9,]+\))?$/);return match?Number(match[1].replaceAll(',','')):null;}
+
+export function validateWorkingCapitalPlans(plans,ids){return plans===undefined||(Array.isArray(plans)&&plans.length<=500&&new Set(plans.map(p=>p?.bankId+':'+p?.consultMonth)).size===plans.length&&plans.every(p=>p&&ids.includes(p.bankId)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.consultMonth)&&Number.isFinite(p.amount)&&p.amount>0&&p.amount<=1e12&&Number.isFinite(p.rate)&&p.rate>=0&&p.rate<=100&&Number.isFinite(p.years)&&p.years>0&&p.years<=100));}
