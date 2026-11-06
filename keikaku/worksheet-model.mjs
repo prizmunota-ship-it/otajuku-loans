@@ -38,22 +38,22 @@ export function selfFundingExpenses(settings){const result=[];for(const [bankId,
  const [y,m]=month.split('-').map(Number),next=m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`;
  result.push({id:`self-${bankId}-${month}`,bankId,month:next,amount,name:'自己資金（'+month+'相談分）'});
  }return result;}
-export function numericRows(w,ledger,settings,year,today){const ym=today.slice(0,7),live=liveMetrics(ledger,settings.cfMode),deposits=depositTotals(ledger),selfExpenses=selfFundingExpenses(settings);const rows=w.numbers.map(r=>({...r,values:year===w.year?[...r.values]:Array(12).fill('—'),sources:Array(12).fill(year===w.year?'元Excel':'未設定')}));
+export function numericRows(w,ledger,settings,year,today){const effectiveEntries=[...settings.entries,...workingCapitalFunding(settings)];const ym=today.slice(0,7),live=liveMetrics(ledger,settings.cfMode),deposits=depositTotals(ledger),selfExpenses=selfFundingExpenses(settings);const rows=w.numbers.map(r=>({...r,values:year===w.year?[...r.values]:Array(12).fill('—'),sources:Array(12).fill(year===w.year?'元Excel':'未設定')}));
  // Explicit November 2026 planning adjustment; do not add it again after the live month rolls forward.
- const currentFunding=ym==='2026-11'?settings.entries.filter(e=>e.include&&e.month===ym&&['borrowing','income'].includes(e.kind)).reduce((sum,e)=>sum+e.amount,0):0;
+ const currentFunding=ym==='2026-11'?effectiveEntries.filter(e=>e.include&&e.month===ym&&['borrowing','income'].includes(e.kind)).reduce((sum,e)=>sum+e.amount,0):0;
  rows[6]={...rows[6],label:'預金残高（計画反映後）',values:Array(12).fill('—'),sources:Array(12).fill('過去残高未登録')};
  for(let i=0;i<12;i++){const month=`${year}-${String(i+1).padStart(2,'0')}`;
   if(month>=ym&&live.available){[live.units,live.rent/10000,live.cfMissing?null:live.cf/10000].forEach((v,r)=>{rows[r].values[i]=v==null?'未登録':v;rows[r].sources[i]=month===ym?'総合収支・最新登録値':'総合収支・最新値据置';});}
   if(month>=ym&&live.available){const p=propertyPlanTotals(settings,ledger,month);if(p.count)[p.units,p.rentY/10000,p.cfY/10000].forEach((v,r)=>{if(typeof rows[r].values[i]==='number')rows[r].values[i]+=v;rows[r].sources[i]='総合収支・最新登録値＋取得予定の年額（計画）';});}
   if(month===ym&&deposits.available){rows[6].values[i]=(deposits.total+currentFunding)/10000;rows[6].sources[i]=ym==='2026-11'?'見込：現在預金＋11月資金調達（借入＋賃収・その他）':'総合収支・現在預金（口座＋積立）';}
   if(month>ym&&deposits.available){
-   const planned=settings.entries.filter(e=>e.include&&e.month>ym&&e.month<=month);
+   const planned=effectiveEntries.filter(e=>e.include&&e.month>ym&&e.month<=month);
    const net=planned.reduce((sum,e)=>sum+(['borrowing','income'].includes(e.kind)?e.amount:e.kind==='expense'?-e.amount:0),0);
    const own=selfExpenses.filter(e=>e.month>ym&&e.month<=month).reduce((sum,e)=>sum+e.amount,0);
    rows[6].values[i]=(deposits.total+currentFunding+net-own)/10000;
    rows[6].sources[i]='見込：当月の計画反映後残高＋翌月から表示月までの借入＋賃収その他−支出（自己資金含む）';
   }
-  ['borrowing','income','expense'].forEach((kind,k)=>{rows[k+3].values[i]=settings.entries.filter(e=>e.month===month&&e.kind===kind&&e.include).reduce((s,e)=>s+e.amount/10000,0);if(kind==='expense')rows[k+3].values[i]+=selfExpenses.filter(x=>x.month===month).reduce((sum,x)=>sum+x.amount/10000,0);rows[k+3].sources[i]='資金調達案・予定支出（計画）';});
+  ['borrowing','income','expense'].forEach((kind,k)=>{rows[k+3].values[i]=effectiveEntries.filter(e=>e.month===month&&e.kind===kind&&e.include).reduce((s,e)=>s+e.amount/10000,0);if(kind==='expense')rows[k+3].values[i]+=selfExpenses.filter(x=>x.month===month).reduce((sum,x)=>sum+x.amount/10000,0);rows[k+3].sources[i]='資金調達案・予定支出（計画）';});
  }
  // Manual changes are deltas, so later source updates still flow through.
  for(let i=0;i<12;i++){const month=`${year}-${String(i+1).padStart(2,'0')}`;for(const a of settings.numericAdjustments||[]){
@@ -103,3 +103,7 @@ export function editNumericAdjustment(settings,row,month,delta){const items=(set
 export function numericCellValue(value){if(typeof value==='number')return Number.isFinite(value)?value:null;const text=String(value??'').normalize('NFKC').replace(/\s/g,'');const match=text.match(/^([+-]?[0-9,]+(?:\.[0-9]+)?)(?:\([+-][0-9,]+\))?$/);return match?Number(match[1].replaceAll(',','')):null;}
 
 export function validateWorkingCapitalPlans(plans,ids){return plans===undefined||(Array.isArray(plans)&&plans.length<=500&&new Set(plans.map(p=>p?.bankId+':'+p?.consultMonth)).size===plans.length&&plans.every(p=>p&&ids.includes(p.bankId)&&/^20\d{2}-(0[1-9]|1[0-2])$/.test(p.consultMonth)&&Number.isFinite(p.amount)&&p.amount>0&&p.amount<=1e12&&Number.isFinite(p.rate)&&p.rate>=0&&p.rate<=100&&Number.isFinite(p.years)&&p.years>0&&p.years<=100));}
+
+// Equal monthly principal-and-interest payments; round the displayed estimate to yen.
+export function workingCapitalPayment(p){const months=Math.round(p.years*12),r=p.rate/1200;if(!Number.isFinite(p.amount)||p.amount<=0||!Number.isFinite(r)||r<0||!Number.isFinite(months)||months<1)return null;return Math.round(r===0?p.amount/months:p.amount*r/(-Math.expm1(-months*Math.log1p(r))));}
+export function workingCapitalFunding(settings){return (settings.workingCapitalPlans||[]).map(p=>{const [y,m]=p.consultMonth.split('-').map(Number);return {id:`working-${p.bankId}-${p.consultMonth}`,bankId:p.bankId,consultMonth:p.consultMonth,month:m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`,name:'運転資金（'+p.consultMonth+'相談分）',kind:'borrowing',amount:p.amount,include:true,status:'planned',source:'working'};});}
