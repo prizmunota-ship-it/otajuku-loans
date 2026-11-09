@@ -1,14 +1,14 @@
 [
- {
-  "name": "P戸畑駅前",
-  "room": "501",
-  "takyobi": "10/31",
-  "kanri": "DL",
-  "kagi": "",
-  "status": "未内装",
-  "kanryoYotei": "",
-  "kojihi": "",
-  "itsukin": "",
-  "notes": ""
- }
+  {
+    "name": "P戸畑駅前",
+    "room": "501",
+    "takyobi": "10/31",
+    "kanri": "DL",
+    "kagi": "",
+    "status": "内装中",
+    "kanryoYotei": "",
+    "kojihi": "",
+    "itsukin": "",
+    "notes": ""
+  }
 ]
