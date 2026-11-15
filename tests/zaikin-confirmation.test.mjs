@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const html=fs.readFileSync(new URL('../zaikin/index.html',import.meta.url),'utf8');
+for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) if(m[1].trim())new vm.Script(m[1]);
+const start=html.indexOf('  function amountConfirmed('), end=html.indexOf('  function pDetailBlock(');
+const ctx={ASSETS:{completeMonths:9},esc:x=>x,yen:x=>String(x),deriveDetail:()=>[]};vm.createContext(ctx);vm.runInContext(html.slice(start,end),ctx);
+const row={l:'家賃',t:'in',v:Array(12).fill(100),confirmedValues:{10:{amount:100,period:'2026-11'}}};
+assert.equal(ctx.amountConfirmed(row,10,9),true);
+assert.equal(ctx.amountConfirmed(row,9,9),false);
+assert.equal(ctx.amountConfirmed(row,8,9),true);
+row.v[10]=101;assert.equal(ctx.amountConfirmed(row,10,9),false);row.v[10]=100;
+const output=ctx.pDetailTable({detail:[row,{l:'電気代',t:'out',v:Array(12).fill(50)},{l:'差引収支',t:'net',v:Array(12).fill(50)}]});
+assert.match(output,/<td class="confirmed">100<\/td>/);
+assert.match(output,/<td class="fut">50<\/td>/);
+assert.match(output,/薄字：未確定/);
+ctx.ASSETS.monthlyBook=[{l:'物件',v:Array(12).fill(50)}];assert.match(ctx.monthlyBookHtml(),/<td class="fut ">50/);
+console.log('PASS: syntax, verified cell, unknown cell, changed amount, month boundary, incomplete total');
