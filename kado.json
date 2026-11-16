@@ -1,12 +1,12 @@
 {
-  "asof": "2026/11/10",
+  "asof": "2026/11/16",
   "total": 267,
-  "vacant": 17,
-  "applied": 8,
-  "taikyo": 1,
-  "lossMan": 186,
+  "vacant": 16,
+  "applied": 10,
+  "taikyo": 2,
+  "lossMan": 174,
   "target": 97,
-  "rate": 93.6,
+  "rate": 94.0,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -44,9 +44,9 @@
     {
       "name": "プライマリー花畑駅西",
       "units": 30,
-      "vacant": 1,
-      "occupied": 29,
-      "applied": 0,
+      "vacant": 0,
+      "occupied": 30,
+      "applied": 1,
       "taikyo": 0,
       "parkTotal": 6,
       "parkVacant": 0,
@@ -55,9 +55,9 @@
     {
       "name": "プライマリー花畑",
       "units": 9,
-      "vacant": 5,
-      "occupied": 4,
-      "applied": 3,
+      "vacant": 4,
+      "occupied": 5,
+      "applied": 4,
       "taikyo": 0,
       "parkTotal": 2,
       "parkVacant": 1,
@@ -176,10 +176,10 @@
     {
       "name": "プライマリー久留米インターA棟",
       "units": 6,
-      "vacant": 0,
-      "occupied": 6,
+      "vacant": 1,
+      "occupied": 5,
       "applied": 0,
-      "taikyo": 0,
+      "taikyo": 1,
       "parkTotal": 1,
       "parkVacant": 0,
       "kanri": "駅前管理システム"
