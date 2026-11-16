@@ -1,12 +1,12 @@
 {
   "asof": "2026/11/16",
   "total": 267,
-  "vacant": 16,
+  "vacant": 15,
   "applied": 10,
-  "taikyo": 2,
+  "taikyo": 1,
   "lossMan": 174,
   "target": 97,
-  "rate": 94.0,
+  "rate": 94.4,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -176,10 +176,10 @@
     {
       "name": "プライマリー久留米インターA棟",
       "units": 6,
-      "vacant": 1,
-      "occupied": 5,
+      "vacant": 0,
+      "occupied": 6,
       "applied": 0,
-      "taikyo": 1,
+      "taikyo": 0,
       "parkTotal": 1,
       "parkVacant": 0,
       "kanri": "駅前管理システム"
