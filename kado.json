@@ -1,12 +1,12 @@
 {
-  "asof": "2026/11/16",
+  "asof": "2026/11/20",
   "total": 267,
-  "vacant": 14,
+  "vacant": 13,
   "applied": 11,
-  "taikyo": 1,
-  "lossMan": 157,
+  "taikyo": 0,
+  "lossMan": 162,
   "target": 97,
-  "rate": 94.8,
+  "rate": 95.1,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -90,7 +90,7 @@
       "units": 14,
       "vacant": 0,
       "occupied": 14,
-      "applied": 1,
+      "applied": 0,
       "taikyo": 0,
       "parkTotal": 2,
       "parkVacant": 0,
@@ -99,9 +99,9 @@
     {
       "name": "プライマリー久留米大東",
       "units": 18,
-      "vacant": 2,
-      "occupied": 16,
-      "applied": 0,
+      "vacant": 1,
+      "occupied": 17,
+      "applied": 1,
       "taikyo": 0,
       "parkTotal": 3,
       "parkVacant": 0,
@@ -124,7 +124,7 @@
       "vacant": 1,
       "occupied": 11,
       "applied": 1,
-      "taikyo": 1,
+      "taikyo": 0,
       "parkTotal": null,
       "parkVacant": null,
       "kanri": "ウィズザライフ"
