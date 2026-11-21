@@ -1,12 +1,12 @@
 {
-  "asof": "2026/11/20",
+  "asof": "2026/11/21",
   "total": 267,
-  "vacant": 13,
+  "vacant": 12,
   "applied": 11,
   "taikyo": 0,
-  "lossMan": 162,
+  "lossMan": 164,
   "target": 97,
-  "rate": 95.1,
+  "rate": 95.5,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -35,7 +35,7 @@
       "units": 10,
       "vacant": 1,
       "occupied": 9,
-      "applied": 1,
+      "applied": 0,
       "taikyo": 0,
       "parkTotal": 4,
       "parkVacant": 2,
@@ -121,9 +121,9 @@
     {
       "name": "プライマリー西鉄久留米駅前",
       "units": 12,
-      "vacant": 1,
-      "occupied": 11,
-      "applied": 1,
+      "vacant": 0,
+      "occupied": 12,
+      "applied": 2,
       "taikyo": 0,
       "parkTotal": null,
       "parkVacant": null,
