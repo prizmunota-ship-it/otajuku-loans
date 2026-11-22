@@ -1,12 +1,12 @@
 {
-  "asof": "2026/11/21",
+  "asof": "2026/11/22",
   "total": 267,
-  "vacant": 12,
+  "vacant": 13,
   "applied": 11,
-  "taikyo": 0,
-  "lossMan": 164,
+  "taikyo": 1,
+  "lossMan": 166,
   "target": 97,
-  "rate": 95.5,
+  "rate": 95.1,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -66,12 +66,12 @@
     {
       "name": "プライマリー糸島中央",
       "units": 8,
-      "vacant": 0,
-      "occupied": 8,
+      "vacant": 1,
+      "occupied": 7,
       "applied": 0,
-      "taikyo": 0,
+      "taikyo": 1,
       "parkTotal": 10,
-      "parkVacant": 2,
+      "parkVacant": 3,
       "kanri": "イムズパートナー"
     },
     {
