@@ -1,12 +1,12 @@
 {
-  "asof": "2026/11/23",
+  "asof": "2026/11/24",
   "total": 267,
-  "vacant": 14,
-  "applied": 11,
+  "vacant": 13,
+  "applied": 12,
   "taikyo": 2,
-  "lossMan": 168,
+  "lossMan": 150,
   "target": 97,
-  "rate": 94.8,
+  "rate": 95.1,
   "props": [
     {
       "name": "プライマリー上津バイパス",
@@ -209,9 +209,9 @@
     {
       "name": "プライマリー神埼駅前",
       "units": 8,
-      "vacant": 2,
-      "occupied": 6,
-      "applied": 0,
+      "vacant": 1,
+      "occupied": 7,
+      "applied": 1,
       "taikyo": 1,
       "parkTotal": 2,
       "parkVacant": 0,
