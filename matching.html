@@ -12,7 +12,7 @@ function inventoryBlock(d){
  for(const type of ['新築','中古']){const rows=d.inventory.filter(r=>r.type===type);const total=rows.reduce((n,r)=>n+r.count,0);
  if(!rows.length){const empty=document.createElement('div');empty.className='inventory-empty';empty.textContent='【'+type+'】0件';box.append(empty);continue;}
  const details=document.createElement('details');details.className='inventory-group';const summary=document.createElement('summary');
- const label=document.createElement('span'),name=document.createElement('span'),pref=document.createElement('span');name.className='inventory-label';name.textContent='【'+type+'】'+total+'件';pref.className='inventory-pref';pref.textContent=[...new Set(rows.map(r=>r.prefecture))].join('・');label.append(name,pref);
+ const label=document.createElement('span'),name=document.createElement('span'),pref=document.createElement('span');name.className='inventory-label';name.textContent='【'+type+'】'+total+'件';pref.className='inventory-pref';pref.textContent=[...new Set(rows.map(r=>r.prefecture))].join('・');label.append(name);
  const toggle=document.createElement('span');toggle.className='inventory-toggle';toggle.setAttribute('aria-hidden','true');summary.append(label,toggle);details.append(summary);
  const items=document.createElement('div');items.className='inventory-items';for(const r of rows){const item=document.createElement('div');item.className='inventory-item';const place=document.createElement('strong');place.textContent=r.prefecture+' '+r.city+'｜'+r.count+'件';item.append(place);if(r.overview){const p=document.createElement('p');p.textContent=r.overview;item.append(p)}items.append(item)}details.append(items);box.append(details);
  }return box;
