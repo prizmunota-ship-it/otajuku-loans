@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>太田塾 入会管理</title>
-<script>(function(){var G="https://script.google.com/macros/s/AKfycbyZAnDfRVkEsGmaEmZoXQixgMyVHmlMJ-6aMQ4M7Pr_8_q8NwrfAna6tH-eAlYd8uwL/exec";if(localStorage.getItem("otajuku_auth")!=="ok"){location.replace("/");return;}var em=(localStorage.getItem("otajuku_email")||"").trim().toLowerCase();if(!em){localStorage.removeItem("otajuku_auth");location.replace("/");return;}if(em!=="prizmun.ota@gmail.com"){location.replace("/");return;}var ts=parseInt(localStorage.getItem("otajuku_auth_ts")||"0",10);if(Date.now()-ts<86400000){return;}window._rc=function(r){if(r==="ok"){localStorage.setItem("otajuku_auth_ts",""+Date.now());}else{localStorage.removeItem("otajuku_auth");localStorage.removeItem("otajuku_email");localStorage.removeItem("otajuku_auth_ts");location.replace("/");}};var s=document.createElement("script");s.src=G+"?email="+encodeURIComponent(em)+"&callback=_rc";(document.head||document.documentElement).appendChild(s);})();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -70,7 +70,7 @@ textarea{min-height:70px}
 .msg{font-size:12px;color:#176340;font-weight:700;margin-top:6px;min-height:16px}
 .msg.err{color:#a63921}
 .tokenbox{background:#fff;border:1.5px solid rgba(245,196,0,.6);border-radius:14px;padding:14px;margin:10px auto}
-.tokenbox p{font-size:12.5px;color:#6b5312;margin-bottom:8px}
+.tokenbox input{font-size:16px;width:100%;padding:12px;margin:6px 0}.tokenbox p{font-size:14px;color:#6b5312;margin-bottom:8px}
 .sheet{font-size:11px;font-weight:700}
 .sheet.ok{color:#176340}.sheet.failed{color:#a63921}
 .legend{font-size:11px;color:#8A6D1F;margin:2px auto 6px;max-width:680px}
@@ -86,14 +86,22 @@ textarea{min-height:70px}
   </div>
   <div class="legend">手続き未完＝会費ペイ未登録・オープンチャット未招待・紹介料が未払（紹介者がいる方）のいずれか。</div>
 
-  <div class="tokenbox" id="tokenBox" style="display:none">
-    <p><b>管理用トークン</b>を入力してください（この端末に保存されます。太田専用）。</p>
-    <input id="tokenInput" placeholder="トークンを貼り付け" autocomplete="off">
-    <button class="btn dark" onclick="saveToken()">保存して読み込む</button>
-    <div class="msg err" id="tokenMsg"></div>
+  <div class="tokenbox" id="loginBox" style="display:none">
+    <p><b>太田さん専用ログイン</b><br>総合収支アプリと同じメール・パスワードで、スマホからも利用できます。</p>
+    <form onsubmit="signInOwner(event)">
+      <input id="ownerEmail" type="email" value="prizmun.ota@gmail.com" autocomplete="username" aria-label="メールアドレス" required>
+      <input id="ownerPassword" type="password" autocomplete="current-password" placeholder="総合収支アプリのパスワード" aria-label="パスワード" required>
+      <button class="btn dark" id="loginButton" type="submit">ログイン</button>
+    </form>
+    <div class="msg err" id="loginMsg" role="status"></div>
+    <details><summary>従来の管理トークンで開く</summary>
+      <div id="tokenBox"><input id="tokenInput" type="password" placeholder="管理トークン" autocomplete="off">
+      <button class="btn" onclick="saveToken()">保存して読み込む</button><div class="msg err" id="tokenMsg"></div></div>
+    </details>
   </div>
 
   <div class="tools">
+    <button onclick="logoutOwner()">ログアウト</button>
     <button class="pri" onclick="load()">🔄 最新に更新</button>
     <button id="viewBtn" onclick="toggleView()">📋 表で見る（Excel風）</button>
     <button onclick="openCreate()">＋ 手入力で追加</button>
@@ -108,6 +116,18 @@ textarea{min-height:70px}
 <div id="ov" style="display:none"></div>
 
 <script>
+const ownerAuth=window.supabase?.createClient('https://xhbgmnousqkoiqaruprr.supabase.co','sb_publishable_ZhUJDpEF1nCnMYunq27dzg_vcdmjPlc');
+function showLogin(message=''){members=[];$('list').innerHTML='';$('loginBox').style.display='block';$('loginMsg').textContent=message;['cActive','cTodo','cLeft'].forEach(id=>$(id).textContent='—');}
+async function signInOwner(event){
+  event.preventDefault();$('loginButton').disabled=true;$('loginMsg').textContent='';
+  try{if(!ownerAuth)throw Error('読み込みに失敗しました。再読み込みしてください。');
+    const {error}=await ownerAuth.auth.signInWithPassword({email:$('ownerEmail').value.trim(),password:$('ownerPassword').value});
+    $('ownerPassword').value='';
+    if(error)throw Error('ログインできません。総合収支アプリと同じ情報をご確認ください。');
+    localStorage.removeItem(TOKEN_KEY);await load();
+  }catch(e){$('loginMsg').textContent=e.message;}finally{$('loginButton').disabled=false;}
+}
+async function logoutOwner(){localStorage.removeItem(TOKEN_KEY);if(ownerAuth)await ownerAuth.auth.signOut({scope:'local'});showLogin();}
 const TOKEN_KEY='otajuku_member_admin_token';
 const STEPS=[['card','💳','会費ペイ'],['oc','💬','オープンチャット招待'],['referral','🎁','紹介料']];
 const STATUS={active:'メンバー',left:'退会'};
@@ -121,18 +141,22 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const stat=m=>m.status==='left'?'left':'active';
 const refName=m=>{const r=(m.referrer||'').trim();if(!r||NO_REFERRER.test(r))return '';const own=(m.name||'').replace(/[\s　]/g,'').split(/[（(]/)[0];if(own&&r.replace(/[\s　]/g,'').startsWith(own))return '';return r;};
 function token(){return localStorage.getItem(TOKEN_KEY)||'';}
-function saveToken(){const t=$('tokenInput').value.trim();if(!t){$('tokenMsg').textContent='トークンが空です';return;}localStorage.setItem(TOKEN_KEY,t);$('tokenBox').style.display='none';load();}
+function saveToken(){const t=$('tokenInput').value.trim();if(!t){$('tokenMsg').textContent='トークンが空です';return;}localStorage.setItem(TOKEN_KEY,t);$('loginBox').style.display='none';load();}
 async function api(action,extra={}){
-  const r=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:token(),...extra}),signal:AbortSignal.timeout(30000)});
+  const session=ownerAuth?(await ownerAuth.auth.getSession()).data.session:null;
+  const headers={'Content-Type':'application/json'};
+  if(session?.access_token)headers.Authorization='Bearer '+session.access_token;
+  const r=await fetch('/api/join',{method:'POST',headers,body:JSON.stringify({action,token:token(),...extra}),signal:AbortSignal.timeout(30000)});
   const j=await r.json().catch(()=>({}));
-  if(r.status===403){localStorage.removeItem(TOKEN_KEY);$('tokenBox').style.display='block';$('tokenMsg').textContent='トークンが違います。もう一度入力してください。';throw new Error('forbidden');}
+  if(r.status===403){localStorage.removeItem(TOKEN_KEY);showLogin('太田さんのアカウントでログインしてください。');throw new Error('forbidden');}
   if(!r.ok||!j.ok)throw new Error(j.error||'network');
   return j;
 }
 async function load(){
-  if(!token()){$('tokenBox').style.display='block';$('list').innerHTML='<div class="empty">トークンを入力すると名簿が表示されます</div>';return;}
+  const session=ownerAuth?(await ownerAuth.auth.getSession()).data.session:null;
+  if(!token()&&!session){showLogin();return;}
   $('list').innerHTML='<div class="empty">読み込み中…</div>';
-  try{const j=await api('list');members=j.members;render();}
+  try{const j=await api('list');members=j.members;$('loginBox').style.display='none';render();}
   catch(e){if(e.message!=='forbidden')$('list').innerHTML='<div class="empty">読み込めませんでした（'+esc(e.message)+'）</div>';}
 }
 /* 未完の項目：会費ペイ未登録／オープンチャット未招待／紹介者がいるのに紹介料未払 */

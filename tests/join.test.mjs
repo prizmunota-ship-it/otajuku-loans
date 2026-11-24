@@ -62,3 +62,18 @@ test('admin test submissions skip the Google Form mirror', async () => {
   const {send, posted} = setup();
   const r = await send({...apply, token: TOKEN, test: true}); assert.equal(r.sheet, 'n/a'); assert.equal(posted.length, 0);
 });
+
+test('owner login is verified upstream, not by caller-supplied email', async () => {
+  for (const [user, status] of [
+    [{id:'e320ddc4-6302-4632-8941-928b7395988d',email:'prizmun.ota@gmail.com',email_confirmed_at:'2026-01-01'},200],
+    [{id:'other',email:'prizmun.ota@gmail.com',email_confirmed_at:'2026-01-01'},403],
+    [{id:'e320ddc4-6302-4632-8941-928b7395988d',email:'other@example.test',email_confirmed_at:'2026-01-01'},403],
+    [{id:'e320ddc4-6302-4632-8941-928b7395988d',email:'prizmun.ota@gmail.com'},403]
+  ]) {
+    const handler=createHandler(async (url,init)=>{assert.equal(url,'https://xhbgmnousqkoiqaruprr.supabase.co/auth/v1/user');assert.equal(init.headers.Authorization,'Bearer test-session');return Response.json(user)});
+    const r=await handler({request:new Request('https://otajuku-loans.pages.dev/api/join',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer test-session'},body:JSON.stringify({action:'list',email:'prizmun.ota@gmail.com'})}),env:{ZAIKO_KV:new MemoryKV()}});
+    assert.equal(r.status,status);
+  }
+  const handler=createHandler(async()=>new Response('',{status:401}));
+  const r=await handler({request:new Request('https://otajuku-loans.pages.dev/api/join',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer forged'},body:'{"action":"list"}'}),env:{ZAIKO_KV:new MemoryKV()}});assert.equal(r.status,403);
+});
