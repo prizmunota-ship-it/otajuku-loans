@@ -1,15 +1,22 @@
 <!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>業者登録｜太田塾 マッチング不動産</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#fffbef;color:#2d240e;font:16px/1.7 system-ui,sans-serif}header{background:#ffcf35;padding:16px 24px;font-weight:800}main{max-width:700px;margin:24px auto;padding:0 18px}h1{font-size:26px;margin:0}h2{font-size:20px}.card{background:white;border:1px solid #e2d5a6;border-radius:16px;padding:24px;margin:20px 0}label{display:block;font-weight:650;margin:14px 0 5px}input,textarea,button{font:inherit}input:not([type=checkbox]),textarea{width:100%;padding:12px;border:1px solid #a99460;border-radius:8px;background:white}textarea{min-height:90px}fieldset{border:1px solid #d8cda8;border-radius:8px;margin:18px 0;padding:12px}fieldset label{font-weight:400;margin:8px 0}input[type=checkbox]{width:20px;height:20px;vertical-align:middle;margin-right:8px}button,.button{display:inline-block;padding:12px 20px;border:0;border-radius:8px;background:#ffcf35;color:#2d240e;font-weight:750;text-decoration:none;cursor:pointer}button:disabled{opacity:.6}small,.help{font-size:14px;color:#655839}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.error{color:#b3261e}.success{color:#176b42}#message{white-space:pre-line}a{color:#614200}*:focus-visible{outline:3px solid #826000;outline-offset:3px}[hidden]{display:none!important}@media(max-width:500px){.card{padding:16px}.row{grid-template-columns:1fr}}
-</style><header>太田塾㊙️ マッチング不動産</header><main><h1>業者さんの登録</h1><p>得意分野や対応エリアを教えてください。登録時のメールとパスワードで、いつでも編集・更新できます。</p><p class="help">初回登録は太田の承認後に掲載されます。承認後の編集は確認不要で、保存すると太田塾メンバー向けの掲載内容に反映されます。</p>
-<section id="login" class="card" hidden><h2>業者用ログイン</h2><p>初めての方はパスワードを設定してください。ChatGPT登録は不要です。</p><form id="authForm"><label for="vendorEmail">太田塾の登録メール</label><input id="vendorEmail" type="email" autocomplete="username" required><label for="vendorPassword">パスワード（8文字以上）</label><input id="vendorPassword" type="password" autocomplete="current-password" minlength="8" required><button id="signIn" type="submit">ログイン</button> <button id="signUp" type="button">初めて登録する</button><p id="authMessage" role="status"></p><small>資金繰り帳のアカウントがある方は同じパスワードでログインできます。パスワードを忘れた場合は太田にご連絡ください。</small></form></section><button id="signOut" hidden type="button">業者用ログアウト</button>
+</style><header>太田塾㊙️ マッチング不動産</header><main><h1>自社情報の登録・編集</h1><p>会社の得意分野、対応エリア、お問い合わせ先を登録できます。</p>
+<section id="login" class="card" hidden aria-labelledby="loginTitle">
+<h2 id="loginTitle">メールで本人確認</h2>
+<p>太田塾の登録メールに確認リンクを送ります。メールのリンクを開くと、自社情報の入力・編集に進めます。</p>
+<form id="authForm">
+<label for="vendorEmail">太田塾の登録メールアドレス</label><input id="vendorEmail" type="email" autocomplete="email" required>
+<button id="sendLink" type="submit" style="margin-top:12px">確認リンクを送る</button>
+<p id="authMessage" role="status" aria-live="polite" style="white-space:pre-line"></p>
+</form></section>
+<button id="signOut" hidden type="button">ログアウト</button>
 <form id="form" class="card" hidden><p id="account" class="help"></p><label for="company">会社名 *</label><input id="company" required maxlength="100" autocomplete="organization"><label for="logo">会社ロゴ（任意）</label><input id="logo" type="file" accept="image/png,image/jpeg,image/webp"><small>PNG・JPEG・WebP、1MB以下。会社名の横に表示します。</small><p><img id="logoPreview" alt="会社ロゴのプレビュー" hidden style="width:80px;height:80px;object-fit:contain"></p><button id="removeLogo" type="button">ロゴを外す</button><label for="person">ご担当者名 *</label><input id="person" required maxlength="60" autocomplete="name"><label for="strength">特徴・得意なこと *</label><textarea id="strength" required maxlength="50" placeholder="例：福岡市の中古一棟と管理が得意。購入後の相談も対応。"></textarea><small id="counter">0 / 50文字</small>
 <label for="website">会社ホームページ（任意）</label><input id="website" type="url" maxlength="500" placeholder="https://…" autocomplete="url">
 <label for="areas">対応エリア *</label><textarea id="areas" required maxlength="500" placeholder="福岡県 福岡市博多区\n福岡県 久留米市"></textarea><small>都道府県＋市区町村を、1行に1つ。市全域の場合は「福岡県 福岡市全域」など。</small>
 <fieldset><legend>相談できる内容 *（複数選択可）</legend><label><input type="checkbox" name="services" value="売買">売買</label><label><input type="checkbox" name="services" value="管理">管理</label><label><input type="checkbox" name="services" value="大規模修繕">修繕（大規模修繕）</label><label><input type="checkbox" name="services" value="原状回復">修繕（原状回復）</label><label><input type="checkbox" name="services" value="不動産に関する相談">不動産に関する相談</label></fieldset>
 <fieldset><legend>現在の紹介案件</legend><small>新築／中古と所在地ごとに件数を入力。対応エリアとは別です。紹介なしの場合は全行を削除して保存。</small><div id="inventoryRows"></div><button type="button" id="addInventory">紹介案件を追加</button></fieldset><label for="phone">担当者の電話番号（任意）</label><input id="phone" type="tel" maxlength="40" autocomplete="tel" placeholder="例：090-1234-5678"><label for="contactMethod">お問い合わせ方法 *</label><select id="contactMethod" style="font:inherit;width:100%;padding:12px;border:1px solid #a99460;border-radius:8px"><option value="">既存の連絡先（方法未選択）</option><option value="email" selected>メール</option><option value="line">LINE</option><option value="phone">電話</option></select><label id="contactLabel" for="contact">メールアドレス *</label><input id="contact" required maxlength="250" type="email" placeholder="例：info@example.com"><small>メール・LINEでのお問い合わせを基本に、ご希望の方法を選択してください。</small><label for="contactHours">受付時間（任意）</label><input id="contactHours" maxlength="100" placeholder="例：平日9:30〜18:00／水曜定休"><small>メール・LINEの返信対応時間などをご記載ください。未入力なら表示しません。</small>
-<label for="feedback">使ってみた感想・改善点（任意）</label><textarea id="feedback" maxlength="1000" placeholder="分かりにくい点など、ぜひ教えてください。太田のみ確認します。"></textarea>
-<label><input id="consent" type="checkbox" required>初回承認後、登録・更新内容を太田塾内へ掲載することに同意します。</label><p class="help">掲載情報の塾外への公開・転載・転送は禁止です。初回承認後は、ご自身でいつでも編集・更新できます。</p><button id="submit" type="submit">登録内容を送信</button><p id="message" role="status" aria-live="polite"></p></form>
-<p id="loadError" role="alert" class="error"></p><p><a href="/matching">登録内容を一覧で確認</a> · <a href="https://ota-juku-gyosha-demo.prizmun-ota.chatgpt.site/admin">太田専用・登録内容確認</a></p></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+<input id="feedback" type="hidden"><label><input id="consent" type="checkbox" required>登録・更新内容を太田塾メンバー向けに掲載することに同意します。</label><p class="help">初回は承認後に掲載されます。</p><button id="submit" type="submit">登録内容を送信</button><p id="message" role="status" aria-live="polite"></p></form>
+<p id="loadError" role="alert" class="error"></p><p><a href="/matching">マッチング不動産に戻る</a></p></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const $=id=>document.getElementById(id);const fields=['company','person','strength','website','areas','contact','phone','feedback','contactMethod','contactHours'];
 function updateContactInput(){const method=$('contactMethod').value;const config={email:['メールアドレス','email','例：info@example.com'],line:['LINE URL','url','例：https://line.me/…'],phone:['電話番号','tel','例：092-123-4567']};const [label,type,placeholder]=config[method]||['問い合わせ先','text','既存の連絡先'];$('contactLabel').textContent=label+' *';$('contact').type=type;$('contact').placeholder=placeholder;}
 $('contactMethod').onchange=updateContactInput;
@@ -32,31 +39,40 @@ $('logo').onchange=async()=>{const file=$('logo').files[0];if(!file)return;if(fi
 $('removeLogo').onclick=()=>{logoValue='';$('logo').value='';$('logoPreview').hidden=true};
 $('strength').oninput=()=>{$('counter').textContent=Array.from($('strength').value).length+' / 50文字'};
 
+const callbackError=new URLSearchParams(location.hash.slice(1)).has('error')||new URLSearchParams(location.search).has('error');
 const sb=window.supabase?.createClient('https://xhbgmnousqkoiqaruprr.supabase.co','sb_publishable_ZhUJDpEF1nCnMYunq27dzg_vcdmjPlc');
 const API='https://ota-juku-gyosha-demo.prizmun-ota.chatgpt.site/api/vendor-registration';
 let initBusy=false;
-async function api(options={}){const {data}=await sb.auth.getSession();if(!data.session)throw Error('業者用ログインをお願いします。');return fetch(API,{...options,credentials:'omit',headers:{...options.headers,Authorization:'Bearer '+data.session.access_token}});}
+async function api(options={}){const {data}=await sb.auth.getSession();if(!data.session)throw Error('先にメールで本人確認をしてください。');return fetch(API,{...options,credentials:'omit',headers:{...options.headers,Authorization:'Bearer '+data.session.access_token}});}
 async function init(){if(initBusy)return;initBusy=true;try{
 if(!sb)throw Error('読み込みに失敗しました。再読み込みしてください。');
-const {data}=await sb.auth.getSession();if(!data.session){$('login').hidden=false;$('form').hidden=true;$('signOut').hidden=true;return;}
-const res=await api();const d=await res.json();if(!res.ok){$('login').hidden=false;throw Error(d.error);}
+const {data}=await sb.auth.getSession();if(!data.session){$('login').hidden=false;$('form').hidden=true;$('signOut').hidden=true;if(callbackError&&!$('authMessage').textContent)$('authMessage').textContent='確認リンクが無効か期限切れです。この画面から新しいリンクを送ってください。';return;}
+const res=await api();const d=await res.json();if(!res.ok){$('login').hidden=true;$('form').hidden=true;$('signOut').hidden=false;throw Error(d.error||'自社情報を読み込めませんでした。時間をおいて再読み込みしてください。');}
 $('login').hidden=true;$('form').hidden=false;$('signOut').hidden=false;$('account').textContent='登録メール：'+data.session.user.email;
 $('form').reset();$('inventoryRows').replaceChildren();logoValue=undefined;inventoryTouched=false;$('logoPreview').hidden=true;$('message').textContent='';$('submit').textContent='登録内容を送信';$('loadError').textContent='';
-if(d.record){for(const row of d.record.inventory||[])addInventory(row);if(d.record.logo){$('logoPreview').src=d.record.logo;$('logoPreview').hidden=false;}for(const k of fields)$(k).value=d.record[k]||'';for(const e of document.querySelectorAll('[name=services]'))e.checked=d.record.services.includes(e.value);$('consent').checked=true;$('submit').textContent='登録内容を更新';$('message').textContent='保存済みの内容です。修正して再送信できます。';$('strength').oninput();updateContactInput()}
+if(d.record){for(const row of d.record.inventory||[])addInventory(row);if(d.record.logo){$('logoPreview').src=d.record.logo;$('logoPreview').hidden=false;}for(const k of fields)$(k).value=d.record[k]||'';for(const e of document.querySelectorAll('[name=services]'))e.checked=d.record.services.includes(e.value);$('consent').checked=true;$('submit').textContent='登録内容を更新';$('message').textContent='登録済みの内容です。修正後は「登録内容を更新」を押してください。';$('strength').oninput();updateContactInput()}
 }catch(e){$('loadError').textContent=e.message;}finally{initBusy=false;}}
-async function authenticate(create){
-if(!$('authForm').reportValidity())return;
-$('signIn').disabled=$('signUp').disabled=true;$('authMessage').textContent='確認しています…';
-try{if(!sb)throw Error('再読み込みしてください。');
-const email=$('vendorEmail').value.trim().toLowerCase(),password=$('vendorPassword').value;
-const r=await fetch('/api/member-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});const check=await r.json();if(!r.ok)throw Error('会員確認に接続できません。再度お試しください。');if(check.result!=='ok')throw Error('太田塾の登録メールをご確認ください。');
-const result=create?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
-if(result.error)throw Error(create?'登録できませんでした。登録済みの場合はログインしてください。':'メールまたはパスワードをご確認ください。');
-if(!result.data.session)throw Error('登録の確認が必要です。太田にご連絡ください。');
-$('vendorPassword').value='';$('authMessage').textContent='';await init();
-}catch(e){$('authMessage').textContent=e.message;}finally{$('signIn').disabled=$('signUp').disabled=false;}}
-$('authForm').onsubmit=e=>{e.preventDefault();authenticate(false)};$('signUp').onclick=()=>authenticate(true);
+async function sendVerificationLink(){
+const button=$('sendLink'),message=$('authMessage');
+if(button.disabled||!$('authForm').reportValidity())return;
+button.disabled=true;message.className='';message.textContent='確認リンクを送っています…';
+let sent=false;
+try{
+ if(!sb)throw Error('ページを再読み込みして、もう一度お試しください。');
+ const email=$('vendorEmail').value.trim().toLowerCase();
+ const r=await fetch('/api/member-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+ if(!r.ok)throw Error('会員確認に接続できません。時間をおいてお試しください。');
+ const check=await r.json();
+ if(check.result!=='ok')throw Error('太田塾に登録しているメールアドレスを入力してください。');
+ // A normal email link works even when LINE opens this page in an in-app browser.
+ const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:new URL('/partner-register',location.origin).href}});
+ if(error)throw Error('確認リンクを送れませんでした。時間をおいてお試しください。');
+ sent=true;message.className='success';message.textContent='確認リンクを送りました。メールを開いて手続きを続けてください。\n見当たらない場合は、迷惑メールもご確認ください。';
+}catch(e){message.className='error';message.textContent=e.message||'確認リンクを送れませんでした。';}
+finally{if(sent)setTimeout(()=>{button.disabled=false;},60000);else button.disabled=false;}
+}
+$('authForm').onsubmit=e=>{e.preventDefault();void sendVerificationLink();};
 $('vendorEmail').value=localStorage.getItem('otajuku_email')||'';
-$('signOut').onclick=async()=>{await sb.auth.signOut({scope:'local'});$('form').reset();$('inventoryRows').replaceChildren();$('form').hidden=true;await init();};
-$('form').onsubmit=async e=>{e.preventDefault();const services=[...document.querySelectorAll('[name=services]:checked')].map(e=>e.value);$('message').className='error';if(!services.length){$('message').textContent='相談できる内容を1つ以上選んでください。';return}const body=Object.fromEntries(fields.map(k=>[k,$(k).value.trim()]));body.services=services;if(inventoryTouched)body.inventory=[...document.querySelectorAll('.inventory-row')].map(row=>Object.fromEntries([...row.querySelectorAll('[data-key]')].map(e=>[e.dataset.key,e.dataset.key==='count'?Number(e.value):e.value.trim()])));if(logoValue!==undefined)body.logo=logoValue;body.consent=$('consent').checked;$('submit').disabled=true;$('message').textContent='保存しています…';try{const r=await api({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'送信に失敗しました');$('message').className='success';$('message').textContent='登録内容を保存しました。ありがとうございます！\n受付番号：'+d.id+(d.status==='approved'?'\n掲載内容を更新しました。再承認は不要です。':'\n初回の承認待ちです。太田が内容を確認します。')+'\n下の「登録内容を一覧で確認」から確認できます。';$('submit').textContent='登録内容を更新'}catch(e){$('message').className='error';$('message').textContent=e.message+' 入力内容は残っています。再送信してください。'}finally{$('submit').disabled=false}};init();
+$('signOut').onclick=async()=>{const {error}=await sb.auth.signOut({scope:'local'});if(error){$('loadError').textContent='ログアウトできませんでした。もう一度お試しください。';return;}$('form').reset();$('inventoryRows').replaceChildren();$('form').hidden=true;$('authMessage').textContent='';$('sendLink').disabled=false;$('loadError').textContent='';await init();};
+$('form').onsubmit=async e=>{e.preventDefault();const services=[...document.querySelectorAll('[name=services]:checked')].map(e=>e.value);$('message').className='error';if(!services.length){$('message').textContent='相談できる内容を1つ以上選んでください。';return}const body=Object.fromEntries(fields.map(k=>[k,$(k).value.trim()]));body.services=services;if(inventoryTouched)body.inventory=[...document.querySelectorAll('.inventory-row')].map(row=>Object.fromEntries([...row.querySelectorAll('[data-key]')].map(e=>[e.dataset.key,e.dataset.key==='count'?Number(e.value):e.value.trim()])));if(logoValue!==undefined)body.logo=logoValue;body.consent=$('consent').checked;$('submit').disabled=true;$('message').textContent='保存しています…';try{const r=await api({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'送信に失敗しました');$('message').className='success';$('message').textContent=d.status==='approved'?'太田塾メンバー向けの掲載内容を更新しました。':'登録を受け付けました。承認後、太田塾メンバー向けに掲載されます。';$('submit').textContent='登録内容を更新'}catch(e){$('message').className='error';$('message').textContent=e.message+' 入力内容は残っています。再送信してください。'}finally{$('submit').disabled=false}};init();
 </script></html>
